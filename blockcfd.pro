@@ -3,8 +3,11 @@ CONFIG += console
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    patch.cpp
+    patch.cpp \
+    cartesianpatch.cpp
 
 HEADERS += \
-    patch.h
+    patch.h \
+    cartesianpatch.h \
+    blockcfd.h
 
