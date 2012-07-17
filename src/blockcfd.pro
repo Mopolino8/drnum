@@ -4,10 +4,12 @@ CONFIG -= qt
 
 SOURCES += main.cpp \
     patch.cpp \
-    cartesianpatch.cpp
+    cartesianpatch.cpp \
+    compressiblecartesianpatch.cpp
 
 HEADERS += \
     patch.h \
     cartesianpatch.h \
-    blockcfd.h
+    blockcfd.h \
+    compressiblecartesianpatch.h
 

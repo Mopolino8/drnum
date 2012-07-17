@@ -29,16 +29,28 @@ protected: // attributes
   real m_DX;
   real m_DY;
   real m_DZ;
+  real m_InvDX;
+  real m_InvDY;
+  real m_InvDZ;
 
 protected: // methods
 
   void allocateData(size_t num_i, size_t num_j, size_t num_k);
+  void computeDeltas();
 
 public: // methods
 
   CartesianPatch();
   void setupAligned(real x1, real y1, real z1, real x2, real y2, real z2);
   void resize(size_t num_i, size_t num_j, size_t num_k);
+
+  size_t idx(int i, int j, int k) { return i*m_NumJ*m_NumK + j*m_NumK + k; }
+  double dx() { return m_DX; }
+  double dy() { return m_DY; }
+  double dz() { return m_DZ; }
+  double idx() { return m_InvDX; }
+  double idy() { return m_InvDY; }
+  double idz() { return m_InvDZ; }
 
 };
 
