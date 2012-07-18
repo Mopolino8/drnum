@@ -20,6 +20,8 @@ protected: // methods
   void  deleteData();
   real* getField(size_t i_field);
   void  setNumberOfFields(size_t num_fields) { m_NumFields = num_fields; }
+  void  setFieldToZero(real *field);
+  void  copyField(real *src, real *dst);
 
   /**
    * Will be called at the end of allocaData().
@@ -53,6 +55,26 @@ public: // methods
    */
   void computeFieldDifference(size_t i_field1, size_t i_field2, real &max_norm, real &l2_norm);
 
+  size_t numFields() { return m_NumFields; }
+  size_t fieldSize() { return m_FieldSize; }
+
+  virtual void computeResiduals() = 0;
+  virtual void subStep(real dt) = 0;
+
 };
+
+inline void Patch::setFieldToZero(real *field)
+{
+  for (size_t i = 0; i < m_FieldSize; ++i) {
+    field[i] = 0.0;
+  }
+}
+
+inline void Patch::copyField(real *src, real *dst)
+{
+  for (size_t i = 0; i < m_FieldSize; ++i) {
+    dst[i] = src[i];
+  }
+}
 
 #endif // PATCH_H

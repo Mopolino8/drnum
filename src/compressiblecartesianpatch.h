@@ -47,7 +47,11 @@ protected: // methods
 public: // methods
 
   CompressibleCartesianPatch();
-  void computeAusmPlus();
+
+  void setState(size_t i, size_t j, size_t k, real p, real T);
+  void setOldState();
+
+  virtual void subStep(real dt);
 
 };
 
