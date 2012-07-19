@@ -32,7 +32,6 @@ HEADERS += \
     cartesianpatch.h \
     blockcfd.h \
     compressiblecartesianpatch.h \
-    fluxes/ausm_plus_x.h \
     ausmtools.h \
     limiter/minmod.h \
     limiter/first_order.h \
@@ -46,5 +45,6 @@ HEADERS += \
     fluxes/ausmbase.h \
     afluxes/usmplus.h \
     fluxes/ausmplus.h \
-    compressibleobject.h
+    compressibleobject.h \
+    fluxes/ausm.h
 

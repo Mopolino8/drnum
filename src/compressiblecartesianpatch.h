@@ -122,7 +122,7 @@ inline void CompressibleCartesianPatch<TEulerFlux>::preStep()
 
   // x direction
   //
-  for (size_t i = 1; i < sizeI() - 1; ++i) {
+  for (size_t i = 1; i < sizeI(); ++i) {
     for (size_t j = 0; j < sizeJ(); ++j) {
       for (size_t k = 0; k < sizeK(); ++k) {
         m_EulerFlux.x(this, i, j, k, dy()*dz(), flux);
@@ -154,7 +154,7 @@ inline void CompressibleCartesianPatch<TEulerFlux>::preStep()
   // y direction
   //
   for (size_t i = 0; i < sizeI(); ++i) {
-    for (size_t j = 1; j < sizeJ() - 1; ++j) {
+    for (size_t j = 1; j < sizeJ(); ++j) {
       for (size_t k = 0; k < sizeK(); ++k) {
       }
     }
@@ -168,7 +168,7 @@ inline void CompressibleCartesianPatch<TEulerFlux>::preStep()
   //
   for (size_t i = 0; i < sizeI(); ++i) {
     for (size_t j = 0; j < sizeJ(); ++j) {
-      for (size_t k = 1; k < sizeK() - 1; ++k) {
+      for (size_t k = 1; k < sizeK(); ++k) {
       }
     }
   }

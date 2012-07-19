@@ -2,13 +2,14 @@
 #include "ausmtools.h"
 
 #define NI 1000
-#define NJ 2
-#define NK 2
+#define NJ 1
+#define NK 1
 
 #include "reconstruction/upwind1.h"
+#include "fluxes/ausm.h"
 #include "fluxes/ausmplus.h"
 
-typedef CompressibleCartesianPatch<AusmPlus<Upwind1> > TestPatch;
+typedef CompressibleCartesianPatch<Ausm<Upwind1> > TestPatch;
 
 void write(TestPatch &P, int count)
 {
@@ -43,7 +44,7 @@ int main()
   int count = 0;
   int sub_count = 0;
   write(P, count);
-  while (t < 1e-3) {
+  while (t < 1e-2) {
     P.copyField(P.i_new, P.i_old);
     for (int i_rk = 0; i_rk < 3; ++i_rk) {
       P.subStep(dt*alpha[i_rk]);
