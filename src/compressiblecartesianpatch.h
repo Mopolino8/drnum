@@ -44,16 +44,29 @@ public: // methods
   restrict real* res_rw = getVariable(i_res, 3); \
   restrict real* res_rE = getVariable(i_res, 4); \
 
-#define ADD_COMPR_XFLUX           \
-f(res_r,  i, j, k)  -= flux_r;    \
-f(res_ru,  i, j, k) -= flux_ru;   \
-f(res_rv,  i, j, k) -= flux_rv;   \
-f(res_rw,  i, j, k) -= flux_rw;   \
-f(res_rE,  i, j, k) -= flux_rE;   \
-f(res_r,  i+1, j, k)  -= flux_r;  \
-f(res_ru,  i+1, j, k) -= flux_ru; \
-f(res_rv,  i+1, j, k) -= flux_rv; \
-f(res_rw,  i+1, j, k) -= flux_rw; \
-f(res_rE,  i+1, j, k) -= flux_rE;
+#define CHECK_COMPR_FLUX {        \
+  if (isnan(flux_r)) BUG;         \
+  if (isinf(flux_r)) BUG;         \
+  if (isnan(flux_ru)) BUG;        \
+  if (isinf(flux_ru)) BUG;        \
+  if (isnan(flux_rv)) BUG;        \
+  if (isinf(flux_rv)) BUG;        \
+  if (isnan(flux_rw)) BUG;        \
+  if (isinf(flux_rw)) BUG;        \
+  if (isnan(flux_rE)) BUG;        \
+  if (isinf(flux_rE)) BUG;        \
+}
+
+#define ADD_COMPR_XFLUX             \
+  f(res_r,  i, j, k)  -= flux_r;    \
+  f(res_ru,  i, j, k) -= flux_ru;   \
+  f(res_rv,  i, j, k) -= flux_rv;   \
+  f(res_rw,  i, j, k) -= flux_rw;   \
+  f(res_rE,  i, j, k) -= flux_rE;   \
+  f(res_r,  i+1, j, k)  += flux_r;  \
+  f(res_ru,  i+1, j, k) += flux_ru; \
+  f(res_rv,  i+1, j, k) += flux_rv; \
+  f(res_rw,  i+1, j, k) += flux_rw; \
+  f(res_rE,  i+1, j, k) += flux_rE;
 
 #endif // COMPRESSIBLECARTESIANPATCH_H

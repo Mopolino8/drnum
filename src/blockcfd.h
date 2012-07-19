@@ -29,11 +29,18 @@ inline real nonZero(const real &x, const real &eps)
 #define WITH_VTK
 #define VTK_USE_ANSI_STDLIB
 
-#define BUG                             \
-  cout << "This seems to be a bug!\n";  \
-  cout << "  file: " + __FILE__ + "\n"; \
-  cout << "  line: " + __LINE__ + "\n"; \
-  exit(EXIT_FAILURE)                    \
+#define BUG {                             \
+  cout << "This seems to be a bug!\n";    \
+  cout << "  file: " << __FILE__ << "\n"; \
+  cout << "  line: " << __LINE__ << "\n"; \
+  abort();                                \
+}
 
+#ifdef WITH_VTK
+  #include <Qt>
+  #ifdef QT_DEBUG
+    #define DEBUG
+  #endif
+#endif
 
 #endif // BLOCKCFD_H

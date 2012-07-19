@@ -45,4 +45,8 @@ real flux_rv = 0.5*flux_r*(rv_l + rv_r)       - 0.5*fabs(flux_r)*(rv_r - rv_l);
 real flux_rw = 0.5*flux_r*(rw_l + rw_r)       - 0.5*fabs(flux_r)*(rw_r - rw_l);
 real flux_rE = 0.5*flux_r*(rE_l + rE_r)       - 0.5*fabs(flux_r)*(rE_r - rE_l);
 
+#ifdef DEBUG
+  CHECK_COMPR_FLUX;
+#endif
+
 ADD_COMPR_XFLUX;

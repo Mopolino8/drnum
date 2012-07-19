@@ -107,12 +107,12 @@ void CartesianPatch::writeToVtk(QString file_name)
       var->SetName(qPrintable("f_" + field_name + "_" + var_name));
       var->SetNumberOfValues(variableSize());
       grid->GetCellData()->AddArray(var);
-      vtkIdType i_var = 0;
+      vtkIdType id = 0;
       for (size_t k = 0; k < m_NumK; ++k) {
         for (size_t j = 0; j < m_NumJ; ++j) {
           for (size_t i = 0; i < m_NumI; ++i) {
-            var->SetValue(i_var, f(getField(i_field), i, j, k));
-            ++i_var;
+            var->SetValue(id, f(getVariable(i_field, i_var), i, j, k));
+            ++id;
           }
         }
       }
