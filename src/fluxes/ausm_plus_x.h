@@ -45,15 +45,4 @@ real flux_rv = 0.5*flux_r*(rv_l + rv_r)       - 0.5*fabs(flux_r)*(rv_r - rv_l);
 real flux_rw = 0.5*flux_r*(rw_l + rw_r)       - 0.5*fabs(flux_r)*(rw_r - rw_l);
 real flux_rE = 0.5*flux_r*(rE_l + rE_r)       - 0.5*fabs(flux_r)*(rE_r - rE_l);
 
-addF(res_r,  i, j, k, -flux_r);
-addF(res_ru, i, j, k, -flux_ru);
-addF(res_rv, i, j, k, -flux_rv);
-addF(res_rw, i, j, k, -flux_rw);
-addF(res_rE, i, j, k, -flux_rE);
-
-addF(res_r,  i+1, j, k, flux_r);
-addF(res_ru, i+1, j, k, flux_ru);
-addF(res_rv, i+1, j, k, flux_rv);
-addF(res_rw, i+1, j, k, flux_rw);
-addF(res_rE, i+1, j, k, flux_rE);
-
+ADD_COMPR_XFLUX;

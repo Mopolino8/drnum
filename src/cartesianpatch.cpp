@@ -16,14 +16,6 @@ CartesianPatch::CartesianPatch()
   m_NumK = 1;
 }
 
-void CartesianPatch::allocateData(size_t num_i, size_t num_j, size_t num_k)
-{
-  m_NumI = num_i;
-  m_NumJ = num_j;
-  m_NumK = num_k;
-  Patch::allocateData(m_NumI*m_NumJ*m_NumK);
-}
-
 void CartesianPatch::computeDeltas()
 {
   double Lx = sqrt(sqr(m_UX) + sqr(m_UY) + sqr(m_UZ));
@@ -41,9 +33,9 @@ void CartesianPatch::computeDeltas()
 
 void CartesianPatch::setupAligned(real x1, real y1, real z1, real x2, real y2, real z2)
 {
-  m_X0 = x1;
-  m_Y0 = y1;
-  m_Z0 = z1;
+  m_Xo = x1;
+  m_Yo = y1;
+  m_Zo = z1;
 
   m_UX = x2 - x1;
   m_UY = 0;
@@ -62,9 +54,11 @@ void CartesianPatch::setupAligned(real x1, real y1, real z1, real x2, real y2, r
 
 void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
 {
-  /// @todo implement a field mapping mechanism if the grid gets resized
+  m_NumI = num_i;
+  m_NumJ = num_j;
+  m_NumK = num_k;
   deleteData();
-  allocateData(num_i, num_j, num_k);
+  Patch::resize(m_NumI*m_NumJ*m_NumK);
   computeDeltas();
 }
 
@@ -98,22 +92,28 @@ void CartesianPatch::writeToVtk(QString file_name)
   grid->SetZCoordinates(zc);
 
   for (size_t i_field = 0; i_field < numFields(); ++i_field) {
-    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
     QString field_name;
     field_name.setNum(i_field + 1);
     if (field_name.size() < 2) {
       field_name = "0" + field_name;
     }
-    field_name = "q_" + field_name;
-    var->SetName(qPrintable(field_name));
-    var->SetNumberOfValues(fieldSize());
-    grid->GetCellData()->AddArray(var);
-    vtkIdType i_var = 0;
-    for (size_t k = 0; k < m_NumK; ++k) {
-      for (size_t j = 0; j < m_NumJ; ++j) {
-        for (size_t i = 0; i < m_NumI; ++i) {
-          var->SetValue(i_var, f(getField(i_field), i, j, k));
-          ++i_var;
+    for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+      QString var_name;
+      var_name.setNum(i_var + 1);
+      if (var_name.size() < 2) {
+        var_name = "0" + var_name;
+      }
+      vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
+      var->SetName(qPrintable("f_" + field_name + "_" + var_name));
+      var->SetNumberOfValues(variableSize());
+      grid->GetCellData()->AddArray(var);
+      vtkIdType i_var = 0;
+      for (size_t k = 0; k < m_NumK; ++k) {
+        for (size_t j = 0; j < m_NumJ; ++j) {
+          for (size_t i = 0; i < m_NumI; ++i) {
+            var->SetValue(i_var, f(getField(i_field), i, j, k));
+            ++i_var;
+          }
         }
       }
     }

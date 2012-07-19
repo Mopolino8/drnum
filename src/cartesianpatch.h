@@ -19,9 +19,9 @@ protected: // attributes
   size_t m_NumJ;
   size_t m_NumK;
 
-  real m_X0;
-  real m_Y0;
-  real m_Z0;
+  real m_Xo;
+  real m_Yo;
+  real m_Zo;
   real m_UX;
   real m_UY;
   real m_UZ;
@@ -40,9 +40,12 @@ protected: // attributes
 
   real m_LimiterEpsilon;
 
+private: // methods
+
+
+
 protected: // methods
 
-  void allocateData(size_t num_i, size_t num_j, size_t num_k);
   void computeDeltas();
 
 public: // methods
@@ -72,14 +75,11 @@ public: // methods
    * @param k third Cartesian index
    * @return the field value at (i, j, k).
    */
-  real f(real *field, int i, int j, int k) { return field[i*m_NumJ*m_NumK + j*m_NumK + k]; }
+  real& f(real *var, int i, int j, int k) { return var[i*m_NumJ*m_NumK + j*m_NumK + k]; }
 
-  void setF(real *field, int i, int j, int k, real v) { field[i*m_NumJ*m_NumK + j*m_NumK + k]  = v; }
-  void addF(real *field, int i, int j, int k, real v) { field[i*m_NumJ*m_NumK + j*m_NumK + k] += v; }
-
-  real rx(real *field, int i1, int i2, int j, int k);
-  real ry(real *field, int i, int j1, int j2, int k);
-  real rz(real *field, int i, int j, int k1, int k2);
+  real rx(real *field, int i1, int i2, int j, int k); ///< gradient ratio in x direction for limiters
+  real ry(real *field, int i, int j1, int j2, int k); ///< gradient ratio in y direction for limiters
+  real rz(real *field, int i, int j, int k1, int k2); ///< gradient ratio in z direction for limiters
 
   real dx() { return m_DX; }
   real dy() { return m_DY; }
@@ -113,5 +113,16 @@ inline real CartesianPatch::rz(real *field, int i, int j, int k1, int k2)
 {
   return (f(field, i, j, k1) - f(field, i, j, 2*k1 - k2))/nonZero(f(field, i, j, k2) - f(field, i, j, k1), m_LimiterEpsilon);
 }
+
+
+#define PROJ_UX(F, I1, I2,  J,  K) \
+  f(F, I1,  J,  K) + 0.5* LIM(rx(F, I1, I2,  J,  K)) * (f(F, I1,  J,  K) - f(F, 2*I1-I2,  J,  K))
+
+#define PROJ_UY(F,  I, J1, J2,  K) \
+  f(F,  I, J1,  K) + 0.5* LIM(ry(F,  I, J1, J2,  K)) * (f(F,  I, J1,  K) - f(F,  I, 2*J1-J2,  K))
+
+#define PROJ_UZ(F,  I,  J, K1, K2) \
+  f(F,  I,  J, K1) + 0.5* LIM(ry(F,  I,  J, K1, K2)) * (f(F,  I,  J, K1) - f(F,  I,  J, 2*K1-J2))
+
 
 #endif // CARTESIANPATCH_H

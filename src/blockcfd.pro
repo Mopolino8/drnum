@@ -33,9 +33,6 @@ HEADERS += \
     blockcfd.h \
     compressiblecartesianpatch.h \
     code_blocks/ausm_plus_x.h \
-    code_blocks/compressible_variables.h \
     ausmtools.h \
-    code_blocks/minmod.h \
-    code_blocks/cartesian_projection.h \
-    code_blocks/compressible_residuals.h
+    code_blocks/minmod.h
 

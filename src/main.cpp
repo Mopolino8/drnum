@@ -13,17 +13,18 @@ class TestPatch : public CompressibleCartesianPatch
 
 public:
 
-  virtual void computeResiduals();
+  virtual void preStep();
+  virtual void postStep();
   void correctBoundaries();
 
 };
 
-inline void TestPatch::computeResiduals()
+inline void TestPatch::preStep()
 {
-  #include "code_blocks/compressible_residuals.h"
-  #include "code_blocks/compressible_variables.h"
+  COMPR_NEW_VARIABLES;
+  COMPR_RES_VARIABLES;
 
-  for (size_t i = 0; i < NI - 1; ++i) {
+  for (size_t i = 1; i < NI - 3; ++i) {
     for (size_t j = 0; j < NJ; ++j) {
       for (size_t k = 0; k < NK; ++k) {
 
@@ -34,22 +35,16 @@ inline void TestPatch::computeResiduals()
   }
 }
 
-inline void TestPatch::correctBoundaries()
+inline void TestPatch::postStep()
 {
-  #include "code_blocks/compressible_variables.h"
-
   for (size_t j = 0; j < NJ; ++j) {
     for (size_t k = 0; k < NK; ++k) {
-      setF(r, 0, j, k, f(r, 1, j, k));
-      setF(r, sizeI() - 1, j, k, f(r, sizeI() - 2, j, k));
-      setF(ru, 0, j, k, f(ru, 1, j, k));
-      setF(ru, sizeI() - 1, j, k, f(ru, sizeI() - 2, j, k));
-      setF(rv, 0, j, k, f(rv, 1, j, k));
-      setF(rv, sizeI() - 1, j, k, f(rv, sizeI() - 2, j, k));
-      setF(rw, 0, j, k, f(rw, 1, j, k));
-      setF(rw, sizeI() - 1, j, k, f(rw, sizeI() - 2, j, k));
-      setF(rE, 0, j, k, f(rE, 1, j, k));
-      setF(rE, sizeI() - 1, j, k, f(rE, sizeI() - 2, j, k));
+      for (size_t i_var = 0; i_var < 5; ++i_var) {
+        f(getVariable(i_new, i_var), 0, j, k) = f(getVariable(i_new, i_var), 2, j, k);
+        f(getVariable(i_new, i_var), 1, j, k) = f(getVariable(i_new, i_var), 2, j, k);
+        f(getVariable(i_new, i_var), NI-2, j, k) = f(getVariable(i_new, i_var), NI-3, j, k);
+        f(getVariable(i_new, i_var), NI-1, j, k) = f(getVariable(i_new, i_var), NI-3, j, k);
+      }
     }
   }
 }
@@ -75,10 +70,9 @@ int main()
   real t = 0;
   real alpha[3] = {0.25, 0.5, 1};
   while (t < 1e-4) {
-    P.setOldState();
+    P.copyField(P.i_new, P.i_old);
     for (int i_rk = 0; i_rk < 3; ++i_rk) {
       P.subStep(dt*alpha[i_rk]);
-      P.correctBoundaries();
     }
     t += dt;
     cout << t << endl;

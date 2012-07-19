@@ -6,43 +6,11 @@
 class CompressibleCartesianPatch : public CartesianPatch
 {
 
-private: // attributes
+public: // static attributes
 
-  real* m_OldRho;
-  real* m_OldRhou;
-  real* m_OldRhov;
-  real* m_OldRhow;
-  real* m_OldRhoE;
-  real* m_Rho;
-  real* m_Rhou;
-  real* m_Rhov;
-  real* m_Rhow;
-  real* m_RhoE;
-  real* m_ResRho;
-  real* m_ResRhou;
-  real* m_ResRhov;
-  real* m_ResRhow;
-  real* m_ResRhoE;
-
-protected: // methods
-
-  virtual void updatePointers();
-
-  real* oldRho  () { return m_OldRho; }
-  real* oldRhou () { return m_OldRhou; }
-  real* oldRhov () { return m_OldRhov; }
-  real* oldRhow () { return m_OldRhow; }
-  real* oldRhoE () { return m_OldRhoE; }
-  real* rho     () { return m_Rho; }
-  real* rhou    () { return m_Rhou; }
-  real* rhov    () { return m_Rhov; }
-  real* rhow    () { return m_Rhow; }
-  real* rhoE    () { return m_RhoE; }
-  real* resRho  () { return m_ResRho; }
-  real* resRhou () { return m_ResRhou; }
-  real* resRhov () { return m_ResRhov; }
-  real* resRhow () { return m_ResRhow; }
-  real* resRhoE () { return m_ResRhoE; }
+  static const size_t i_new = 0;
+  static const size_t i_old = 1;
+  static const size_t i_res = 2;
 
 public: // methods
 
@@ -54,5 +22,38 @@ public: // methods
   virtual void subStep(real dt);
 
 };
+
+#define COMPR_NEW_VARIABLES              \
+  restrict real* r  = getVariable(i_new, 0); \
+  restrict real* ru = getVariable(i_new, 1); \
+  restrict real* rv = getVariable(i_new, 2); \
+  restrict real* rw = getVariable(i_new, 3); \
+  restrict real* rE = getVariable(i_new, 4); \
+
+#define COMPR_OLD_VARIABLES                  \
+  restrict real* old_r  = getVariable(i_old, 0); \
+  restrict real* old_ru = getVariable(i_old, 1); \
+  restrict real* old_rv = getVariable(i_old, 2); \
+  restrict real* old_rw = getVariable(i_old, 3); \
+  restrict real* old_rE = getVariable(i_old, 4); \
+
+#define COMPR_RES_VARIABLES                  \
+  restrict real* res_r  = getVariable(i_res, 0); \
+  restrict real* res_ru = getVariable(i_res, 1); \
+  restrict real* res_rv = getVariable(i_res, 2); \
+  restrict real* res_rw = getVariable(i_res, 3); \
+  restrict real* res_rE = getVariable(i_res, 4); \
+
+#define ADD_COMPR_XFLUX           \
+f(res_r,  i, j, k)  -= flux_r;    \
+f(res_ru,  i, j, k) -= flux_ru;   \
+f(res_rv,  i, j, k) -= flux_rv;   \
+f(res_rw,  i, j, k) -= flux_rw;   \
+f(res_rE,  i, j, k) -= flux_rE;   \
+f(res_r,  i+1, j, k)  -= flux_r;  \
+f(res_ru,  i+1, j, k) -= flux_ru; \
+f(res_rv,  i+1, j, k) -= flux_rv; \
+f(res_rw,  i+1, j, k) -= flux_rw; \
+f(res_rE,  i+1, j, k) -= flux_rE;
 
 #endif // COMPRESSIBLECARTESIANPATCH_H
