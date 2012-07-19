@@ -76,8 +76,8 @@ public: // methods
   void  copyField(size_t i_src, size_t i_dst);
   void  addField(real *src, real factor, real *dst);
   void  addField(real *op1, real factor, real *op2, real *dst);
-  void  addField(size_t i_src, size_t factor, size_t i_dst);
-  void  addField(size_t i_op1, size_t factor, size_t i_op2, size_t i_dst);
+  void  addField(size_t i_src, real factor, size_t i_dst);
+  void  addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst);
 
 };
 
@@ -119,12 +119,12 @@ inline void Patch::addField(real *op1, real factor, real *op2, real *dst)
   }
 }
 
-inline void Patch::addField(size_t i_src, size_t factor, size_t i_dst)
+inline void Patch::addField(size_t i_src, real factor, size_t i_dst)
 {
   addField(getField(i_src), factor, getField(i_dst));
 }
 
-inline void Patch::addField(size_t i_op1, size_t factor, size_t i_op2, size_t i_dst)
+inline void Patch::addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst)
 {
   addField(getField(i_op1), factor, getField(i_op2), getField(i_dst));
 }

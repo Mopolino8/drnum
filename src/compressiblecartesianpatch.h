@@ -2,9 +2,22 @@
 #define COMPRESSIBLECARTESIANPATCH_H
 
 #include "cartesianpatch.h"
+#include "compressibleobject.h"
 
-class CompressibleCartesianPatch : public CartesianPatch
+template <class TEulerFlux>
+class CompressibleCartesianPatch : public CartesianPatch, public CompressibleObject
 {
+
+protected: // attributes
+
+  TEulerFlux m_EulerFlux;
+
+
+protected: // methods
+
+  void positiveContribution(size_t i, size_t j, size_t k, flux_t flux);
+  void negativeContribution(size_t i, size_t j, size_t k, flux_t flux);
+
 
 public: // static attributes
 
@@ -12,61 +25,158 @@ public: // static attributes
   static const size_t i_old = 1;
   static const size_t i_res = 2;
 
+
 public: // methods
 
   CompressibleCartesianPatch();
 
   void setState(size_t i, size_t j, size_t k, real p, real T);
-  void setOldState();
+  void getState(size_t i, size_t j, size_t k, real &p, real &T);
 
   virtual void subStep(real dt);
+  virtual void preStep();
+
 
 };
 
-#define COMPR_NEW_VARIABLES              \
-  restrict real* r  = getVariable(i_new, 0); \
-  restrict real* ru = getVariable(i_new, 1); \
-  restrict real* rv = getVariable(i_new, 2); \
-  restrict real* rw = getVariable(i_new, 3); \
-  restrict real* rE = getVariable(i_new, 4); \
 
-#define COMPR_OLD_VARIABLES                  \
-  restrict real* old_r  = getVariable(i_old, 0); \
-  restrict real* old_ru = getVariable(i_old, 1); \
-  restrict real* old_rv = getVariable(i_old, 2); \
-  restrict real* old_rw = getVariable(i_old, 3); \
-  restrict real* old_rE = getVariable(i_old, 4); \
-
-#define COMPR_RES_VARIABLES                  \
-  restrict real* res_r  = getVariable(i_res, 0); \
-  restrict real* res_ru = getVariable(i_res, 1); \
-  restrict real* res_rv = getVariable(i_res, 2); \
-  restrict real* res_rw = getVariable(i_res, 3); \
-  restrict real* res_rE = getVariable(i_res, 4); \
-
-#define CHECK_COMPR_FLUX {        \
-  if (isnan(flux_r)) BUG;         \
-  if (isinf(flux_r)) BUG;         \
-  if (isnan(flux_ru)) BUG;        \
-  if (isinf(flux_ru)) BUG;        \
-  if (isnan(flux_rv)) BUG;        \
-  if (isinf(flux_rv)) BUG;        \
-  if (isnan(flux_rw)) BUG;        \
-  if (isinf(flux_rw)) BUG;        \
-  if (isnan(flux_rE)) BUG;        \
-  if (isinf(flux_rE)) BUG;        \
+template <class TEulerFlux>
+inline CompressibleCartesianPatch<TEulerFlux>::CompressibleCartesianPatch()
+{
+  setNumberOfFields(3);
+  setNumberOfVariables(5);
 }
 
-#define ADD_COMPR_XFLUX             \
-  f(res_r,  i, j, k)  -= flux_r;    \
-  f(res_ru,  i, j, k) -= flux_ru;   \
-  f(res_rv,  i, j, k) -= flux_rv;   \
-  f(res_rw,  i, j, k) -= flux_rw;   \
-  f(res_rE,  i, j, k) -= flux_rE;   \
-  f(res_r,  i+1, j, k)  += flux_r;  \
-  f(res_ru,  i+1, j, k) += flux_ru; \
-  f(res_rv,  i+1, j, k) += flux_rv; \
-  f(res_rw,  i+1, j, k) += flux_rw; \
-  f(res_rE,  i+1, j, k) += flux_rE;
+template <class TEulerFlux>
+inline void CompressibleCartesianPatch<TEulerFlux>::setState(size_t i, size_t j, size_t k, real p, real T)
+{
+  f(i_new, 0, i, j, k) = p/(gasR() * T);
+  f(i_new, 1, i, j, k) = 0;
+  f(i_new, 2, i, j, k) = 0;
+  f(i_new, 3, i, j, k) = 0;
+  f(i_new, 4, i, j, k) = p/(gasGamma() - 1);
+}
+
+template <class TEulerFlux>
+inline void CompressibleCartesianPatch<TEulerFlux>::getState(size_t i, size_t j, size_t k, real &p, real &T)
+{
+  real r  = f(i_new, 0, i, j, k);
+  real ir = 1.0/r;
+  real ru = f(i_new, 1, i, j, k);
+  real rv = f(i_new, 2, i, j, k);
+  real rw = f(i_new, 3, i, j, k);
+  real u  = ru*ir;
+  real v  = rv*ir;
+  real w  = rw*ir;
+  real rE = f(i_new, 4, i, j, k);
+
+  T  = (rE*ir - 0.5*(u*u + v*v + w*w))/gasCv();
+  p  = r*gasR()*T;
+}
+
+template <class TEulerFlux>
+inline void CompressibleCartesianPatch<TEulerFlux>::positiveContribution(size_t i, size_t j, size_t k, flux_t flux)
+{
+  f(i_res, 0, i, j, k) += flux.rho;
+  f(i_res, 1, i, j, k) += flux.rhou;
+  f(i_res, 2, i, j, k) += flux.rhov;
+  f(i_res, 3, i, j, k) += flux.rhow;
+  f(i_res, 4, i, j, k) += flux.rhoE;
+}
+
+template <class TEulerFlux>
+inline void CompressibleCartesianPatch<TEulerFlux>::negativeContribution(size_t i, size_t j, size_t k, flux_t flux)
+{
+  f(i_res, 0, i, j, k) -= flux.rho;
+  f(i_res, 1, i, j, k) -= flux.rhou;
+  f(i_res, 2, i, j, k) -= flux.rhov;
+  f(i_res, 3, i, j, k) -= flux.rhow;
+  f(i_res, 4, i, j, k) -= flux.rhoE;
+}
+
+template <class TEulerFlux>
+inline void CompressibleCartesianPatch<TEulerFlux>::subStep(real dt)
+{
+  setFieldToZero(i_res);
+  preStep();
+  real V = dx()*dy()*dz();
+  addField(i_old, dt/V, i_res, i_new);
+  postStep();
+}
+
+template <class TEulerFlux>
+inline void CompressibleCartesianPatch<TEulerFlux>::preStep()
+{
+  m_EulerFlux.setRho (getVariable(i_new, 0));
+  m_EulerFlux.setRhou(getVariable(i_new, 1));
+  m_EulerFlux.setRhov(getVariable(i_new, 2));
+  m_EulerFlux.setRhow(getVariable(i_new, 3));
+  m_EulerFlux.setRhoE(getVariable(i_new, 4));
+  m_EulerFlux.setResRho (getVariable(i_res, 0));
+  m_EulerFlux.setResRhou(getVariable(i_res, 1));
+  m_EulerFlux.setResRhov(getVariable(i_res, 2));
+  m_EulerFlux.setResRhow(getVariable(i_res, 3));
+  m_EulerFlux.setResRhoE(getVariable(i_res, 4));
+
+  flux_t flux;
+
+  // x direction
+  //
+  for (size_t i = 1; i < sizeI() - 1; ++i) {
+    for (size_t j = 0; j < sizeJ(); ++j) {
+      for (size_t k = 0; k < sizeK(); ++k) {
+        m_EulerFlux.x(this, i, j, k, dy()*dz(), flux);
+        negativeContribution(i-1, j, k, flux);
+        positiveContribution(i, j, k, flux);
+      }
+    }
+  }
+  for (size_t j = 0; j < sizeJ(); ++j) {
+    for (size_t k = 0; k < sizeK(); ++k) {
+      real p, T;
+      getState(0, j, k, p, T);
+      flux.rho  = 0;
+      flux.rhou = p*dy()*dz();
+      flux.rhov = 0;
+      flux.rhow = 0;
+      flux.rhoE = 0;
+      positiveContribution(0, j, k, flux);
+      getState(sizeI() - 1, j, k, p, T);
+      flux.rho  = 0;
+      flux.rhou = p*dy()*dz();
+      flux.rhov = 0;
+      flux.rhow = 0;
+      flux.rhoE = 0;
+      negativeContribution(sizeI() - 1, j, k, flux);
+    }
+  }
+
+  // y direction
+  //
+  for (size_t i = 0; i < sizeI(); ++i) {
+    for (size_t j = 1; j < sizeJ() - 1; ++j) {
+      for (size_t k = 0; k < sizeK(); ++k) {
+      }
+    }
+  }
+  for (size_t i = 0; i < sizeI(); ++i) {
+    for (size_t k = 0; k < sizeK(); ++k) {
+    }
+  }
+
+  // z direction
+  //
+  for (size_t i = 0; i < sizeI(); ++i) {
+    for (size_t j = 0; j < sizeJ(); ++j) {
+      for (size_t k = 1; k < sizeK() - 1; ++k) {
+      }
+    }
+  }
+  for (size_t i = 0; i < sizeI(); ++i) {
+    for (size_t j = 0; j < sizeJ(); ++j) {
+    }
+  }
+}
+
 
 #endif // COMPRESSIBLECARTESIANPATCH_H

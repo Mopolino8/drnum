@@ -2,51 +2,13 @@
 #include "ausmtools.h"
 
 #define NI 1000
-#define NJ 10
-#define NK 10
+#define NJ 2
+#define NK 2
 
-#include "reconstruction/first_order.h"
+#include "reconstruction/upwind1.h"
+#include "fluxes/ausmplus.h"
 
-class TestPatch : public CompressibleCartesianPatch
-{
-
-public:
-
-  virtual void preStep();
-  virtual void postStep();
-  void correctBoundaries();
-
-};
-
-inline void TestPatch::preStep()
-{
-  COMPR_NEW_VARIABLES;
-  COMPR_RES_VARIABLES;
-
-  for (size_t i = 1; i < NI - 3; ++i) {
-    for (size_t j = 0; j < NJ; ++j) {
-      for (size_t k = 0; k < NK; ++k) {
-
-        #include "fluxes/ausm_plus_x.h"
-
-      }
-    }
-  }
-}
-
-inline void TestPatch::postStep()
-{
-  for (size_t j = 0; j < NJ; ++j) {
-    for (size_t k = 0; k < NK; ++k) {
-      for (size_t i_var = 0; i_var < 5; ++i_var) {
-        f(getVariable(i_new, i_var), 0, j, k) = f(getVariable(i_new, i_var), 2, j, k);
-        f(getVariable(i_new, i_var), 1, j, k) = f(getVariable(i_new, i_var), 2, j, k);
-        f(getVariable(i_new, i_var), NI-2, j, k) = f(getVariable(i_new, i_var), NI-3, j, k);
-        f(getVariable(i_new, i_var), NI-1, j, k) = f(getVariable(i_new, i_var), NI-3, j, k);
-      }
-    }
-  }
-}
+typedef CompressibleCartesianPatch<AusmPlus<Upwind1> > TestPatch;
 
 void write(TestPatch &P, int count)
 {
@@ -79,6 +41,7 @@ int main()
   real t = 0;
   real alpha[3] = {0.25, 0.5, 1};
   int count = 0;
+  int sub_count = 0;
   write(P, count);
   while (t < 1e-3) {
     P.copyField(P.i_new, P.i_old);
@@ -86,9 +49,15 @@ int main()
       P.subStep(dt*alpha[i_rk]);
     }
     t += dt;
-    ++count;
-    write(P, count);
-    cout << t << endl;
+    ++sub_count;
+    if (sub_count == 10) {
+      ++count;
+      write(P, count);
+      sub_count = 0;
+    }
+    real max_norm, l2_norm;
+    P.computeVariableDifference(P.i_new, 0, P.i_old, 0, max_norm, l2_norm);
+    cout << t << "  max: " << max_norm << "  L2: " << l2_norm << endl;
   }
 }
 

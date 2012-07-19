@@ -40,10 +40,6 @@ protected: // attributes
 
   real m_LimiterEpsilon;
 
-private: // methods
-
-
-
 protected: // methods
 
   void computeDeltas();
@@ -68,14 +64,25 @@ public: // methods
   size_t index(int i, int j, int k) { return i*m_NumJ*m_NumK + j*m_NumK + k; }
 
   /**
-   * @brief Get the value of a field at an (i, j, k) triple.
-   * @param field a pointer to the data field
+   * @brief Get the value of a variable at an (i, j, k) triple.
+   * @param field a pointer to the variable data
    * @param i first Cartesian index
    * @param j second Cartesian index
    * @param k third Cartesian index
    * @return the field value at (i, j, k).
    */
-  real& f(real *var, int i, int j, int k) { return var[i*m_NumJ*m_NumK + j*m_NumK + k]; }
+  real& f(real *var, size_t i, size_t j, size_t k) { return var[i*m_NumJ*m_NumK + j*m_NumK + k]; }
+
+  /**
+   * @brief Get the value of a variable at an (i, j, k) triple.
+   * @param i_field field index
+   * @param i_var variable index
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
+   * @return the field value at (i, j, k).
+   */
+  real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k) { return getVariable(i_field, i_var)[i*m_NumJ*m_NumK + j*m_NumK + k]; }
 
   real rx(real *field, int i1, int i2, int j, int k); ///< gradient ratio in x direction for limiters
   real ry(real *field, int i, int j1, int j2, int k); ///< gradient ratio in y direction for limiters
@@ -88,17 +95,13 @@ public: // methods
   real idy() { return m_InvDY; }
   real idz() { return m_InvDZ; }
 
-  real gasR()     { return 287; }    ///< @todo find a concept for this
-  real gasGamma() { return 1.4; }    ///< @todo find a concept for this
-  real gasCp()    { return 1004.5; } ///< @todo find a concept for this
-  real gasCv()    { return 717.5; }  ///< @todo find a concept for this
-
 #ifdef WITH_VTK
   void writeToVtk(QString file_name);
 #endif
 
 };
 
+/*
 inline real CartesianPatch::rx(real *field, int i1, int i2, int j, int k)
 {
   return (f(field, i1, j, k) - f(field, 2*i1 - i2, j, k))/nonZero(f(field, i2, j, k) - f(field, i1, j, k), m_LimiterEpsilon);
@@ -115,14 +118,61 @@ inline real CartesianPatch::rz(real *field, int i, int j, int k1, int k2)
 }
 
 
-#define PROJ_UX(F, I1, I2,  J,  K) \
-  f(F, I1,  J,  K) + 0.5* LIM(rx(F, I1, I2,  J,  K)) * (f(F, I1,  J,  K) - f(F, 2*I1-I2,  J,  K))
+inline real CartesianPatch::projUxP(real *field, size_t i, size_t j, size_t k)
+{
+  if (i > 0) {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i-1, i, j, k))*(f(field, i, j, k) - f(field, i-1, j, k));
+  } else {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, i+1, j, k))*(f(field, i+1, j, k) - f(field, i, j, k));
+  }
+}
 
-#define PROJ_UY(F,  I, J1, J2,  K) \
-  f(F,  I, J1,  K) + 0.5* LIM(ry(F,  I, J1, J2,  K)) * (f(F,  I, J1,  K) - f(F,  I, 2*J1-J2,  K))
+inline real CartesianPatch::projUxM(real *field, size_t i, size_t j, size_t k)
+{
+  if (i < m_NumI - 1) {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i+1, i, j, k))*(f(field, i, j, k) - f(field, i+1, j, k));
+  } else {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, i-1, j, k))*(f(field, i-1, j, k) - f(field, i, j, k));
+  }
+}
 
-#define PROJ_UZ(F,  I,  J, K1, K2) \
-  f(F,  I,  J, K1) + 0.5* LIM(ry(F,  I,  J, K1, K2)) * (f(F,  I,  J, K1) - f(F,  I,  J, 2*K1-J2))
 
+inline real CartesianPatch::projUyP(real *field, size_t i, size_t j, size_t k)
+{
+  if (j > 0) {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, j-1, j, k))*(f(field, i, j, k) - f(field, i, j-1, k));
+  } else {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, j, j+1, k))*(f(field, i, j+1, k) - f(field, i, j, k));
+  }
+}
+
+inline real CartesianPatch::projUyM(real *field, size_t i, size_t j, size_t k)
+{
+  if (j < m_NumJ - 1) {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, j+1, j, k))*(f(field, i, j, k) - f(field, i, j+1, k));
+  } else {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, j, j-1, k))*(f(field, i, j-1, k) - f(field, i, j, k));
+  }
+}
+
+
+inline real CartesianPatch::projUzP(real *field, size_t i, size_t j, size_t k)
+{
+  if (k > 0) {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, j, k-1, k))*(f(field, i, j, k) - f(field, i, j, k-1));
+  } else {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, j, k, k+1))*(f(field, i, j, k+1) - f(field, i, j, k));
+  }
+}
+
+inline real CartesianPatch::projUzM(real *field, size_t i, size_t j, size_t k)
+{
+  if (i < m_NumI - 1) {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, j, k+1, j))*(f(field, i, j, k) - f(field, i, j, k+1));
+  } else {
+    return f(field, i, j, k) + 0.5*LIM(rx(field, i, j, k, k-1))*(f(field, i, j, k-1) - f(field, i, j, k));
+  }
+}
+*/
 
 #endif // CARTESIANPATCH_H
