@@ -32,7 +32,13 @@ HEADERS += \
     cartesianpatch.h \
     blockcfd.h \
     compressiblecartesianpatch.h \
-    code_blocks/ausm_plus_x.h \
+    fluxes/ausm_plus_x.h \
     ausmtools.h \
-    code_blocks/minmod.h
+    reconstruction/minmod.h \
+    reconstruction/first_order.h \
+    reconstruction/second_order.h \
+    reconstruction/van_albada1.h \
+    reconstruction/van_albada2.h \
+    reconstruction/van_leer.h \
+    reconstruction/superbee.h
 
