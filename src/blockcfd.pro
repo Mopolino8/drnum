@@ -46,5 +46,7 @@ HEADERS += \
     afluxes/usmplus.h \
     fluxes/ausmplus.h \
     compressibleobject.h \
-    fluxes/ausm.h
+    fluxes/ausm.h \
+    reconstruction/upwind2.h \
+    reconstruction/limited_reconstruction.h
 
