@@ -5,11 +5,11 @@
 #define NJ 1
 #define NK 1
 
-#include "reconstruction/upwind1.h"
+#include "reconstruction/upwind2.h"
 #include "fluxes/ausm.h"
 #include "fluxes/ausmplus.h"
 
-typedef CompressibleCartesianPatch<Ausm<Upwind1> > TestPatch;
+typedef CompressibleCartesianPatch<AusmPlus<Upwind2<MinMod> > > TestPatch;
 
 void write(TestPatch &P, int count)
 {
@@ -38,20 +38,20 @@ int main()
       }
     }
   }
-  real dt = 1e-5;
+  real dt = 1e-6;
   real t = 0;
   real alpha[3] = {0.25, 0.5, 1};
   int count = 0;
   int sub_count = 0;
   write(P, count);
-  while (t < 1e-2) {
+  while (t < 1e-5) {
     P.copyField(P.i_new, P.i_old);
     for (int i_rk = 0; i_rk < 3; ++i_rk) {
       P.subStep(dt*alpha[i_rk]);
     }
     t += dt;
     ++sub_count;
-    if (sub_count == 10) {
+    if (sub_count == 1) {
       ++count;
       write(P, count);
       sub_count = 0;

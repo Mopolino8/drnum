@@ -25,7 +25,8 @@ QMAKE_CXXFLAGS += -Wno-deprecated
 SOURCES += main.cpp \
     patch.cpp \
     cartesianpatch.cpp \
-    fluxes/compressibleflux.cpp
+    fluxes/compressibleflux.cpp \
+    reconstruction/limitedreconstruction.cpp
 
 HEADERS += \
     patch.h \
@@ -33,13 +34,6 @@ HEADERS += \
     blockcfd.h \
     compressiblecartesianpatch.h \
     ausmtools.h \
-    limiter/minmod.h \
-    limiter/first_order.h \
-    limiter/second_order.h \
-    limiter/van_albada1.h \
-    limiter/van_albada2.h \
-    limiter/van_leer.h \
-    limiter/superbee.h \
     reconstruction/upwind1.h \
     fluxes/compressibleflux.h \
     fluxes/ausmbase.h \
@@ -48,5 +42,5 @@ HEADERS += \
     compressibleobject.h \
     fluxes/ausm.h \
     reconstruction/upwind2.h \
-    reconstruction/limited_reconstruction.h
+    reconstruction/limitedreconstruction.h
 

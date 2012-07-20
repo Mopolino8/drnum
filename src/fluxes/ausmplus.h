@@ -30,6 +30,7 @@ void AusmPlus<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, size_t 
   real T_l  = (rE_l*ir_l - 0.5*(u_l*u_l + v_l*v_l + w_l*w_l))/gasCv();
   real p_l  = r_l*gasR()*T_l;
   real a_l  = sqrt(gasGamma()*gasR()*T_l);
+  real H_l  = (rE_l + p_l)/r_l;
 
   real r_r  = TReconstruction::xm(P, m_Rho, i, j, k);
   real ir_r = 1.0/r_r;
@@ -43,6 +44,7 @@ void AusmPlus<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, size_t 
   real T_r  = (rE_r*ir_r - 0.5*(u_r*u_r + v_r*v_r + w_r*w_r))/gasCv();
   real p_r  = r_r*gasR()*T_r;
   real a_r  = sqrt(gasGamma()*gasR()*T_r);
+  real H_r  = (rE_r + p_r)/r_r;
 
   real a    = 0.5*(a_l + a_r);
   real M    = AusmTools::M4(u_l/a, 1) + AusmTools::M4(u_r/a, -1);
@@ -51,10 +53,10 @@ void AusmPlus<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, size_t 
   real p    = AusmTools::P5(u_l/a, 1)*p_l + AusmTools::P5(u_r/a, -1)*p_r;
 
   flux.rho  = a*A*(r_l*Mp + r_r*Mm);
-  flux.rhou = 0.5*flux.rho*(ru_l + ru_r) + A*p - 0.5*fabs(flux.rho)*(ru_r - ru_l);
-  flux.rhov = 0.5*flux.rho*(rv_l + rv_r)       - 0.5*fabs(flux.rho)*(rv_r - rv_l);
-  flux.rhow = 0.5*flux.rho*(rw_l + rw_r)       - 0.5*fabs(flux.rho)*(rw_r - rw_l);
-  flux.rhoE = 0.5*flux.rho*(rE_l + rE_r)       - 0.5*fabs(flux.rho)*(rE_r - rE_l);
+  flux.rhou = 0.5*flux.rho*(u_l + u_r) + A*p - 0.5*fabs(flux.rho)*(u_r - u_l);
+  flux.rhov = 0.5*flux.rho*(v_l + v_r)       - 0.5*fabs(flux.rho)*(v_r - v_l);
+  flux.rhow = 0.5*flux.rho*(w_l + w_r)       - 0.5*fabs(flux.rho)*(w_r - w_l);
+  flux.rhoE = 0.5*flux.rho*(H_l + H_r)       - 0.5*fabs(flux.rho)*(H_r - H_l);
 }
 
 #endif // AUSMPLUS_H

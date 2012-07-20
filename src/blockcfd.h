@@ -43,4 +43,16 @@ inline real nonZero(const real &x, const real &eps)
   #endif
 #endif
 
+#ifdef DEBUG
+  #define CHECK_REAL(X) \
+    if (isnan(X)) {     \
+      BUG;              \
+    }                   \
+    if (isinf(X)) {     \
+      BUG;              \
+    }
+#else
+  #define CHECK_REAL(X)
+#endif
+
 #endif // BLOCKCFD_H
