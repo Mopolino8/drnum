@@ -1,0 +1,96 @@
+# editor and misc backup files - anywhere
+*~
+.*~
+*.orig
+*.bak
+\#*\#
+*.new
+*.old
+temp
+*.output
+
+# objects and archives - anywhere
+*.[oa]
+*.la
+*.so
+*.so.*
+*.jar
+
+# Qt generated files
+moc_*
+ui_*
+qrc_*
+
+# ignore derived files
+lex.yy.c
+
+# Corefiles and debugging files
+core
+callgrind*
+
+# build folder(s) and executables
+/platforms/
+engrid
+engrid_debug
+release
+debug
+Release
+Debug
+Release-static
+Debug-static
+
+# generated Makefiles
+Makefile
+Makefile.Debug
+Makefile.Release
+Makefile.*engrid*
+
+netgen_svn
+third_party
+third_party64
+tmp.txt
+*.kdevelop.pcs
+engrid.kdevelop.ignore_pcs
+.bzr
+.hg
+*.user
+qtc-gdbmacros
+*.sp
+*.out
+*.vtu
+*.egc
+*.txt
+*.bcs
+netgen_svn_old
+*.tag
+*.output
+docs
+*.tmp
+*.dbg
+
+# LaTeX generated files - anywhere
+*.aux
+*.log
+*.toc
+
+# source packages - anywhere
+*.tar.bz2
+*.tar.gz
+*.tgz
+
+# ignore the persistent .build tag in the main directory
+/.build
+
+*.exe
+*.Debug
+*.Release
+
+.*
+
+*.vtk
+*.kdevses
+
+# ignore Visual Studio local files
+*.suo
+*.ncb
+*.vcproj.*
