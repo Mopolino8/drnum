@@ -67,9 +67,6 @@ void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
 void CartesianPatch::writeToVtk(QString file_name)
 {
   vtkSmartPointer<vtkRectilinearGrid> grid = vtkSmartPointer<vtkRectilinearGrid>::New();
-  QVector<float> x(m_NumI + 1);
-  QVector<float> y(m_NumI + 1);
-  QVector<float> z(m_NumI + 1);
 
   vtkSmartPointer<vtkFloatArray> xc = vtkSmartPointer<vtkFloatArray>::New();
   for (size_t i = 0; i < m_NumI + 1; ++i) {
