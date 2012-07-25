@@ -25,8 +25,12 @@ QMAKE_CXXFLAGS += -Wno-deprecated
 SOURCES += main.cpp \
     patch.cpp \
     cartesianpatch.cpp \
-    fluxes/compressibleflux.cpp \
-    reconstruction/limitedreconstruction.cpp
+    reconstruction/limitedreconstruction.cpp \
+    blockcfd.cpp \
+    compressiblecartesianpatch.cpp \
+    timeintegration.cpp \
+    patchiterator.cpp \
+    rungekutta.cpp
 
 HEADERS += \
     patch.h \
@@ -40,7 +44,13 @@ HEADERS += \
     fluxes/ausmplus.h \
     fluxes/ausmplus.h \
     compressibleobject.h \
-    fluxes/ausm.h \
     reconstruction/upwind2.h \
-    reconstruction/limitedreconstruction.h
+    reconstruction/limitedreconstruction.h \
+    cartesianpatchoperation.h \
+    compressiblecartesianpatchoperation.h \
+    timeintegration.h \
+    patchiterator.h \
+    iterators/cartesianstandarditerator.h \
+    iterators/cartesianstandardpatchoperation.h \
+    rungekutta.h
 

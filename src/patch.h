@@ -66,9 +66,7 @@ public: // methods
   size_t fieldSize()    { return m_FieldSize; }
   size_t variableSize() { return m_VariableSize; }
 
-  virtual void preStep() {}
-  virtual void postStep() {}
-  virtual void subStep(real dt) = 0;
+  //virtual void subStep(real dt) = 0;
 
   void  setFieldToZero(real *field);
   void  setFieldToZero(size_t i_field);

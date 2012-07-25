@@ -21,14 +21,18 @@ void CartesianPatch::computeDeltas()
   double Lx = sqrt(sqr(m_UX) + sqr(m_UY) + sqr(m_UZ));
   double Ly = sqrt(sqr(m_VX) + sqr(m_VY) + sqr(m_VZ));
   double Lz = sqrt(sqr(m_WX) + sqr(m_WY) + sqr(m_WZ));
+  countFlops(15);
+  countSqrts(3);
 
   m_DX = Lx/m_NumI;
   m_DY = Ly/m_NumJ;
   m_DZ = Lz/m_NumK;
+  countFlops(3);
 
   m_InvDX = 1.0/m_DX;
   m_InvDY = 1.0/m_DX;
   m_InvDZ = 1.0/m_DX;
+  countFlops(3);
 }
 
 void CartesianPatch::setupAligned(real x1, real y1, real z1, real x2, real y2, real z2)
@@ -40,14 +44,17 @@ void CartesianPatch::setupAligned(real x1, real y1, real z1, real x2, real y2, r
   m_UX = x2 - x1;
   m_UY = 0;
   m_UZ = 0;
+  countFlops(1);
 
   m_VX = 0;
   m_VY = y2 - y1;
   m_VZ = 0;
+  countFlops(1);
 
   m_WX = 0;
   m_WY = 0;
   m_WZ = z2 - z1;
+  countFlops(1);
 
   computeDeltas();
 }

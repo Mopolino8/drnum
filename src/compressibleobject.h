@@ -4,16 +4,22 @@
 class CompressibleObject
 {
 
-public:
+protected: // attributes
 
-  struct flux_t
-  {
-    real rho;
-    real rhou;
-    real rhov;
-    real rhow;
-    real rhoE;
-  };
+  /*
+  restrict real *m_Rho;
+  restrict real *m_Rhou;
+  restrict real *m_Rhov;
+  restrict real *m_Rhow;
+  restrict real *m_RhoE;
+  restrict real *m_ResRho;
+  restrict real *m_ResRhou;
+  restrict real *m_ResRhov;
+  restrict real *m_ResRhow;
+  restrict real *m_ResRhoE;
+  */
+
+public:
 
   real gasR()     { return 287; }    ///< @todo find a concept for this
   real gasGamma() { return 1.4; }    ///< @todo find a concept for this
