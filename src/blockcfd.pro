@@ -21,6 +21,7 @@ LIBS        += -lvtkVolumeRendering
 LIBS        += -lvtkWidgets
 
 QMAKE_CXXFLAGS += -Wno-deprecated
+QMAKE_CXXFLAGS_RELEASE += -O3 -finline-limit=100000 -Winline
 
 SOURCES += main.cpp \
     patch.cpp \

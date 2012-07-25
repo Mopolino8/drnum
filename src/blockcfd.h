@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <ctime>
 
 using namespace std;
 
@@ -54,9 +55,9 @@ inline real nonZero(const real &x, const real &eps)
 #endif
 
 
+#ifdef DEBUG
 inline real checkedReal(real x, int line, const char *file_name)
 {
-#ifdef DEBUG
   if (isnan(x)) {
     cout << "NaN encountered in file \"" << file_name << "\" at line " << line << endl;
     abort();
@@ -65,54 +66,73 @@ inline real checkedReal(real x, int line, const char *file_name)
     cout << "Inf encountered (division by zero?) in file \"" << file_name << "\" at line " << line << endl;
     abort();
   }
-#endif
   return x;
 }
+#else
+inline real checkedReal(real x, int, const char*)
+{
+  return x;
+}
+#endif
 
 #define CHECKED_REAL(X) checkedReal(X, __LINE__, __FILE__)
 
 
 extern unsigned long int global_flops;
 extern unsigned long int global_flops_x86;
+extern time_t            global_start_time;
 
+#ifdef DEBUG
 inline void countFlops(int n)
 {
-#ifdef DEBUG
   global_flops     += n;
   global_flops_x86 += n;
-#endif
 }
+#else
+inline void countFlops(int) {}
+#endif
 
+#ifdef DEBUG
 inline void countSqrts(int n)
 {
-#ifdef DEBUG
   global_flops     += n;
   global_flops_x86 += 15*n;
-#endif
 }
+#else
+inline void countSqrts(int) {}
+#endif
 
+#ifdef DEBUG
 inline void countExps(int n)
 {
-#ifdef DEBUG
   global_flops     += n;
   global_flops_x86 += 20*n;
-#endif
 }
+#else
+inline void countExps(int) {}
+#endif
 
+#ifdef DEBUG
 inline void countLogs(int n)
 {
-#ifdef DEBUG
   global_flops     += n;
   global_flops_x86 += 20*n;
-#endif
 }
+#else
+inline void countLogs(int) {}
+#endif
 
 
 template <unsigned int DIM>
 struct RealVec
 {
   real var[DIM];
+  void fill(real v) { for (size_t i = 0; i < DIM; ++i) var[i] = v; }
 };
+
+
+extern void startTiming();
+extern void stopTiming();
 
 
 #endif // BLOCKCFD_H

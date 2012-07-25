@@ -5,6 +5,7 @@
 #define NJ 5
 #define NK 5
 
+#include "reconstruction/upwind1.h"
 #include "reconstruction/upwind2.h"
 #include "fluxes/ausmplus.h"
 #include "iterators/cartesianstandarditerator.h"
@@ -195,17 +196,24 @@ int main()
   runge_kutta.addAlpha(1.00);
 
   CartesianStandardPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > flux(&patch);
+  //CartesianStandardPatchOperation<5,TestFlux<Upwind1> > flux(&patch);
   CartesianStandardIterator iterator(&flux);
   runge_kutta.addIterator(&iterator);
 
-  real dt             = 1e-5;
+  real dt             = 2e-5;
   real t_write        = 0;
-  real write_interval = 1e-4;
-  real total_time     = 5e-3;
+  real write_interval = 2e-4;
+  real total_time     = 0.0029;
+  //real total_time     = 0.00323;
+  //real total_time     = 5e-3;//0.00323;
 
   int count = 0;
+  int iter = 0;
   real t = 0;
   write(patch, count);
+
+  startTiming();
+
   while (t < total_time) {
     runge_kutta(dt);
     real CFL_max = 0;
@@ -231,7 +239,14 @@ int main()
     real max_norm, l2_norm;
     patch.computeVariableDifference(0, 0, 1, 0, max_norm, l2_norm);
     cout << t << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm << endl;
+    ++iter;
   }
+  //write(patch, 1);
+
+  stopTiming();
+
+  cout << iter << " iterations" << endl;
+  cout << 1e-9*iter*3*15*sizeof(real)*NI*NJ*NK/(time(NULL) - global_start_time) << "GBs" << endl;
 
   return 0;
 }

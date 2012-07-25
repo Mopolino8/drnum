@@ -33,8 +33,8 @@ inline real LimitedReconstruction::rz(CartesianPatch *P, size_t i_f, size_t i_v,
 
 struct FirstOrder  { static real lim(real)   { return 0; } };
 struct SecondOrder { static real lim(real)   { return 1; } };
-struct MinMod      { static real lim(real r) { countFlops(0); return CHECKED_REAL(max(0.0, min(1.0, r))); } };
-struct SuperBee    { static real lim(real r) { countFlops(1); return CHECKED_REAL(max(0.0, max(min(2.0*r, 1.0), min(r, 2.0)))); } };
+struct MinMod      { static real lim(real r) { countFlops(0); return CHECKED_REAL(max(real(0), min(real(1), r))); } };
+struct SuperBee    { static real lim(real r) { countFlops(1); return CHECKED_REAL(max(real(0), max(min(real(2)*r, real(1)), min(r, real(2))))); } };
 struct VanAlbada1  { static real lim(real r) { countFlops(5); return CHECKED_REAL((r*r + r)/(r*r + 1)); } };
 struct VanAlbada2  { static real lim(real r) { countFlops(4); return CHECKED_REAL(2*r/(r*r + 1)); } };
 struct VanLeer     { static real lim(real r) { countFlops(3); return CHECKED_REAL((r + fabs(r))/(1 + fabs(r))); } };
