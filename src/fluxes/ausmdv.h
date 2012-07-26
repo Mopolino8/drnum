@@ -1,11 +1,11 @@
-#ifndef AUSMPLUS_H
-#define AUSMPLUS_H
+#ifndef AUSMDV_H
+#define AUSMDV_H
 
 #include "fluxes/ausmbase.h"
 #include "cartesianpatch.h"
 
 template <class TReconstruction>
-class AusmPlus : public AusmBase
+class AusmDV : public AusmBase
 {
 
 public: // methods
@@ -18,7 +18,7 @@ public: // methods
 
 
 template <class TReconstruction>
-inline void AusmPlus<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux)
+inline void AusmDV<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux)
 {
   real r_l  = TReconstruction::xp(P, 0, 0, i, j, k);
   real ir_l = CHECKED_REAL(1.0/r_l);
@@ -52,12 +52,15 @@ inline void AusmPlus<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, 
   countFlops(19);
   countSqrts(1);
 
-  real a    = 0.5*(a_l + a_r);
-  real M    = AusmTools::M4(u_l/a, 1) + AusmTools::M4(u_r/a, -1);
-  real Mp   = 0.5*(M + fabs(M));
-  real Mm   = 0.5*(M - fabs(M));
-  real p    = AusmTools::P5(u_l/a, 1)*p_l + AusmTools::P5(u_r/a, -1)*p_r;
-  countFlops(14);
+  real a  = 0.5*(a_l + a_r);
+  real fl = p_l/r_l;
+  real fr = p_r/r_r;
+  real wp = 2*fl/(fl+fr);
+  real wm = 2*fr/(fl+fr);
+  real Mp = wp*AusmTools::M2(u_l/a, 1) + (1-wp)*AusmTools::M1(u_l/a, 1);
+  real Mm = wm*AusmTools::M2(u_r/a,-1) + (1-wm)*AusmTools::M1(u_r/a,-1);
+  real p  = AusmTools::P5(u_l/a,1)*p_l + AusmTools::P5(u_r/a,-1)*p_r;
+  countFlops(25);
 
   flux.var[0] += a*A*(r_l*Mp + r_r*Mm);
   flux.var[1] += 0.5*flux.var[0]*(u_l + u_r) + A*p - 0.5*fabs(flux.var[0])*(u_r - u_l);
@@ -68,7 +71,7 @@ inline void AusmPlus<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, 
 }
 
 template <class TReconstruction>
-void AusmPlus<TReconstruction>::y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux)
+void AusmDV<TReconstruction>::y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux)
 {
   real r_l  = TReconstruction::yp(P, 0, 0, i, j, k);
   real ir_l = CHECKED_REAL(1.0/r_l);
@@ -102,12 +105,15 @@ void AusmPlus<TReconstruction>::y(CartesianPatch *P, size_t i, size_t j, size_t 
   countFlops(19);
   countSqrts(1);
 
-  real a    = 0.5*(a_l + a_r);
-  real M    = AusmTools::M4(v_l/a, 1) + AusmTools::M4(v_r/a, -1);
-  real Mp   = 0.5*(M + fabs(M));
-  real Mm   = 0.5*(M - fabs(M));
-  real p    = AusmTools::P5(u_l/a, 1)*p_l + AusmTools::P5(u_r/a, -1)*p_r;
-  countFlops(14);
+  real a  = 0.5*(a_l + a_r);
+  real fl = p_l/r_l;
+  real fr = p_r/r_r;
+  real wp = 2*fl/(fl+fr);
+  real wm = 2*fr/(fl+fr);
+  real Mp = wp*AusmTools::M2(v_l/a, 1) + (1-wp)*AusmTools::M1(v_l/a, 1);
+  real Mm = wm*AusmTools::M2(v_r/a,-1) + (1-wm)*AusmTools::M1(v_r/a,-1);
+  real p  = AusmTools::P5(v_l/a,1)*p_l + AusmTools::P5(v_r/a,-1)*p_r;
+  countFlops(25);
 
   flux.var[0] += a*A*(r_l*Mp + r_r*Mm);
   flux.var[1] += 0.5*flux.var[0]*(u_l + u_r)       - 0.5*fabs(flux.var[0])*(u_r - u_l);
@@ -118,7 +124,7 @@ void AusmPlus<TReconstruction>::y(CartesianPatch *P, size_t i, size_t j, size_t 
 }
 
 template <class TReconstruction>
-void AusmPlus<TReconstruction>::z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux)
+void AusmDV<TReconstruction>::z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux)
 {
   real r_l  = TReconstruction::zp(P, 0, 0, i, j, k);
   real ir_l = CHECKED_REAL(1.0/r_l);
@@ -152,12 +158,15 @@ void AusmPlus<TReconstruction>::z(CartesianPatch *P, size_t i, size_t j, size_t 
   countFlops(19);
   countSqrts(1);
 
-  real a    = 0.5*(a_l + a_r);
-  real M    = AusmTools::M4(w_l/a, 1) + AusmTools::M4(w_r/a, -1);
-  real Mp   = 0.5*(M + fabs(M));
-  real Mm   = 0.5*(M - fabs(M));
-  real p    = AusmTools::P5(u_l/a, 1)*p_l + AusmTools::P5(u_r/a, -1)*p_r;
-  countFlops(14);
+  real a  = 0.5*(a_l + a_r);
+  real fl = p_l/r_l;
+  real fr = p_r/r_r;
+  real wp = 2*fl/(fl+fr);
+  real wm = 2*fr/(fl+fr);
+  real Mp = wp*AusmTools::M2(w_l/a, 1) + (1-wp)*AusmTools::M1(w_l/a, 1);
+  real Mm = wm*AusmTools::M2(w_r/a,-1) + (1-wm)*AusmTools::M1(w_r/a,-1);
+  real p  = AusmTools::P5(w_l/a,1)*p_l + AusmTools::P5(w_r/a,-1)*p_r;
+  countFlops(25);
 
   flux.var[0] += a*A*(r_l*Mp + r_r*Mm);
   flux.var[1] += 0.5*flux.var[0]*(u_l + u_r)       - 0.5*fabs(flux.var[0])*(u_r - u_l);
@@ -167,4 +176,4 @@ void AusmPlus<TReconstruction>::z(CartesianPatch *P, size_t i, size_t j, size_t 
   countFlops(36);
 }
 
-#endif // AUSMPLUS_H
+#endif // AUSMDV_H

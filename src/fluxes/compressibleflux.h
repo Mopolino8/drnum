@@ -9,10 +9,6 @@ class CompressibleFlux : public CompressibleObject
 
 public:
 
-  void x(CartesianPatch*, size_t, size_t, size_t, real, RealVec<5>&) {}
-  void y(CartesianPatch*, size_t, size_t, size_t, real, RealVec<5>&) {}
-  void z(CartesianPatch*, size_t, size_t, size_t, real, RealVec<5>&) {}
-
   void xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux);
   void yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux);
   void zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, RealVec<5> &flux);

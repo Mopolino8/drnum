@@ -21,7 +21,14 @@ LIBS        += -lvtkVolumeRendering
 LIBS        += -lvtkWidgets
 
 QMAKE_CXXFLAGS += -Wno-deprecated
-QMAKE_CXXFLAGS_RELEASE += -O3 -finline-limit=100000 -Winline
+QMAKE_CXXFLAGS_RELEASE += -O3
+QMAKE_CXXFLAGS_RELEASE += -finline-limit=100000
+QMAKE_CXXFLAGS_RELEASE += --param large-function-growth=100000
+QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
+QMAKE_CXXFLAGS_RELEASE += -funroll-loops
+#QMAKE_CXXFLAGS_RELEASE += -Winline
+
+QMAKE_LFLAGS_RELEASE += -O3
 
 SOURCES += main.cpp \
     patch.cpp \
@@ -48,10 +55,10 @@ HEADERS += \
     reconstruction/upwind2.h \
     reconstruction/limitedreconstruction.h \
     cartesianpatchoperation.h \
-    compressiblecartesianpatchoperation.h \
     timeintegration.h \
     patchiterator.h \
     iterators/cartesianstandarditerator.h \
     iterators/cartesianstandardpatchoperation.h \
-    rungekutta.h
+    rungekutta.h \
+    fluxes/ausmdv.h
 

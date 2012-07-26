@@ -2,12 +2,14 @@
 #include "ausmtools.h"
 
 #define NI 1000
-#define NJ 5
-#define NK 5
+#define NJ 10
+#define NK 10
 
 #include "reconstruction/upwind1.h"
 #include "reconstruction/upwind2.h"
 #include "fluxes/ausmplus.h"
+#include "fluxes/ausmdv.h"
+#include "fluxes/compressibleflux.h"
 #include "iterators/cartesianstandarditerator.h"
 #include "iterators/cartesianstandardpatchoperation.h"
 #include "rungekutta.h"
@@ -16,7 +18,7 @@ template <class TReconstruction>
 class TestFlux
 {
 
-  AusmPlus<TReconstruction>         m_EulerFlux;
+  AusmDV<TReconstruction>           m_EulerFlux;
   CompressibleFlux<TReconstruction> m_WallFlux;
 
 public: // methods
@@ -162,14 +164,16 @@ int main()
 }
 */
 
-void write(CompressibleCartesianPatch &patch, int count)
+void write(CompressibleCartesianPatch &patch, QString file_name, int count)
 {
-  QString file_name;
-  file_name.setNum(count);
-  while (file_name.size() < 6) {
-    file_name = "0" + file_name;
+  if (count >= 0) {
+    QString num;
+    num.setNum(count);
+    while (num.size() < 6) {
+      num = "0" + num;
+    }
+    file_name += "_" + num;
   }
-  file_name = "shock_tube_" + file_name;
   patch.writeToVtk(file_name);
 }
 
@@ -195,6 +199,7 @@ int main()
   runge_kutta.addAlpha(0.50);
   runge_kutta.addAlpha(1.00);
 
+  //CartesianStandardPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > flux(&patch);
   CartesianStandardPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > flux(&patch);
   //CartesianStandardPatchOperation<5,TestFlux<Upwind1> > flux(&patch);
   CartesianStandardIterator iterator(&flux);
@@ -203,14 +208,14 @@ int main()
   real dt             = 2e-5;
   real t_write        = 0;
   real write_interval = 2e-4;
-  real total_time     = 0.0029;
+  //real total_time     = 0.0029;
   //real total_time     = 0.00323;
-  //real total_time     = 5e-3;//0.00323;
+  real total_time     = 6e-3;//0.00323;
 
   int count = 0;
   int iter = 0;
   real t = 0;
-  write(patch, count);
+  write(patch, "shock_tube", count);
 
   startTiming();
 
@@ -233,7 +238,7 @@ int main()
     t_write += dt;
     if (t_write >= write_interval) {
       ++count;
-      write(patch, count);
+      write(patch, "shock_tube", count);
       t_write = 0;
     }
     real max_norm, l2_norm;
@@ -241,7 +246,7 @@ int main()
     cout << t << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm << endl;
     ++iter;
   }
-  //write(patch, 1);
+  write(patch, "shock_tube", -1);
 
   stopTiming();
 

@@ -95,6 +95,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
             if (i > 0) {
               m_Res[resIndex(i_var, i-1, j, k)] -= flux.var[i_var];
+              countFlops(1);
             }
             m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
           }
@@ -108,6 +109,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
             if (j > 0) {
               m_Res[resIndex(i_var, i, j-1, k)] -= flux.var[i_var];
+              countFlops(1);
             }
             m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
           }
@@ -121,6 +123,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
             if (k > 0) {
               m_Res[resIndex(i_var, i, j, k-1)] -= flux.var[i_var];
+              countFlops(1);
             }
             m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
           }

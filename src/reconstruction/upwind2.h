@@ -25,6 +25,7 @@ inline real Upwind2<TLimiter>::xp(CartesianPatch *P, size_t i_f, size_t i_v, siz
   } else {
     countFlops(4);
     return CHECKED_REAL(P->f(i_f, i_v, i-1, j, k) + 0.5*TLimiter::lim(rx(P, i_f, i_v, i, i+1, j, k))*(P->f(i_f, i_v, i, j, k) - P->f(i_f, i_v, i-1, j, k)));
+    //return P->f(i_f, i_v, i-1, j, k);
   }
 }
 
@@ -35,8 +36,9 @@ inline real Upwind2<TLimiter>::xm(CartesianPatch *P, size_t i_f, size_t i_v, siz
     countFlops(4);
     return CHECKED_REAL(P->f(i_f, i_v, i, j, k) + 0.5*TLimiter::lim(rx(P, i_f, i_v, i, i-1, j, k))*(P->f(i_f, i_v, i, j, k) - P->f(i_f, i_v, i+1, j, k)));
   } else {
-    countFlops(4);
-    return CHECKED_REAL(P->f(i_f, i_v, i, j, k) + 0.5*TLimiter::lim(rx(P, i_f, i_v, i-1, i-2, j, k))*(P->f(i_f, i_v, i-1, j, k) - P->f(i_f, i_v, i, j, k)));
+    //countFlops(4);
+    //return CHECKED_REAL(P->f(i_f, i_v, i, j, k) + 0.5*TLimiter::lim(rx(P, i_f, i_v, i-1, i-2, j, k))*(P->f(i_f, i_v, i-1, j, k) - P->f(i_f, i_v, i, j, k)));
+    return P->f(i_f, i_v, i, j, k);
   }
 }
 
@@ -50,6 +52,7 @@ inline real Upwind2<TLimiter>::yp(CartesianPatch *P, size_t i_f, size_t i_v, siz
   } else {
     countFlops(4);
     return CHECKED_REAL(P->f(i_f, i_v, i, j-1, k) + 0.5*TLimiter::lim(ry(P, i_f, i_v, i, j, j+1, k))*(P->f(i_f, i_v, i, j, k) - P->f(i_f, i_v, i, j-1, k)));
+    //return P->f(i_f, i_v, i, j-1, k);
   }
 }
 
@@ -62,6 +65,7 @@ inline real Upwind2<TLimiter>::ym(CartesianPatch *P, size_t i_f, size_t i_v, siz
   } else {
     countFlops(4);
     return CHECKED_REAL(P->f(i_f, i_v, i, j, k) + 0.5*TLimiter::lim(ry(P, i_f, i_v, i, j-1, j-2, k))*(P->f(i_f, i_v, i, j, k) - P->f(i_f, i_v, i, j-1, k)));
+    //return P->f(i_f, i_v, i, j, k);
   }
 }
 
@@ -75,6 +79,7 @@ inline real Upwind2<TLimiter>::zp(CartesianPatch *P, size_t i_f, size_t i_v, siz
   } else {
     countFlops(4);
     return CHECKED_REAL(P->f(i_f, i_v, i, j, k-1) + 0.5*TLimiter::lim(rz(P, i_f, i_v, i, j, k, k+1))*(P->f(i_f, i_v, i, j, k) - P->f(i_f, i_v, i, j, k-1)));
+    //return P->f(i_f, i_v, i, j, k-1);
   }
 }
 
@@ -87,6 +92,7 @@ inline real Upwind2<TLimiter>::zm(CartesianPatch *P, size_t i_f, size_t i_v, siz
   } else {
     countFlops(4);
     return CHECKED_REAL(P->f(i_f, i_v, i, j, k) + 0.5*TLimiter::lim(rz(P, i_f, i_v, i, j, k-1, k-2))*(P->f(i_f, i_v, i, j, k) - P->f(i_f, i_v, i, j, k-1)));
+    //return P->f(i_f, i_v, i, j, k);
   }
 }
 
