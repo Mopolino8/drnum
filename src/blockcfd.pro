@@ -60,5 +60,6 @@ HEADERS += \
     iterators/cartesianstandarditerator.h \
     iterators/cartesianstandardpatchoperation.h \
     rungekutta.h \
-    fluxes/ausmdv.h
+    fluxes/ausmdv.h \
+    fluxes/ausm.h
 

@@ -9,6 +9,7 @@
 #include "reconstruction/upwind2.h"
 #include "fluxes/ausmplus.h"
 #include "fluxes/ausmdv.h"
+#include "fluxes/ausm.h"
 #include "fluxes/compressibleflux.h"
 #include "iterators/cartesianstandarditerator.h"
 #include "iterators/cartesianstandardpatchoperation.h"
@@ -18,7 +19,7 @@ template <class TReconstruction>
 class TestFlux
 {
 
-  AusmDV<TReconstruction>           m_EulerFlux;
+  Ausm<TReconstruction>             m_EulerFlux;
   CompressibleFlux<TReconstruction> m_WallFlux;
 
 public: // methods
