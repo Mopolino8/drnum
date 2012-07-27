@@ -93,13 +93,10 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           flux.fill(0);
           m_Flux.x(patch(), i, j, k, Ax, flux);
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            if (i > 0) {
-              m_Res[resIndex(i_var, i-1, j, k)] -= flux.var[i_var];
-              countFlops(1);
-            }
+            m_Res[resIndex(i_var, i-1, j, k)] -= flux.var[i_var];
             m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
           }
-          countFlops(DIM);
+          countFlops(2*DIM);
         }
 
         // y direction
@@ -107,13 +104,10 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           flux.fill(0);
           m_Flux.y(patch(), i, j, k, Ay, flux);
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            if (j > 0) {
-              m_Res[resIndex(i_var, i, j-1, k)] -= flux.var[i_var];
-              countFlops(1);
-            }
+            m_Res[resIndex(i_var, i, j-1, k)] -= flux.var[i_var];
             m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
           }
-          countFlops(DIM);
+          countFlops(2*DIM);
         }
 
         // z direction
@@ -121,13 +115,10 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           flux.fill(0);
           m_Flux.z(patch(), i, j, k, Az, flux);
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            if (k > 0) {
-              m_Res[resIndex(i_var, i, j, k-1)] -= flux.var[i_var];
-              countFlops(1);
-            }
+            m_Res[resIndex(i_var, i, j, k-1)] -= flux.var[i_var];
             m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
           }
-          countFlops(DIM);
+          countFlops(2*DIM);
         }
 
       }
@@ -137,6 +128,9 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute x walls
   //
   // .. left wall
+
+  Clean up wall (BC) concept i +/i 1 .... make it consistent with field fluxes!!
+
   if (i1 == 0) {
     for (size_t j = j1; j < j2; ++j) {
       for (size_t k = k1; k < k2; ++k) {

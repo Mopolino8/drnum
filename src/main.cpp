@@ -1,9 +1,9 @@
 #include "compressiblecartesianpatch.h"
 #include "ausmtools.h"
 
-#define NI 1000
-#define NJ 10
-#define NK 10
+#define NI 200
+#define NJ 50
+#define NK 50
 
 #include "reconstruction/upwind1.h"
 #include "reconstruction/upwind2.h"
@@ -19,7 +19,9 @@ template <class TReconstruction>
 class TestFlux
 {
 
-  Ausm<TReconstruction>             m_EulerFlux;
+  //Ausm<TReconstruction>             m_EulerFlux;
+  AusmPlus<TReconstruction>         m_EulerFlux;
+  //AusmDV<TReconstruction>           m_EulerFlux;
   CompressibleFlux<TReconstruction> m_WallFlux;
 
 public: // methods
@@ -91,80 +93,6 @@ inline void TestFlux<TReconstruction>::zWallM(CartesianPatch *P, size_t i, size_
   m_WallFlux.zWallM(P, i, j, k, A, flux);
 }
 
-
-/*
-typedef CompressibleCartesianPatch<AusmPlus<Upwind2<VanAlbada2> > > TestPatch;
-//typedef CompressibleCartesianPatch<AusmPlus<Upwind2<FirstOrder> > > TestPatch;
-
-void write(TestPatch &P, int count)
-{
-  QString file_name;
-  file_name.setNum(count);
-  while (file_name.size() < 6) {
-    file_name = "0" + file_name;
-  }
-  file_name = "shock_tube_" + file_name;
-  P.writeToVtk(file_name);
-}
-
-int main()
-{
-  TestPatch P;
-  P.setupAligned(0, 0, 0, 10.0, 0.1, 0.1);
-  P.resize(NI, NJ, NK);
-  for (size_t i = 0; i < NI; ++i) {
-    for (size_t j = 0; j < NJ; ++j) {
-      for (size_t k = 0; k < NK; ++k) {
-        if (i < NI/2) {
-          P.setState(i, j, k, 1e6, 300);
-        } else {
-          P.setState(i, j, k, 1e5, 300);
-        }
-      }
-    }
-  }
-  real t = 0;
-  real alpha[3] = {0.25, 0.5, 1};
-  int count = 0;
-
-  real dt             = 1e-5;
-  real t_write        = 0;
-  real write_interval = 1e-4;
-  real total_time     = 5e-3;
-
-  write(P, count);
-  while (t < total_time) {
-    P.copyField(P.i_new, P.i_old);
-    for (int i_rk = 0; i_rk < 3; ++i_rk) {
-      P.subStep(dt*alpha[i_rk]);
-    }
-    real CFL_max = 0;
-    for (size_t i = 0; i < NI; ++i) {
-      for (size_t j = 0; j < NJ; ++j) {
-        for (size_t k = 0; k < NK; ++k) {
-          real p, u, v, w, T;
-          P.getState(i, j, k, p, u, v, w, T);
-          real a = sqrt(P.gasGamma()*P.gasR()*T);
-          CFL_max = max(CFL_max, fabs(u)*dt/P.dx());
-          CFL_max = max(CFL_max, fabs(u+a)*dt/P.dx());
-          CFL_max = max(CFL_max, fabs(u-a)*dt/P.dx());
-        }
-      }
-    }
-    t += dt;
-    t_write += dt;
-    if (t_write >= write_interval) {
-      ++count;
-      write(P, count);
-      t_write = 0;
-    }
-    real max_norm, l2_norm;
-    P.computeVariableDifference(P.i_new, 0, P.i_old, 0, max_norm, l2_norm);
-    cout << t << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm << endl;
-  }
-}
-*/
-
 void write(CompressibleCartesianPatch &patch, QString file_name, int count)
 {
   if (count >= 0) {
@@ -175,19 +103,24 @@ void write(CompressibleCartesianPatch &patch, QString file_name, int count)
     }
     file_name += "_" + num;
   }
+  cout << "writing to file \"" << qPrintable(file_name) << endl;
   patch.writeToVtk(file_name);
 }
 
 int main()
 {
   CompressibleCartesianPatch patch;
-  patch.setupAligned(0, 0, 0, 10.0, 0.1, 0.1);
+  patch.setupAligned(0, 0, 0, 8, 2, 2);
   patch.resize(NI, NJ, NK);
   for (size_t i = 0; i < NI; ++i) {
+    real x = -4 + 0.5*patch.dx() + i*patch.dx();
     for (size_t j = 0; j < NJ; ++j) {
+      real y = -1 + 0.5*patch.dy() + j*patch.dy();
       for (size_t k = 0; k < NK; ++k) {
-        if (i < NI/2) {
-          patch.setState(i, j, k, 1e6, 300);
+        real z = -1 + 0.5*patch.dz() + k*patch.dz();
+        real r = sqrt(x*x + y*y + z*z);
+        if (r < 0.5) {
+          patch.setState(i, j, k, 1e6, 600);
         } else {
           patch.setState(i, j, k, 1e5, 300);
         }
@@ -196,11 +129,10 @@ int main()
   }
 
   RungeKutta runge_kutta;
-  runge_kutta.addAlpha(0.25);
-  runge_kutta.addAlpha(0.50);
+  //runge_kutta.addAlpha(0.25);
+  //runge_kutta.addAlpha(0.50);
   runge_kutta.addAlpha(1.00);
 
-  //CartesianStandardPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > flux(&patch);
   CartesianStandardPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > flux(&patch);
   //CartesianStandardPatchOperation<5,TestFlux<Upwind1> > flux(&patch);
   CartesianStandardIterator iterator(&flux);
@@ -208,10 +140,8 @@ int main()
 
   real dt             = 2e-5;
   real t_write        = 0;
-  real write_interval = 2e-4;
-  //real total_time     = 0.0029;
-  //real total_time     = 0.00323;
-  real total_time     = 6e-3;//0.00323;
+  real write_interval = 1e-4;
+  real total_time     = 1e-3;
 
   int count = 0;
   int iter = 0;

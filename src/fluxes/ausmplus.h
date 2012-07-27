@@ -106,7 +106,7 @@ void AusmPlus<TReconstruction>::y(CartesianPatch *P, size_t i, size_t j, size_t 
   real M    = AusmTools::M4(v_l/a, 1) + AusmTools::M4(v_r/a, -1);
   real Mp   = 0.5*(M + fabs(M));
   real Mm   = 0.5*(M - fabs(M));
-  real p    = AusmTools::P5(u_l/a, 1)*p_l + AusmTools::P5(u_r/a, -1)*p_r;
+  real p    = AusmTools::P5(v_l/a, 1)*p_l + AusmTools::P5(v_r/a, -1)*p_r;
   countFlops(14);
 
   flux.var[0] += a*A*(r_l*Mp + r_r*Mm);
@@ -156,7 +156,7 @@ void AusmPlus<TReconstruction>::z(CartesianPatch *P, size_t i, size_t j, size_t 
   real M    = AusmTools::M4(w_l/a, 1) + AusmTools::M4(w_r/a, -1);
   real Mp   = 0.5*(M + fabs(M));
   real Mm   = 0.5*(M - fabs(M));
-  real p    = AusmTools::P5(u_l/a, 1)*p_l + AusmTools::P5(u_r/a, -1)*p_r;
+  real p    = AusmTools::P5(w_l/a, 1)*p_l + AusmTools::P5(w_r/a, -1)*p_r;
   countFlops(14);
 
   flux.var[0] += a*A*(r_l*Mp + r_r*Mm);

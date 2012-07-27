@@ -43,7 +43,7 @@ inline real AusmTools::P5(real M, real s)
     return CHECKED_REAL(M1(M,s)/M);
   }
   countFlops(6);
-  return M2(M, s)*((2*s - M) - 3*s*M2(M, -s));
+  return M2(M, s)*((2*s - M) - 3*s*M*M2(M, -s));
 }
 
 #endif // AUSMTOOLS_H
