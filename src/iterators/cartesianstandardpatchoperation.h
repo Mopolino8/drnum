@@ -77,7 +77,9 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   real Ax = patch()->dy()*patch()->dz();
   real Ay = patch()->dx()*patch()->dz();
   real Az = patch()->dx()*patch()->dy();
-  RealVec<DIM> flux;
+
+  real flux[5];
+
   for (size_t i_res = 0; i_res < DIM*m_ResLength; ++i_res) {
     m_Res[i_res] = 0;
   }
@@ -90,33 +92,33 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
 
         // x direction
         if (i > 0) {
-          flux.fill(0);
+          fill(flux, 5, 0);
           m_Flux.x(patch(), i, j, k, Ax, flux);
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i-1, j, k)] -= flux.var[i_var];
-            m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
+            m_Res[resIndex(i_var, i-1, j, k)] -= flux[i_var];
+            m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
           }
           countFlops(2*DIM);
         }
 
         // y direction
         if (j > 0) {
-          flux.fill(0);
+          fill(flux, 5, 0);
           m_Flux.y(patch(), i, j, k, Ay, flux);
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i, j-1, k)] -= flux.var[i_var];
-            m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
+            m_Res[resIndex(i_var, i, j-1, k)] -= flux[i_var];
+            m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
           }
           countFlops(2*DIM);
         }
 
         // z direction
         if (k > 0) {
-          flux.fill(0);
+          fill(flux, 5, 0);
           m_Flux.z(patch(), i, j, k, Az, flux);
           for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i, j, k-1)] -= flux.var[i_var];
-            m_Res[resIndex(i_var, i, j, k)]   += flux.var[i_var];
+            m_Res[resIndex(i_var, i, j, k-1)] -= flux[i_var];
+            m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
           }
           countFlops(2*DIM);
         }
@@ -128,16 +130,13 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute x walls
   //
   // .. left wall
-
-  Clean up wall (BC) concept i +/i 1 .... make it consistent with field fluxes!!
-
   if (i1 == 0) {
     for (size_t j = j1; j < j2; ++j) {
       for (size_t k = k1; k < k2; ++k) {
-        flux.fill(0);
+        fill(flux, 5, 0);
         m_Flux.xWallM(patch(), i1, j, k, Ax, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
-          m_Res[resIndex(i_var, i1, j, k)] += flux.var[i_var];
+          m_Res[resIndex(i_var, i1, j, k)] += flux[i_var];
         }
         countFlops(DIM);
       }
@@ -148,10 +147,10 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   if (i2 == patch()->sizeI()) {
     for (size_t j = j1; j < j2; ++j) {
       for (size_t k = k1; k < k2; ++k) {
-        flux.fill(0);
-        m_Flux.xWallP(patch(), i2-1, j, k, Ax, flux);
+        fill(flux, 5, 0);
+        m_Flux.xWallP(patch(), i2, j, k, Ax, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
-          m_Res[resIndex(i_var, i2-1, j, k)] -= flux.var[i_var];
+          m_Res[resIndex(i_var, i2-1, j, k)] -= flux[i_var];
         }
         countFlops(DIM);
       }
@@ -164,10 +163,10 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   if (j1 == 0) {
     for (size_t i = i1; i < i2; ++i) {
       for (size_t k = k1; k < k2; ++k) {
-        flux.fill(0);
+        fill(flux, 5, 0);
         m_Flux.yWallM(patch(), i, j1, k, Ay, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
-          m_Res[resIndex(i_var, i, j1, k)] += flux.var[i_var];
+          m_Res[resIndex(i_var, i, j1, k)] += flux[i_var];
         }
         countFlops(DIM);
       }
@@ -178,10 +177,10 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   if (j2 == patch()->sizeJ()) {
     for (size_t i = i1; i < i2; ++i) {
       for (size_t k = k1; k < k2; ++k) {
-        flux.fill(0);
-        m_Flux.yWallP(patch(), i, j2-1, k, Ay, flux);
+        fill(flux, 5, 0);
+        m_Flux.yWallP(patch(), i, j2, k, Ay, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
-          m_Res[resIndex(i_var, i, j2-1, k)] -= flux.var[i_var];
+          m_Res[resIndex(i_var, i, j2-1, k)] -= flux[i_var];
         }
         countFlops(DIM);
       }
@@ -194,10 +193,10 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   if (k1 == 0) {
     for (size_t i = i1; i < i2; ++i) {
       for (size_t j = j1; j < j2; ++j) {
-        flux.fill(0);
+        fill(flux, 5, 0);
         m_Flux.zWallM(patch(), i, j, k1, Az, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
-          m_Res[resIndex(i_var, i, j, k1)] += flux.var[i_var];
+          m_Res[resIndex(i_var, i, j, k1)] += flux[i_var];
         }
         countFlops(DIM);
       }
@@ -208,10 +207,10 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   if (k2 == patch()->sizeK()) {
     for (size_t i = i1; i < i2; ++i) {
       for (size_t j = j1; j < j2; ++j) {
-        flux.fill(0);
-        m_Flux.zWallP(patch(), i, j, k2-1, Az, flux);
+        fill(flux, 5, 0);
+        m_Flux.zWallP(patch(), i, j, k2, Az, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
-          m_Res[resIndex(i_var, i, j, k2-1)] -= flux.var[i_var];
+          m_Res[resIndex(i_var, i, j, k2-1)] -= flux[i_var];
         }
         countFlops(DIM);
       }

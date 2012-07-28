@@ -10,19 +10,20 @@ using namespace std;
 
 typedef double real;
 
-#define restrict __restrict__
+#define RESTRICT __restrict__
+#define REGREAL register real
 
-inline real sqr(const real &x)
+inline real sqr(const real x)
 {
   return x*x;
 }
 
-inline real sign1(const real &x)
+inline real sign1(const real x)
 {
   return 2.0*(x >= 0) - 1.0;
 }
 
-inline real nonZero(const real &x, const real &eps)
+inline real nonZero(const real x, const real eps)
 {
   if (fabs(x) < 0) {
     return min(-eps, x);
@@ -122,13 +123,12 @@ inline void countLogs(int n)
 inline void countLogs(int) {}
 #endif
 
-
-template <unsigned int DIM>
-struct RealVec
+inline void fill(real* var, size_t num_vars, real value)
 {
-  real var[DIM];
-  void fill(real v) { for (size_t i = 0; i < DIM; ++i) var[i] = v; }
-};
+  for (size_t i_var = 0; i_var < num_vars; ++i_var) {
+    var[i_var] = value;
+  }
+}
 
 
 extern void startTiming();

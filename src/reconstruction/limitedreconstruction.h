@@ -3,13 +3,53 @@
 
 #include "cartesianpatch.h"
 
+/**
+ * Base class for reconstruction methods.
+ * The implementation is probably not optimal at the moment,
+ * especially the unified methods (for x, y, z directions) are most likely
+ * not very efficient due to too many if statements. Later on this can be split again,
+ * but for now it should reduce the chance of errors significantly.
+ * @todo look at efficiency
+ */
 struct LimitedReconstruction
 {
   static const real m_Epsilon;
+
+  /**
+   * Check if an (i,j,k) is inside a Cartesian patch.
+   * Attention only the upper limit will be checked (unsigned data type).
+   * @param patch The patch to check
+   * @param i first index
+   * @param j second index
+   * @param k third index
+   * @return true if it is a valid (i,j,k) triple, false otherwise
+   */
+  static bool checkRange(CartesianPatch *patch, size_t i, size_t j, size_t k);
+
+  static real r(CartesianPatch *patch, size_t i_f, size_t i_v, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2);
+
   static real rx(CartesianPatch *P, size_t i_f, size_t i_v, size_t i1, size_t i2, size_t j, size_t k);
   static real ry(CartesianPatch *P, size_t i_f, size_t i_v, size_t i, size_t j1, size_t j2, size_t k);
   static real rz(CartesianPatch *P, size_t i_f, size_t i_v, size_t i, size_t j, size_t k1, size_t k2);
 };
+
+
+inline bool LimitedReconstruction::checkRange(CartesianPatch *patch, size_t i, size_t j, size_t k)
+{
+  if (i >= patch->sizeI() || j >= patch->sizeJ() || k >= patch->sizeK()) {
+    return false;
+  }
+  return true;
+}
+
+inline real LimitedReconstruction::r(CartesianPatch *patch, size_t i_f, size_t i_v, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2)
+{
+  countFlops(3);
+  REGREAL delta1 = patch->f(i_f, i_v, i1, j1, k1) - patch->f(i_f, i_v, 2*i1-i2, 2*j1-j2, 2*k1-k2);
+  REGREAL delta2 = patch->f(i_f, i_v, i2, j2, k2) - patch->f(i_f, i_v, i1, j1, k1);
+  return CHECKED_REAL(delta1/nonZero(delta2, m_Epsilon));
+}
+
 
 inline real LimitedReconstruction::rx(CartesianPatch *P, size_t i_f, size_t i_v, size_t i1, size_t i2, size_t j, size_t k)
 {
