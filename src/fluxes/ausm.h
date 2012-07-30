@@ -4,7 +4,7 @@
 #include "fluxes/ausmbase.h"
 #include "cartesianpatch.h"
 
-template <class TReconstruction>
+template <typename TReconstruction, typename TGas>
 class Ausm : public AusmBase
 {
 
@@ -17,8 +17,8 @@ public: // methods
 };
 
 
-template <class TReconstruction>
-inline void Ausm<TReconstruction>::x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+inline void Ausm<TReconstruction, TGas>::x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   AUSM_LEFT_PROJX;
   AUSM_RIGHT_PROJX;
@@ -49,8 +49,8 @@ inline void Ausm<TReconstruction>::x(CartesianPatch *patch, size_t i, size_t j, 
   countFlops(11);
 }
 
-template <class TReconstruction>
-void Ausm<TReconstruction>::y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+void Ausm<TReconstruction, TGas>::y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   AUSM_LEFT_PROJY;
   AUSM_RIGHT_PROJY;
@@ -81,8 +81,8 @@ void Ausm<TReconstruction>::y(CartesianPatch *patch, size_t i, size_t j, size_t 
   countFlops(11);
 }
 
-template <class TReconstruction>
-void Ausm<TReconstruction>::z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+void Ausm<TReconstruction, TGas>::z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   AUSM_LEFT_PROJZ;
   AUSM_RIGHT_PROJZ;

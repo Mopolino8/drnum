@@ -29,14 +29,15 @@ protected: // methods
 
   real* getField(size_t i_field);
   real* getVariable(size_t i_field, size_t i_variable);
-  void  setNumberOfFields(size_t num_fields) { m_NumFields = num_fields; }
-  void  setNumberOfVariables(size_t num_variables) { m_NumVariables = num_variables; }
 
 
 public: // methods
 
   Patch();
   virtual ~Patch();
+
+  void  setNumberOfFields(size_t num_fields) { m_NumFields = num_fields; }
+  void  setNumberOfVariables(size_t num_variables) { m_NumVariables = num_variables; }
 
   /**
     * This is one of the main methods which will be used for data exchange.

@@ -1,6 +1,3 @@
-#include "compressiblecartesianpatch.h"
-#include "ausmtools.h"
-
 #define NI 200
 #define NJ 50
 #define NK 50
@@ -10,19 +7,18 @@
 #include "fluxes/ausmplus.h"
 #include "fluxes/ausmdv.h"
 #include "fluxes/ausm.h"
-#include "fluxes/compressibleflux.h"
+#include "fluxes/compressiblewallflux.h"
 #include "iterators/cartesianstandarditerator.h"
 #include "iterators/cartesianstandardpatchoperation.h"
 #include "rungekutta.h"
+#include "perfectgas.h"
 
-template <class TReconstruction>
+template <typename TReconstruction>
 class TestFlux
 {
 
-  //Ausm<TReconstruction>             m_EulerFlux;
-  AusmPlus<TReconstruction>         m_EulerFlux;
-  //AusmDV<TReconstruction>           m_EulerFlux;
-  CompressibleFlux<TReconstruction> m_WallFlux;
+  AusmPlus<TReconstruction, PerfectGas>              m_EulerFlux;
+  CompressibleWallFlux<TReconstruction, PerfectGas>  m_WallFlux;
 
 public: // methods
 
@@ -93,7 +89,7 @@ inline void TestFlux<TReconstruction>::zWallM(CartesianPatch *P, size_t i, size_
   m_WallFlux.zWallM(P, i, j, k, A, flux);
 }
 
-void write(CompressibleCartesianPatch &patch, QString file_name, int count)
+void write(CartesianPatch &patch, QString file_name, int count)
 {
   if (count >= 0) {
     QString num;
@@ -109,7 +105,9 @@ void write(CompressibleCartesianPatch &patch, QString file_name, int count)
 
 int main()
 {
-  CompressibleCartesianPatch patch;
+  CartesianPatch patch;
+  patch.setNumberOfFields(2);
+  patch.setNumberOfVariables(5);
   patch.setupAligned(0, 0, 0, 8, 2, 2);
   patch.resize(NI, NJ, NK);
   for (size_t i = 0; i < NI; ++i) {
@@ -119,11 +117,13 @@ int main()
       for (size_t k = 0; k < NK; ++k) {
         real z = 0.5*patch.dz() + k*patch.dz();
         real r = sqrt(x*x + y*y + z*z);
+        real var[5];
         if (r < 0.5) {
-          patch.setState(i, j, k, 1e6, 600);
+          PerfectGas::primitiveToConservative(1e6, 300, var);
         } else {
-          patch.setState(i, j, k, 1e5, 300);
+          PerfectGas::primitiveToConservative(1e5, 300, var);
         }
+        patch.setVar(0, i, j, k, var);
       }
     }
   }
@@ -161,9 +161,10 @@ int main()
     for (size_t i = 0; i < NI; ++i) {
       for (size_t j = 0; j < NJ; ++j) {
         for (size_t k = 0; k < NK; ++k) {
-          real p, u, v, w, T;
-          patch.getState(i, j, k, p, u, v, w, T);
-          real a = sqrt(patch.gasGamma()*patch.gasR()*T);
+          real p, u, v, w, T, var[5];
+          patch.getVar(0, i, j, k, var);
+          PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+          real a = sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
           CFL_max = max(CFL_max, fabs(u)*dt/patch.dx());
           CFL_max = max(CFL_max, fabs(u+a)*dt/patch.dx());
           CFL_max = max(CFL_max, fabs(u-a)*dt/patch.dx());

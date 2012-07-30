@@ -1,9 +1,9 @@
 #ifndef AUSMBASE_H
 #define AUSMBASE_H
 
-#include "compressibleobject.h"
+#include "blockcfd.h"
 
-class AusmBase : public CompressibleObject
+class AusmBase
 {
 
 protected: // methods
@@ -17,12 +17,14 @@ protected: // methods
 
 inline real AusmBase::M1(real M,real s)
 {
-  return 0.5*(M + s*fabs(M));
+  countFlops(3);
+  return CHECKED_REAL(0.5*(M + s*fabs(M)));
 }
 
 inline real AusmBase::M2(real M,real s)
 {
-  return 0.25*s*sqr(M + s);
+  countFlops(4);
+  return CHECKED_REAL(0.25*s*sqr(M + s));
 }
 
 inline real AusmBase::M4(real M,real s)
@@ -30,15 +32,18 @@ inline real AusmBase::M4(real M,real s)
   if (fabs(M) >= 1) {
     return M1(M, s);
   }
-  return M2(M, s)*(1 - 2*s*M2(M, -s));
+  countFlops(4);
+  return CHECKED_REAL(M2(M, s)*(1 - 2*s*M2(M, -s)));
 }
 
 inline real AusmBase::P5(real M, real s)
 {
   if (fabs(M) >= 1) {
-    return M1(M,s)/M;
+    countFlops(1);
+    return CHECKED_REAL(M1(M,s)/M);
   }
-  return M2(M, s)*((2*s - M) - 3*s*M2(M, -s));
+  countFlops(6);
+  return M2(M, s)*((2*s - M) - 3*s*M*M2(M, -s));
 }
 
 #define AUSM_LEFT_VARS \
@@ -51,9 +56,9 @@ inline real AusmBase::P5(real M, real s)
   REGREAL v_l  = rv_l*ir_l; \
   REGREAL w_l  = rw_l*ir_l; \
   REGREAL rE_l = var_l[4]; \
-  REGREAL T_l  = CHECKED_REAL((rE_l*ir_l - 0.5*(u_l*u_l + v_l*v_l + w_l*w_l))/gasCv()); \
-  REGREAL p_l  = r_l*gasR()*T_l; \
-  REGREAL a_l  = CHECKED_REAL(sqrt(gasGamma()*gasR()*T_l)); \
+  REGREAL T_l  = CHECKED_REAL((rE_l*ir_l - 0.5*(u_l*u_l + v_l*v_l + w_l*w_l))/TGas::cv(var_l)); \
+  REGREAL p_l  = r_l*TGas::R(var_l)*T_l; \
+  REGREAL a_l  = CHECKED_REAL(sqrt(TGas::gamma(var_l)*TGas::R(var_l)*T_l)); \
   REGREAL H_l  = (rE_l + p_l)/r_l; \
   countFlops(19); \
   countSqrts(1);
@@ -68,9 +73,9 @@ inline real AusmBase::P5(real M, real s)
   REGREAL v_r  = rv_r*ir_r; \
   REGREAL w_r  = rw_r*ir_r; \
   REGREAL rE_r = var_r[4]; \
-  REGREAL T_r  = CHECKED_REAL((rE_r*ir_r - 0.5*(u_r*u_r + v_r*v_r + w_r*w_r))/gasCv()); \
-  REGREAL p_r  = r_r*gasR()*T_r; \
-  REGREAL a_r  = CHECKED_REAL(sqrt(gasGamma()*gasR()*T_r)); \
+  REGREAL T_r  = CHECKED_REAL((rE_r*ir_r - 0.5*(u_r*u_r + v_r*v_r + w_r*w_r))/TGas::cv(var_r)); \
+  REGREAL p_r  = r_r*TGas::R(var_r)*T_r; \
+  REGREAL a_r  = CHECKED_REAL(sqrt(TGas::gamma(var_r)*TGas::R(var_r)*T_r)); \
   REGREAL H_r  = (rE_r + p_r)/r_r; \
   countFlops(19); \
   countSqrts(1);

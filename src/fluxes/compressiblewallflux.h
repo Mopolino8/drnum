@@ -1,10 +1,10 @@
 #ifndef COMPRESSIBLEFLUX_H
 #define COMPRESSIBLEFLUX_H
 
-#include "compressiblecartesianpatch.h"
+#include "cartesianpatch.h"
 
-template <class TReconstruction>
-class CompressibleFlux : public CompressibleObject
+template <typename TReconstruction, typename TGas>
+class CompressibleWallFlux
 {
 
 public:
@@ -28,12 +28,12 @@ public:
   real v  = rv*ir; \
   real w  = rw*ir; \
   real rE = var[4]; \
-  real T  = CHECKED_REAL((rE*ir - 0.5*(u*u + v*v + w*w))/gasCv()); \
-  real p  = r*gasR()*T; \
+  real T  = CHECKED_REAL((rE*ir - 0.5*(u*u + v*v + w*w))/TGas::cv(var)); \
+  real p  = r*TGas::R(var)*T; \
   countFlops(15);
 
-template <class TReconstruction>
-inline void CompressibleFlux<TReconstruction>::xWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+inline void CompressibleWallFlux<TReconstruction, TGas>::xWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   real var[5];
   TReconstruction::project(patch, var, 0, 5, i-1, j, k, i, j, k);
@@ -42,8 +42,8 @@ inline void CompressibleFlux<TReconstruction>::xWallP(CartesianPatch *patch, siz
   countFlops(2);
 }
 
-template <class TReconstruction>
-inline void CompressibleFlux<TReconstruction>::xWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+inline void CompressibleWallFlux<TReconstruction, TGas>::xWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   real var[5];
   TReconstruction::project(patch, var, 0, 5, i, j, k, i-1, j, k);
@@ -53,8 +53,8 @@ inline void CompressibleFlux<TReconstruction>::xWallM(CartesianPatch *patch, siz
 }
 
 
-template <class TReconstruction>
-inline void CompressibleFlux<TReconstruction>::yWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+inline void CompressibleWallFlux<TReconstruction, TGas>::yWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   real var[5];
   TReconstruction::project(patch, var, 0, 5, i, j-1, k, i, j, k);
@@ -63,8 +63,8 @@ inline void CompressibleFlux<TReconstruction>::yWallP(CartesianPatch *patch, siz
   countFlops(2);
 }
 
-template <class TReconstruction>
-inline void CompressibleFlux<TReconstruction>::yWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+inline void CompressibleWallFlux<TReconstruction, TGas>::yWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   real var[5];
   TReconstruction::project(patch, var, 0, 5, i, j, k, i, j-1, k);
@@ -74,8 +74,8 @@ inline void CompressibleFlux<TReconstruction>::yWallM(CartesianPatch *patch, siz
 }
 
 
-template <class TReconstruction>
-inline void CompressibleFlux<TReconstruction>::zWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+inline void CompressibleWallFlux<TReconstruction, TGas>::zWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   real var[5];
   TReconstruction::project(patch, var, 0, 5, i, j, k-1, i, j, k);
@@ -84,8 +84,8 @@ inline void CompressibleFlux<TReconstruction>::zWallP(CartesianPatch *patch, siz
   countFlops(2);
 }
 
-template <class TReconstruction>
-inline void CompressibleFlux<TReconstruction>::zWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+inline void CompressibleWallFlux<TReconstruction, TGas>::zWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   real var[5];
   TReconstruction::project(patch, var, 0, 5, i, j, k, i, j, k-1);

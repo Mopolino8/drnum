@@ -36,31 +36,29 @@ SOURCES += main.cpp \
     cartesianpatch.cpp \
     reconstruction/limitedreconstruction.cpp \
     blockcfd.cpp \
-    compressiblecartesianpatch.cpp \
     timeintegration.cpp \
     patchiterator.cpp \
-    rungekutta.cpp
+    rungekutta.cpp \
+    perfectgas.cpp
 
 HEADERS += \
     patch.h \
     cartesianpatch.h \
     blockcfd.h \
-    compressiblecartesianpatch.h \
-    ausmtools.h \
     reconstruction/upwind1.h \
-    fluxes/compressibleflux.h \
     fluxes/ausmbase.h \
     fluxes/ausmplus.h \
     fluxes/ausmplus.h \
-    compressibleobject.h \
     reconstruction/upwind2.h \
     reconstruction/limitedreconstruction.h \
-    cartesianpatchoperation.h \
+    iterators/cartesianpatchoperation.h \
     timeintegration.h \
     patchiterator.h \
     iterators/cartesianstandarditerator.h \
     iterators/cartesianstandardpatchoperation.h \
     rungekutta.h \
     fluxes/ausmdv.h \
-    fluxes/ausm.h
+    fluxes/ausm.h \
+    fluxes/compressiblewallflux.h \
+    perfectgas.h
 

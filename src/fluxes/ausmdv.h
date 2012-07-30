@@ -4,7 +4,7 @@
 #include "fluxes/ausmbase.h"
 #include "cartesianpatch.h"
 
-template <class TReconstruction>
+template <typename TReconstruction, typename TGas>
 class AusmDV : public AusmBase
 {
 
@@ -17,8 +17,8 @@ public: // methods
 };
 
 
-template <class TReconstruction>
-inline void AusmDV<TReconstruction>::x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+inline void AusmDV<TReconstruction, TGas>::x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   AUSM_LEFT_PROJX;
   AUSM_RIGHT_PROJX;
@@ -28,9 +28,9 @@ inline void AusmDV<TReconstruction>::x(CartesianPatch *patch, size_t i, size_t j
   real fr = p_r/r_r;
   real wp = 2*fl/(fl+fr);
   real wm = 2*fr/(fl+fr);
-  real Mp = wp*AusmTools::M2(u_l/a, 1) + (1-wp)*AusmTools::M1(u_l/a, 1);
-  real Mm = wm*AusmTools::M2(u_r/a,-1) + (1-wm)*AusmTools::M1(u_r/a,-1);
-  real p  = AusmTools::P5(u_l/a,1)*p_l + AusmTools::P5(u_r/a,-1)*p_r;
+  real Mp = wp*M2(u_l/a, 1) + (1-wp)*M1(u_l/a, 1);
+  real Mm = wm*M2(u_r/a,-1) + (1-wm)*M1(u_r/a,-1);
+  real p  = P5(u_l/a,1)*p_l + P5(u_r/a,-1)*p_r;
   countFlops(25);
 
   flux[0] += a*A*(r_l*Mp + r_r*Mm);
@@ -41,8 +41,8 @@ inline void AusmDV<TReconstruction>::x(CartesianPatch *patch, size_t i, size_t j
   countFlops(36);
 }
 
-template <class TReconstruction>
-void AusmDV<TReconstruction>::y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+void AusmDV<TReconstruction, TGas>::y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   AUSM_LEFT_PROJY;
   AUSM_RIGHT_PROJY;
@@ -52,9 +52,9 @@ void AusmDV<TReconstruction>::y(CartesianPatch *patch, size_t i, size_t j, size_
   real fr = p_r/r_r;
   real wp = 2*fl/(fl+fr);
   real wm = 2*fr/(fl+fr);
-  real Mp = wp*AusmTools::M2(v_l/a, 1) + (1-wp)*AusmTools::M1(v_l/a, 1);
-  real Mm = wm*AusmTools::M2(v_r/a,-1) + (1-wm)*AusmTools::M1(v_r/a,-1);
-  real p  = AusmTools::P5(v_l/a,1)*p_l + AusmTools::P5(v_r/a,-1)*p_r;
+  real Mp = wp*M2(v_l/a, 1) + (1-wp)*M1(v_l/a, 1);
+  real Mm = wm*M2(v_r/a,-1) + (1-wm)*M1(v_r/a,-1);
+  real p  = P5(v_l/a,1)*p_l + P5(v_r/a,-1)*p_r;
   countFlops(25);
 
   flux[0] += a*A*(r_l*Mp + r_r*Mm);
@@ -65,8 +65,8 @@ void AusmDV<TReconstruction>::y(CartesianPatch *patch, size_t i, size_t j, size_
   countFlops(36);
 }
 
-template <class TReconstruction>
-void AusmDV<TReconstruction>::z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+template <typename TReconstruction, typename TGas>
+void AusmDV<TReconstruction, TGas>::z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   AUSM_LEFT_PROJZ;
   AUSM_RIGHT_PROJZ;
@@ -76,9 +76,9 @@ void AusmDV<TReconstruction>::z(CartesianPatch *patch, size_t i, size_t j, size_
   real fr = p_r/r_r;
   real wp = 2*fl/(fl+fr);
   real wm = 2*fr/(fl+fr);
-  real Mp = wp*AusmTools::M2(w_l/a, 1) + (1-wp)*AusmTools::M1(w_l/a, 1);
-  real Mm = wm*AusmTools::M2(w_r/a,-1) + (1-wm)*AusmTools::M1(w_r/a,-1);
-  real p  = AusmTools::P5(w_l/a,1)*p_l + AusmTools::P5(w_r/a,-1)*p_r;
+  real Mp = wp*M2(w_l/a, 1) + (1-wp)*M1(w_l/a, 1);
+  real Mm = wm*M2(w_r/a,-1) + (1-wm)*M1(w_r/a,-1);
+  real p  = P5(w_l/a,1)*p_l + P5(w_r/a,-1)*p_r;
   countFlops(25);
 
   flux[0] += a*A*(r_l*Mp + r_r*Mm);

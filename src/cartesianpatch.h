@@ -74,6 +74,26 @@ public: // methods
   real& f(real *var, size_t i, size_t j, size_t k) { return var[i*m_NumJ*m_NumK + j*m_NumK + k]; }
 
   /**
+   * @brief Get a variable set at a specified (i,j,k) position.
+   * @param i_field the field index
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
+   * @param var will hold the conservative variable set afterwards (needs to be allocated beforehand)
+   */
+  void getVar(size_t i_field, size_t i, size_t j, size_t k, real* var);
+
+  /**
+   * @brief Set a variable set at a specified (i,j,k) position.
+   * @param i_field the field index
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
+   * @param the conservative variable set
+   */
+  void setVar(size_t i_field, size_t i, size_t j, size_t k, real* var);
+
+  /**
    * @brief Get the value of a variable at an (i, j, k) triple.
    * @param i_field field index
    * @param i_var variable index
@@ -97,6 +117,21 @@ public: // methods
 #endif
 
 };
+
+
+inline void CartesianPatch::getVar(size_t i_field, size_t i, size_t j, size_t k, real *var)
+{
+  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    var[i_var] = f(i_field, i_var, i, j, k);
+  }
+}
+
+inline void CartesianPatch::setVar(size_t i_field, size_t i, size_t j, size_t k, real *var)
+{
+  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    f(i_field, i_var, i, j, k) = var[i_var];
+  }
+}
 
 
 #endif // CARTESIANPATCH_H
