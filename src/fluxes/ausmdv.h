@@ -10,9 +10,9 @@ class AusmDV : public AusmBase
 
 public: // methods
 
-  void x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
 
 };
 

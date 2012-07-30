@@ -9,12 +9,12 @@ class CompressibleWallFlux
 
 public:
 
-  void xWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void yWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void zWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void xWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void yWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void zWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void xWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void yWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void zWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void xWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void yWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  static void zWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
 
 };
 

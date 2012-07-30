@@ -8,10 +8,10 @@ class AusmBase
 
 protected: // methods
 
-  real M1(real M,real s);
-  real M2(real M,real s);
-  real M4(real M,real s);
-  real P5(real M,real s);
+  static real M1(real M,real s);
+  static real M2(real M,real s);
+  static real M4(real M,real s);
+  static real P5(real M,real s);
 
 };
 

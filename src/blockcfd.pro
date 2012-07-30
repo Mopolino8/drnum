@@ -60,5 +60,6 @@ HEADERS += \
     fluxes/ausmdv.h \
     fluxes/ausm.h \
     fluxes/compressiblewallflux.h \
-    perfectgas.h
+    perfectgas.h \
+    iterators/cartesiandirectionalpatchoperation.h
 
