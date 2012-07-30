@@ -6,6 +6,8 @@
 #include <iostream>
 #include <ctime>
 
+#define DEBUG
+
 using namespace std;
 
 typedef double real;

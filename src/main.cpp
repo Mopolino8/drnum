@@ -8,6 +8,7 @@
 #include "fluxes/ausmdv.h"
 #include "fluxes/ausm.h"
 #include "fluxes/compressiblewallflux.h"
+#include "fluxes/compressiblefarfieldflux.h"
 #include "iterators/cartesianstandarditerator.h"
 #include "iterators/cartesianstandardpatchoperation.h"
 #include "iterators/cartesiandirectionalpatchoperation.h"
@@ -18,77 +19,92 @@ template <typename TReconstruction>
 class TestFlux
 {
 
-  typedef AusmDV<TReconstruction, PerfectGas> EFlux;
-  typedef CompressibleWallFlux<TReconstruction, PerfectGas> WFlux;
-
+  AusmDV<TReconstruction, PerfectGas> m_EulerFlux;
+  CompressibleWallFlux<TReconstruction, PerfectGas> m_WallFlux;
+  CompressibleFarfieldFlux<TReconstruction, PerfectGas> m_FarFlux;
 
 public: // methods
 
-  static void x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  static void y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  static void z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  TestFlux(real u);
 
-  static void xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  static void yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  static void zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  static void xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  static void yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  static void zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+
+  void xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
 
 };
+
+
+template <typename TReconstruction>
+TestFlux<TReconstruction>::TestFlux(real u)
+{
+  m_FarFlux.setFarfield(1e5, 300, u, 0, 0);
+}
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  EFlux::x(P, i, j, k, A, flux);
+  m_EulerFlux.x(P, i, j, k, A, flux);
 }
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  EFlux::y(P, i, j, k, A, flux);
+  m_EulerFlux.y(P, i, j, k, A, flux);
 }
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  EFlux::z(P, i, j, k, A, flux);
+  m_EulerFlux.z(P, i, j, k, A, flux);
 }
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  WFlux::xWallP(P, i, j, k, A, flux);
+  m_FarFlux.xWallP(P, i, j, k, A, flux);
+  //m_WallFlux.xWallP(P, i, j, k, A, flux);
 }
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  WFlux::yWallP(P, i, j, k, A, flux);
+  m_FarFlux.yWallP(P, i, j, k, A, flux);
+  //m_WallFlux.yWallP(P, i, j, k, A, flux);
 }
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  WFlux::zWallP(P, i, j, k, A, flux);
+  m_FarFlux.zWallP(P, i, j, k, A, flux);
+  //m_WallFlux.zWallP(P, i, j, k, A, flux);
 }
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  WFlux::xWallM(P, i, j, k, A, flux);
+  m_FarFlux.xWallM(P, i, j, k, A, flux);
+  //m_WallFlux.xWallM(P, i, j, k, A, flux);
 }
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  WFlux::yWallM(P, i, j, k, A, flux);
+  m_FarFlux.yWallM(P, i, j, k, A, flux);
+  //m_WallFlux.yWallM(P, i, j, k, A, flux);
 }
 
 template <class TReconstruction>
 inline void TestFlux<TReconstruction>::zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  WFlux::zWallM(P, i, j, k, A, flux);
+  m_FarFlux.zWallM(P, i, j, k, A, flux);
+  //m_WallFlux.zWallM(P, i, j, k, A, flux);
 }
 
 void write(CartesianPatch &patch, QString file_name, int count)
@@ -121,9 +137,9 @@ int main()
         real r = sqrt(x*x + y*y + z*z);
         real var[5];
         if (r < 0.5) {
-          PerfectGas::primitiveToConservative(1e6, 300, var);
+          PerfectGas::primitiveToConservative(1e5, 300, 0, 0, 0, var);
         } else {
-          PerfectGas::primitiveToConservative(1e5, 300, var);
+          PerfectGas::primitiveToConservative(1e5, 300, 0, 0, 0, var);
         }
         patch.setVar(0, i, j, k, var);
       }
@@ -131,27 +147,28 @@ int main()
   }
 
   RungeKutta runge_kutta;
-  //runge_kutta.addAlpha(0.25);
-  //runge_kutta.addAlpha(0.50);
+  runge_kutta.addAlpha(0.25);
+  runge_kutta.addAlpha(0.50);
   runge_kutta.addAlpha(1.00);
 
   //CartesianStandardPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > flux(&patch);
-  CartesianDirectionalPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > flux(&patch);
+  TestFlux<Upwind2<VanAlbada2> > flux(100.0);
+  CartesianDirectionalPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > operation(&patch, &flux);
   //CartesianStandardPatchOperation<5,TestFlux<Upwind1> > flux(&patch);
-  CartesianStandardIterator iterator(&flux);
+  CartesianStandardIterator iterator(&operation);
   runge_kutta.addIterator(&iterator);
 
-  real dt             = 2.5e-5;
-  real dt_max         = 2.5e-5;
+  real dt             = 1e-4;
+  real dt_max         = 1e-4;
   real dt_ramp        = 1.1;
   real t_write        = 0;
-  real write_interval = 2.5e-3;
-  real total_time     = 2.5e-3;
+  real write_interval = 2e-3;
+  real total_time     = 1e-1;
 
   int count = 0;
   int iter = 0;
   real t = 0;
-  write(patch, "shock_tube", count);
+  write(patch, "testrun", count);
 
   cout << "Press <ENTER> to start!";
   cin.get();
@@ -178,7 +195,7 @@ int main()
     t_write += dt;
     if (t_write >= write_interval) {
       ++count;
-      write(patch, "shock_tube", count);
+      write(patch, "testrun", count);
       t_write = 0;
     }
     real max_norm, l2_norm;
@@ -189,7 +206,7 @@ int main()
   }
 
   stopTiming();
-  write(patch, "shock_tube", -1);
+  write(patch, "testrun", -1);
 
   cout << iter << " iterations" << endl;
   cout << 1e-9*iter*3*15*sizeof(real)*NI*NJ*NK/(time(NULL) - global_start_time) << "GBs" << endl;

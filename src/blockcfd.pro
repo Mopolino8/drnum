@@ -21,7 +21,7 @@ LIBS        += -lvtkVolumeRendering
 LIBS        += -lvtkWidgets
 
 QMAKE_CXXFLAGS += -Wno-deprecated
-#QMAKE_CXXFLAGS_RELEASE += -g
+QMAKE_CXXFLAGS_RELEASE += -g
 QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_CXXFLAGS_RELEASE += -finline-limit=100000
 QMAKE_CXXFLAGS_RELEASE += --param large-function-growth=100000
@@ -38,8 +38,7 @@ SOURCES += main.cpp \
     blockcfd.cpp \
     timeintegration.cpp \
     patchiterator.cpp \
-    rungekutta.cpp \
-    perfectgas.cpp
+    rungekutta.cpp
 
 HEADERS += \
     patch.h \
@@ -61,5 +60,7 @@ HEADERS += \
     fluxes/ausm.h \
     fluxes/compressiblewallflux.h \
     perfectgas.h \
-    iterators/cartesiandirectionalpatchoperation.h
+    iterators/cartesiandirectionalpatchoperation.h \
+    shapes/sphere.h \
+    fluxes/compressiblefarfieldflux.h
 
