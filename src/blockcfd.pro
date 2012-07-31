@@ -62,5 +62,7 @@ HEADERS += \
     perfectgas.h \
     iterators/cartesiandirectionalpatchoperation.h \
     shapes/sphere.h \
-    fluxes/compressiblefarfieldflux.h
+    fluxes/compressiblefarfieldflux.h \
+    reconstruction/immersedboundaryreconstruction.h \
+    boundary_conditions/compressibleeulerwall.h
 

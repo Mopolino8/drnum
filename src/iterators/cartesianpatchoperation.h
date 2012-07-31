@@ -29,7 +29,9 @@ protected: // methods
 
 public: // methods
 
-  CartesianPatchOperation(CartesianPatch *P) { m_Patch = P; }
+  CartesianPatchOperation(CartesianPatch *P);
+  virtual ~CartesianPatchOperation();
+
   CartesianPatch* patch() { return m_Patch; }
 
   size_t resIndex(size_t i_var, size_t i, size_t j, size_t k) { return m_ResLength*i_var + (i-m_I1)*m_SizeJ*m_SizeK + (j-m_J1)*m_SizeK + (k-m_K1); }
@@ -38,6 +40,18 @@ public: // methods
 
 };
 
+
+inline CartesianPatchOperation::CartesianPatchOperation(CartesianPatch *P)
+{
+  m_Patch = P;
+  m_Res = NULL;
+  m_ResLength = 0;
+}
+
+inline CartesianPatchOperation::~CartesianPatchOperation()
+{
+  delete [] m_Res;
+}
 
 inline void CartesianPatchOperation::checkResFieldSize(size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2)
 {

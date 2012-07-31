@@ -8,7 +8,11 @@ template <typename TReconstruction, typename TGas>
 class AusmPlus : public AusmBase
 {
 
+  TReconstruction* m_Reconstruction;
+
 public: // methods
+
+  AusmPlus(TReconstruction* reconstruction) { m_Reconstruction = reconstruction; }
 
   void x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux);
   void y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux);

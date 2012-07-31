@@ -12,7 +12,6 @@ class CartesianDirectionalPatchOperation : public CartesianPatchOperation
 public:
 
   CartesianDirectionalPatchOperation(CartesianPatch *patch, TFlux* flux);
-  virtual ~CartesianDirectionalPatchOperation();
 
   virtual void compute(real factor, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2);
 
@@ -22,16 +21,7 @@ public:
 template <unsigned int DIM, class TFlux>
 CartesianDirectionalPatchOperation<DIM, TFlux>::CartesianDirectionalPatchOperation(CartesianPatch *patch, TFlux* flux) : CartesianPatchOperation(patch)
 {
-  m_Res = NULL;
-  m_ResLength = 0;
   m_Flux = flux;
-}
-
-
-template <unsigned int DIM, class TFlux>
-CartesianDirectionalPatchOperation<DIM, TFlux>::~CartesianDirectionalPatchOperation()
-{
-  delete [] m_Res;
 }
 
 

@@ -1,9 +1,10 @@
-#define NI 200
+#define NI 50
 #define NJ 50
 #define NK 50
 
 #include "reconstruction/upwind1.h"
 #include "reconstruction/upwind2.h"
+#include "reconstruction/immersedboundaryreconstruction.h"
 #include "fluxes/ausmplus.h"
 #include "fluxes/ausmdv.h"
 #include "fluxes/ausm.h"
@@ -14,18 +15,30 @@
 #include "iterators/cartesiandirectionalpatchoperation.h"
 #include "rungekutta.h"
 #include "perfectgas.h"
+#include "shapes/sphere.h"
+#include "boundary_conditions/compressibleeulerwall.h"
 
-template <typename TReconstruction>
-class TestFlux
+
+typedef ImmersedBoundaryReconstruction<Upwind2<VanAlbada2>, Sphere, CompressibleEulerWall> reconstruction_t;
+//typedef Upwind2<VanAlbada2> reconstruction_t;
+typedef AusmDV<reconstruction_t, PerfectGas> euler_t;
+typedef CompressibleWallFlux<reconstruction_t, PerfectGas> wall_t;
+typedef CompressibleFarfieldFlux<reconstruction_t, PerfectGas> farfield_t;
+
+class MyFlux
 {
 
-  AusmDV<TReconstruction, PerfectGas> m_EulerFlux;
-  CompressibleWallFlux<TReconstruction, PerfectGas> m_WallFlux;
-  CompressibleFarfieldFlux<TReconstruction, PerfectGas> m_FarFlux;
+  reconstruction_t* m_Reconstruction;
+  euler_t*          m_EulerFlux;
+  wall_t*           m_WallFlux;
+  farfield_t*       m_FarFlux;
+
+  Sphere            m_Sphere;
+
 
 public: // methods
 
-  TestFlux(real u);
+  MyFlux(real u);
 
   void x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
   void y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
@@ -41,70 +54,67 @@ public: // methods
 };
 
 
-template <typename TReconstruction>
-TestFlux<TReconstruction>::TestFlux(real u)
+MyFlux::MyFlux(real u)
 {
-  m_FarFlux.setFarfield(1e5, 300, u, 0, 0);
+  m_Sphere.setCentre(0, 0, 0);
+  m_Sphere.setRadius(1.0);
+  m_Reconstruction = new reconstruction_t(&m_Sphere);
+  //m_Reconstruction = new reconstruction_t();
+  m_EulerFlux = new euler_t(m_Reconstruction);
+  m_FarFlux = new farfield_t(m_Reconstruction);
+  m_FarFlux->setFarfield(1e5, 300, u, 0, 0);
+  m_WallFlux = new wall_t(m_Reconstruction);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_EulerFlux.x(P, i, j, k, A, flux);
+  m_EulerFlux->x(P, i, j, k, A, flux);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_EulerFlux.y(P, i, j, k, A, flux);
+  m_EulerFlux->y(P, i, j, k, A, flux);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_EulerFlux.z(P, i, j, k, A, flux);
+  m_EulerFlux->z(P, i, j, k, A, flux);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_FarFlux.xWallP(P, i, j, k, A, flux);
-  //m_WallFlux.xWallP(P, i, j, k, A, flux);
+  m_FarFlux->xWallP(P, i, j, k, A, flux);
+  //m_WallFlux->xWallP(P, i, j, k, A, flux);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_FarFlux.yWallP(P, i, j, k, A, flux);
-  //m_WallFlux.yWallP(P, i, j, k, A, flux);
+  //m_FarFlux->yWallP(P, i, j, k, A, flux);
+  m_WallFlux->yWallP(P, i, j, k, A, flux);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_FarFlux.zWallP(P, i, j, k, A, flux);
-  //m_WallFlux.zWallP(P, i, j, k, A, flux);
+  //m_FarFlux->zWallP(P, i, j, k, A, flux);
+  m_WallFlux->zWallP(P, i, j, k, A, flux);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_FarFlux.xWallM(P, i, j, k, A, flux);
-  //m_WallFlux.xWallM(P, i, j, k, A, flux);
+  m_FarFlux->xWallM(P, i, j, k, A, flux);
+  //m_WallFlux->xWallM(P, i, j, k, A, flux);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_FarFlux.yWallM(P, i, j, k, A, flux);
-  //m_WallFlux.yWallM(P, i, j, k, A, flux);
+  //m_FarFlux->yWallM(P, i, j, k, A, flux);
+  m_WallFlux->yWallM(P, i, j, k, A, flux);
 }
 
-template <class TReconstruction>
-inline void TestFlux<TReconstruction>::zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
 {
-  m_FarFlux.zWallM(P, i, j, k, A, flux);
-  //m_WallFlux.zWallM(P, i, j, k, A, flux);
+  //m_FarFlux->zWallM(P, i, j, k, A, flux);
+  m_WallFlux->zWallM(P, i, j, k, A, flux);
 }
 
 void write(CartesianPatch &patch, QString file_name, int count)
@@ -126,21 +136,13 @@ int main()
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
-  patch.setupAligned(0, 0, 0, 8, 2, 2);
+  patch.setupAligned(-5, 0, 0, 5, 5, 5);
   patch.resize(NI, NJ, NK);
   for (size_t i = 0; i < NI; ++i) {
-    real x = 0.5*patch.dx() + i*patch.dx();
     for (size_t j = 0; j < NJ; ++j) {
-      real y = 0.5*patch.dy() + j*patch.dy();
       for (size_t k = 0; k < NK; ++k) {
-        real z = 0.5*patch.dz() + k*patch.dz();
-        real r = sqrt(x*x + y*y + z*z);
         real var[5];
-        if (r < 0.5) {
-          PerfectGas::primitiveToConservative(1e5, 300, 0, 0, 0, var);
-        } else {
-          PerfectGas::primitiveToConservative(1e5, 300, 0, 0, 0, var);
-        }
+        PerfectGas::primitiveToConservative(1e5, 300, 100, 0, 0, var);
         patch.setVar(0, i, j, k, var);
       }
     }
@@ -151,10 +153,8 @@ int main()
   runge_kutta.addAlpha(0.50);
   runge_kutta.addAlpha(1.00);
 
-  //CartesianStandardPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > flux(&patch);
-  TestFlux<Upwind2<VanAlbada2> > flux(100.0);
-  CartesianDirectionalPatchOperation<5,TestFlux<Upwind2<VanAlbada2> > > operation(&patch, &flux);
-  //CartesianStandardPatchOperation<5,TestFlux<Upwind1> > flux(&patch);
+  MyFlux flux(100.0);
+  CartesianDirectionalPatchOperation<5, MyFlux> operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
   runge_kutta.addIterator(&iterator);
 
@@ -162,8 +162,8 @@ int main()
   real dt_max         = 1e-4;
   real dt_ramp        = 1.1;
   real t_write        = 0;
-  real write_interval = 2e-3;
-  real total_time     = 1e-1;
+  real write_interval = 1e-3;
+  real total_time     = 1e-3;
 
   int count = 0;
   int iter = 0;

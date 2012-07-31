@@ -12,28 +12,11 @@ using namespace std;
 
 typedef double real;
 
+struct real3_t { real x, y, z; };
+struct size3_t { size_t i, j, k; };
+
 #define RESTRICT __restrict__
 #define REGREAL register real
-
-inline real sqr(const real x)
-{
-  return x*x;
-}
-
-inline real sign1(const real x)
-{
-  return 2.0*(x >= 0) - 1.0;
-}
-
-inline real nonZero(const real x, const real eps)
-{
-  if (fabs(x) < 0) {
-    return min(-eps, x);
-  } else {
-    return max(eps, x);
-  }
-  //return x + eps*(2*sign1(x) - 1.0)*(1.0 - fabs(tanh(100*x)));
-}
 
 #define WITH_VTK
 #define VTK_USE_ANSI_STDLIB
@@ -135,6 +118,28 @@ inline void fill(real* var, size_t num_vars, real value)
 
 extern void startTiming();
 extern void stopTiming();
+
+
+inline real sqr(const real x)
+{
+  return x*x;
+  countFlops(1);
+}
+
+inline real sign1(const real x)
+{
+  return 2.0*(x >= 0) - 1.0;
+}
+
+inline real nonZero(const real x, const real eps)
+{
+  if (fabs(x) < 0) {
+    return min(-eps, x);
+  } else {
+    return max(eps, x);
+  }
+}
+
 
 
 #endif // BLOCKCFD_H

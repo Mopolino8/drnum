@@ -82,32 +82,32 @@ inline real AusmBase::P5(real M, real s)
 
 #define AUSM_LEFT_PROJX \
   real var_l[5]; \
-  TReconstruction::project(patch, var_l, 0, 5, i-1, j, k, i, j, k); \
+  m_Reconstruction->project(patch, var_l, 0, 5, i-1, j, k, i, j, k); \
   AUSM_LEFT_VARS
 
 #define AUSM_RIGHT_PROJX \
   real var_r[5]; \
-  TReconstruction::project(patch, var_r, 0, 5, i, j, k, i-1, j, k); \
+  m_Reconstruction->project(patch, var_r, 0, 5, i, j, k, i-1, j, k); \
   AUSM_RIGHT_VARS
 
 #define AUSM_LEFT_PROJY \
   real var_l[5]; \
-  TReconstruction::project(patch, var_l, 0, 5, i, j-1, k, i, j, k); \
+  m_Reconstruction->project(patch, var_l, 0, 5, i, j-1, k, i, j, k); \
   AUSM_LEFT_VARS
 
 #define AUSM_RIGHT_PROJY \
   real var_r[5]; \
-  TReconstruction::project(patch, var_r, 0, 5, i, j, k, i, j-1, k); \
+  m_Reconstruction->project(patch, var_r, 0, 5, i, j, k, i, j-1, k); \
   AUSM_RIGHT_VARS
 
 #define AUSM_LEFT_PROJZ \
   real var_l[5]; \
-  TReconstruction::project(patch, var_l, 0, 5, i, j, k-1, i, j, k); \
+  m_Reconstruction->project(patch, var_l, 0, 5, i, j, k-1, i, j, k); \
   AUSM_LEFT_VARS
 
 #define AUSM_RIGHT_PROJZ \
   real var_r[5]; \
-  TReconstruction::project(patch, var_r, 0, 5, i, j, k, i, j, k-1); \
+  m_Reconstruction->project(patch, var_r, 0, 5, i, j, k, i, j, k-1); \
   AUSM_RIGHT_VARS
 
 

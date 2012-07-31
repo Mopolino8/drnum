@@ -18,21 +18,41 @@ CartesianPatch::CartesianPatch()
 
 void CartesianPatch::computeDeltas()
 {
-  double Lx = sqrt(sqr(m_UX) + sqr(m_UY) + sqr(m_UZ));
-  double Ly = sqrt(sqr(m_VX) + sqr(m_VY) + sqr(m_VZ));
-  double Lz = sqrt(sqr(m_WX) + sqr(m_WY) + sqr(m_WZ));
+  double Lx = sqrt(sqr(m_Uxo) + sqr(m_Uyo) + sqr(m_Uzo));
+  double Ly = sqrt(sqr(m_Vxo) + sqr(m_Vyo) + sqr(m_Vzo));
+  double Lz = sqrt(sqr(m_Wxo) + sqr(m_Wyo) + sqr(m_Wzo));
   countFlops(15);
   countSqrts(3);
 
-  m_DX = Lx/m_NumI;
-  m_DY = Ly/m_NumJ;
-  m_DZ = Lz/m_NumK;
+  m_Dx = Lx/m_NumI;
+  m_Dy = Ly/m_NumJ;
+  m_Dz = Lz/m_NumK;
   countFlops(3);
 
-  m_InvDX = 1.0/m_DX;
-  m_InvDY = 1.0/m_DX;
-  m_InvDZ = 1.0/m_DX;
+  m_InvDx = 1.0/m_Dx;
+  m_InvDy = 1.0/m_Dx;
+  m_InvDz = 1.0/m_Dx;
   countFlops(3);
+
+  m_Dixo = m_Uxo/m_NumI;
+  m_Diyo = m_Uyo/m_NumI;
+  m_Dizo = m_Uzo/m_NumI;
+  countFlops(3);
+
+  m_Djxo = m_Vxo/m_NumJ;
+  m_Djyo = m_Vyo/m_NumJ;
+  m_Djzo = m_Vzo/m_NumJ;
+  countFlops(3);
+
+  m_Djxo = m_Wxo/m_NumK;
+  m_Djyo = m_Wyo/m_NumK;
+  m_Djzo = m_Wzo/m_NumK;
+  countFlops(3);
+
+  m_Xco = m_Xo + 0.5*(m_Dixo + m_Djxo + m_Dkxo);
+  m_Yco = m_Yo + 0.5*(m_Diyo + m_Djyo + m_Dkyo);
+  m_Zco = m_Zo + 0.5*(m_Dizo + m_Djzo + m_Dkzo);
+  countFlops(12);
 }
 
 void CartesianPatch::setupAligned(real x1, real y1, real z1, real x2, real y2, real z2)
@@ -41,19 +61,19 @@ void CartesianPatch::setupAligned(real x1, real y1, real z1, real x2, real y2, r
   m_Yo = y1;
   m_Zo = z1;
 
-  m_UX = x2 - x1;
-  m_UY = 0;
-  m_UZ = 0;
+  m_Uxo = x2 - x1;
+  m_Uyo = 0;
+  m_Uzo = 0;
   countFlops(1);
 
-  m_VX = 0;
-  m_VY = y2 - y1;
-  m_VZ = 0;
+  m_Vxo = 0;
+  m_Vyo = y2 - y1;
+  m_Vzo = 0;
   countFlops(1);
 
-  m_WX = 0;
-  m_WY = 0;
-  m_WZ = z2 - z1;
+  m_Wxo = 0;
+  m_Wyo = 0;
+  m_Wzo = z2 - z1;
   countFlops(1);
 
   computeDeltas();
@@ -115,7 +135,7 @@ void CartesianPatch::writeToVtk(QString file_name)
       for (size_t k = 0; k < m_NumK; ++k) {
         for (size_t j = 0; j < m_NumJ; ++j) {
           for (size_t i = 0; i < m_NumI; ++i) {
-            var->SetValue(id, f(getVariable(i_field, i_var), i, j, k));
+            var->SetValue(id, f(i_field, i_var, i, j, k));
             ++id;
           }
         }

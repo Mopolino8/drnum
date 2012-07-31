@@ -22,21 +22,41 @@ protected: // attributes
   real m_Xo;
   real m_Yo;
   real m_Zo;
-  real m_UX;
-  real m_UY;
-  real m_UZ;
-  real m_VX;
-  real m_VY;
-  real m_VZ;
-  real m_WX;
-  real m_WY;
-  real m_WZ;
-  real m_DX;
-  real m_DY;
-  real m_DZ;
-  real m_InvDX;
-  real m_InvDY;
-  real m_InvDZ;
+
+  real m_Xco;
+  real m_Yco;
+  real m_Zco;
+
+  real m_Uxo;
+  real m_Uyo;
+  real m_Uzo;
+
+  real m_Vxo;
+  real m_Vyo;
+  real m_Vzo;
+
+  real m_Wxo;
+  real m_Wyo;
+  real m_Wzo;
+
+  real m_Dx;
+  real m_Dy;
+  real m_Dz;
+  real m_InvDx;
+  real m_InvDy;
+  real m_InvDz;
+
+  real m_Dixo;
+  real m_Diyo;
+  real m_Dizo;
+
+  real m_Djxo;
+  real m_Djyo;
+  real m_Djzo;
+
+  real m_Dkxo;
+  real m_Dkyo;
+  real m_Dkzo;
 
   real m_LimiterEpsilon;
 
@@ -62,16 +82,6 @@ public: // methods
    * @return the index in the one dimensional data field
    */
   size_t index(int i, int j, int k) { return i*m_NumJ*m_NumK + j*m_NumK + k; }
-
-  /**
-   * @brief Get the value of a variable at an (i, j, k) triple.
-   * @param field a pointer to the variable data
-   * @param i first Cartesian index
-   * @param j second Cartesian index
-   * @param k third Cartesian index
-   * @return the field value at (i, j, k).
-   */
-  real& f(real *var, size_t i, size_t j, size_t k) { return var[i*m_NumJ*m_NumK + j*m_NumK + k]; }
 
   /**
    * @brief Get a variable set at a specified (i,j,k) position.
@@ -102,15 +112,39 @@ public: // methods
    * @param k third Cartesian index
    * @return the field value at (i, j, k).
    */
-  real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k) { return getVariable(i_field, i_var)[i*m_NumJ*m_NumK + j*m_NumK + k]; }
+  real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k);
 
-  real dx() { return m_DX; }
-  real dy() { return m_DY; }
-  real dz() { return m_DZ; }
-  real dV() { return m_DX*m_DY*m_DZ; }
-  real idx() { return m_InvDX; }
-  real idy() { return m_InvDY; }
-  real idz() { return m_InvDZ; }
+  /**
+   * Check if an (i,j,k) triple is inside the patch.
+   * Attention only the upper limit will be checked (unsigned data type).
+   * @param i first index
+   * @param j second index
+   * @param k third index
+   * @return true if it is a valid (i,j,k) triple, false otherwise
+   */
+  bool checkRange(size_t i, size_t j, size_t k);
+
+  real xo(size_t i, size_t j, size_t k) { return m_Xco + i*m_Dixo + j*m_Djxo + k*m_Dkxo; }
+  real yo(size_t i, size_t j, size_t k) { return m_Yco + i*m_Diyo + j*m_Djyo + k*m_Dkyo; }
+  real zo(size_t i, size_t j, size_t k) { return m_Zco + i*m_Dizo + j*m_Djzo + k*m_Dkzo; }
+
+  real dx() { return m_Dx; }
+  real dy() { return m_Dy; }
+  real dz() { return m_Dz; }
+  real dV() { return m_Dx*m_Dy*m_Dz; }
+  real idx() { return m_InvDx; }
+  real idy() { return m_InvDy; }
+  real idz() { return m_InvDz; }
+
+  real dixo() { return m_Dixo; }
+  real diyo() { return m_Diyo; }
+  real dizo() { return m_Dizo; }
+  real djxo() { return m_Djxo; }
+  real djyo() { return m_Djyo; }
+  real djzo() { return m_Djzo; }
+  real dkxo() { return m_Dkxo; }
+  real dkyo() { return m_Dkyo; }
+  real dkzo() { return m_Dkzo; }
 
 #ifdef WITH_VTK
   void writeToVtk(QString file_name);
@@ -118,6 +152,15 @@ public: // methods
 
 };
 
+inline real& CartesianPatch::f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k)
+{
+#ifdef DEBUG
+  if (!checkRange(i, j, k)) {
+    BUG;
+  }
+#endif
+  return getVariable(i_field, i_var)[i*m_NumJ*m_NumK + j*m_NumK + k];
+}
 
 inline void CartesianPatch::getVar(size_t i_field, size_t i, size_t j, size_t k, real *var)
 {
@@ -131,6 +174,14 @@ inline void CartesianPatch::setVar(size_t i_field, size_t i, size_t j, size_t k,
   for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
     f(i_field, i_var, i, j, k) = var[i_var];
   }
+}
+
+inline bool CartesianPatch::checkRange(size_t i, size_t j, size_t k)
+{
+  if (i >= sizeI() || j >= sizeJ() || k >= sizeK()) {
+    return false;
+  }
+  return true;
 }
 
 

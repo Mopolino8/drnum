@@ -23,7 +23,6 @@ private: // attributes
 public:
 
   CartesianStandardPatchOperation(CartesianPatch *patch, TFlux* flux);
-  virtual ~CartesianStandardPatchOperation();
 
   virtual void compute(real factor, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2);
 
@@ -33,16 +32,7 @@ public:
 template <unsigned int DIM, class TFlux>
 CartesianStandardPatchOperation<DIM, TFlux>::CartesianStandardPatchOperation(CartesianPatch *patch, TFlux *flux) : CartesianPatchOperation(patch)
 {
-  m_Res = NULL;
-  m_ResLength = 0;
   m_Flux = flux;
-}
-
-
-template <unsigned int DIM, class TFlux>
-CartesianStandardPatchOperation<DIM, TFlux>::~CartesianStandardPatchOperation()
-{
-  delete [] m_Res;
 }
 
 

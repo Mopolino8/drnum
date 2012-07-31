@@ -8,7 +8,11 @@ template <typename TReconstruction, typename TGas>
 class Ausm : public AusmBase
 {
 
+  TReconstruction* m_Reconstruction;
+
 public: // methods
+
+  Ausm(TReconstruction* reconstruction) { m_Reconstruction = reconstruction; }
 
   void x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
   void y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
@@ -50,7 +54,7 @@ inline void Ausm<TReconstruction, TGas>::x(CartesianPatch *patch, size_t i, size
 }
 
 template <typename TReconstruction, typename TGas>
-void Ausm<TReconstruction, TGas>::y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+inline void Ausm<TReconstruction, TGas>::y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
 {
   AUSM_LEFT_PROJY;
   AUSM_RIGHT_PROJY;
