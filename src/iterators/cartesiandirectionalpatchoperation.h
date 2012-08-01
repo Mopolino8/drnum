@@ -110,6 +110,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
             }
             countFlops(2*DIM);
           }
+          z += patch()->dz();
         }
         y += patch()->dy();
       }

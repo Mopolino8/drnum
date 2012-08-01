@@ -28,6 +28,7 @@ public: // methods
   bool getBoundaryMetric(real x1, real y1, real z1,
                          real x2, real y2, real z2,
                          real &k, real &nx, real &ny, real &nz);
+  bool isInside(real x, real y, real z);
 
   virtual void transform(const Transformation &transformation);
   virtual void reset();
@@ -81,6 +82,14 @@ inline bool Sphere::getBoundaryMetric(real x1, real y1, real z1,
   countFlops(11);
 
   return true;
+}
+
+inline bool Sphere::isInside(real x, real y, real z)
+{
+  real dr = CHECKED_REAL(sqrt(sqr(x - m_Xcentre) + sqr(y - m_Ycentre) + sqr(z - m_Zcentre)) - m_Radius);
+  countSqrts(1);
+  countFlops(6);
+  return dr < 0;
 }
 
 

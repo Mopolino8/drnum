@@ -62,7 +62,7 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
       countFlops(1 + 4*num_vars);
 
       // extrapolate (interpolate) to the face 1 + 1/2
-      k = (2 + k)/3;
+      k = 3.0/(2 + k);
       size_t i0 = 2*i1 - i2;
       size_t j0 = 2*j1 - j2;
       size_t k0 = 2*k1 - k2;

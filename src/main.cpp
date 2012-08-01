@@ -1,4 +1,4 @@
-#define NI 50
+#define NI 100
 #define NJ 50
 #define NK 50
 
@@ -38,7 +38,9 @@ class MyFlux
 
 public: // methods
 
-  MyFlux(real u);
+  MyFlux(CartesianPatch *patch, real u);
+
+  Sphere getSphere() { return m_Sphere; }
 
   void xField(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   void yField(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
@@ -54,10 +56,11 @@ public: // methods
 };
 
 
-MyFlux::MyFlux(real u)
+MyFlux::MyFlux(CartesianPatch *patch, real u)
 {
   m_Sphere.setCentre(0, 0, 0);
   m_Sphere.setRadius(1.0);
+  m_Sphere.transform(patch->getTransformation());
   m_Reconstruction = new reconstruction_t(&m_Sphere);
   //m_Reconstruction = new reconstruction_t();
   m_EulerFlux = new euler_t(m_Reconstruction);
@@ -145,7 +148,7 @@ void write(CartesianPatch &patch, QString file_name, int count)
     }
     file_name += "_" + num;
   }
-  cout << "writing to file \"" << qPrintable(file_name) << endl;
+  cout << "writing to file \"" << qPrintable(file_name) << ".vtr\"" << endl;
   patch.writeToVtk(file_name);
 }
 
@@ -156,12 +159,14 @@ int main()
   patch.setNumberOfVariables(5);
   patch.setupAligned(-5, 0, 0, 5, 5, 5);
   patch.resize(NI, NJ, NK);
+  real init_var[5];
+  real zero_var[5];
+  PerfectGas::primitiveToConservative(1e5, 300, 100, 0, 0, init_var);
+  PerfectGas::primitiveToConservative(1e5, 300, 0, 0, 0, zero_var);
   for (size_t i = 0; i < NI; ++i) {
     for (size_t j = 0; j < NJ; ++j) {
       for (size_t k = 0; k < NK; ++k) {
-        real var[5];
-        PerfectGas::primitiveToConservative(1e5, 300, 100, 0, 0, var);
-        patch.setVar(0, i, j, k, var);
+        patch.setVar(0, i, j, k, init_var);
       }
     }
   }
@@ -171,7 +176,7 @@ int main()
   runge_kutta.addAlpha(0.50);
   runge_kutta.addAlpha(1.00);
 
-  MyFlux flux(100.0);
+  MyFlux flux(&patch, 100.0);
   CartesianDirectionalPatchOperation<5, MyFlux> operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
   runge_kutta.addIterator(&iterator);
@@ -181,7 +186,7 @@ int main()
   real dt_ramp        = 1.1;
   real t_write        = 0;
   real write_interval = 1e-3;
-  real total_time     = 1e-3;
+  real total_time     = 1;
 
   int count = 0;
   int iter = 0;
@@ -193,21 +198,35 @@ int main()
 
   startTiming();
 
+  Sphere sphere = flux.getSphere();
+
   while (t < total_time) {
     runge_kutta(dt);
     real CFL_max = 0;
+    real x = 0.5*patch.dx();
     for (size_t i = 0; i < NI; ++i) {
+      real y = 0.5*patch.dy();
       for (size_t j = 0; j < NJ; ++j) {
+        real z = 0.5*patch.dz();
         for (size_t k = 0; k < NK; ++k) {
-          real p, u, v, w, T, var[5];
-          patch.getVar(0, i, j, k, var);
-          PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
-          real a = sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-          CFL_max = max(CFL_max, fabs(u)*dt/patch.dx());
-          CFL_max = max(CFL_max, fabs(u+a)*dt/patch.dx());
-          CFL_max = max(CFL_max, fabs(u-a)*dt/patch.dx());
+          if (!sphere.isInside(x, y, z)) {
+            real p, u, v, w, T, var[5];
+            patch.getVar(0, i, j, k, var);
+            PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+            real a = sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+            CFL_max = max(CFL_max, fabs(u)*dt/patch.dx());
+            CFL_max = max(CFL_max, fabs(u+a)*dt/patch.dx());
+            CFL_max = max(CFL_max, fabs(u-a)*dt/patch.dx());
+            countSqrts(1);
+            countFlops(10);
+          } else {
+            patch.setVar(0, i, j, k, zero_var);
+          }
+          z += patch.dz();
         }
+        y += patch.dy();
       }
+      x += patch.dx();
     }
     t += dt;
     t_write += dt;

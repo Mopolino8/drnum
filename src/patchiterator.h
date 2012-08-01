@@ -12,12 +12,6 @@ class PatchIterator
 private: // attributes
 
   Patch* m_Patch;
-  list<Shape*> m_Shapes;
-
-
-protected: // methods
-
-  void transformShapes();
 
 
 public:
@@ -26,7 +20,7 @@ public:
 
   Patch* patch() { return m_Patch; }
 
-  virtual void compute(real factor) = 0;
+  virtual void compute(real factor) = 0;  
 
 };
 
