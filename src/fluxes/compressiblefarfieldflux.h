@@ -15,12 +15,12 @@ public:
   CompressibleFarfieldFlux(TReconstruction* reconstruction);
   void setFarfield(real p, real T, real u, real v, real w) { TGas::primitiveToConservative(p, T, u, v, w, m_Var); }
 
-  void xWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void xWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void yWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void yWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void zWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void zWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  void xWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void xWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void yWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void yWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void zWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void zWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
 
 };
 
@@ -76,10 +76,13 @@ CompressibleFarfieldFlux<TReconstruction, TGas>::CompressibleFarfieldFlux(TRecon
 
 
 template <typename TReconstruction, typename TGas>
-void CompressibleFarfieldFlux<TReconstruction, TGas>::xWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void CompressibleFarfieldFlux<TReconstruction, TGas>::xWallP(CartesianPatch *patch,
+                                                             size_t i, size_t j, size_t k,
+                                                             real x, real y, real z,
+                                                             real A, real *flux)
 {
   real var1[5];
-  m_Reconstruction->project(patch, var1, 0, 5, i-1, j, k, i, j, k);
+  m_Reconstruction->project(patch, var1, 0, 5, i-1, j, k, i, j, k, x - patch->dx(), y, z, x, y, z);
   FARFIELD_VARS
   real M0 = -CHECKED_REAL(u0/a0);
   real M1 = -CHECKED_REAL(u1/a1);
@@ -92,10 +95,13 @@ void CompressibleFarfieldFlux<TReconstruction, TGas>::xWallP(CartesianPatch *pat
 }
 
 template <typename TReconstruction, typename TGas>
-void CompressibleFarfieldFlux<TReconstruction, TGas>::xWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void CompressibleFarfieldFlux<TReconstruction, TGas>::xWallM(CartesianPatch *patch,
+                                                             size_t i, size_t j, size_t k,
+                                                             real x, real y, real z,
+                                                             real A, real *flux)
 {
   real var1[5];
-  m_Reconstruction->project(patch, var1, 0, 5, i, j, k, i-1, j, k);
+  m_Reconstruction->project(patch, var1, 0, 5, i, j, k, i-1, j, k, x, y, z, x - patch->dx(), y, z);
   FARFIELD_VARS
   real M0 = CHECKED_REAL(u0/a0);
   real M1 = CHECKED_REAL(u1/a1);
@@ -108,10 +114,13 @@ void CompressibleFarfieldFlux<TReconstruction, TGas>::xWallM(CartesianPatch *pat
 }
 
 template <typename TReconstruction, typename TGas>
-void CompressibleFarfieldFlux<TReconstruction, TGas>::yWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void CompressibleFarfieldFlux<TReconstruction, TGas>::yWallP(CartesianPatch *patch,
+                                                             size_t i, size_t j, size_t k,
+                                                             real x, real y, real z,
+                                                             real A, real *flux)
 {
   real var1[5];
-  m_Reconstruction->project(patch, var1, 0, 5, i, j-1, k, i, j, k);
+  m_Reconstruction->project(patch, var1, 0, 5, i, j-1, k, i, j, k, x, y - patch->dy(), z, x, y, z);
   FARFIELD_VARS
   real M0 = -CHECKED_REAL(v0/a0);
   real M1 = -CHECKED_REAL(v1/a1);
@@ -124,10 +133,13 @@ void CompressibleFarfieldFlux<TReconstruction, TGas>::yWallP(CartesianPatch *pat
 }
 
 template <typename TReconstruction, typename TGas>
-void CompressibleFarfieldFlux<TReconstruction, TGas>::yWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void CompressibleFarfieldFlux<TReconstruction, TGas>::yWallM(CartesianPatch *patch,
+                                                             size_t i, size_t j, size_t k,
+                                                             real x, real y, real z,
+                                                             real A, real *flux)
 {
   real var1[5];
-  m_Reconstruction->project(patch, var1, 0, 5, i, j, k, i, j-1, k);
+  m_Reconstruction->project(patch, var1, 0, 5, i, j, k, i, j-1, k, x, y, z, x, y - patch->dy(), z);
   FARFIELD_VARS
   real M0 = CHECKED_REAL(v0/a0);
   real M1 = CHECKED_REAL(v1/a1);
@@ -140,10 +152,13 @@ void CompressibleFarfieldFlux<TReconstruction, TGas>::yWallM(CartesianPatch *pat
 }
 
 template <typename TReconstruction, typename TGas>
-void CompressibleFarfieldFlux<TReconstruction, TGas>::zWallP(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void CompressibleFarfieldFlux<TReconstruction, TGas>::zWallP(CartesianPatch *patch,
+                                                             size_t i, size_t j, size_t k,
+                                                             real x, real y, real z,
+                                                             real A, real *flux)
 {
   real var1[5];
-  m_Reconstruction->project(patch, var1, 0, 5, i, j, k-1, i, j, k);
+  m_Reconstruction->project(patch, var1, 0, 5, i, j, k-1, i, j, k, x, y, z - patch->dz(), x, y, z);
   FARFIELD_VARS
   real M0 = -CHECKED_REAL(w0/a0);
   real M1 = -CHECKED_REAL(w1/a1);
@@ -156,10 +171,13 @@ void CompressibleFarfieldFlux<TReconstruction, TGas>::zWallP(CartesianPatch *pat
 }
 
 template <typename TReconstruction, typename TGas>
-void CompressibleFarfieldFlux<TReconstruction, TGas>::zWallM(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void CompressibleFarfieldFlux<TReconstruction, TGas>::zWallM(CartesianPatch *patch,
+                                                             size_t i, size_t j, size_t k,
+                                                             real x, real y, real z,
+                                                             real A, real *flux)
 {
   real var1[5];
-  m_Reconstruction->project(patch, var1, 0, 5, i, j, k, i, j, k-1);
+  m_Reconstruction->project(patch, var1, 0, 5, i, j, k, i, j, k-1, x, y, z, x, y, z - patch->dz());
   FARFIELD_VARS
   real M0 = CHECKED_REAL(w0/a0);
   real M1 = CHECKED_REAL(w1/a1);

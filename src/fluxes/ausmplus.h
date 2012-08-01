@@ -14,15 +14,28 @@ public: // methods
 
   AusmPlus(TReconstruction* reconstruction) { m_Reconstruction = reconstruction; }
 
-  void x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux);
-  void y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux);
-  void z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux);
+  void xField(CartesianPatch *patch,
+              size_t i, size_t j, size_t k,
+              real x, real y, real z,
+              real A, real* flux);
+  void yField(CartesianPatch *patch,
+              size_t i, size_t j, size_t k,
+              real x, real y, real z,
+              real A, real* flux);
+  void zField(CartesianPatch *patch,
+              size_t i, size_t j, size_t k,
+              real x, real y, real z,
+              real A, real* flux);
+
 
 };
 
 
 template <typename TReconstruction, typename TGas>
-inline void AusmPlus<TReconstruction, TGas>::x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void AusmPlus<TReconstruction, TGas>::xField(CartesianPatch *patch,
+                                             size_t i, size_t j, size_t k,
+                                             real x, real y, real z,
+                                             real A, real* flux)
 {
   AUSM_LEFT_PROJX;
   AUSM_RIGHT_PROJX;
@@ -43,7 +56,10 @@ inline void AusmPlus<TReconstruction, TGas>::x(CartesianPatch *patch, size_t i, 
 }
 
 template <typename TReconstruction, typename TGas>
-void AusmPlus<TReconstruction, TGas>::y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void AusmPlus<TReconstruction, TGas>::yField(CartesianPatch *patch,
+                                             size_t i, size_t j, size_t k,
+                                             real x, real y, real z,
+                                             real A, real* flux)
 {
   AUSM_LEFT_PROJY;
   AUSM_RIGHT_PROJY;
@@ -64,7 +80,10 @@ void AusmPlus<TReconstruction, TGas>::y(CartesianPatch *patch, size_t i, size_t 
 }
 
 template <typename TReconstruction, typename TGas>
-void AusmPlus<TReconstruction, TGas>::z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real *flux)
+void AusmPlus<TReconstruction, TGas>::zField(CartesianPatch *patch,
+                                             size_t i, size_t j, size_t k,
+                                             real x, real y, real z,
+                                             real A, real* flux)
 {
   AUSM_LEFT_PROJZ;
   AUSM_RIGHT_PROJZ;

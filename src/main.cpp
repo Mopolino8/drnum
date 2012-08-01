@@ -40,16 +40,16 @@ public: // methods
 
   MyFlux(real u);
 
-  void x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  void y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  void z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void xField(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void yField(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void zField(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
 
-  void xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  void yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  void zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  void xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  void yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
-  void zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux);
+  void xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+  void zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
 
 };
 
@@ -66,55 +66,73 @@ MyFlux::MyFlux(real u)
   m_WallFlux = new wall_t(m_Reconstruction);
 }
 
-inline void MyFlux::x(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::xField
+(
+  CartesianPatch *patch,
+  size_t i, size_t j, size_t k,
+  real x, real y, real z,
+  real A, real* flux
+)
 {
-  m_EulerFlux->x(P, i, j, k, A, flux);
+  m_EulerFlux->xField(patch, i, j, k, x, y, z, A, flux);
 }
 
-inline void MyFlux::y(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::yField
+(
+  CartesianPatch *patch,
+  size_t i, size_t j, size_t k,
+  real x, real y, real z,
+  real A, real* flux
+)
 {
-  m_EulerFlux->y(P, i, j, k, A, flux);
+  m_EulerFlux->yField(patch, i, j, k, x, y, z, A, flux);
 }
 
-inline void MyFlux::z(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::zField
+(
+  CartesianPatch *patch,
+  size_t i, size_t j, size_t k,
+  real x, real y, real z,
+  real A, real* flux
+)
 {
-  m_EulerFlux->z(P, i, j, k, A, flux);
+  m_EulerFlux->zField(patch, i, j, k, x, y, z, A, flux);
 }
 
-inline void MyFlux::xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarFlux->xWallP(P, i, j, k, A, flux);
+  m_FarFlux->xWallP(P, i, j, k, x, y, z, A, flux);
   //m_WallFlux->xWallP(P, i, j, k, A, flux);
 }
 
-inline void MyFlux::yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  //m_FarFlux->yWallP(P, i, j, k, A, flux);
-  m_WallFlux->yWallP(P, i, j, k, A, flux);
+  //m_FarFlux->yWallP(P, i, j, k, x, y, z, A, flux);
+  m_WallFlux->yWallP(P, i, j, k, x, y, z, A, flux);
 }
 
-inline void MyFlux::zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  //m_FarFlux->zWallP(P, i, j, k, A, flux);
-  m_WallFlux->zWallP(P, i, j, k, A, flux);
+  //m_FarFlux->zWallP(P, i, j, k, x, y, z, A, flux);
+  m_WallFlux->zWallP(P, i, j, k, x, y, z, A, flux);
 }
 
-inline void MyFlux::xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarFlux->xWallM(P, i, j, k, A, flux);
-  //m_WallFlux->xWallM(P, i, j, k, A, flux);
+  m_FarFlux->xWallM(P, i, j, k, x, y, z, A, flux);
+  //m_WallFlux->xWallM(P, i, j, k, x, y, z, A, flux);
 }
 
-inline void MyFlux::yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  //m_FarFlux->yWallM(P, i, j, k, A, flux);
-  m_WallFlux->yWallM(P, i, j, k, A, flux);
+  //m_FarFlux->yWallM(P, i, j, k, x, y, z, A, flux);
+  m_WallFlux->yWallM(P, i, j, k, x, y, z, A, flux);
 }
 
-inline void MyFlux::zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real A, real* flux)
+inline void MyFlux::zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  //m_FarFlux->zWallM(P, i, j, k, A, flux);
-  m_WallFlux->zWallM(P, i, j, k, A, flux);
+  //m_FarFlux->zWallM(P, i, j, k, x, y, z, A, flux);
+  m_WallFlux->zWallM(P, i, j, k, x, y, z, A, flux);
 }
 
 void write(CartesianPatch &patch, QString file_name, int count)

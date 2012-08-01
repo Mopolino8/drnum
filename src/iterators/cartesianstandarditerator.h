@@ -21,6 +21,7 @@ public: // methods
 
 inline void CartesianStandardIterator::compute(real factor)
 {
+  transformShapes();
   size_t i2 = m_PatchOperation->patch()->sizeI();
   size_t j2 = m_PatchOperation->patch()->sizeJ();
   size_t k2 = m_PatchOperation->patch()->sizeK();

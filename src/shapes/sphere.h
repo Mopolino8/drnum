@@ -1,9 +1,9 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "blockcfd.h"
+#include "shapes/shape.h"
 
-class Sphere
+class Sphere : public Shape
 {
 
 private: // attributes
@@ -12,6 +12,10 @@ private: // attributes
   real m_Ycentre;
   real m_Zcentre;
   real m_Radius;
+  real m_XcentreOrig;
+  real m_YcentreOrig;
+  real m_ZcentreOrig;
+  real m_RadiusOrig;
 
 
 public: // methods
@@ -24,6 +28,9 @@ public: // methods
   bool getBoundaryMetric(real x1, real y1, real z1,
                          real x2, real y2, real z2,
                          real &k, real &nx, real &ny, real &nz);
+
+  virtual void transform(const Transformation &transformation);
+  virtual void reset();
 
 };
 

@@ -14,15 +14,27 @@ public: // methods
 
   AusmDV(TReconstruction* reconstruction) { m_Reconstruction = reconstruction; }
 
-  void x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
-  void z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux);
+  void xField(CartesianPatch *patch,
+              size_t i, size_t j, size_t k,
+              real x, real y, real z,
+              real A, real* flux);
+  void yField(CartesianPatch *patch,
+              size_t i, size_t j, size_t k,
+              real x, real y, real z,
+              real A, real* flux);
+  void zField(CartesianPatch *patch,
+              size_t i, size_t j, size_t k,
+              real x, real y, real z,
+              real A, real* flux);
 
 };
 
 
 template <typename TReconstruction, typename TGas>
-inline void AusmDV<TReconstruction, TGas>::x(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+void AusmDV<TReconstruction, TGas>::xField(CartesianPatch *patch,
+                                           size_t i, size_t j, size_t k,
+                                           real x, real y, real z,
+                                           real A, real* flux)
 {
   AUSM_LEFT_PROJX;
   AUSM_RIGHT_PROJX;
@@ -46,7 +58,10 @@ inline void AusmDV<TReconstruction, TGas>::x(CartesianPatch *patch, size_t i, si
 }
 
 template <typename TReconstruction, typename TGas>
-void AusmDV<TReconstruction, TGas>::y(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+void AusmDV<TReconstruction, TGas>::yField(CartesianPatch *patch,
+                                           size_t i, size_t j, size_t k,
+                                           real x, real y, real z,
+                                           real A, real* flux)
 {
   AUSM_LEFT_PROJY;
   AUSM_RIGHT_PROJY;
@@ -70,7 +85,10 @@ void AusmDV<TReconstruction, TGas>::y(CartesianPatch *patch, size_t i, size_t j,
 }
 
 template <typename TReconstruction, typename TGas>
-void AusmDV<TReconstruction, TGas>::z(CartesianPatch *patch, size_t i, size_t j, size_t k, real A, real* flux)
+void AusmDV<TReconstruction, TGas>::zField(CartesianPatch *patch,
+                                           size_t i, size_t j, size_t k,
+                                           real x, real y, real z,
+                                           real A, real* flux)
 {
   AUSM_LEFT_PROJZ;
   AUSM_RIGHT_PROJZ;

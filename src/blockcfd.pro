@@ -38,7 +38,9 @@ SOURCES += main.cpp \
     blockcfd.cpp \
     timeintegration.cpp \
     patchiterator.cpp \
-    rungekutta.cpp
+    rungekutta.cpp \
+    transformation.cpp \
+    shapes/sphere.cpp
 
 HEADERS += \
     patch.h \
@@ -65,5 +67,12 @@ HEADERS += \
     fluxes/compressiblefarfieldflux.h \
     reconstruction/immersedboundaryreconstruction.h \
     boundary_conditions/compressibleeulerwall.h \
-    shapes/shape.h
+    shapes/shape.h \
+    math/smallsquarematrix.h \
+    math/mathvector_structs.h \
+    math/mathvector_operators.h \
+    math/mathvector_methods.h \
+    math/mathvector.h \
+    math/linsolve.h \
+    transformation.h
 

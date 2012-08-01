@@ -6,6 +6,9 @@
 #include <iostream>
 #include <ctime>
 
+#include "math/mathvector.h"
+#include "math/smallsquarematrix.h"
+
 #define DEBUG
 
 using namespace std;

@@ -17,7 +17,9 @@ public:
 
   void project(CartesianPatch *patch, real* var, size_t i_field, size_t num_vars,
                size_t i1, size_t j1, size_t k1,
-               size_t i2, size_t j2, size_t k2);
+               size_t i2, size_t j2, size_t k2,
+               real x1, real y1, real z1,
+               real x2, real y2, real z2);
 };
 
 template <typename TReconstruction, typename TShape, typename TBoundaryCondition>
@@ -25,19 +27,15 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
 (
   CartesianPatch *patch, real *var, size_t i_field, size_t num_vars,
   size_t i1, size_t j1, size_t k1,
-  size_t i2, size_t j2, size_t k2
+  size_t i2, size_t j2, size_t k2,
+  real x1, real y1, real z1,
+  real x2, real y2, real z2
 )
 {
   if (patch->checkRange(i1, j1, k1) && patch->checkRange(i2, j2, k2)) {
     real k, nx, ny, nz;
-    real xo1 = patch->xo(i1, j1, k1);
-    real yo1 = patch->yo(i1, j1, k1);
-    real zo1 = patch->zo(i1, j1, k1);
-    real xo2 = patch->xo(i2, j2, k2);
-    real yo2 = patch->yo(i2, j2, k2);
-    real zo2 = patch->zo(i2, j2, k2);
 
-    if (m_Shape->getBoundaryMetric(xo1, yo1, zo1, xo2, yo2, zo2, k, nx, ny, nz))
+    if (m_Shape->getBoundaryMetric(x1, y1, z1, x2, y2, z2, k, nx, ny, nz))
     {
       // auxilary variable sets
       real* var0 = new real [num_vars];
@@ -45,7 +43,7 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
       real* bvar = new real [num_vars];
 
       // make sure we always extrapolate from outside the shape
-      if ((xo2-xo1)*nx + (yo2-yo1)*ny + (zo2-zo1)*nz > 0) {
+      if ((x2-x1)*nx + (y2-y1)*ny + (z2-z1)*nz > 0) {
         swap(i1, i2);
         swap(j1, j2);
         swap(k1, k2);

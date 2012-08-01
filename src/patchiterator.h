@@ -2,6 +2,9 @@
 #define PATCHITERATOR_H
 
 #include "patch.h"
+#include "shapes/shape.h"
+
+#include <list>
 
 class PatchIterator
 {
@@ -9,6 +12,13 @@ class PatchIterator
 private: // attributes
 
   Patch* m_Patch;
+  list<Shape*> m_Shapes;
+
+
+protected: // methods
+
+  void transformShapes();
+
 
 public:
 

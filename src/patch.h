@@ -4,6 +4,7 @@
 #include <cstddef>
 
 #include "blockcfd.h"
+#include "transformation.h"
 
 class Patch
 {
@@ -15,6 +16,8 @@ private: // attributes
   size_t  m_NumVariables; ///< number of variables (e.g. rho, rhou, ...)
   size_t  m_FieldSize;    ///< length of each field
   size_t  m_VariableSize; ///< length of each variable
+
+  Transformation m_Transformation;
 
 
 private: // methods
@@ -29,6 +32,8 @@ protected: // methods
 
   real* getField(size_t i_field);
   real* getVariable(size_t i_field, size_t i_variable);
+
+  void setTransformation(Transformation t) { m_Transformation = t; }
 
 
 public: // methods
@@ -67,8 +72,6 @@ public: // methods
   size_t fieldSize()    { return m_FieldSize; }
   size_t variableSize() { return m_VariableSize; }
 
-  //virtual void subStep(real dt) = 0;
-
   void setFieldToZero(real *field);
   void setFieldToZero(size_t i_field);
   void copyField(real *src, real *dst);
@@ -77,6 +80,8 @@ public: // methods
   void addField(real *op1, real factor, real *op2, real *dst);
   void addField(size_t i_src, real factor, size_t i_dst);
   void addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst);
+
+  Transformation getTransformation() { return m_Transformation; }
 
 };
 

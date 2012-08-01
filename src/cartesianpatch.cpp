@@ -77,6 +77,10 @@ void CartesianPatch::setupAligned(real x1, real y1, real z1, real x2, real y2, r
   countFlops(1);
 
   computeDeltas();
+
+  Transformation t;
+  t.setVector(vec3_t(x1, y1, z1));
+  setTransformation(t.inverse());
 }
 
 void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
