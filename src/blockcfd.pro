@@ -64,5 +64,6 @@ HEADERS += \
     shapes/sphere.h \
     fluxes/compressiblefarfieldflux.h \
     reconstruction/immersedboundaryreconstruction.h \
-    boundary_conditions/compressibleeulerwall.h
+    boundary_conditions/compressibleeulerwall.h \
+    shapes/shape.h
 

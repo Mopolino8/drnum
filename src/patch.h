@@ -69,14 +69,14 @@ public: // methods
 
   //virtual void subStep(real dt) = 0;
 
-  void  setFieldToZero(real *field);
-  void  setFieldToZero(size_t i_field);
-  void  copyField(real *src, real *dst);
-  void  copyField(size_t i_src, size_t i_dst);
-  void  addField(real *src, real factor, real *dst);
-  void  addField(real *op1, real factor, real *op2, real *dst);
-  void  addField(size_t i_src, real factor, size_t i_dst);
-  void  addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst);
+  void setFieldToZero(real *field);
+  void setFieldToZero(size_t i_field);
+  void copyField(real *src, real *dst);
+  void copyField(size_t i_src, size_t i_dst);
+  void addField(real *src, real factor, real *dst);
+  void addField(real *op1, real factor, real *op2, real *dst);
+  void addField(size_t i_src, real factor, size_t i_dst);
+  void addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst);
 
 };
 
