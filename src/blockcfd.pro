@@ -21,7 +21,7 @@ LIBS        += -lvtkVolumeRendering
 LIBS        += -lvtkWidgets
 
 QMAKE_CXXFLAGS += -Wno-deprecated
-QMAKE_CXXFLAGS_RELEASE += -g
+#QMAKE_CXXFLAGS_RELEASE += -g
 QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_CXXFLAGS_RELEASE += -finline-limit=100000
 QMAKE_CXXFLAGS_RELEASE += --param large-function-growth=100000
@@ -29,7 +29,6 @@ QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
 QMAKE_CXXFLAGS_RELEASE += -funroll-loops
 #QMAKE_CXXFLAGS_RELEASE += -Winline
 
-QMAKE_LFLAGS_RELEASE += -O3
 
 SOURCES += main.cpp \
     patch.cpp \
@@ -40,7 +39,8 @@ SOURCES += main.cpp \
     patchiterator.cpp \
     rungekutta.cpp \
     transformation.cpp \
-    shapes/sphere.cpp
+    shapes/sphere.cpp \
+    shapes/halfspace.cpp
 
 HEADERS += \
     patch.h \
@@ -74,5 +74,7 @@ HEADERS += \
     math/mathvector_methods.h \
     math/mathvector.h \
     math/linsolve.h \
-    transformation.h
+    transformation.h \
+    shapes/halfspace.h \
+    compressiblevariables.h
 

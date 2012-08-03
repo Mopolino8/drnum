@@ -3,6 +3,10 @@
 
 #include "blockcfd.h"
 
+/**
+ * A genric reconstruction which respects immersed boundaries.
+ * The boundary description has to be passed as a template parameter (TShape)
+ */
 template <typename TReconstruction, typename TShape, typename TBoundaryCondition>
 class ImmersedBoundaryReconstruction
 {
@@ -32,56 +36,58 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
   real x2, real y2, real z2
 )
 {
-  if (patch->checkRange(i1, j1, k1) && patch->checkRange(i2, j2, k2)) {
-    real k, nx, ny, nz;
+  real k, nx, ny, nz;
 
-    if (m_Shape->getBoundaryMetric(x1, y1, z1, x2, y2, z2, k, nx, ny, nz))
-    {
-      // auxilary variable sets
-      real* var0 = new real [num_vars];
-      real* var1 = new real [num_vars];
-      real* bvar = new real [num_vars];
+  // check if the edge (i1, j1, k1) -> (i2, j2, k2) crosses an immersed boundary
+  if (m_Shape->getBoundaryMetric(x1, y1, z1, x2, y2, z2, k, nx, ny, nz)) {
 
-      // make sure we always extrapolate from outside the shape
-      if ((x2-x1)*nx + (y2-y1)*ny + (z2-z1)*nz > 0) {
-        swap(i1, i2);
-        swap(j1, j2);
-        swap(k1, k2);
-        k = 1 - k;
-      }
-      countFlops(9);
+    // auxilary variable sets
+    real* var0 = new real [num_vars];
+    real* var1 = new real [num_vars];
+    real* bvar = new real [num_vars];
 
-      // compute corrected values on the surface of the shape
-      k *= 2;
-      m_Reconstruction.project(patch, var, i_field, num_vars, i1, j1, k1, i2, j2, k2);
-      patch->getVar(i_field, i1, j1, k1, var1);
-      for (size_t i_var = 0; i_var < num_vars; ++i_var) {
-        bvar[i_var] = k*var[i_var] + (1-k)*var1[i_var];
-      }
-      TBoundaryCondition::correct(nx, ny, nz, bvar);
-      countFlops(1 + 4*num_vars);
-
-      // extrapolate (interpolate) to the face 1 + 1/2
-      k = 3.0/(2 + k);
-      size_t i0 = 2*i1 - i2;
-      size_t j0 = 2*j1 - j2;
-      size_t k0 = 2*k1 - k2;
-
-      if (!patch->checkRange(i0, j0, k0)) {
-        BUG;
-      }
-
-      patch->getVar(i_field, i0, j0, k0, var0);
-      for (size_t i_var = 0; i_var < num_vars; ++i_var) {
-        var[i_var] = k*bvar[i_var] + (1-k)*var0[i_var];
-      }
-      countFlops(8 + 4*num_vars);
-
-      delete [] var0;
-      delete [] var1;
-      delete [] bvar;
-      return;
+    // make sure we always extrapolate from outside the shape (i.e. from the fluid part)
+    if ((x2-x1)*nx + (y2-y1)*ny + (z2-z1)*nz > 0) {
+      swap(i1, i2);
+      swap(j1, j2);
+      swap(k1, k2);
+      k = 1 - k;
     }
+    if (!patch->checkRange(i1, j1, k1)) {
+      BUG;
+    }
+    countFlops(9);
+
+    // compute corrected values on the surface of the shape
+    k *= 2;
+    m_Reconstruction.project(patch, var, i_field, num_vars, i1, j1, k1, i2, j2, k2);
+    patch->getVar(i_field, i1, j1, k1, var1);
+    for (size_t i_var = 0; i_var < num_vars; ++i_var) {
+      bvar[i_var] = k*var[i_var] + (1-k)*var1[i_var];
+    }
+    TBoundaryCondition::correct(nx, ny, nz, bvar);
+    countFlops(1 + 4*num_vars);
+
+    // compute the indices of one node further away from the boundary surface
+    k = 3.0/(2 + k);
+    size_t i0 = 2*i1 - i2;
+    size_t j0 = 2*j1 - j2;
+    size_t k0 = 2*k1 - k2;
+    if (!patch->checkRange(i0, j0, k0)) {
+      BUG;
+    }
+
+    // extrapolate (interpolate) to the face i + 1/2
+    patch->getVar(i_field, i0, j0, k0, var0);
+    for (size_t i_var = 0; i_var < num_vars; ++i_var) {
+      var[i_var] = k*bvar[i_var] + (1-k)*var0[i_var];
+    }
+    countFlops(8 + 4*num_vars);
+
+    delete [] var0;
+    delete [] var1;
+    delete [] bvar;
+    return;
   }
 
   // default to normal reconstruction

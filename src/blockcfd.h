@@ -6,14 +6,16 @@
 #include <iostream>
 #include <ctime>
 
+typedef float real;
+
+
 #include "math/mathvector.h"
 #include "math/smallsquarematrix.h"
 
-#define DEBUG
+//#define DEBUG
 
 using namespace std;
 
-typedef double real;
 
 struct real3_t { real x, y, z; };
 struct size3_t { size_t i, j, k; };

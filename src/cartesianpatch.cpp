@@ -1,14 +1,5 @@
 #include "cartesianpatch.h"
 
-#ifdef WITH_VTK
-#include <vtkSmartPointer.h>
-#include <vtkRectilinearGrid.h>
-#include <vtkXMLRectilinearGridWriter.h>
-#include <vtkFloatArray.h>
-#include <vtkCellData.h>
-#include <QVector>
-#endif
-
 CartesianPatch::CartesianPatch()
 {
   m_NumI = 1;
@@ -93,64 +84,3 @@ void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
   computeDeltas();
 }
 
-#ifdef WITH_VTK
-
-void CartesianPatch::writeToVtk(QString file_name)
-{
-  vtkSmartPointer<vtkRectilinearGrid> grid = vtkSmartPointer<vtkRectilinearGrid>::New();
-
-  vtkSmartPointer<vtkFloatArray> xc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t i = 0; i < m_NumI + 1; ++i) {
-    xc->InsertNextValue(i*dx());
-  }
-
-  vtkSmartPointer<vtkFloatArray> yc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t j = 0; j < m_NumJ + 1; ++j) {
-    yc->InsertNextValue(j*dy());
-  }
-
-  vtkSmartPointer<vtkFloatArray> zc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t k = 0; k < m_NumK + 1; ++k) {
-    zc->InsertNextValue(k*dz());
-  }
-
-  grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
-  grid->SetXCoordinates(xc);
-  grid->SetYCoordinates(yc);
-  grid->SetZCoordinates(zc);
-
-  for (size_t i_field = 0; i_field < numFields(); ++i_field) {
-    QString field_name;
-    field_name.setNum(i_field + 1);
-    if (field_name.size() < 2) {
-      field_name = "0" + field_name;
-    }
-    for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
-      QString var_name;
-      var_name.setNum(i_var + 1);
-      if (var_name.size() < 2) {
-        var_name = "0" + var_name;
-      }
-      vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-      var->SetName(qPrintable("f_" + field_name + "_" + var_name));
-      var->SetNumberOfValues(variableSize());
-      grid->GetCellData()->AddArray(var);
-      vtkIdType id = 0;
-      for (size_t k = 0; k < m_NumK; ++k) {
-        for (size_t j = 0; j < m_NumJ; ++j) {
-          for (size_t i = 0; i < m_NumI; ++i) {
-            var->SetValue(id, f(i_field, i_var, i, j, k));
-            ++id;
-          }
-        }
-      }
-    }
-  }
-
-  vtkSmartPointer<vtkXMLRectilinearGridWriter> vtr = vtkSmartPointer<vtkXMLRectilinearGridWriter>::New();
-  vtr->SetFileName(qPrintable(file_name + ".vtr"));
-  vtr->SetInput(grid);
-  vtr->Write();
-}
-
-#endif
