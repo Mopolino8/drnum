@@ -2,6 +2,7 @@ TEMPLATE = app
 CONFIG += console
 
 INCLUDEPATH += $(VTKINCDIR)
+INCLUDEPATH += utility
 
 LIBS        += -L$(VTKLIBDIR)
 LIBS        += -lQVTK
@@ -22,6 +23,8 @@ LIBS        += -lvtkWidgets
 
 QMAKE_CXXFLAGS += -Wno-deprecated
 
+
+
 SOURCES += main.cpp \
     patch.cpp \
     cartesianpatch.cpp \
@@ -30,7 +33,12 @@ SOURCES += main.cpp \
     compressiblecartesianpatch.cpp \
     timeintegration.cpp \
     patchiterator.cpp \
-    rungekutta.cpp
+    rungekutta.cpp \
+    patchgrid.cpp \
+    utility/List.cc \
+    utility/MError.cc \
+    math/coordtransform.cpp \
+    math/coordtransformvv.cpp
 
 HEADERS += \
     patch.h \
@@ -52,5 +60,12 @@ HEADERS += \
     patchiterator.h \
     iterators/cartesianstandarditerator.h \
     iterators/cartesianstandardpatchoperation.h \
-    rungekutta.h
-
+    rungekutta.h \
+    patchgrid.h \
+    intercoeff.h \
+    intercoeffws.h \
+    utility/weightedset.h \
+    utility/List.hh \
+    utility/MError.hh \
+    math/coordtransform.h \
+    math/coordtransformvv.h

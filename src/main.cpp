@@ -10,6 +10,7 @@
 #include "iterators/cartesianstandarditerator.h"
 #include "iterators/cartesianstandardpatchoperation.h"
 #include "rungekutta.h"
+#include "patchgrid.h"
 
 template <class TReconstruction>
 class TestFlux
@@ -174,7 +175,35 @@ void write(CompressibleCartesianPatch &patch, int count)
 
 int main()
 {
-  CompressibleCartesianPatch patch;
+  /// Testing transformations (debug only)
+  CoordTransformVV ct;
+  vec3_t b(1., 0., 0.);
+  ct.setVector(b);
+  vec3_t xyzo(0., 0., 0.);
+  vec3_t xyz = ct.transform(xyzo);
+  vec3_t xyzo_1 = ct.transformReverse(xyz);
+
+  /// Testing patchGrids
+  PatchGrid patchGrid;
+  patchGrid.initLists(10,10);
+  CartesianPatch patch_0;
+  CartesianPatch patch_1;
+  patch_0.setupAligned( 0., 0., 0., 10.0, 10.0, 10.0);
+  patch_0.resize(10,10,10);
+  patch_0.setInterpolateData();
+  patch_1.setupAligned(10., 0., 0., 20.0, 10.0, 10.0);
+  patch_1.resize(10,10,10);
+  patch_1.setInterpolateData();
+  patchGrid.insertPatch(&patch_0);
+  patchGrid.insertPatch(&patch_1);
+  // patchGrid.computeDependencies(true);
+  patch_0.insertNeighbour(&patch_1);  /// will be automatic later
+  patch_1.insertNeighbour(&patch_0);  /// will be automatic later
+
+
+
+
+  CompressibleCartesianPatch patch; //@@ kann ersetzt werden
   patch.setupAligned(0, 0, 0, 10.0, 0.1, 0.1);
   patch.resize(NI, NJ, NK);
   for (size_t i = 0; i < NI; ++i) {
@@ -208,7 +237,9 @@ int main()
   write(patch, count);
   while (t < total_time) {
     runge_kutta(dt);
+
     real CFL_max = 0;
+    /*
     for (size_t i = 0; i < NI; ++i) {
       for (size_t j = 0; j < NJ; ++j) {
         for (size_t k = 0; k < NK; ++k) {
@@ -228,6 +259,7 @@ int main()
       write(patch, count);
       t_write = 0;
     }
+    */
     real max_norm, l2_norm;
     patch.computeVariableDifference(0, 0, 1, 0, max_norm, l2_norm);
     cout << t << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm << endl;
