@@ -14,10 +14,9 @@ class InterCoeff;
  *
  * NOTE: * Dependencies from ONE other Patch only.
  */
-//struct InterCoeff
-class InterCoeff
+struct InterCoeff
+    //class InterCoeff
 {
-
   /**
    * Patch from which data will be received.
    */
@@ -44,8 +43,8 @@ class InterCoeff
    *       in m_ReceivingCells a fixed number m_StrideGivePerRec of pairs(cells, weights)
    *       is provided. Padding is used to fill empty spaces, in case of lesser contributors.
    */
-  pair<size_t,real>* m_GivingCellContribs;
+  pair<size_t, real>* m_GivingCellContribs;
 
-}
+};
 #endif // INTERCOEFF_H
 
