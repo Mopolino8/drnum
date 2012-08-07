@@ -12,7 +12,7 @@ typedef float real;
 #include "math/mathvector.h"
 #include "math/smallsquarematrix.h"
 
-//#define DEBUG
+#define DEBUG
 
 using namespace std;
 

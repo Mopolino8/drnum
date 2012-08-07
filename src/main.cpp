@@ -158,10 +158,10 @@ void write(CartesianPatch &patch, QString file_name, int count)
   patch.writeToVtk(0, file_name, cvars);
 }
 
-#define N  30
-#define NI 8*N
-#define NJ 3*N
-#define NK 3*N
+#define N  50
+#define NI 4*N
+#define NJ 1*N
+#define NK 3
 
 int main()
 {
@@ -191,18 +191,20 @@ int main()
   runge_kutta.addAlpha(0.50);
   runge_kutta.addAlpha(1.00);
 
-  Sphere shape;
-  shape.setCentre(0, 0, 0);
-  shape.setRadius(0.25);
+  //Sphere shape;
+  //shape.setCentre(0, 0, 0);
+  //shape.setRadius(0.25);
 
-  //HalfSpace shape;
-  //shape.setPoint(0.2,0,0);
-  //shape.setNormal(-1,5,0);
+  HalfSpace shape;
+  shape.setPoint(0, 0.2, 0);
+  shape.setNormal(-1,20,0);
 
   shape.transform(patch.getTransformation());
 
-  MyFlux<Sphere> flux(u, shape);
-  CartesianDirectionalPatchOperation<5, MyFlux<Sphere> > operation(&patch, &flux);
+  typedef HalfSpace shape_t;
+
+  MyFlux<shape_t> flux(u, shape);
+  CartesianDirectionalPatchOperation<5, MyFlux<shape_t> > operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
   runge_kutta.addIterator(&iterator);
 
@@ -210,7 +212,7 @@ int main()
   real dt_max         = 5e-5;
   real dt_ramp        = 1.0;
   real t_write        = 0;
-  real write_interval = 1e-3;
+  real write_interval = 1e-2;
   real total_time     = 1;
 
   int count = 0;
