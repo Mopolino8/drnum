@@ -30,23 +30,28 @@ struct SingleInterCoeffWS
  *                         receiving data from more than one giving Patch.
  */
 struct InterCoeffWS
-//class InterCoeffWS
+    //class InterCoeffWS
 {
-//public:
+  //public:
   /**
    * Patch from which data will be received.
    */
   Patch* m_DonorPatch;
 
-//  /**
-//   * Cells in "this"-owning Patch, receiving data from giving Patch.
-//   * Parallel/Vector info: * Unique size_t-arrays: no write conflicts using m_ReceivingCells
-//   *                         for left side array addressing. Force vectorization, as needed.
-//   *                       * Potential recurrence for different giving Patches (several instances
-//   *                         of InterCoeff for same receiving Patch). Same cells may be receiving data
-//   *                         from more than one giving Patch.
-//   */
-//  TList<size_t>* m_ReceivingCells;
+  /**
+    * Coordinate transformation from m_DonorPatch to "this" owning Patch.
+    */
+  CoordTransformVV m_ct;
+
+  //  /**
+  //   * Cells in "this"-owning Patch, receiving data from giving Patch.
+  //   * Parallel/Vector info: * Unique size_t-arrays: no write conflicts using m_ReceivingCells
+  //   *                         for left side array addressing. Force vectorization, as needed.
+  //   *                       * Potential recurrence for different giving Patches (several instances
+  //   *                         of InterCoeff for same receiving Patch). Same cells may be receiving data
+  //   *                         from more than one giving Patch.
+  //   */
+  //  TList<size_t>* m_ReceivingCells;
 
   /**
    * Contributing pairs(cells, weights) in giving Patch.
@@ -94,6 +99,58 @@ struct InterCoeffWS
         m_DonorCellContribsWS[ll].donor_contribution *= (1./hits[ind_rec_h]);
       }
     }
+  }
+
+  /**
+    * Apply WeightedSet pattern to donor_data and write to receive_data.
+    * NOTE: donor_data and receive_data are vectors with magnitude num_vars
+    * @param donor_data vector of real pointers to variable data of donor patch
+    * @param receiver_data vector of real pointers to variable data of receiving patch
+    * @param receive_cells indirect address field of cells in receiving patch
+    */
+  void transferFromTo(const vector<real*>& donor_data, const vector<real*>& receive_data) {
+    size_t num_vars = donor_data.size();
+    for (size_t i_ind = 0; i_ind < m_DonorCellContribsWS.size(); i_ind++) {
+      size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
+      WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
+      for(size_t i_v=0; i_v<num_vars; i_v++) {
+        *(receive_data[i_v]+i_receive) += dccws.RealValue(donor_data[i_v]);
+      }
+    }
+  }
+
+
+  /** @todo must improve variable selection for transformFree operation to allow better optimization.
+    */
+
+  /**
+    * Apply WeightedSet pattern to donor_data and write to receive_data.
+    * NOTE: donor_data and receive_data are vectors with magnitude num_vars
+    * @param donor_data vector of real pointers to variable data of donor patch
+    * @param receiver_data vector of real pointers to variable data of receiving patch
+    * @param receive_cells indirect address field of cells in receiving patch
+    */
+  void transferturnFromTo(vector<real*> donor_data, vector<real*> receive_data,
+                          const int& i_vx, const int& i_vy, const int& i_vz) {
+    size_t num_vars = donor_data.size();
+    real* vars_h = new real[num_vars];
+    for(size_t i_ind=0; i_ind<m_DonorCellContribsWS.size(); i_ind++) {
+      size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
+      WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
+      for(size_t i_v=0; i_v<num_vars; i_v++) {
+        vars_h[i_v] = dccws.RealValue(donor_data[i_v]);
+      }
+      // turn
+
+      Needs tranformation matrix in this class !!!
+
+      m_ct.transfree(vars_h[i_vx], vars_h[i_vy], vars_h[i_vz]);
+      // contribute
+      for(size_t i_v=0; i_v<num_vars; i_v++) {
+        *(receive_data[i_v]+i_receive) += vars_h[i_v];
+      }
+    }
+    delete vars_h;
   }
 
 

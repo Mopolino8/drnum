@@ -264,6 +264,13 @@ public: // methods
                                              WeightedSet<real>& w_set)=0;
 
   /**
+    * Data access from donor patches via m_InterCoeffData_WS
+    * NOTE: Non padded version employing WeightedSet pattern.
+    * @param field the field, for which all variables are transfered
+    */
+  void accessForeignData_WS(size_t field);
+
+  /**
     * This is one of the main methods which will be used for data exchange.
     * How this can be used to handle exchange between CPU/GPU, CPU/CPU, GPU/GPU, and NODE/NODE (MPI) needs
     * to be established as soon as possible.
