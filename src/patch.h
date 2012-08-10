@@ -2,13 +2,46 @@
 #define PATCH_H
 
 #include <cstddef>
-
+#include <vector>
 #include "blockcfd.h"
-#include "transformation.h"
+//<<<<<<< HEAD
+#include "weightedset.h"
+
+class Patch;
+
+#include "intercoeff.h"
+#include "intercoeffws.h"
+#include "math/coordtransformvv.h"
+
+/** @todo
+ *    proposed coord naming convention:
+ *        (Xo,Yo,Zo), (xo,yo,zo) or vec3_t XYZo, xyzo     : coords in syst. of origin
+ *        (X,Y,Z)   , (x,y,z)    or vec3_t XYZ , xyz      : coords in syst. of "this" patch
+ *        (XX,YY,ZZ), (xx,yy,zz) or vec3_t XXYYZZ, xxyyzz : coords in syst. of any foreign patch
+ *
+ */
+
+/**
+ * @todo Build new heritage tree for patches. Proposed as follows:
+ *  base:        Patch
+ *  addr. level: StructuredHexPatch, StructuredPrisPatch, SemistructPrisPatch, SemistructHexPatch, UnstructuredPatch
+ *  geo. level:  StructuredHexPatch  => CartesianPatch, CartesianStretchedPatch, GeneralStructuredHexPatch, etc...
+ *               StructuredPrisPatch => GeneralStructuredPrisPatch, ... (and geometrically simplified types)
+ *               SemistructPrisPatch => ... (unstructured 2D-hex grid, structured in 3rd dimension)
+ *               SemistructHexPatch  => ... (unstructured 2D-hex grid, structured in 3rd dimension)
+ *               UnstructuredPatch   => ... (probably no variants, hybrid cells)
+ *
+ *  Remark: at present I think, we should NOT differentiate patch alignments to (xo,yo,zo) from others. Might be
+ *          smarter to define coalignments of neighbouring blocks.
+ *
+ */
+//=======
+#include "transformation.h"    /// @todo merge: kept for compatibility
+//>>>>>>> master
 
 class Patch
 {
-
+  /// @todo Why these should be private? Never any access from child classes???
 private: // attributes
 
   real*   m_Data;         ///< the main data block of this patch
@@ -17,32 +50,218 @@ private: // attributes
   size_t  m_FieldSize;    ///< length of each field
   size_t  m_VariableSize; ///< length of each variable
 
-  Transformation m_Transformation;
-
-
-private: // methods
+//<<<<<<< HEAD
+//protected: // methods
+//=======
+Transformation m_Transformation;    /// @todo merge: kept for compatibility
+//
+//
+//private: // methods
+//>>>>>>> master
 
   void  allocateData();
+
+protected: // attributes
+
+  // settings
+  bool m_InterpolateData;    ///< Flag indicates wether to interpolate data on interpatch transfers
+  bool m_InterpolateGrad1N;  ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
+  size_t m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
+  size_t m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
+
+  // orientation, geometry
+  CoordTransformVV m_transformInertial2This; ///< transformation matrix to transform intertial coords into system of "this"
+  vec3_t m_bbox_xyzo_min;                     ///< lowest coordinates of smallest box around patch in inertial coords.
+  vec3_t m_bbox_xyzo_max;                     ///< highest coordinates of smallest box around patch in inertial coords.
+  bool m_bbox_OK;                            ///< flag indicating wether the bounding box is available
+
+  // intermediate variables
+  bool m_receiveCells_OK; ///< Flag indicating that receive_cells have been extracted yet. Might be set false on mesh changes.
+
+  // lists related to receiving cells in overlap layers
+  vector<size_t> m_receive_cells;           ///< cells of "this", expecting to get data (and/or grads) from any donor neighbour
+  vector<size_t> m_receive_cell_data_hits;  ///< number of contributing patches for data, note indexing as receive_cells
+  vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for data, note indexing as receive_cells
+
+  // lists related to neighbouring donor patches
+  vector<pair<Patch*, CoordTransformVV> > m_neighbours; ///< neighbouring donor patches and coord transformation. NOTE: receiving patches not stored.
+  vector<InterCoeff> m_InterCoeffData;                 ///< Interpolation coefficient lists for data
+  vector<InterCoeff> m_InterCoeffGrad1N;               ///< Interpolation coefficient lists for 1st directed gradients
+  vector<InterCoeffWS> m_InterCoeffData_WS;            ///< same as m_InterCoeffData, but with WeightedSets (CPU only)
+  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;          ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
+  // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;  ///< Interpolation coefficient lists for 2nd directed gradients
 
 
 protected: // methods
 
+  // internal data handling
   void  deleteData();
   void  resize(size_t variable_size);
-
   real* getField(size_t i_field);
   real* getVariable(size_t i_field, size_t i_variable);
 
-  void setTransformation(Transformation t) { m_Transformation = t; }
+  void setTransformation(Transformation t) { m_Transformation = t; }  /// @todo keep for compatibility, prefer CoordTransformVV later
+
+  // geometry
+  virtual void buildBoundingBox()=0;
+
+  // external data handling
+  virtual void extractReceiveCells(){BUG;}; ///< Extract cells in overlap layers (m_receive_cells)
+  void compactReceiveCellLists();           ///< Clean up m_receive_cells and hit counter lists
 
 
 public: // methods
 
-  Patch();
+  /**
+   * Constructor
+   * NOTE: The default number of protection as well as overplap layers is 1
+   * @param num_protectlayers number of protection layers, in which no foreign data access is allowed
+   * @param num_overlaplayers number of overlap layers, for which to get data from donor neighbour patches
+   */
+  Patch(size_t num_protectlayers=1, size_t num_overlaplayers=1);
+
   virtual ~Patch();
 
   void  setNumberOfFields(size_t num_fields) { m_NumFields = num_fields; }
   void  setNumberOfVariables(size_t num_variables) { m_NumVariables = num_variables; }
+
+  /**
+    * Set number of protection layers
+    * @param num_protectlayers number of protection layers
+    */
+  void setNumProtectLayers(size_t num_protectlayers)
+  {
+    m_NumProtectLayers = num_protectlayers;
+  }
+
+  /**
+    * Set number of protection layers
+    * @param num_overlaplayers number of overlap layers
+    */
+  void setNumOverlapLayers(size_t num_overlaplayers)
+  {
+    m_NumOverlapLayers = num_overlaplayers;
+  }
+
+  /**
+    * Set interaction with/without data transfers
+    * @param interpolate_data bool to cause data interpolation if true
+    */
+  void setInterpolateData(bool interpolatedata = true)
+  {
+    m_InterpolateData = interpolatedata;
+  }
+
+  /**
+    * Set interaction with/without 1. gradient transfers
+    * @param interpolate_data bool to cause gradient interpolation if true
+    */
+  void setInterpolateGrad1N(bool interpolategrad1N = true)
+  {
+    m_InterpolateGrad1N = interpolategrad1N;
+  }
+
+  /**
+    * Access
+    * @return lower coordinates of bounding box
+    */
+  vec3_t accessBBoxXYZoMin()
+  {
+    if(!m_bbox_OK) {
+      buildBoundingBox();
+    }
+    return m_bbox_xyzo_min;
+  }
+
+  /**
+    * Access
+    * @return upper coordinates of bounding box
+    */
+  vec3_t accessBBoxXYZoMax()
+  {
+    if(!m_bbox_OK) {
+      buildBoundingBox();
+    }
+    return m_bbox_xyzo_max;
+  }
+
+  /**
+   * Insert a neighbouring donor patch and insert it.
+   * receiving block: "this"
+   * donor block:     neighbour_patch
+   * @param neighbour_patch the new donor neighbour patch of "this".
+   */
+  void insertNeighbour(Patch* neighbour_patch);
+
+  /**
+     * Compute dependencies "from" a neighbour.
+     * receiving patch: "this"
+     * donor patch:     neighbour_patch
+     * @param i_neighbour index of neighbour patch from which to receive data
+     */
+  virtual void computeDependencies(const size_t& i_neighbour)=0;
+
+  /**
+   * Set up interpolation methods for giving data to foreign patches.
+   * Example: Build up Split- or Octrees for search operations, etc ... depending on patch type.
+   */
+  virtual void setupInterpolators()=0;
+
+  /**
+   * Get data interpolation coeff-sets.
+   * @param xyz coordinates of requesting point in system of the present patch
+   * @param w_set WeightedSet<real> object on which to write data (return reference)
+   * @return true, if interpol sets were found.
+   */
+  inline bool computeCCDataInterpolCoeffs(vec3_t xyz,
+                                          WeightedSet<real>& w_set) {
+    return computeCCDataInterpolCoeffs(xyz[0], xyz[1], xyz[2],
+                                       w_set);
+  }
+
+  /**
+   * Get data interpolation coeff-sets.
+   * @param x the x-value in the coords of the present patch
+   * @param y the y-value in the coords of the present patch
+   * @param z the z-value in the coords of the present patch
+   * @param w_set WeightedSet<real> object on which to write data (return reference)
+   * @return true, if interpol sets were found.
+   */
+  virtual bool computeCCDataInterpolCoeffs(real x, real y, real z,
+                                           WeightedSet<real>& w_set)=0;
+
+  /**
+   * Get directional derivative (grad*n) interpolation coeff-sets.
+   * @param x the x-value in the coords of the present patch
+   * @param y the y-value in the coords of the present patch
+   * @param z the z-value in the coords of the present patch
+   * @param nx the x-component of directional vector in the coords of the present patch
+   * @param ny the y-component of directional vector in the coords of the present patch
+   * @param nz the z-component of directional vector in the coords of the present patch
+   * @param w_set WeightedSet<real> object on which to write data (return reference)
+   * @return true, if interpol sets were found.
+   */
+  inline bool computeCCGrad1NInterpolCoeffs(vec3_t xyz, vec3_t nxyz,
+                                            WeightedSet<real>& w_set) {
+    return computeCCGrad1NInterpolCoeffs(xyz[0], xyz[1], xyz[2],
+                                         nxyz[0], nxyz[1], nxyz[2],
+                                         w_set);
+  }
+
+  /**
+   * Get directional derivative (grad*n) interpolation coeff-sets.
+   * @param x the x-value in the coords of the present patch
+   * @param y the y-value in the coords of the present patch
+   * @param z the z-value in the coords of the present patch
+   * @param nx the x-component of directional vector in the coords of the present patch
+   * @param ny the y-component of directional vector in the coords of the present patch
+   * @param nz the z-component of directional vector in the coords of the present patch
+   * @param w_set WeightedSet<real> object on which to write data (return reference)
+   * @return true, if interpol sets were found.
+   */
+  virtual bool computeCCGrad1NInterpolCoeffs(real x, real y, real z,
+                                             real nx, real ny, real nz,
+                                             WeightedSet<real>& w_set)=0;
 
   /**
     * This is one of the main methods which will be used for data exchange.

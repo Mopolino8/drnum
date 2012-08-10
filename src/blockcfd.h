@@ -6,8 +6,21 @@
 #include <iostream>
 #include <ctime>
 
-typedef float real;
+//<<<<<<< HEAD
+//need real def first #include "math/mathvector.h"
+//#include "math/smallsquarematrix.h"
 
+using namespace std;
+
+#include "namespace_mouse.hh"
+#include "mouse_types.hh"    /// @todo mouse_types needed for namespace (?)
+using namespace fvmouse;
+
+typedef double real;
+//=======
+//typedef float real;
+//
+//>>>>>>> master
 
 #include "math/mathvector.h"
 #include "math/smallsquarematrix.h"

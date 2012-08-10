@@ -11,11 +11,15 @@
 #include "iterators/cartesianstandardpatchoperation.h"
 #include "iterators/cartesiandirectionalpatchoperation.h"
 #include "rungekutta.h"
+//<<<<<<< HEAD
+#include "patchgrid.h"
+//=======
 #include "perfectgas.h"
 #include "shapes/sphere.h"
 #include "shapes/halfspace.h"
 #include "boundary_conditions/compressibleeulerwall.h"
 #include "compressiblevariables.h"
+//>>>>>>> master
 
 template <typename TShape>
 class MyFlux
@@ -165,6 +169,36 @@ void write(CartesianPatch &patch, QString file_name, int count)
 
 int main()
 {
+//<<<<<<< HEAD
+  /// Testing transformations (debug only)
+  CoordTransformVV ct;
+  vec3_t b(1., 0., 0.);
+  ct.setVector(b);
+  vec3_t xyzo(0., 0., 0.);
+  vec3_t xyz = ct.transform(xyzo);
+  vec3_t xyzo_1 = ct.transformReverse(xyz);
+
+  /// Testing patchGrids
+  PatchGrid patchGrid;
+  patchGrid.initLists(10,10);
+  CartesianPatch patch_0;
+  CartesianPatch patch_1;
+  patch_0.setupAligned(0.1, 0.0, 0.0, 10.1, 10.0, 10.0);
+  patch_0.resize(10,10,10);
+  patch_0.setInterpolateData();
+  patch_1.setupAligned(8.0, 0.0, 0.0, 18.0, 10.0, 10.0);
+  patch_1.resize(10,10,10);
+  patch_1.setInterpolateData();
+  patchGrid.insertPatch(&patch_0);
+  patchGrid.insertPatch(&patch_1);
+  // patchGrid.computeDependencies(true);
+  patch_0.insertNeighbour(&patch_1);  /// will be automatic later
+  patch_1.insertNeighbour(&patch_0);  /// will be automatic later
+
+  exit(0); /// grid debugging only
+
+
+
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
@@ -227,8 +261,14 @@ int main()
 
   while (t < total_time) {
     runge_kutta(dt);
+
     real CFL_max = 0;
-    real x = 0.5*patch.dx();
+
+//<<<<<<< HEAD
+    /*
+//=======
+//    real x = 0.5*patch.dx();
+//>>>>>>> master
     for (size_t i = 0; i < NI; ++i) {
       real y = 0.5*patch.dy();
       for (size_t j = 0; j < NJ; ++j) {
@@ -260,6 +300,7 @@ int main()
       write(patch, "testrun", count);
       t_write -= write_interval;
     }
+    */
     real max_norm, l2_norm;
     patch.computeVariableDifference(0, 0, 1, 0, max_norm, l2_norm);
     cout << t << "  dt: " << dt << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm << endl;

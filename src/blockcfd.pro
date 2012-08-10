@@ -2,6 +2,7 @@ TEMPLATE = app
 CONFIG += console
 
 INCLUDEPATH += $(VTKINCDIR)
+INCLUDEPATH += utility
 
 LIBS        += -L$(VTKLIBDIR)
 LIBS        += -lQVTK
@@ -38,6 +39,11 @@ SOURCES += main.cpp \
     timeintegration.cpp \
     patchiterator.cpp \
     rungekutta.cpp \
+    patchgrid.cpp \
+    utility/List.cc \
+    utility/MError.cc \
+    math/coordtransform.cpp \
+    math/coordtransformvv.cpp \
     transformation.cpp \
     shapes/sphere.cpp \
     shapes/halfspace.cpp
@@ -58,6 +64,14 @@ HEADERS += \
     iterators/cartesianstandarditerator.h \
     iterators/cartesianstandardpatchoperation.h \
     rungekutta.h \
+    patchgrid.h \
+    intercoeff.h \
+    intercoeffws.h \
+    utility/weightedset.h \
+    utility/List.hh \
+    utility/MError.hh \
+    math/coordtransform.h \
+    math/coordtransformvv.h \
     fluxes/ausmdv.h \
     fluxes/ausm.h \
     fluxes/compressiblewallflux.h \
@@ -77,4 +91,3 @@ HEADERS += \
     transformation.h \
     shapes/halfspace.h \
     compressiblevariables.h
-

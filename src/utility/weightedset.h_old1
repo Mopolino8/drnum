@@ -1,0 +1,433 @@
+#if !defined(WEIGHTEDSET_HH)
+#define WEIGHTEDSET_HH
+
+/**
+be careful by using this class, when you allocate and delete thousands of objects of this type
+**/
+template<class T> class WeightedSet;
+
+#include <algorithm>
+#include <vector>
+#include <iostream>
+
+
+/// @todo clean up this class.
+
+/**
+ * Class around vector<pair<size_t, T> > to keep pairs (index, a_T)
+ *
+ * Features simple arithmetics like adding, sorting, while concatenating a unique
+ * set of indicees.
+ *
+ * operator+ and operator* must be defined for type T
+ *
+ * Example:
+ *   WeightedSet<float>* a_ws;
+ *   WeightedSet<float>* b_ws;
+ *   a_ws = new WeightedSet<float>(2, 2.);        // creates a WS with one pair (2, 2.)
+ *   vector<size_t> b_v; b_v.push_back(1); b_v.push_back(2); b_v.push_back(3);
+ *   b_ws = new WeightedSet<float> b_ws(b_v, 1.); // creates a WS with the pairs (1, 1.), (2, 1.), (3, 1.)
+ *   b_ws->pushBack(0, 100.);                     // appends pair (0, 100.) to the end of b_ws
+ *   *a_ws += *b_ws;                              // creates a_ws = ((0, 100.), (1, 1.), (2, 3.), (3, 1.));
+ *   *a_ws *= 3.;                                 // creates a_ws = ((0, 300.), (1, 3.), (2, 9.), (3, 3.));
+ *
+ */
+template<class T>
+class WeightedSet : public vector<pair<size_t, T> >
+{
+protected:
+  bool sure_sorted;
+
+public:
+  // dummy construction
+  WeightedSet() {
+    //clear();
+    sure_sorted = true;
+  }
+  // construction considering a single node
+  WeightedSet(size_t k_node, T weight) {
+    vector<pair<size_t, T> >::clear();
+    pair<size_t, T> a_node_contribution;
+    a_node_contribution.first = k_node;
+    a_node_contribution.second = weight;
+    push_back(a_node_contribution);
+    sure_sorted = true;
+  }
+  // construction considering a single node with weight 1.
+  WeightedSet(size_t k_node) {
+    vector<pair<size_t, T> >::clear();
+    pair<size_t, T> a_node_contribution;
+    a_node_contribution.first = k_node;
+    a_node_contribution.second = 1.;
+    push_back(a_node_contribution);
+    sure_sorted = true;
+  }
+  // construction considering equiweighted average of a nodes vector
+  WeightedSet(vector<size_t> vn) {
+    vector<pair<size_t, T> >::clear();
+    T weight = 1./vn.size();
+    for(vector<size_t>::iterator k_vn = vn.begin(); k_vn != vn.end(); k_vn++) {
+      pair<size_t, T> a_node_contribution;
+      a_node_contribution.first = *k_vn;
+      a_node_contribution.second = weight;
+      push_back(a_node_contribution);
+    };
+    sort(vector<pair<size_t, T> >::begin(), vector<pair<size_t, T> >::end());
+    sure_sorted = true;
+  }
+
+  WeightedSet(vector<size_t> vn, T a_weight) {
+    vector<pair<size_t, T> >::clear();
+    T weight = a_weight;
+    for(vector<size_t>::iterator k_vn = vn.begin(); k_vn != vn.end(); k_vn++) {
+      pair<size_t, T> a_node_contribution;
+      a_node_contribution.first = *k_vn;
+      a_node_contribution.second = weight;
+      push_back(a_node_contribution);
+    };
+    sort(vector<pair<size_t, T> >::begin(), vector<pair<size_t, T> >::end());
+    sure_sorted = true;
+  }
+
+  WeightedSet(vector<int> vn) {
+    vector<pair<size_t, T> >::clear();
+    T weight = 1./vn.size();
+    for(vector<int>::iterator k_vn = vn.begin(); k_vn != vn.end(); k_vn++) {
+      pair<size_t, T> a_node_contribution;
+      a_node_contribution.first = *k_vn;
+      a_node_contribution.second = weight;
+      push_back(a_node_contribution);
+    };
+    sort(vector<pair<size_t, T> >::begin(), vector<pair<size_t, T> >::end());
+    sure_sorted = true;
+  }
+
+  WeightedSet(vector<int> vn, T a_weight) {
+    vector<pair<size_t, T> >::clear();
+    T weight = a_weight;
+    for(vector<int>::iterator k_vn = vn.begin(); k_vn != vn.end(); k_vn++) {
+      pair<size_t, T> a_node_contribution;
+      a_node_contribution.first = *k_vn;
+      a_node_contribution.second = weight;
+      push_back(a_node_contribution);
+    };
+    sort(vector<pair<size_t, T> >::begin(), vector<pair<size_t, T> >::end());
+    sure_sorted = true;
+  }
+
+  void pushBack(size_t k_node, T weight) {
+    pair<size_t, T> a_node_contribution;
+    a_node_contribution.first = k_node;
+    a_node_contribution.second = weight;
+    push_back(a_node_contribution);
+    sure_sorted = false;
+  }
+
+  void PrintNumSets();
+  void operator=(WeightedSet<T>& a_ws);
+  void operator+=(const WeightedSet<T>& a_ws);
+  void operator*=(const T& scalar);
+  void Add(WeightedSet<T>);
+  void Concatenate(WeightedSet<T>& concat_2);
+  //    void Concatenate(WeightedSet<T>& concat_2, T& multiplier);
+  void Concatenate(WeightedSet<T>& concat_2, T multiplier);
+  void Unify();
+
+  void MultScalar(T);
+  size_t HighNodeAddress();
+
+  /**
+   * Eliminate all entries with absolute values of weight below eps.
+   * @param eps the threshold value
+   * @param relative if true, causes function to work with eps relative to largest absolute weight
+   * @param keep_weight_sum if true, causes distribution of defects on remaining weights
+   */
+  void EliminateBelowEps(T eps, bool relative, bool keep_weight_sum);
+
+  /**
+   * Compute sum of weights.
+   * @return the sum of the weights
+   */
+  T WeightSum();
+
+  /**
+   * Adjust sum of weights.
+   * Shift-version: act by adding a constant to all contributors
+   * @param aimed sum of the weights
+   */
+  T adjustWeightSumShift(T weight_sum);
+
+  /**
+   * Compute maximum absolute weight.
+   * @return the sum of the weights
+   */
+  T WeightAbsMax();
+
+  /**T RealValue(T* a) {
+    T ret_val=0.;
+    for(vector<pair<size_t, T> >::iterator i = vector<pair<size_t, T> >::begin();
+ i != end(); i++) {
+      ret_val += a[(*i).first] * (*i).second;
+    };
+    return ret_val;
+  } */
+
+};
+
+template<class T>
+inline void WeightedSet<T>::PrintNumSets()
+{
+  T sum_weight=0.;
+  T rel_weight=0.;
+
+  // first loop to calc sum_weight
+  //typename vector<pair<size_t, T> >;
+  for(typename vector<pair<size_t, T> >::iterator i = vector<pair<size_t, T> >::begin(); i != vector<pair<size_t, T> >::end(); i++)
+  {
+    sum_weight+=(*i).second;
+  }
+  cout << "sum_weights:" << sum_weight << endl;
+  // second loop to calc weight of nodes
+  //    if(sum_weight != 0)
+  if( (sum_weight > 0.0) || (sum_weight< 0.0))
+  {
+    for(typename vector<pair<size_t, T> >::iterator i = vector<pair<size_t, T> >::begin(); i!=vector<pair<size_t, T> >::end(); i++)
+    {
+      rel_weight=(*i).second;
+      cout << (*i).first << "  " << (*i).second  << "   " << (rel_weight/sum_weight) << endl;
+    }
+  }
+}
+
+template<class T>
+inline void WeightedSet<T>::operator=(WeightedSet<T>& a_ws) {
+  vector<pair<size_t, T> >::clear();
+  for(typename WeightedSet<T>::iterator i = a_ws.begin(); i != a_ws.end(); i++) {
+    push_back(*i);
+  };
+  sure_sorted = a_ws.sure_sorted;
+}
+
+template<class T>
+inline void WeightedSet<T>::operator+=(const WeightedSet<T>& a_ws) {
+  Add(a_ws);
+}
+
+template<class T>
+inline void WeightedSet<T>::MultScalar(T scalar)
+{
+  for (size_t i_t = 0; i_t < vector<pair<size_t, T> >::size(); ++i_t) {
+//  for (typename WeightedSet<T>::iterator i_t = WeightedSet<T>::begin(); i_t != WeightedSet<T>::end(); i_t++) {
+//    i_t->second *= scalar;
+    WeightedSet<T>::operator[](i_t).second *= scalar;
+  };
+}
+
+template<class T>
+inline void WeightedSet<T>::operator*=(const T& scalar) {
+  MultScalar(scalar);
+}
+
+/// @todo modified 2012_07_30: test carefully.
+// Method has worked for billions of calls, but erase was probably wrong
+template<class T>
+inline void WeightedSet<T>::Unify()
+{
+  sort(begin(), end());
+  WeightedSet<T>::iterator it = begin();
+  WeightedSet<T>::iterator hold_it;
+  bool initial = true;
+  while(it != end()) {
+    if(initial) {
+      initial = false;
+      hold_it = it;
+      it++;
+    } else {
+      if(it->first == hold_it->first) {
+        // same address: add weights
+        hold_it->second += it->second;
+        /// @todo was probably wrong
+        //		erase(it);
+        it = erase(it);
+      } else {
+        // other address: go on
+        hold_it = it;
+        it++;
+      };
+    };
+  };
+  sure_sorted = true;
+}
+
+template<class T>
+inline void WeightedSet<T>::Concatenate(WeightedSet<T>& concat_2)
+{
+  for(vector<pair<size_t, T> >::iterator i = concat_2.begin();
+      i != concat_2.end(); i++) {
+    push_back(*i);
+  };
+  sure_sorted = false;
+}
+
+template<class T>
+inline void WeightedSet<T>::Concatenate(WeightedSet<T>& concat_2, T multiplier)
+{
+  for(vector<pair<size_t, T> >::iterator i = concat_2.begin();
+      i != concat_2.end(); i++) {
+    pair<size_t, T> pp;
+    pp.first = i->first;
+    pp.second = i->second * multiplier;
+    push_back(pp);
+  };
+  sure_sorted = false;
+}
+
+/// @todo new since 2012_07_30: test carefully.
+template<class T>
+inline T WeightedSet<T>::WeightSum()
+{
+  T weight_sum = 0.;
+  for(vector<pair<size_t, T> >::iterator i = begin(); i!=end(); i++) {
+    weight_sum += (*i).second;
+  }
+  return weight_sum;
+}
+
+/// @todo new since 2012_07_30: test carefully.
+template<class T>
+inline T WeightedSet<T>::WeightAbsMax()
+{
+  T weight_absmax = 0.;
+  for(vector<pair<size_t, T> >::iterator i = begin(); i!=end(); i++) {
+    T test_w = (*i).second;
+    if(test_w < 0.) test_w = -test_w;  // no general abs-function for float and double
+    if(test_w > weight_absmax) weight_absmax = test_w;
+  }
+  return weight_absmax;
+}
+
+// Include functions previously in WeightedSet.cc below
+
+
+template<class T>
+void WeightedSet<T>::Add(WeightedSet<T> addend_2)
+{
+  // check input for being sorted
+  //not in stl standard?  if(!is_sorted(begin(), end())) {
+  //  if(!sure_sorted) {
+  sort(begin(), end());
+  sure_sorted = true;
+  //  };
+  //not in stl standard?  if(!is_sorted(addend_2.begin(), addend_2.end())) {
+  //  if(!addend_2.sure_sorted) {
+  sort(addend_2.begin(), addend_2.end());
+  addend_2.sure_sorted = true;
+  //  };
+  //
+  WeightedSet<T> addend_1(*this);
+  //  addend_1 = *this;
+  clear();
+
+  // add go through sorted sequences of addends
+  pair<size_t, T> new_pair;
+  WeightedSet<T>::iterator addend_1_it = addend_1.begin();
+  WeightedSet<T>::iterator addend_2_it = addend_2.begin();
+  //  WeightedSet<T>::iterator this_it = begin();
+  while((addend_1_it != addend_1.end()) && (addend_2_it != addend_2.end())) {
+    if(addend_1_it->first < addend_2_it->first) {
+      // take the entry of addend_1
+      new_pair.first = addend_1_it->first;
+      new_pair.second = addend_1_it->second;
+      addend_1_it++;
+    }
+    else if(addend_1_it->first > addend_2_it->first) {
+      // take the entry of addend_2
+      new_pair.first = addend_2_it->first;
+      new_pair.second = addend_2_it->second;
+      addend_2_it++;
+    }
+    else {
+      // both addresses are the same: add weight
+      new_pair.first = addend_1_it->first;  // same as *addend_2->first
+      new_pair.second = addend_1_it->second + addend_2_it->second;
+      addend_1_it++;
+      addend_2_it++;
+    };
+    push_back(new_pair);
+  };
+  // append the rest of the addend that is still running
+  while(addend_1_it != addend_1.end()) {
+    new_pair.first = addend_1_it->first;
+    new_pair.second = addend_1_it->second;
+    addend_1_it++;
+    push_back(new_pair);
+  };
+  while(addend_2_it != addend_2.end()) {
+    new_pair.first = addend_2_it->first;
+    new_pair.second = addend_2_it->second;
+    addend_2_it++;
+    push_back(new_pair);
+  };
+}
+
+template<class T>
+inline size_t WeightedSet<T>::HighNodeAddress()
+{
+  // get the maximum internal node address of all entries
+  size_t high_node;
+  high_node = 0;
+  for (iterator i_t = begin(); i_t != end(); i_t++) {
+    if(i_t->first > high_node) {
+      high_node = i_t->first;
+    };
+  };
+  return high_node;
+}
+
+/// @todo new since 2012_07_30: test carefully.
+template<class T>
+inline void EliminateBelowEps(T eps, bool relative, bool keep_weight_sum)
+{
+  // eliminate all entries with weights below eps
+  Unify();
+  //  T weight_sum = WeightSum();
+  T weight_absmax = WeightAbsMax();
+  if(relative) {
+    eps *= weight_absmax;
+  }
+  T defect = 0;
+  for(vector<pair<size_t, T> >::iterator i = begin(); i!=end(); i++) {
+    T test_w = (*i).second;
+    if (test_w < 0.) {
+      test_w = -test_w;  // no general abs-function for float and double
+    }
+    if(test_w < eps) {
+      defect += (*i).second;
+      erase(i);
+    }
+  }
+  /// @todo Correction below is potentially unsafe.
+  if(keep_weight_sum && (size()>0) ) {
+    //unsafe T correction = weight_sum/(weight_sum-defect);
+    //unsafe for(vector<pair<size_t, T> >::iterator i = begin(); i!=end(); i++) {
+    //unsafe   (*i).second *= correction;
+    // }
+    T correction = defect / size();
+    for(vector<pair<size_t, T> >::iterator i = begin(); i!=end(); i++) {
+      (*i).second += correction;
+    }
+  }
+}
+
+/// @todo new since 2012_07_31: test carefully.
+template<class T>
+inline void adjustWeightSumShift(T weight_sum)
+{
+  T old_weight_sum = WeightSum();
+  T correction = (weight_sum-old_weight_sum) / size();
+  for(vector<pair<size_t, T> >::iterator i = begin(); i!=end(); i++) {
+    (*i).second += correction;
+  }
+}
+
+#endif

@@ -308,7 +308,11 @@ public:
   /** constructor.
    */ 
   InvSmallSquareMatrix<T,N>(SmallSquareMatrix<T,N> a,
+//<<<<<<< HEAD
+//			    bool a_prec_safe, T a_prec_limit) {
+//=======
                             bool a_prec_safe, T a_prec_limit) {
+//>>>>>>> master
 
     int Smalldim = N;
     int n;
@@ -317,6 +321,7 @@ public:
     vector<int> p(n);
     T q,s,max,h,det;
     T ele_max = 0;
+
 
     if(a_prec_safe) {a.setSafe(a_prec_limit);}
 
@@ -336,6 +341,22 @@ public:
       max=0.0;
       p[k]=0;
       for(i=k;i<n;i++){
+//<<<<<<< HEAD
+//	s=0.0;
+//	for(j=k;j<n;j++) s=s+fabs(a[i][j]);
+//	q=fabs(a[i][k])/s;
+//	if(q>max){
+//	  max=q;
+//	  p[k]=i;
+//        }
+//      }
+//      if(!(p[k]==k)){
+//	det=-det;
+//	for(j=0;j<n;j++){
+//	  h=a[k][j];
+//	  a[k][j]=a[p[k]][j];
+//	  a[p[k]][j]=h;
+//=======
         s=0.0;
         for(j=k;j<n;j++) s=s+fabs(a[i][j]);
         q=fabs(a[i][k])/s;
@@ -350,6 +371,7 @@ public:
           h=a[k][j];
           a[k][j]=a[p[k]][j];
           a[p[k]][j]=h;
+//>>>>>>> master
         }
       }
       det=det*a[k][k];
@@ -363,6 +385,18 @@ public:
     //.. Proceed with rest of system reduction
     for(k=0;k<n-1;k++)
       if(!(p[k]==k)){
+//<<<<<<< HEAD
+//	for(l=0;l<n;l++){
+//	  h=b[k][l];
+//	  b[k][l]=b[p[k]][l];
+//	  b[p[k]][l]=h;
+//	}
+//      }
+//    for(i=0;i<n;i++){
+//      for(j=0;j<i;j++){
+//	for(l=0;l<n;l++)
+//	  b[i][l]=b[i][l]-a[i][j]*b[j][l];
+//=======
         for(l=0;l<n;l++){
           h=b[k][l];
           b[k][l]=b[p[k]][l];
@@ -373,14 +407,22 @@ public:
       for(j=0;j<i;j++){
         for(l=0;l<n;l++)
           b[i][l]=b[i][l]-a[i][j]*b[j][l];
+//>>>>>>> master
       }
     }
     for(i=n-1;i>=0;i--){
       for(l=0;l<n;l++){
+//<<<<<<< HEAD
+//	s=b[i][l];
+//	for(k=i+1;k<n;k++)
+//	  s=s-a[i][k]*b[k][l];
+//	b[i][l]=s/a[i][i];
+//=======
         s=b[i][l];
         for(k=i+1;k<n;k++)
           s=s-a[i][k]*b[k][l];
         b[i][l]=s/a[i][i];
+//>>>>>>> master
       }
     }
 
