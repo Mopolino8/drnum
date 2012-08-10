@@ -940,6 +940,7 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
   return inside;
 }
 
+
 /*
 #ifdef WITH_VTK
 

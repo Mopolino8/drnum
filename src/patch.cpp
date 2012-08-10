@@ -20,6 +20,33 @@ Patch::~Patch()
   deleteData();
 }
 
+//void Patch::insertNeighbour(Patch* neighbour_patch) {
+//  // Check, if boundary cells are yet extracted. If not, do so.
+//  if(!m_receiveCells_OK) {
+//    m_receive_cells.clear();
+//    extractReceiveCells();
+//    compactReceiveCellLists();
+//    m_receiveCells_OK = true;
+//  }
+//  pair<Patch*, CoordTransformVV> dependency_h;
+//  dependency_h.first = neighbour_patch;
+//  dependency_h.second.setTransFromTo(m_transformInertial2This, neighbour_patch->m_transformInertial2This);
+//  m_neighbours.push_back(dependency_h);
+//  //  if(m_InterpolateData) {
+//  //    InterCoeffWS icws_h;
+//  //    m_InterCoeffData_WS.push_back(icws_h);   /// @todo would be nice to have a link_vector<T>
+//  //  }
+//  //  if(m_InterpolateGrad1N) {
+//  //    InterCoeffWS icws_h;
+//  //    m_InterCoeffGrad1N_WS.push_back(icws_h);
+//  //  }
+//  if(m_InterpolateData) {m_InterCoeffData_WS.resize(m_neighbours.size());}   /// @todo would be nice to have a link_vector<T>
+//  if(m_InterpolateGrad1N) {m_InterCoeffGrad1N_WS.resize(m_neighbours.size());}
+//  size_t i_neighbour = m_neighbours.size() - 1;  /// @todo any better idea to get direct pos index?
+//  computeDependencies(i_neighbour);
+//}
+
+// changed 2012_08_10: ommit m_neighbours and store in
 void Patch::insertNeighbour(Patch* neighbour_patch) {
   // Check, if boundary cells are yet extracted. If not, do so.
   if(!m_receiveCells_OK) {
@@ -28,18 +55,23 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
     compactReceiveCellLists();
     m_receiveCells_OK = true;
   }
+
+
+
+
+
   pair<Patch*, CoordTransformVV> dependency_h;
   dependency_h.first = neighbour_patch;
   dependency_h.second.setTransFromTo(m_transformInertial2This, neighbour_patch->m_transformInertial2This);
   m_neighbours.push_back(dependency_h);
-//  if(m_InterpolateData) {
-//    InterCoeffWS icws_h;
-//    m_InterCoeffData_WS.push_back(icws_h);   /// @todo would be nice to have a link_vector<T>
-//  }
-//  if(m_InterpolateGrad1N) {
-//    InterCoeffWS icws_h;
-//    m_InterCoeffGrad1N_WS.push_back(icws_h);
-//  }
+  //  if(m_InterpolateData) {
+  //    InterCoeffWS icws_h;
+  //    m_InterCoeffData_WS.push_back(icws_h);   /// @todo would be nice to have a link_vector<T>
+  //  }
+  //  if(m_InterpolateGrad1N) {
+  //    InterCoeffWS icws_h;
+  //    m_InterCoeffGrad1N_WS.push_back(icws_h);
+  //  }
   if(m_InterpolateData) {m_InterCoeffData_WS.resize(m_neighbours.size());}   /// @todo would be nice to have a link_vector<T>
   if(m_InterpolateGrad1N) {m_InterCoeffGrad1N_WS.resize(m_neighbours.size());}
   size_t i_neighbour = m_neighbours.size() - 1;  /// @todo any better idea to get direct pos index?
@@ -65,6 +97,41 @@ void Patch::compactReceiveCellLists()
     m_receive_cell_grad1N_hits.resize(m_receive_cells.size(), 0);
   }
 }
+
+void Patch::accessDonorData_WS(size_t field)
+{
+  // loop through neighbouring donor patches
+  for(size_t i_pd=0; i_pd<m_neighbours.size(); i_pd++) {
+    Patch* donor = m_neighbours[i_pd].first;
+    InterCoeffWS icws = m_InterCoeffData_WS[i_pd];
+    //.. loop for variables in field
+    vector<real*> donor_vars;
+    vector<real*> this_vars;
+    for(size_t i_v=0; i_v<numVariables(); i_v++) {
+      donor_vars.push_back(donor->getVariable(field, i_v));
+      this_vars.push_back(getVariable(field, i_v));
+    }
+    icws.transferFromTo(donor_vars, this_vars);
+  }
+}
+
+// FOLLOWING IS AUTOMATIC
+//void Patch::accessturnDonorData_WS(size_t field)
+//{
+//  // loop through neighbouring donor patches
+//  for(size_t i_pd=0; i_pd<m_neighbours.size(); i_pd++) {
+//    Patch* donor = m_neighbours[i_pd].first;
+//    InterCoeffWS icws = m_InterCoeffData_WS[i_pd];
+//    //.. loop for variables in field
+//    vector<real*> donor_vars;
+//    vector<real*> this_vars;
+//    for(size_t i_v=0; i_v<numVariables(); i_v++) {
+//      donor_vars.push_back(donor->getVariable(field, i_v));
+//      this_vars.push_back(getVariable(field, i_v));
+//    }
+//    icws.transferturnFromTo(donor_vars, this_vars);
+//  }
+//}
 
 void Patch::allocateData()
 {

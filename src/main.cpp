@@ -183,7 +183,7 @@ int main()
   patchGrid.initLists(10,10);
   CartesianPatch patch_0;
   CartesianPatch patch_1;
-  patch_0.setupAligned(0.1, 0.0, 0.0, 10.1, 10.0, 10.0);
+  patch_0.setupAligned(0.0, 0.0, 0.0, 10.0, 10.0, 10.0);
   patch_0.resize(10,10,10);
   patch_0.setInterpolateData();
   patch_1.setupAligned(8.0, 0.0, 0.0, 18.0, 10.0, 10.0);
