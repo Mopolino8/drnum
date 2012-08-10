@@ -1,28 +1,17 @@
-#ifndef CARTESIANSTANDARDPATCHOPERATION_H
-#define CARTESIANSTANDARDPATCHOPERATION_H
+#ifndef CARTESIANDIRECTIONALPATCHOPERATION_H
+#define CARTESIANDIRECTIONALPATCHOPERATION_H
 
 #include "cartesianpatchoperation.h"
 
 template <unsigned int DIM, class TFlux>
-class CartesianStandardPatchOperation : public CartesianPatchOperation
+class CartesianDirectionalPatchOperation : public CartesianPatchOperation
 {
 
-private: // attributes
-
-  TFlux  m_Flux;
-  real*  m_Res;
-  size_t m_ResLength;
-  size_t m_I1;
-  size_t m_J1;
-  size_t m_K1;
-  size_t m_SizeI;
-  size_t m_SizeJ;
-  size_t m_SizeK;
-
+  TFlux *m_Flux;
 
 public:
 
-  CartesianStandardPatchOperation(CartesianPatch *patch, TFlux* flux);
+  CartesianDirectionalPatchOperation(CartesianPatch *patch, TFlux* flux);
 
   virtual void compute(real factor, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2);
 
@@ -30,14 +19,14 @@ public:
 
 
 template <unsigned int DIM, class TFlux>
-CartesianStandardPatchOperation<DIM, TFlux>::CartesianStandardPatchOperation(CartesianPatch *patch, TFlux *flux) : CartesianPatchOperation(patch)
+CartesianDirectionalPatchOperation<DIM, TFlux>::CartesianDirectionalPatchOperation(CartesianPatch *patch, TFlux* flux) : CartesianPatchOperation(patch)
 {
   m_Flux = flux;
 }
 
 
 template <unsigned int DIM, class TFlux>
-void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2)
+void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2)
 {
   checkResFieldSize(i1, j1, k1, i2, j2, k2);
 
@@ -53,6 +42,58 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   countFlops(3);
 
   // compute main block
+  //
+  // .. x direction
+  {
+    real y = 0.5*patch()->dy();
+    for (size_t j = 0; j < patch()->sizeJ(); ++j) {
+      real z = 0.5*patch()->dz();
+      for (size_t k = 0; k < patch()->sizeK(); ++k) {
+        real x = 0.5*patch()->dx();
+        for (size_t i = 0; i < patch()->sizeI(); ++i) {
+          if (i > 0) {
+            fill(flux, 5, 0);
+            m_Flux->xField(patch(), i, j, k, x, y, z, Ax, flux);
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              m_Res[resIndex(i_var, i-1, j, k)] -= flux[i_var];
+              m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
+            }
+            countFlops(2*DIM);
+          }
+          x += patch()->dx();
+        }
+        z += patch()->dz();
+      }
+      y += patch()->dy();
+    }
+  }
+
+  // .. y direction
+  {
+    real x = 0.5*patch()->dx();
+    for (size_t i = 0; i < patch()->sizeI(); ++i) {
+      real z = 0.5*patch()->dz();
+      for (size_t k = 0; k < patch()->sizeK(); ++k) {
+        real y = 0.5*patch()->dy();
+        for (size_t j = 0; j < patch()->sizeJ(); ++j) {
+          if (j > 0) {
+            fill(flux, 5, 0);
+            m_Flux->yField(patch(), i, j, k, x, y, z, Ay, flux);
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              m_Res[resIndex(i_var, i, j-1, k)] -= flux[i_var];
+              m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
+            }
+            countFlops(2*DIM);
+          }
+          y += patch()->dy();
+        }
+        z += patch()->dz();
+      }
+      x += patch()->dx();
+    }
+  }
+
+  // .. z direction
   {
     real x = 0.5*patch()->dx();
     for (size_t i = 0; i < patch()->sizeI(); ++i) {
@@ -60,40 +101,15 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
       for (size_t j = 0; j < patch()->sizeJ(); ++j) {
         real z = 0.5*patch()->dz();
         for (size_t k = 0; k < patch()->sizeK(); ++k) {
-
-          // x direction
-          if (i > 0) {
-            fill(flux, 5, 0);
-            m_Flux.x(patch(), i, j, k, x, y, z, Ax, flux);
-            for (size_t i_var = 0; i_var < DIM; ++i_var) {
-              m_Res[resIndex(i_var, i-1, j, k)] -= flux[i_var];
-              m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
-            }
-            countFlops(2*DIM);
-          }
-
-          // y direction
-          if (j > 0) {
-            fill(flux, 5, 0);
-            m_Flux.y(patch(), i, j, k, x, y, z, Ay, flux);
-            for (size_t i_var = 0; i_var < DIM; ++i_var) {
-              m_Res[resIndex(i_var, i, j-1, k)] -= flux[i_var];
-              m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
-            }
-            countFlops(2*DIM);
-          }
-
-          // z direction
           if (k > 0) {
             fill(flux, 5, 0);
-            m_Flux.z(patch(), i, j, k, x, y, z, Az, flux);
+            m_Flux->zField(patch(), i, j, k, x, y, z, Az, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
               m_Res[resIndex(i_var, i, j, k-1)] -= flux[i_var];
               m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
             }
             countFlops(2*DIM);
           }
-
           z += patch()->dz();
         }
         y += patch()->dy();
@@ -235,4 +251,4 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   }
 }
 
-#endif // CARTESIANSTANDARDPATCHOPERATION_H
+#endif // CARTESIANDIRECTIONALPATCHOPERATION_H

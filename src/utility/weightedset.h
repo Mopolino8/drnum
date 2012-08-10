@@ -38,7 +38,7 @@ using namespace std;
 template<class T>
 class WeightedSet
 {
-private:
+public:     /// @todo need usefull protection rules
   vector<pair<size_t, T> > v;
   bool sure_sorted;
   T t_zero;
@@ -326,7 +326,8 @@ inline void WeightedSet<T>::operator*=(const T& scalar) {
 }
 
 /// @todo modified 2012_07_30: test carefully.
-// Method has worked for billions of calls, but erase was probably wrong
+//  fixed bug 2012_08_09
+
 template<class T>
 inline void WeightedSet<T>::Unify()
 {
@@ -348,12 +349,11 @@ inline void WeightedSet<T>::Unify()
         // other address: copy
         hold_it++;
         v[hold_it] = v[it];
-        hold_it++;
       }
     }
     it++;
   }
-  v.resize(hold_it);
+  v.resize(hold_it+1);
   sure_sorted = true;
 }
 

@@ -32,6 +32,16 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   dependency_h.first = neighbour_patch;
   dependency_h.second.setTransFromTo(m_transformInertial2This, neighbour_patch->m_transformInertial2This);
   m_neighbours.push_back(dependency_h);
+//  if(m_InterpolateData) {
+//    InterCoeffWS icws_h;
+//    m_InterCoeffData_WS.push_back(icws_h);   /// @todo would be nice to have a link_vector<T>
+//  }
+//  if(m_InterpolateGrad1N) {
+//    InterCoeffWS icws_h;
+//    m_InterCoeffGrad1N_WS.push_back(icws_h);
+//  }
+  if(m_InterpolateData) {m_InterCoeffData_WS.resize(m_neighbours.size());}   /// @todo would be nice to have a link_vector<T>
+  if(m_InterpolateGrad1N) {m_InterCoeffGrad1N_WS.resize(m_neighbours.size());}
   size_t i_neighbour = m_neighbours.size() - 1;  /// @todo any better idea to get direct pos index?
   computeDependencies(i_neighbour);
 }
@@ -75,20 +85,10 @@ void Patch::resize(size_t variable_size)
   allocateData();
 }
 
-real* Patch::getField(size_t i_field)
-{
-  return m_Data + i_field*m_FieldSize;
-}
-
-real* Patch::getVariable(size_t i_field, size_t i_variable)
-{
-  return getField(i_field) + i_variable*m_VariableSize;
-}
-
 void Patch::computeVariableDifference(size_t i_field1, size_t i_var1, size_t i_field2, size_t i_var2, real &max_norm, real &l2_norm)
 {
-  restrict real *var1 = getVariable(i_field1, i_var1);
-  restrict real *var2 = getVariable(i_field2, i_var2);
+  RESTRICT real *var1 = getVariable(i_field1, i_var1);
+  RESTRICT real *var2 = getVariable(i_field2, i_var2);
   max_norm = 0.0;
   l2_norm  = 0.0;
   for (size_t i = 0; i < m_VariableSize; ++i) {

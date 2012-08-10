@@ -4,9 +4,11 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <ctime>
 
-#include "math/mathvector.h"
-#include "math/smallsquarematrix.h"
+//<<<<<<< HEAD
+//need real def first #include "math/mathvector.h"
+//#include "math/smallsquarematrix.h"
 
 using namespace std;
 
@@ -15,28 +17,24 @@ using namespace std;
 using namespace fvmouse;
 
 typedef double real;
+//=======
+//typedef float real;
+//
+//>>>>>>> master
 
-#define restrict __restrict__
+#include "math/mathvector.h"
+#include "math/smallsquarematrix.h"
 
-inline real sqr(const real &x)
-{
-  return x*x;
-}
+//#define DEBUG
 
-inline real sign1(const real &x)
-{
-  return 2.0*(x >= 0) - 1.0;
-}
+using namespace std;
 
-inline real nonZero(const real &x, const real &eps)
-{
-  if (fabs(x) < 0) {
-    return min(-eps, x);
-  } else {
-    return max(eps, x);
-  }
-  //return x + eps*(2*sign1(x) - 1.0)*(1.0 - fabs(tanh(100*x)));
-}
+
+struct real3_t { real x, y, z; };
+struct size3_t { size_t i, j, k; };
+
+#define RESTRICT __restrict__
+#define REGREAL register real
 
 #define WITH_VTK
 #define VTK_USE_ANSI_STDLIB
@@ -61,9 +59,9 @@ inline real nonZero(const real &x, const real &eps)
 #endif
 
 
+#ifdef DEBUG
 inline real checkedReal(real x, int line, const char *file_name)
 {
-#ifdef DEBUG
   if (isnan(x)) {
     cout << "NaN encountered in file \"" << file_name << "\" at line " << line << endl;
     abort();
@@ -72,54 +70,94 @@ inline real checkedReal(real x, int line, const char *file_name)
     cout << "Inf encountered (division by zero?) in file \"" << file_name << "\" at line " << line << endl;
     abort();
   }
-#endif
   return x;
 }
+#else
+inline real checkedReal(real x, int, const char*)
+{
+  return x;
+}
+#endif
 
 #define CHECKED_REAL(X) checkedReal(X, __LINE__, __FILE__)
 
 
 extern unsigned long int global_flops;
 extern unsigned long int global_flops_x86;
+extern time_t            global_start_time;
 
+#ifdef DEBUG
 inline void countFlops(int n)
 {
-#ifdef DEBUG
   global_flops     += n;
   global_flops_x86 += n;
-#endif
 }
+#else
+inline void countFlops(int) {}
+#endif
 
+#ifdef DEBUG
 inline void countSqrts(int n)
 {
-#ifdef DEBUG
   global_flops     += n;
   global_flops_x86 += 15*n;
-#endif
 }
+#else
+inline void countSqrts(int) {}
+#endif
 
+#ifdef DEBUG
 inline void countExps(int n)
 {
-#ifdef DEBUG
   global_flops     += n;
   global_flops_x86 += 20*n;
-#endif
 }
+#else
+inline void countExps(int) {}
+#endif
 
+#ifdef DEBUG
 inline void countLogs(int n)
 {
-#ifdef DEBUG
   global_flops     += n;
   global_flops_x86 += 20*n;
+}
+#else
+inline void countLogs(int) {}
 #endif
+
+inline void fill(real* var, size_t num_vars, real value)
+{
+  for (size_t i_var = 0; i_var < num_vars; ++i_var) {
+    var[i_var] = value;
+  }
 }
 
 
-template <unsigned int DIM>
-struct RealVec
+extern void startTiming();
+extern void stopTiming();
+
+
+inline real sqr(const real x)
 {
-  real var[DIM];
-};
+  return x*x;
+  countFlops(1);
+}
+
+inline real sign1(const real x)
+{
+  return 2.0*(x >= 0) - 1.0;
+}
+
+inline real nonZero(const real x, const real eps)
+{
+  if (fabs(x) < 0) {
+    return min(-eps, x);
+  } else {
+    return max(eps, x);
+  }
+}
+
 
 
 #endif // BLOCKCFD_H

@@ -1,26 +1,18 @@
 #include "cartesianpatch.h"
 
-#ifdef WITH_VTK
-#include <vtkSmartPointer.h>
-#include <vtkRectilinearGrid.h>
-#include <vtkXMLRectilinearGridWriter.h>
-#include <vtkFloatArray.h>
-#include <vtkCellData.h>
-#include <QVector>
-#endif
+//<<<<<<< HEAD
+//#ifdef WITH_VTK
+//#include <vtkSmartPointer.h>
+//#include <vtkRectilinearGrid.h>
+//#include <vtkXMLRectilinearGridWriter.h>
+//#include <vtkFloatArray.h>
+//#include <vtkCellData.h>
+//#include <QVector>
+//#endif
 
-/** @todo proposed coord naming convention:
- *        (Xo,Yo,Zo), (xo,yo,zo) or vec3_t XYZo, xyzo     : coords in syst. of origin
- *        (X,Y,Z)   , (x,y,z)    or vec3_t XYZ , xyz      : coords in syst. of patch
- *        (XX,YY,ZZ), (xx,yy,zz) or vec3_t XXYYZZ, xxyyzz : coords in syst. of any foreign patch
- *
- *  ATTENTION: This differs essentially to actual naming, as aparently all coords are only
- *             in the XYZo-system. In proposed coord-syst any CartesianPatch will have its own
- *             aligned system, no matter how it is actually oriented.
- *             Define an origin, usefull at node (i,j,k) = (0,0,0)
- *             Define XYZo_shift as the position of (0,0,0) in coord-syst of origin
- */
 
+//=======
+//>>>>>>> master
 CartesianPatch::CartesianPatch()
   : Patch()
 {
@@ -28,86 +20,113 @@ CartesianPatch::CartesianPatch()
   m_NumJ = 1;
   m_NumK = 1;
   //do allways with computeDeltas() m_Interpol_Initialized = false;
-  /// @todo need a better eps-handling. Is there a minimum real?
+  /// @todo need a better eps-handling.
   m_Eps = 1.e-6;
 }
 
 void CartesianPatch::computeDeltas()
 {
-  double Lx = sqrt(sqr(m_UX) + sqr(m_UY) + sqr(m_UZ));
-  double Ly = sqrt(sqr(m_VX) + sqr(m_VY) + sqr(m_VZ));
-  double Lz = sqrt(sqr(m_WX) + sqr(m_WY) + sqr(m_WZ));
+  m_Lx = sqrt(sqr(m_Uxo) + sqr(m_Uyo) + sqr(m_Uzo));
+  m_Ly = sqrt(sqr(m_Vxo) + sqr(m_Vyo) + sqr(m_Vzo));
+  m_Lz = sqrt(sqr(m_Wxo) + sqr(m_Wyo) + sqr(m_Wzo));
   countFlops(15);
   countSqrts(3);
 
-  m_DX = Lx/m_NumI;
-  m_DY = Ly/m_NumJ;
-  m_DZ = Lz/m_NumK;
+  m_Dx = m_Lx/m_NumI;
+  m_Dy = m_Ly/m_NumJ;
+  m_Dz = m_Lz/m_NumK;
   countFlops(3);
 
-  m_InvDX = 1.0/m_DX;
-  m_InvDY = 1.0/m_DX;
-  m_InvDZ = 1.0/m_DX;
+  m_InvDx = 1.0/m_Dx;
+  m_InvDy = 1.0/m_Dx;
+  m_InvDz = 1.0/m_Dx;
   countFlops(3);
 
-  m_xCCMin = 0.5 * m_DX;
-  m_yCCMin = 0.5 * m_DY;
-  m_zCCMin = 0.5 * m_DZ;
-  m_xCCMax = m_UX - 0.5 * m_DX;
-  m_yCCMax = m_VY - 0.5 * m_DY;
-  m_zCCMax = m_WZ - 0.5 * m_DZ;
+//  m_Dixo = m_Uxo/m_NumI;
+//  m_Diyo = m_Uyo/m_NumI;
+//  m_Dizo = m_Uzo/m_NumI;
+//  countFlops(3);
+
+//  m_Djxo = m_Vxo/m_NumJ;
+//  m_Djyo = m_Vyo/m_NumJ;
+//  m_Djzo = m_Vzo/m_NumJ;
+//  countFlops(3);
+
+//  m_Djxo = m_Wxo/m_NumK;
+//  m_Djyo = m_Wyo/m_NumK;
+//  m_Djzo = m_Wzo/m_NumK;
+//  countFlops(3);
+
+//<<<<<<< HEAD
+  m_xCCMin = 0.5 * m_Dx;
+  m_yCCMin = 0.5 * m_Dy;
+  m_zCCMin = 0.5 * m_Dz;
+  m_xCCMax = m_Lx - 0.5 * m_Dx;
+  m_yCCMax = m_Ly - 0.5 * m_Dy;
+  m_zCCMax = m_Lz - 0.5 * m_Dz;
   countFlops(6);
 
-  m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_DX;
-  m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_DY;
-  m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_DZ;
-  m_xCCInterMax = m_UX - (m_NumProtectLayers + 0.5) * m_DX;
-  m_yCCInterMax = m_VY - (m_NumProtectLayers + 0.5) * m_DY;
-  m_zCCInterMax = m_WZ - (m_NumProtectLayers + 0.5) * m_DZ;
+  m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
+  m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
+  m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
+  m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
+  m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
+  m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
   countFlops(6);
 
-  m_EpsDX = m_DX * m_Eps;
-  m_EpsDY = m_DY * m_Eps;
-  m_EpsDZ = m_DZ * m_Eps;
+  m_EpsDX = m_Dx * m_Eps;
+  m_EpsDY = m_Dy * m_Eps;
+  m_EpsDZ = m_Dz * m_Eps;
   countFlops(3);
+//=======
+//  m_Xco = m_Xo + 0.5*(m_Dixo + m_Djxo + m_Dkxo);  /// @todo Name conflict? Why not m_xCCMin?
+//  m_Yco = m_Yo + 0.5*(m_Diyo + m_Djyo + m_Dkyo);
+//  m_Zco = m_Zo + 0.5*(m_Dizo + m_Djzo + m_Dkzo);
+//  countFlops(12);
+//>>>>>>> master
 }
 
-void CartesianPatch::setupAligned(real x1, real y1, real z1, real x2, real y2, real z2)
+void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2)
 {
 
   /** @todo Use a more general alignment method with trafo-matrix and internal coord system.
    *  I assume these are co-aligned here. */
 
-  m_Xo = x1;
-  m_Yo = y1;
-  m_Zo = z1;
+  m_Xo = xo1;
+  m_Yo = yo1;
+  m_Zo = zo1;
 
-  m_UX = x2 - x1;
-  m_UY = 0;
-  m_UZ = 0;
+  m_Uxo = xo2 - xo1;
+  m_Uyo = 0;
+  m_Uzo = 0;
   countFlops(1);
 
-  m_VX = 0;
-  m_VY = y2 - y1;
-  m_VZ = 0;
+  m_Vxo = 0;
+  m_Vyo = yo2 - yo1;
+  m_Vzo = 0;
   countFlops(1);
 
-  m_WX = 0;
-  m_WY = 0;
-  m_WZ = z2 - z1;
+  m_Wxo = 0;
+  m_Wyo = 0;
+  m_Wzo = zo2 - zo1;
   countFlops(1);
 
-  computeDeltas();
-
+//<<<<<<< HEAD
   // position relative to inertial system
   vec3_t shift_inertial2this;
   shift_inertial2this[0] = -m_Xo;
   shift_inertial2this[1] = -m_Yo;
   shift_inertial2this[2] = -m_Zo;
   m_transformInertial2This.setVector(shift_inertial2this);
+/// @todo rotationm NOT implemented!!!
 
-  /// @todo rotationm NOT implemented!!!
+  computeDeltas();
 
+//=======
+  Transformation t;    /// @todo keep for compatibility
+  t.setVector(vec3_t(xo1, yo1, zo1));
+  setTransformation(t.inverse());
+//>>>>>>> master
 }
 
 void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
@@ -120,10 +139,11 @@ void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
   computeDeltas();
 }
 
+//<<<<<<< HEAD
 void CartesianPatch::buildBoundingBox()
 {
   vec3_t bbox_xyz_min(0., 0., 0.);
-  vec3_t bbox_xyz_max(m_UX, m_VY, m_WZ);  /// @todo change names UX, VY, WZ
+  vec3_t bbox_xyz_max(m_Lx, m_Ly, m_Lz);
   m_bbox_xyzo_min = m_transformInertial2This.transformReverse(bbox_xyz_min);
   m_bbox_xyzo_max = m_transformInertial2This.transformReverse(bbox_xyz_max);
 }
@@ -184,11 +204,11 @@ void CartesianPatch::computeDependencies(const size_t& i_neighbour)
   Patch* neighbour_patch = m_neighbours[i_neighbour].first;
   CoordTransformVV trans = m_neighbours[i_neighbour].second;
   // patch bounding normal vectors in coord syst of donor
-  vector<vec3_t> nnxyz_ijk;
-  nnxyz_ijk.resize(3);
-  nnxyz_ijk[0] = trans.transfree(vec3_t(1., 0., 0.));
-  nnxyz_ijk[1] = trans.transfree(vec3_t(0., 1., 0.));
-  nnxyz_ijk[2] = trans.transfree(vec3_t(0., 0., 1.));
+  vector<vec3_t> nxxyyzz_ijk;
+  nxxyyzz_ijk.resize(3);
+  nxxyyzz_ijk[0] = trans.transfree(vec3_t(1., 0., 0.));
+  nxxyyzz_ijk[1] = trans.transfree(vec3_t(0., 1., 0.));
+  nxxyyzz_ijk[2] = trans.transfree(vec3_t(0., 0., 1.));
   // Process all receiving cells and get interpolation sets
   //  - get own coeffs
   //  - transform into system of neighbour patch
@@ -205,17 +225,17 @@ void CartesianPatch::computeDependencies(const size_t& i_neighbour)
     if(m_InterpolateData) {
       if(neighbour_patch->computeCCDataInterpolCoeffs(xxyyzz_rc,
                                                       w_set)) {
-        m_InterCoeffData_WS[i_neighbour]->push(ll_rc, l_rc, w_set);  // note: since l_rc are unique, no "add" is required
+        m_InterCoeffData_WS[i_neighbour].push(ll_rc, l_rc, w_set);  // note: since l_rc are unique, no "add" is required
         m_receive_cell_data_hits[ll_rc]++;
       }
       if(m_InterpolateGrad1N) {
         int direction = boundingNVecDirection(l_rc); // note: trivial function, that ommits normal storage
         //        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xx_rc, yy_rc, zz_rc,
-        //                                                          nnxyz_ijk[direction][0], nnxyz_ijk[direction][1], nnxyz_ijk[direction][2],
+        //                                                          nxxyyzz_ijk[direction][0], nxxyyzz_ijk[direction][1], nxxyyzz_ijk[direction][2],
         //                                                          w_set)) {
-        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xxyyzz_rc, nnxyz_ijk[direction],
+        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xxyyzz_rc, nxxyyzz_ijk[direction],
                                                           w_set)) {
-          m_InterCoeffGrad1N_WS[i_neighbour]->push(ll_rc, l_rc, w_set);
+          m_InterCoeffGrad1N_WS[i_neighbour].push(ll_rc, l_rc, w_set);
           m_receive_cell_grad1N_hits[ll_rc]++;
         }
       }
@@ -238,21 +258,21 @@ void CartesianPatch::setupInterpolators()
 //   m_NumProtectLayers = num_protectlayers;
 
 //   // Cell center coords of lowest address cell (i,j,k) = (0,0,0)
-//   //  m_xCCMin = 0.5 * m_DX;
-//   //  m_yCCMin = 0.5 * m_DY;
-//   //  m_zCCMin = 0.5 * m_DZ;
+//   //  m_xCCMin = 0.5 * m_Dx;
+//   //  m_yCCMin = 0.5 * m_Dy;
+//   //  m_zCCMin = 0.5 * m_Dz;
 
 //   // CC-coordinates limits to access data from foreign patches
-//   m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_DX;
-//   m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_DY;
-//   m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_DZ;
-//   m_xCCInterMax = m_UX - (m_NumProtectLayers + 0.5) * m_DX;
-//   m_yCCInterMax = m_VY - (m_NumProtectLayers + 0.5) * m_DY;
-//   m_zCCInterMax = m_WZ - (m_NumProtectLayers + 0.5) * m_DZ;
+//   m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
+//   m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
+//   m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
+//   m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
+//   m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
+//   m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
 
-//   m_EpsDX = m_Eps * m_DX;
-//   m_EpsDY = m_Eps * m_DY;
-//   m_EpsDZ = m_Eps * m_DZ;
+//   m_EpsDX = m_Eps * m_Dx;
+//   m_EpsDY = m_Eps * m_Dy;
+//   m_EpsDZ = m_Eps * m_Dz;
 
 //   //  m_Interpol_Initialized = true;
 // }
@@ -340,9 +360,9 @@ bool CartesianPatch::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
     real nnz = nz * inv_n_abs;
 
     //.. Convenience
-    real div_x = nnx/(2*m_DX);
-    real div_y = nny/(2*m_DY);
-    real div_z = nnz/(2*m_DZ);
+    real div_x = nnx/(2*m_Dx);
+    real div_y = nny/(2*m_Dy);
+    real div_z = nnz/(2*m_Dz);
 
     d_dn.clearWS();
     //   0:       (ic_ref,   jc_ref,   kc_ref  )
@@ -456,9 +476,9 @@ void CartesianPatch::computeCCInterpolWeights(real& x, real& y, real& z,
   //   7:         ( ic_ref+1, jc_ref+1, kc_ref+1 )
 
   // cartesian distances to bounding element sides
-  real x_ref = 0.5*m_DX + ic_ref*m_DX;
-  real y_ref = 0.5*m_DY + jc_ref*m_DY;
-  real z_ref = 0.5*m_DZ + kc_ref*m_DZ;
+  real x_ref = 0.5*m_Dx + ic_ref*m_Dx;
+  real y_ref = 0.5*m_Dy + jc_ref*m_Dy;
+  real z_ref = 0.5*m_Dz + kc_ref*m_Dz;
 
   computeInterpolWeights(x, y, z,
                          x_ref, y_ref, z_ref,
@@ -482,9 +502,9 @@ void CartesianPatch::computeNCInterpolWeights(real& x, real& y, real& z,
   //   7:         ( in_ref+1, jn_ref+1, kn_ref+1 )
 
   // cartesian distances to bounding element sides
-  real x_ref = in_ref*m_DX;
-  real y_ref = jn_ref*m_DY;
-  real z_ref = kn_ref*m_DZ;
+  real x_ref = in_ref*m_Dx;
+  real y_ref = jn_ref*m_Dy;
+  real z_ref = kn_ref*m_Dz;
 
   computeInterpolWeights(x, y, z,
                          x_ref, y_ref, z_ref,
@@ -503,23 +523,23 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
 
   // box corner:       coords:
   //   0:          ( x_ref,      y_ref,      z_ref      )
-  //   1:          ( x_ref,      y_ref,      z_ref+m_DZ )
-  //   2:          ( x_ref,      y_ref+m_DY, z_ref      )
-  //   3:          ( x_ref,      y_ref+m_DY, z_ref+m_DZ )
-  //   4:          ( x_ref+m_DX, y_ref,      z_ref      )
-  //   5:          ( x_ref+m_DX, y_ref,      z_ref+m_DZ )
-  //   6:          ( x_ref+m_DX, y_ref+m_DY, z_ref      )
-  //   7:          ( x_ref+m_DX, y_ref+m_DY, z_ref+m_DZ )
+  //   1:          ( x_ref,      y_ref,      z_ref+m_Dz )
+  //   2:          ( x_ref,      y_ref+m_Dy, z_ref      )
+  //   3:          ( x_ref,      y_ref+m_Dy, z_ref+m_Dz )
+  //   4:          ( x_ref+m_Dx, y_ref,      z_ref      )
+  //   5:          ( x_ref+m_Dx, y_ref,      z_ref+m_Dz )
+  //   6:          ( x_ref+m_Dx, y_ref+m_Dy, z_ref      )
+  //   7:          ( x_ref+m_Dx, y_ref+m_Dy, z_ref+m_Dz )
 
   // cartesian distances to box sides
   real low_diff_x_ref = x - x_ref;
   real low_diff_y_ref = y - y_ref;
   real low_diff_z_ref = z - z_ref;
-  real up_diff_x_ref = m_DX - low_diff_x_ref;
-  real up_diff_y_ref = m_DY - low_diff_y_ref;
-  real up_diff_z_ref = m_DZ - low_diff_z_ref;
+  real up_diff_x_ref = m_Dx - low_diff_x_ref;
+  real up_diff_y_ref = m_Dy - low_diff_y_ref;
+  real up_diff_z_ref = m_Dz - low_diff_z_ref;
 
-  real inv_cell_vol = m_InvDX * m_InvDY * m_InvDZ;
+  real inv_cell_vol = m_InvDx * m_InvDy * m_InvDz;
 
   //.. Init weights
   w_octet[0] = inv_cell_vol;
@@ -596,26 +616,26 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
 // // X-gradient
 // //.. cell-cell difference grad for 0->4
 // WeightedSet<real> d_dx_04();
-// d_dx_04.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDX);
-// d_dx_04.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDX);
+// d_dx_04.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDx);
+// d_dx_04.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDx);
 // d_dx_04 *= up_diff_y_ref;
 // d_dx_04 *= up_diff_z_ref;
 // //.. cell-cell difference grad for 1->5
 // WeightedSet<real> d_dx_15();
-// d_dx_15.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDX);
-// d_dx_15.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDX);
+// d_dx_15.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDx);
+// d_dx_15.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDx);
 // d_dx_15 *= up_diff_y_ref;
 // d_dx_15 *= low_diff_z_ref;
 // //.. cell-cell difference grad for 2->6
 // WeightedSet<real> d_dx_26();
-// d_dx_26.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDX);
-// d_dx_26.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDX);
+// d_dx_26.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDx);
+// d_dx_26.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDx);
 // d_dx_26 *= low_diff_y_ref;
 // d_dx_26 *= up_diff_z_ref;
 // //.. cell-cell difference grad for 3->7
 // WeightedSet<real> d_dx_37();
-// d_dx_37.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDX);
-// d_dx_37.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDX);
+// d_dx_37.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDx);
+// d_dx_37.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDx);
 // d_dx_37 *= low_diff_y_ref;
 // d_dx_37 *= low_diff_z_ref;
 // //.. combined x-grad
@@ -628,8 +648,8 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
 // // Y-gradient
 // //.. cell-cell difference grad for 0->2
 // WeightedSet<real> d_dx_02();
-// d_dx_02.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDY);
-// d_dx_02.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDY);
+// d_dx_02.pushBack(index(ic_ref,   jc_ref,   kc_ref  ), -m_InvDy);
+// d_dx_02.pushBack(index(ic_ref+1, jc_ref,   kc_ref  ),  m_InvDy);
 // d_dx_02 *= up_diff_x_ref;
 // d_dx_02 *= up_diff_z_ref;
 
@@ -647,12 +667,12 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
 // face_i_low.pushBack(index(ic_ref+1, jc_ref+1, kc_ref  ), low_diff_y_ref * up_diff_z_ref ); // 6
 // face_i_low.pushBack(index(ic_ref+1, jc_ref+1, kc_ref+1), low_diff_y_ref * low_diff_z_ref); // 7
 // //.. x-grad as difference from above
-// face_i_low *= (m_InvDY * m_InvDZ);
-// face_i_up  *= (m_InvDY * m_InvDZ);
+// face_i_low *= (m_InvDy * m_InvDz);
+// face_i_up  *= (m_InvDy * m_InvDz);
 // WeightedSet<real> d_dx();
 // d_dx.clearWS();
-// d_dx.Concatenate(face_i_up ,  m_InvDX);
-// d_dx.Concatenate(face_i_low, -m_InvDX);
+// d_dx.Concatenate(face_i_up ,  m_InvDx);
+// d_dx.Concatenate(face_i_low, -m_InvDx);
 
 // // Y-gradient
 // //.. proj average on "inverse mesh face" j=jc_ref
@@ -668,12 +688,12 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
 // face_i_low.pushBack(index(ic_ref+1, jc_ref+1, kc_ref  ), low_diff_x_ref * up_diff_z_ref ); // 6
 // face_i_low.pushBack(index(ic_ref+1, jc_ref+1, kc_ref+1), low_diff_x_ref * low_diff_z_ref); // 7
 // //.. x-grad as difference from above
-// face_j_low *= (m_InvDX * m_InvDZ);
-// face_j_up  *= (m_InvDX * m_InvDZ);
+// face_j_low *= (m_InvDx * m_InvDz);
+// face_j_up  *= (m_InvDx * m_InvDz);
 // WeightedSet<real> d_dx();
 // d_dx.clearWS();
-// d_dx.Concatenate(face_j_up ,  m_InvDY);
-// d_dx.Concatenate(face_j_low, -m_InvDY);
+// d_dx.Concatenate(face_j_up ,  m_InvDy);
+// d_dx.Concatenate(face_j_low, -m_InvDy);
 
 // // X-gradient
 // //.. proj average on "inverse mesh face" i=ic_ref
@@ -689,12 +709,12 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
 // face_i_low.pushBack(index(ic_ref+1, jc_ref+1, kc_ref  ), low_diff_y_ref * up_diff_z_ref ); // 6
 // face_i_low.pushBack(index(ic_ref+1, jc_ref+1, kc_ref+1), low_diff_y_ref * low_diff_z_ref); // 7
 // //.. x-grad as difference from above
-// face_i_low *= (m_InvDY * m_InvDZ);
-// face_i_up  *= (m_InvDY * m_InvDZ);
+// face_i_low *= (m_InvDy * m_InvDz);
+// face_i_up  *= (m_InvDy * m_InvDz);
 // WeightedSet<real> d_dx();
 // d_dx.clearWS();
-// d_dx.Concatenate(face_i_up ,  m_InvDX);
-// d_dx.Concatenate(face_i_low, -m_InvDX);
+// d_dx.Concatenate(face_i_up ,  m_InvDx);
+// d_dx.Concatenate(face_i_low, -m_InvDx);
 
 // // Directed gradient
 // WeightedSet<real> d_
@@ -736,9 +756,9 @@ bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
     if(y > m_yCCInterMax-m_EpsDY) {y = m_xCCInterMax-m_EpsDY;}
     if(z > m_zCCInterMax-m_EpsDZ) {z = m_xCCInterMax-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
-    real ric_ref = (x - m_xCCMin) / m_DX;
-    real rjc_ref = (y - m_yCCMin) / m_DY;
-    real rkc_ref = (z - m_zCCMin) / m_DZ;
+    real ric_ref = (x - m_xCCMin) / m_Dx;
+    real rjc_ref = (y - m_yCCMin) / m_Dy;
+    real rkc_ref = (z - m_zCCMin) / m_Dz;
     //    iic_ref = lrint(floor(ric_ref));
     //    jjc_ref = lrint(floor(rjc_ref));
     //    kkc_ref = lrint(floor(rkc_ref));
@@ -799,9 +819,9 @@ bool CartesianPatch::xyzToRefCell(real x, real y, real z,
     if(y > m_yCCMax-m_EpsDY) {y = m_xCCMax-m_EpsDY;}
     if(z > m_zCCMax-m_EpsDZ) {z = m_xCCMax-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
-    real ric_ref = (x - m_xCCMin) / m_DX;
-    real rjc_ref = (y - m_yCCMin) / m_DY;
-    real rkc_ref = (z - m_zCCMin) / m_DZ;
+    real ric_ref = (x - m_xCCMin) / m_Dx;
+    real rjc_ref = (y - m_yCCMin) / m_Dy;
+    real rkc_ref = (z - m_zCCMin) / m_Dz;
     //    iic_ref = lrint(floor(ric_ref));
     //    jjc_ref = lrint(floor(rjc_ref));
     //    kkc_ref = lrint(floor(rkc_ref));
@@ -857,9 +877,9 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
   if(x < -m_EpsDX) {in_ref = 0; inside = false;};
   if(y < -m_EpsDY) {jn_ref = 0; inside = false;};
   if(z < -m_EpsDZ) {kn_ref = 0; inside = false;};
-  if(x > m_UX+m_EpsDX) {in_ref = m_NumI-1; inside = false;};
-  if(y > m_VY+m_EpsDY) {jn_ref = m_NumJ-1; inside = false;};
-  if(z > m_WZ+m_EpsDZ) {kn_ref = m_NumK-1; inside = false;};
+  if(x > m_Lx+m_EpsDX) {in_ref = m_NumI-1; inside = false;};
+  if(y > m_Ly+m_EpsDY) {jn_ref = m_NumJ-1; inside = false;};
+  if(z > m_Lz+m_EpsDZ) {kn_ref = m_NumK-1; inside = false;};
 
   // get reference cell, if inside
   if(inside) {
@@ -873,9 +893,9 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
     if(y > m_yCCMax-m_EpsDY) {y = m_xCCMax-m_EpsDY;}
     if(z > m_zCCMax-m_EpsDZ) {z = m_xCCMax-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
-    real rin_ref = (x - m_xCCMin) / m_DX;
-    real rjn_ref = (y - m_yCCMin) / m_DY;
-    real rkn_ref = (z - m_zCCMin) / m_DZ;
+    real rin_ref = (x - m_xCCMin) / m_Dx;
+    real rjn_ref = (y - m_yCCMin) / m_Dy;
+    real rkn_ref = (z - m_zCCMin) / m_Dz;
     //    iin_ref = lrint(floor(rin_ref));
     //    jjn_ref = lrint(floor(rjn_ref));
     //    kkn_ref = lrint(floor(rkn_ref));
@@ -920,7 +940,7 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
   return inside;
 }
 
-
+/*
 #ifdef WITH_VTK
 
 void CartesianPatch::writeToVtk(QString file_name)
@@ -982,3 +1002,6 @@ void CartesianPatch::writeToVtk(QString file_name)
 }
 
 #endif
+*/
+//=======
+//>>>>>>> master

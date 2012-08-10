@@ -25,8 +25,10 @@ void CoordTransformVV::setAll(mat3_t A, vec3_t b)
 
 void CoordTransformVV::setTransFromTo(const CoordTransformVV& c_from, const CoordTransformVV& c_to)
 {
-  m_transform.setTransFromTo(c_from.m_transform, c_to.m_transform);
-  computeInverse();
+  m_transform = (c_from.m_transform_inverse).concatenate(c_to.m_transform); // avoids 1st inverting
+  m_transform_inverse = (c_to.m_transform_inverse).concatenate(c_from.m_transform); // avoids 2nd inverting
+  // m_transform.setTransFromTo(c_from.m_transform, c_to.m_transform);
+  // computeInverse();
 }
 
 mat3_t CoordTransformVV::getMatrix()

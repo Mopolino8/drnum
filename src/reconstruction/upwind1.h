@@ -5,42 +5,22 @@
 
 struct Upwind1
 {
-  static real xp(CartesianPatch *P, real *var, size_t i, size_t j, size_t k);
-  static real xm(CartesianPatch *P, real *var, size_t i, size_t j, size_t k);
-  static real yp(CartesianPatch *P, real *var, size_t i, size_t j, size_t k);
-  static real ym(CartesianPatch *P, real *var, size_t i, size_t j, size_t k);
-  static real zp(CartesianPatch *P, real *var, size_t i, size_t j, size_t k);
-  static real zm(CartesianPatch *P, real *var, size_t i, size_t j, size_t k);
+  void project(CartesianPatch *patch, real* var, size_t i_field, size_t num_vars,
+               size_t i1, size_t j1, size_t k1,
+               size_t,    size_t,    size_t,
+               real = 0, real = 0, real = 0,
+               real = 0, real = 0, real = 0);
 };
 
-inline real Upwind1::xp(CartesianPatch *P, real *var, size_t i, size_t j, size_t k)
+inline void Upwind1::project(CartesianPatch *patch, real *var, size_t i_field, size_t num_vars,
+                             size_t i1, size_t j1, size_t k1,
+                             size_t   , size_t   , size_t,
+                             real, real, real,
+                             real, real, real)
 {
-  return P->f(var, i-1, j, k);
-}
-
-inline real Upwind1::xm(CartesianPatch *P, real *var, size_t i, size_t j, size_t k)
-{
-  return P->f(var, i, j, k);
-}
-
-inline real Upwind1::yp(CartesianPatch *P, real *var, size_t i, size_t j, size_t k)
-{
-  return P->f(var, i, j-1, k);
-}
-
-inline real Upwind1::ym(CartesianPatch *P, real *var, size_t i, size_t j, size_t k)
-{
-  return P->f(var, i, j, k);
-}
-
-inline real Upwind1::zp(CartesianPatch *P, real *var, size_t i, size_t j, size_t k)
-{
-  return P->f(var, i, j, k-1);
-}
-
-inline real Upwind1::zm(CartesianPatch *P, real *var, size_t i, size_t j, size_t k)
-{
-  return P->f(var, i, j, k);
+  for (size_t i_var = 0; i_var < num_vars; ++i_var) {
+    var[i_var] = patch->f(i_field, i_var, i1, j1, k1);
+  }
 }
 
 #endif // UPWIND1_H

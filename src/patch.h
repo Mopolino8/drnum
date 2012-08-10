@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <vector>
 #include "blockcfd.h"
+//<<<<<<< HEAD
 #include "weightedset.h"
 
 class Patch;
@@ -11,6 +12,14 @@ class Patch;
 #include "intercoeff.h"
 #include "intercoeffws.h"
 #include "math/coordtransformvv.h"
+
+/** @todo
+ *    proposed coord naming convention:
+ *        (Xo,Yo,Zo), (xo,yo,zo) or vec3_t XYZo, xyzo     : coords in syst. of origin
+ *        (X,Y,Z)   , (x,y,z)    or vec3_t XYZ , xyz      : coords in syst. of "this" patch
+ *        (XX,YY,ZZ), (xx,yy,zz) or vec3_t XXYYZZ, xxyyzz : coords in syst. of any foreign patch
+ *
+ */
 
 /**
  * @todo Build new heritage tree for patches. Proposed as follows:
@@ -22,10 +31,13 @@ class Patch;
  *               SemistructHexPatch  => ... (unstructured 2D-hex grid, structured in 3rd dimension)
  *               UnstructuredPatch   => ... (probably no variants, hybrid cells)
  *
- *  Remark: at present I think, we should NOT differentiate patch alingments to (xo,yo,zo) from others. Might be
+ *  Remark: at present I think, we should NOT differentiate patch alignments to (xo,yo,zo) from others. Might be
  *          smarter to define coalignments of neighbouring blocks.
  *
  */
+//=======
+#include "transformation.h"    /// @todo merge: kept for compatibility
+//>>>>>>> master
 
 class Patch
 {
@@ -38,7 +50,14 @@ private: // attributes
   size_t  m_FieldSize;    ///< length of each field
   size_t  m_VariableSize; ///< length of each variable
 
-protected: // methods
+//<<<<<<< HEAD
+//protected: // methods
+//=======
+Transformation m_Transformation;    /// @todo merge: kept for compatibility
+//
+//
+//private: // methods
+//>>>>>>> master
 
   void  allocateData();
 
@@ -65,11 +84,11 @@ protected: // attributes
   vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for data, note indexing as receive_cells
 
   // lists related to neighbouring donor patches
-  vector<pair<Patch*, CoordTransformVV> > m_neighbours; ///< neighbouring donor patches and coord transformation. NOT vice-versa !!!
-  vector<InterCoeff*> m_InterCoeffData;                 ///< Interpolation coefficient lists for data
-  vector<InterCoeff*> m_InterCoeffGrad1N;               ///< Interpolation coefficient lists for 1st directed gradients
-  vector<InterCoeffWS*> m_InterCoeffData_WS;            ///< same as m_InterCoeffData, but with WeightedSets (CPU only)
-  vector<InterCoeffWS*> m_InterCoeffGrad1N_WS;          ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
+  vector<pair<Patch*, CoordTransformVV> > m_neighbours; ///< neighbouring donor patches and coord transformation. NOTE: receiving patches not stored.
+  vector<InterCoeff> m_InterCoeffData;                 ///< Interpolation coefficient lists for data
+  vector<InterCoeff> m_InterCoeffGrad1N;               ///< Interpolation coefficient lists for 1st directed gradients
+  vector<InterCoeffWS> m_InterCoeffData_WS;            ///< same as m_InterCoeffData, but with WeightedSets (CPU only)
+  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;          ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
   // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;  ///< Interpolation coefficient lists for 2nd directed gradients
 
 
@@ -80,8 +99,8 @@ protected: // methods
   void  resize(size_t variable_size);
   real* getField(size_t i_field);
   real* getVariable(size_t i_field, size_t i_variable);
-  void  setNumberOfFields(size_t num_fields) { m_NumFields = num_fields; }
-  void  setNumberOfVariables(size_t num_variables) { m_NumVariables = num_variables; }
+
+  void setTransformation(Transformation t) { m_Transformation = t; }  /// @todo keep for compatibility, prefer CoordTransformVV later
 
   // geometry
   virtual void buildBoundingBox()=0;
@@ -102,6 +121,9 @@ public: // methods
   Patch(size_t num_protectlayers=1, size_t num_overlaplayers=1);
 
   virtual ~Patch();
+
+  void  setNumberOfFields(size_t num_fields) { m_NumFields = num_fields; }
+  void  setNumberOfVariables(size_t num_variables) { m_NumVariables = num_variables; }
 
   /**
     * Set number of protection layers
@@ -269,16 +291,16 @@ public: // methods
   size_t fieldSize()    { return m_FieldSize; }
   size_t variableSize() { return m_VariableSize; }
 
-  //virtual void subStep(real dt) = 0;
+  void setFieldToZero(real *field);
+  void setFieldToZero(size_t i_field);
+  void copyField(real *src, real *dst);
+  void copyField(size_t i_src, size_t i_dst);
+  void addField(real *src, real factor, real *dst);
+  void addField(real *op1, real factor, real *op2, real *dst);
+  void addField(size_t i_src, real factor, size_t i_dst);
+  void addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst);
 
-  void  setFieldToZero(real *field);
-  void  setFieldToZero(size_t i_field);
-  void  copyField(real *src, real *dst);
-  void  copyField(size_t i_src, size_t i_dst);
-  void  addField(real *src, real factor, real *dst);
-  void  addField(real *op1, real factor, real *op2, real *dst);
-  void  addField(size_t i_src, real factor, size_t i_dst);
-  void  addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst);
+  Transformation getTransformation() { return m_Transformation; }
 
 };
 
@@ -329,5 +351,16 @@ inline void Patch::addField(size_t i_op1, real factor, size_t i_op2, size_t i_ds
 {
   addField(getField(i_op1), factor, getField(i_op2), getField(i_dst));
 }
+
+inline real* Patch::getField(size_t i_field)
+{
+  return m_Data + i_field*m_FieldSize;
+}
+
+inline real* Patch::getVariable(size_t i_field, size_t i_variable)
+{
+  return getField(i_field) + i_variable*m_VariableSize;
+}
+
 
 #endif // PATCH_H
