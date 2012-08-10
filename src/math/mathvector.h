@@ -183,19 +183,11 @@ public:
 };
 
 
-//<<<<<<< HEAD
-//typedef MathVector<StaticVector<double,2> > vec2_t;
-//typedef MathVector<StaticVector<double,3> > vec3_t;
-//typedef MathVector<StaticVector<double,4> > vec4_t;
-//typedef MathVector<StaticVector<double,5> > vec5_t;
-//typedef MathVector<StaticVector<double,6> > vec6_t;
-//=======
 typedef MathVector<StaticVector<real,2> > vec2_t;
 typedef MathVector<StaticVector<real,3> > vec3_t;
 typedef MathVector<StaticVector<real,4> > vec4_t;
 typedef MathVector<StaticVector<real,5> > vec5_t;
 typedef MathVector<StaticVector<real,6> > vec6_t;
-//>>>>>>> master
 
 #include "mathvector_operators.h"
 #include "mathvector_methods.h"
