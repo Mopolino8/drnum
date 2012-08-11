@@ -85,11 +85,11 @@ protected: // attributes
 
   // lists related to neighbouring donor patches
   vector<pair<Patch*, CoordTransformVV> > m_neighbours; ///< neighbouring donor patches and coord transformation. NOTE: receiving patches not stored.
-  vector<InterCoeff> m_InterCoeffData;                 ///< Interpolation coefficient lists for data
-  vector<InterCoeff> m_InterCoeffGrad1N;               ///< Interpolation coefficient lists for 1st directed gradients
-  vector<InterCoeffWS> m_InterCoeffData_WS;            ///< same as m_InterCoeffData, but with WeightedSets (CPU only)
-  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;          ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
-  // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;  ///< Interpolation coefficient lists for 2nd directed gradients
+  vector<InterCoeffPad> m_InterCoeffData;               ///< Interpolation coefficient lists for data
+  vector<InterCoeffPad> m_InterCoeffGrad1N;             ///< Interpolation coefficient lists for 1st directed gradients
+  vector<InterCoeffWS> m_InterCoeffData_WS;             ///< same as m_InterCoeffData, but with WeightedSets (CPU only)
+  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;           ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
+  // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;    ///< Interpolation coefficient lists for 2nd directed gradients
 
 
 protected: // methods

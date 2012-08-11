@@ -95,12 +95,15 @@ public:
   void Concatenate(const WeightedSet<T>& w);             ///< concatenate: v = [v , w]
   void Concatenate(const WeightedSet<T>& w, const T& s); ///< concatenate: v = [v , s*w]
   void Unify();    ///< adds up weights for multiple indicees and makes indicees unique
-  size_t HighNodeAddress();    ///< Find highest index stored v[..].first (compatibility)
-  size_t HighestIndex();       ///< Find highest index stored v[..].first
-  T WeightSum();               ///< Compute sum of weights
-  T WeightAbsMax();            ///< Compute maximum absolute weight
-  T RealValue(T* a);           ///< Compute sum(a[j[i]] * t[i]) for all i (compatibility)
-  T computeValue(T* a);        ///< Compute sum(a[j[i]] * t[i]) for all i
+  size_t getSize() const;                  ///< return number of pairs.
+  size_t getIndex(const size_t& ll) const; ///< return the index of the ll-th pair (index, weight)
+  T getWeight(const size_t& ll) const;     ///< return the weight of the ll-th pair (index, weight)
+  size_t HighNodeAddress() const;   ///< Find highest index stored v[..].first (compatibility)
+  size_t HighestIndex() const;      ///< Find highest index stored v[..].first
+  T WeightSum();                    ///< Compute sum of weights
+  T WeightAbsMax();                 ///< Compute maximum absolute weight
+  T RealValue(T* a);                ///< Compute sum(a[j[i]] * t[i]) for all i (compatibility)
+  T computeValue(const T* a) const; ///< Compute sum(a[j[i]] * t[i]) for all i
 
   // Operators
   void operator=(const WeightedSet<T>& w);               ///< copy:        v = w
@@ -510,13 +513,31 @@ inline void WeightedSet<T>::MultiplyAdd(const WeightedSet<T>& addend_2, const T&
 //}
 
 template<class T>
-inline size_t WeightedSet<T>::HighNodeAddress()
+inline size_t WeightedSet<T>::getSize() const
+{
+  return v.size();
+}
+
+template<class T>
+inline size_t WeightedSet<T>::getIndex(const size_t& ll) const
+{
+  return v[ll].first;
+}
+
+template<class T>
+inline T WeightedSet<T>::getWeight(const size_t& ll) const
+{
+  return v[ll].second;
+}
+
+template<class T>
+inline size_t WeightedSet<T>::HighNodeAddress() const
 {
   return HighestIndex();
 }
 
 template<class T>
-inline size_t WeightedSet<T>::HighestIndex()
+inline size_t WeightedSet<T>::HighestIndex() const
 {
   // get the maximum internal index of all entries
   size_t high_index = 0;
@@ -577,11 +598,23 @@ inline void WeightedSet<T>::adjustWeightSumShift(const T& weight_sum)
 }
 
 template<class T>
-inline T WeightedSet<T>::RealValue(T* a) {
+inline T WeightedSet<T>::RealValue(T* a)
+{
   T ret_val = t_zero;
   for(size_t i=0; i<v.size(); i++) {
     ret_val += a[v[i].first] * v[i].second;
   }
   return ret_val;
 }
+
+template<class T>
+inline T WeightedSet<T>::computeValue(const T* a) const
+{
+  T ret_val = t_zero;
+  for(size_t i=0; i<v.size(); i++) {
+    ret_val += a[v[i].first] * v[i].second;
+  }
+  return ret_val;
+}
+
 #endif

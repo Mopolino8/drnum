@@ -8,6 +8,7 @@
 struct SingleInterCoeffWS;
 class InterCoeffWS;
 
+
 #include "patch.h"
 
 /// @todo Structures need some better naming conventions to allow easyer understanding
@@ -35,6 +36,8 @@ struct SingleInterCoeffWS
 class InterCoeffWS
 {
 
+  friend class InterCoeffPad;
+
 protected: // attributes
 
   /// @todo new mem-structure: m_DonorPatch probably obsolete due to borrowed pointers anyway
@@ -59,6 +62,28 @@ public: // methods
     * Set relative coordinate transformation. Required for later access when transfering vectorial data.
     */
   void setCoordTransform(const CoordTransform& ct_donor2owner);
+
+  /**
+    * Get number of receiving cells.
+    */
+  size_t getNumRecCells() const;
+
+  /**
+    * Get maximum number of donor cells contributing to any single receiver cell.
+    */
+  size_t getMaxContrib() const;
+
+  /**
+    * Get direct receiving cell index in receiving patch
+    * @param ll_rec index in list of contributions
+    */
+  size_t getDirectRecCell(const size_t& ll_rec) const;
+
+  /**
+    * Get WeightedSet-ptr for contribution to one receiving cell
+    * @param ll_rec index in list of contributions
+    */
+  WeightedSet<real>* getWS(const size_t& ll_rec);
 
   /**
     * Insert a WeightedSet for a given indexed request
@@ -124,6 +149,32 @@ inline void InterCoeffWS::setCoordTransform(const CoordTransform& ct_donor2owner
   m_ct = ct_donor2owner;
 }
 
+inline size_t InterCoeffWS::getNumRecCells() const
+{
+  return m_DonorCellContribsWS.size();
+}
+
+inline size_t InterCoeffWS::getMaxContrib() const
+{
+  size_t max_contrib_size = 0;
+  for (size_t ll_rec = 0; ll_rec < m_DonorCellContribsWS.size(); ll_rec++) {
+    size_t s_h = m_DonorCellContribsWS[ll_rec].donor_contribution.getSize();
+    if(max_contrib_size < s_h) {
+      max_contrib_size = s_h;
+    }
+  }
+  return max_contrib_size;
+}
+
+inline size_t InterCoeffWS::getDirectRecCell(const size_t& ll_rec) const
+{
+  return m_DonorCellContribsWS[ll_rec].direct_receiveindex;
+}
+
+inline WeightedSet<real>* InterCoeffWS::getWS(const size_t& ll_rec)
+{
+  return &(m_DonorCellContribsWS[ll_rec].donor_contribution);
+}
 
 inline void InterCoeffWS::push(const size_t& i_indirect, const size_t& i_direct, const WeightedSet<real>& contribution)
 {
@@ -160,7 +211,7 @@ inline void InterCoeffWS::transFromTo(const vector<real*>& donor_data, const vec
     size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
     WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
     for(size_t i_v=0; i_v<num_vars; i_v++) {
-      *(receiver_data[i_v]+i_receive) += dccws.RealValue(donor_data[i_v]);
+      *(receiver_data[i_v]+i_receive) += dccws.computeValue(donor_data[i_v]);
     }
   }
 }
@@ -183,7 +234,7 @@ inline void InterCoeffWS::transTurnFromTo(const vector<real*>& donor_data, const
     size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
     WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
     for(size_t i_v=0; i_v<num_vars; i_v++) {
-      vars_h[i_v] = dccws.RealValue(donor_data[i_v]);
+      vars_h[i_v] = dccws.computeValue(donor_data[i_v]);
     }
     // turn vectorial data onto system of receiver
     /** @todo likely to be a performance issue: fixed indexing for vectorial quantities prefereable, if possible */
@@ -208,16 +259,16 @@ inline void InterCoeffWS::transTurnFromTo(const vector<real*>& donor_data, const
     size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
     WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
     // do vectorial var first
-    real vec_vars_0 = dccws.RealValue(donor_data[0]);    // x_comp vectorial var to turn
-    real vec_vars_1 = dccws.RealValue(donor_data[1]);    // y_comp vectorial var to turn
-    real vec_vars_2 = dccws.RealValue(donor_data[2]);    // z_comp vectorial var to turn
+    real vec_vars_0 = dccws.computeValue(donor_data[0]);    // x_comp vectorial var to turn
+    real vec_vars_1 = dccws.computeValue(donor_data[1]);    // y_comp vectorial var to turn
+    real vec_vars_2 = dccws.computeValue(donor_data[2]);    // z_comp vectorial var to turn
     m_ct.transfree(vec_vars_0, vec_vars_1, vec_vars_2);  // turn into system of receiver
     *(receiver_data[0]+i_receive) += vec_vars_0;         // add contribution
     *(receiver_data[1]+i_receive) += vec_vars_1;         //        "
     *(receiver_data[2]+i_receive) += vec_vars_2;         //        "
     // do all other variables
     for(size_t i_v=3; i_v<num_vars; i_v++) {
-      *(receiver_data[i_v]+i_receive) += dccws.RealValue(donor_data[i_v]);
+      *(receiver_data[i_v]+i_receive) += dccws.computeValue(donor_data[i_v]);
     }
   }
 }
