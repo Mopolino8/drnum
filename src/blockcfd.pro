@@ -65,7 +65,7 @@ HEADERS += \
     iterators/cartesianstandardpatchoperation.h \
     rungekutta.h \
     patchgrid.h \
-    intercoeff.h \
+    intercoeffpad.h \
     intercoeffws.h \
     utility/weightedset.h \
     utility/List.hh \

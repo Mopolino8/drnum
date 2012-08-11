@@ -9,7 +9,7 @@
 
 class Patch;
 
-#include "intercoeff.h"
+#include "intercoeffpad.h"
 #include "intercoeffws.h"
 #include "math/coordtransformvv.h"
 
