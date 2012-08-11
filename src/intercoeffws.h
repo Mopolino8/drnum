@@ -3,10 +3,10 @@
 
 #include <cstddef>
 #include "blockcfd.h"
+#include "math/coordtransform.h"
 
 struct SingleInterCoeffWS;
-struct InterCoeffWS;
-//class InterCoeffWS;
+class InterCoeffWS;
 
 #include "patch.h"
 
@@ -14,13 +14,15 @@ struct InterCoeffWS;
 
 struct SingleInterCoeffWS
 {
-  size_t indirect_receiveindex;         ///< Index in receive_cells of "this"-owning Patch
-  size_t direct_receiveindex;           ///< Cell index in "this"-owning Patch, receiving data
+  size_t indirect_receiveindex;         ///< Index in indirect array receive_cells of receiving Patch
+  size_t direct_receiveindex;           ///< Cell index in receiving Patch
   WeightedSet<real> donor_contribution; ///< WeightedSet containing contributions of donor patch
 };
 
 /**
  * Data structure to hold dependency coefficients for data exchange from ONE neighbouring donor patch.
+ *
+ * Receiving patch: keeps one instance of this class per donor neighbour.
  *
  * Parallel/Vector info: - Unique size_t-sequence: no write conflicts using
  *                         m_DonorCellContribsWS[...].direct_receiveindex
@@ -29,43 +31,34 @@ struct SingleInterCoeffWS
  *                         of InterCoeffWS for same "this"-owning (receiving) patch). Same cells may be
  *                         receiving data from more than one giving Patch.
  */
-struct InterCoeffWS
-    //class InterCoeffWS
+//struct InterCoeffWS
+class InterCoeffWS
 {
-  //public:
-  /**
-   * Patch from which data will be received.
-   */
+
+protected: // attributes
+
+  /// @todo new mem-structure: m_DonorPatch probably obsolete due to borrowed pointers anyway
+  /// Patch from which data will be received.
   Patch* m_DonorPatch;
 
-  /**
-    * Coordinate transformation from m_DonorPatch to "this" owning Patch.
-    */
-  CoordTransformVV m_ct;
+  /// Coordinate transformation from m_DonorPatch to receiving Patch.
+  CoordTransform m_ct;
 
-  //  /**
-  //   * Cells in "this"-owning Patch, receiving data from giving Patch.
-  //   * Parallel/Vector info: * Unique size_t-arrays: no write conflicts using m_ReceivingCells
-  //   *                         for left side array addressing. Force vectorization, as needed.
-  //   *                       * Potential recurrence for different giving Patches (several instances
-  //   *                         of InterCoeff for same receiving Patch). Same cells may be receiving data
-  //   *                         from more than one giving Patch.
-  //   */
-  //  TList<size_t>* m_ReceivingCells;
-
-  /**
-   * Contributing pairs(cells, weights) in giving Patch.
-   */
+  /// Contributing pairs(cells, weights) in giving Patch.
   vector<SingleInterCoeffWS> m_DonorCellContribsWS;
+
+public: // methods
 
   /**
     * Set donor patch.
     * @param donor_patch
     */
-  void setDonorPatch(Patch* donor_patch)
-  {
-    m_DonorPatch = donor_patch;  /// @todo this is dangerous, since it might be overwritten
-  }
+  void setDonorPatch(Patch* donor_patch);
+
+  /**
+    * Set relative coordinate transformation. Required for later access when transfering vectorial data.
+    */
+  void setCoordTransform(const CoordTransform& ct_donor2owner);
 
   /**
     * Insert a WeightedSet for a given indexed request
@@ -73,87 +66,162 @@ struct InterCoeffWS
     * @param i_direct the direct index of the requesting cell
     * @param contribution WeightedSet with coefficients related to m_DonorPatch
     */
-  void push(const size_t& i_indirect, const size_t& i_direct, const WeightedSet<real>& contribution)
-  {
-    SingleInterCoeffWS sic_h;
-    sic_h.indirect_receiveindex = i_indirect;
-    sic_h.direct_receiveindex = i_direct;
-    sic_h.donor_contribution = contribution;
-    m_DonorCellContribsWS.push_back(sic_h);  /// @todo strange debug error on ddd: cannot access operator[] unless the folowing line is active
-    //cout << m_DonorCellContribsWS[0].indirect_receiveindex << endl;
-    cout << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].indirect_receiveindex;
-    cout << " w_set-size = " << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].donor_contribution.v.size() << endl;
-  }
+  void push(const size_t& i_indirect, const size_t& i_direct, const WeightedSet<real>& contribution);
 
   /**
     * Prepare for averiging: divide contributions for a receiving cell by number of contributing patches
     * NOTE: A receiving cell might be located in the core region of several donor patches.
     * @param hits a vector containing the number of contributing donor patches.
     */
-  void adjust2Average(vector<size_t> hits)
-  {
-    for(size_t ll=0; ll<m_DonorCellContribsWS.size(); ll++) {
-      // indirect address (equal to index in hits)
-      size_t ind_rec_h = m_DonorCellContribsWS[ll].indirect_receiveindex;
-      if(hits[ind_rec_h] > 1) {
-        m_DonorCellContribsWS[ll].donor_contribution *= (1./hits[ind_rec_h]);
-      }
-    }
-  }
+  void adjust2Average(vector<size_t> hits);
 
   /**
-    * Apply WeightedSet pattern to donor_data and write to receive_data.
-    * NOTE: donor_data and receive_data are vectors with magnitude num_vars
+    * Apply WeightedSet pattern to donor_data and add to receive_data.
+    * No turning of any types of variables, suitable for scalar variables only.
+    * NOTE: donor_data and receive_data are small vectors with one entry per variable type to transfer
     * @param donor_data vector of real pointers to variable data of donor patch
     * @param receiver_data vector of real pointers to variable data of receiving patch
-    * @param receive_cells indirect address field of cells in receiving patch
     */
-  void transferFromTo(const vector<real*>& donor_data, const vector<real*>& receive_data) {
-    size_t num_vars = donor_data.size();
-    for (size_t i_ind = 0; i_ind < m_DonorCellContribsWS.size(); i_ind++) {
-      size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
-      WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
-      for(size_t i_v=0; i_v<num_vars; i_v++) {
-        *(receive_data[i_v]+i_receive) += dccws.RealValue(donor_data[i_v]);
-      }
-    }
-  }
-
-
-  /** @todo must improve variable selection for transformFree operation to allow better optimization.
-    */
+  void transFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data);
 
   /**
-    * Apply WeightedSet pattern to donor_data and write to receive_data.
-    * NOTE: donor_data and receive_data are vectors with magnitude num_vars
+    * Apply WeightedSet pattern to donor_data and add to receive_data.
+    * Includes turning of vectorial variable (example: speed vector) given by indicees (i_vx, i_vy, i_vz) in donor_data
+    * NOTE: donor_data and receive_data are small vectors with one entry per variable type to transfer
+    *
+    * @todo must improve variable selection for transformFree operation to allow better optimization.
+    *
     * @param donor_data vector of real pointers to variable data of donor patch
     * @param receiver_data vector of real pointers to variable data of receiving patch
-    * @param receive_cells indirect address field of cells in receiving patch
+    * @param i_vx variable index forming the x-comp. of a vectorial variable. Example: "1" for speed (p,u,v,w,T)
+    * @param i_vy variable index forming the y-comp. of a vectorial variable. Example: "2" for speed (p,u,v,w,T)
+    * @param i_vz variable index forming the z-comp. of a vectorial variable. Example: "3" for speed (p,u,v,w,T)
+
     */
-  void transferturnFromTo(vector<real*> donor_data, vector<real*> receive_data,
-                          const int& i_vx, const int& i_vy, const int& i_vz) {
-    size_t num_vars = donor_data.size();
-    real* vars_h = new real[num_vars];
-    for(size_t i_ind=0; i_ind<m_DonorCellContribsWS.size(); i_ind++) {
-      size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
-      WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
-      for(size_t i_v=0; i_v<num_vars; i_v++) {
-        vars_h[i_v] = dccws.RealValue(donor_data[i_v]);
-      }
-      // turn
+  void transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data,
+                       const size_t& i_vx, const size_t& i_vy, const size_t& i_vz);
 
-      Needs tranformation matrix in this class !!!
+  /**
+    * Apply WeightedSet pattern to donor_data and add to receive_data.
+    * Includes turning of vectorial variable (example: speed vector) given by fixed indicees (0, 1, 2) in donor_data
+    * NOTE: donor_data and receive_data are small vectors with one entry per variable type to transfer
+    * @param donor_data vector of real pointers to variable data of donor patch
+    * @param receiver_data vector of real pointers to variable data of receiving patch
+    */
+  void transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data);
 
-      m_ct.transfree(vars_h[i_vx], vars_h[i_vy], vars_h[i_vz]);
-      // contribute
-      for(size_t i_v=0; i_v<num_vars; i_v++) {
-        *(receive_data[i_v]+i_receive) += vars_h[i_v];
-      }
+};  // end class definition
+
+
+inline void InterCoeffWS::setDonorPatch(Patch* donor_patch)
+{
+  m_DonorPatch = donor_patch;
+}
+
+
+inline void InterCoeffWS::setCoordTransform(const CoordTransform& ct_donor2owner)
+{
+  m_ct = ct_donor2owner;
+}
+
+
+inline void InterCoeffWS::push(const size_t& i_indirect, const size_t& i_direct, const WeightedSet<real>& contribution)
+{
+  SingleInterCoeffWS sic_h;
+  sic_h.indirect_receiveindex = i_indirect;
+  sic_h.direct_receiveindex = i_direct;
+  sic_h.donor_contribution = contribution;
+  m_DonorCellContribsWS.push_back(sic_h);  /// @todo strange debug error on ddd: cannot access operator[] unless the folowing line is active
+  //cout << m_DonorCellContribsWS[0].indirect_receiveindex << endl;
+  cout << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].indirect_receiveindex;
+  cout << " w_set-size = " << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].donor_contribution.v.size() << endl;
+}
+
+
+inline void InterCoeffWS::adjust2Average(vector<size_t> hits)
+{
+  for(size_t ll=0; ll<m_DonorCellContribsWS.size(); ll++) {
+    // indirect address (equal to index in hits)
+    size_t ind_rec_h = m_DonorCellContribsWS[ll].indirect_receiveindex;
+    if(hits[ind_rec_h] > 1) {
+      m_DonorCellContribsWS[ll].donor_contribution *= (1./hits[ind_rec_h]);
     }
-    delete vars_h;
   }
+}
 
 
-};
+inline void InterCoeffWS::transFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data) {
+#ifdef DEBUG
+  // check sizes
+  if(donor_data.size() != receiver_data.size()) {BUG;}
+#endif
+  size_t num_vars = donor_data.size();
+  for (size_t i_ind = 0; i_ind < m_DonorCellContribsWS.size(); i_ind++) {
+    size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
+    WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
+    for(size_t i_v=0; i_v<num_vars; i_v++) {
+      *(receiver_data[i_v]+i_receive) += dccws.RealValue(donor_data[i_v]);
+    }
+  }
+}
+
+
+inline void InterCoeffWS::transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data,
+                                          const size_t& i_vx, const size_t& i_vy, const size_t& i_vz)
+{
+#ifdef DEBUG
+  // check vector indexing bounds
+  if(i_vx > donor_data.size()) {BUG;}
+  if(i_vy > donor_data.size()) {BUG;}
+  if(i_vz > donor_data.size()) {BUG;}
+  // check sizes
+  if(donor_data.size() != receiver_data.size()) {BUG;}
+#endif
+  size_t num_vars = donor_data.size();
+  real* vars_h = new real[num_vars];
+  for(size_t i_ind=0; i_ind<m_DonorCellContribsWS.size(); i_ind++) {
+    size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
+    WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
+    for(size_t i_v=0; i_v<num_vars; i_v++) {
+      vars_h[i_v] = dccws.RealValue(donor_data[i_v]);
+    }
+    // turn vectorial data onto system of receiver
+    /** @todo likely to be a performance issue: fixed indexing for vectorial quantities prefereable, if possible */
+    m_ct.transfree(vars_h[i_vx], vars_h[i_vy], vars_h[i_vz]);
+    // contribute
+    for(size_t i_v=0; i_v<num_vars; i_v++) {
+      *(receiver_data[i_v]+i_receive) += vars_h[i_v];
+    }
+  }
+  delete vars_h;
+}
+
+inline void InterCoeffWS::transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data)
+{
+#ifdef DEBUG
+  // check number of variable types
+  if(donor_data.size() != receiver_data.size()) {BUG;}
+  if(donor_data.size() < 3) {BUG;}
+#endif
+  size_t num_vars = donor_data.size();
+  for(size_t i_ind=0; i_ind<m_DonorCellContribsWS.size(); i_ind++) {
+    size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
+    WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
+    // do vectorial var first
+    real vec_vars_0 = dccws.RealValue(donor_data[0]);    // x_comp vectorial var to turn
+    real vec_vars_1 = dccws.RealValue(donor_data[1]);    // y_comp vectorial var to turn
+    real vec_vars_2 = dccws.RealValue(donor_data[2]);    // z_comp vectorial var to turn
+    m_ct.transfree(vec_vars_0, vec_vars_1, vec_vars_2);  // turn into system of receiver
+    *(receiver_data[0]+i_receive) += vec_vars_0;         // add contribution
+    *(receiver_data[1]+i_receive) += vec_vars_1;         //        "
+    *(receiver_data[2]+i_receive) += vec_vars_2;         //        "
+    // do all other variables
+    for(size_t i_v=3; i_v<num_vars; i_v++) {
+      *(receiver_data[i_v]+i_receive) += dccws.RealValue(donor_data[i_v]);
+    }
+  }
+}
+
+
 #endif // INTERCOEFFWS_H
 

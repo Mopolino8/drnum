@@ -55,26 +55,25 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
     compactReceiveCellLists();
     m_receiveCells_OK = true;
   }
-
-
-
-
-
+  // Insert donor patch and relative coord transformation into m_neighbours and get neighbourship index
   pair<Patch*, CoordTransformVV> dependency_h;
   dependency_h.first = neighbour_patch;
-  dependency_h.second.setTransFromTo(m_transformInertial2This, neighbour_patch->m_transformInertial2This);
+  CoordTransformVV ctvv_relative;
+  ctvv_relative.setTransFromTo(m_transformInertial2This, neighbour_patch->m_transformInertial2This);
+  dependency_h.second = ctvv_relative;
   m_neighbours.push_back(dependency_h);
-  //  if(m_InterpolateData) {
-  //    InterCoeffWS icws_h;
-  //    m_InterCoeffData_WS.push_back(icws_h);   /// @todo would be nice to have a link_vector<T>
-  //  }
-  //  if(m_InterpolateGrad1N) {
-  //    InterCoeffWS icws_h;
-  //    m_InterCoeffGrad1N_WS.push_back(icws_h);
-  //  }
-  if(m_InterpolateData) {m_InterCoeffData_WS.resize(m_neighbours.size());}   /// @todo would be nice to have a link_vector<T>
-  if(m_InterpolateGrad1N) {m_InterCoeffGrad1N_WS.resize(m_neighbours.size());}
-  size_t i_neighbour = m_neighbours.size() - 1;  /// @todo any better idea to get direct pos index?
+  size_t i_neighbour = m_neighbours.size() - 1;
+  // Depending on calculation type, insert donor and relative coord transformation into InterCoeffWS lists
+  if(m_InterpolateData) {
+    m_InterCoeffData_WS.resize(i_neighbour + 1);
+    m_InterCoeffData_WS[i_neighbour].setDonorPatch(neighbour_patch);
+    m_InterCoeffData_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
+  }   /// @todo would be nice to have a link_vector<T>
+  if(m_InterpolateGrad1N) {
+    m_InterCoeffGrad1N_WS.resize(i_neighbour + 1);
+    m_InterCoeffGrad1N_WS[i_neighbour].setDonorPatch(neighbour_patch);
+    m_InterCoeffGrad1N_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
+  }
   computeDependencies(i_neighbour);
 }
 
@@ -98,40 +97,81 @@ void Patch::compactReceiveCellLists()
   }
 }
 
-void Patch::accessDonorData_WS(size_t field)
+/// @todo new mem-structure: must change access to borrowed pointers
+void Patch::accessDonorData_WS(const size_t& field)
 {
+  vector<real*> donor_vars;
+  vector<real*> this_vars;
+  // assign variable pointers to work on
+  for(size_t i_v=0; i_v<numVariables(); i_v++) {
+    this_vars.push_back(getVariable(field, i_v));
+  }
+  // set all receiving data variables to 0, as donors will add their contributions onto
+  for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
+    size_t l_rc = m_receive_cells[ll_rc];
+    for(size_t i_v=0; i_v<numVariables(); i_v++) {
+      this_vars[i_v][l_rc] = 0.;
+    }
+  }
   // loop through neighbouring donor patches
   for(size_t i_pd=0; i_pd<m_neighbours.size(); i_pd++) {
     Patch* donor = m_neighbours[i_pd].first;
-    InterCoeffWS icws = m_InterCoeffData_WS[i_pd];
-    //.. loop for variables in field
-    vector<real*> donor_vars;
-    vector<real*> this_vars;
+    //.. assign foreign variable pointers (same sequence as in "this_vars"
     for(size_t i_v=0; i_v<numVariables(); i_v++) {
       donor_vars.push_back(donor->getVariable(field, i_v));
-      this_vars.push_back(getVariable(field, i_v));
     }
-    icws.transferFromTo(donor_vars, this_vars);
+    //.. execute transfer contribution
+    InterCoeffWS icws = m_InterCoeffData_WS[i_pd];
+    icws.transFromTo(donor_vars, this_vars);    // NOTE: NO turning of vectorial variables
   }
 }
 
-// FOLLOWING IS AUTOMATIC
-//void Patch::accessturnDonorData_WS(size_t field)
-//{
-//  // loop through neighbouring donor patches
-//  for(size_t i_pd=0; i_pd<m_neighbours.size(); i_pd++) {
-//    Patch* donor = m_neighbours[i_pd].first;
-//    InterCoeffWS icws = m_InterCoeffData_WS[i_pd];
-//    //.. loop for variables in field
-//    vector<real*> donor_vars;
-//    vector<real*> this_vars;
-//    for(size_t i_v=0; i_v<numVariables(); i_v++) {
-//      donor_vars.push_back(donor->getVariable(field, i_v));
-//      this_vars.push_back(getVariable(field, i_v));
-//    }
-//    icws.transferturnFromTo(donor_vars, this_vars);
-//  }
-//}
+
+void Patch::accessTurnDonorData_WS(const size_t& field,
+                                   const size_t& i_vx, const size_t& i_vy, const size_t& i_vz)
+{
+  /// @todo must check performance issues of these little vector allocations, assume OK
+  vector<real*> donor_vars;
+  vector<real*> this_vars;
+  // sort variable sequences to get vectorial quantity at position 0,1,2 in sequence of donor_vars/this_vars
+  vector<bool> blocked(numVariables(), false);
+  vector<size_t> ind_iv;
+  ind_iv.push_back(i_vx);
+  ind_iv.push_back(i_vy);
+  ind_iv.push_back(i_vz);
+  blocked[i_vx] = true;
+  blocked[i_vy] = true;
+  blocked[i_vz] = true;
+  for (size_t i_v = 0; i_v < numVariables(); i_v++) {
+    if (!blocked[i_v]) {
+      ind_iv.push_back(i_v);
+    }
+  }
+  // assign variable pointers to work on
+  for(size_t ii_v=0; ii_v<numVariables(); ii_v++) {
+    size_t i_v = ind_iv[ii_v];
+    this_vars.push_back(getVariable(field, i_v));
+  }
+  // set all receiving data variables to 0, as donors will add their contributions onto
+  for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
+    size_t l_rc = m_receive_cells[ll_rc];
+    for(size_t i_v=0; i_v<numVariables(); i_v++) {
+      this_vars[i_v][l_rc] = 0.;
+    }
+  }
+  // loop through neighbouring donor patches
+  for(size_t i_pd=0; i_pd<m_neighbours.size(); i_pd++) {
+    Patch* donor = m_neighbours[i_pd].first;
+    //.. assign foreign variable pointers (same sequence as in "this_vars"
+    for(size_t ii_v=0; ii_v<numVariables(); ii_v++) {
+      size_t i_v = ind_iv[ii_v];
+      donor_vars.push_back(donor->getVariable(field, i_v));
+    }
+    //.. execute transfer contribution
+    InterCoeffWS icws = m_InterCoeffData_WS[i_pd];
+    icws.transTurnFromTo(donor_vars, this_vars);
+  }
+}
 
 void Patch::allocateData()
 {

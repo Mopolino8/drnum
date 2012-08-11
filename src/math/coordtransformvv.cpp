@@ -5,21 +5,27 @@ CoordTransformVV::CoordTransformVV()
   // nothing: m_transform and m_transform_inverse use their defauts
 }
 
-void CoordTransformVV::setMatrix(mat3_t A)
+void CoordTransformVV::setMatrix(const mat3_t& A)
 {
   m_transform.setMatrix(A);
   computeInverse();
 }
 
-void CoordTransformVV::setVector(vec3_t b)
+void CoordTransformVV::setVector(const vec3_t& b)
 {
   m_transform.setVector(b);
   computeInverse();
 }
 
-void CoordTransformVV::setAll(mat3_t A, vec3_t b)
+void CoordTransformVV::setAll(const mat3_t& A, const vec3_t& b)
 {
   m_transform.setAll(A, b);
+  computeInverse();
+}
+
+void CoordTransformVV::setAll(const CoordTransform& transform)
+{
+  m_transform = transform;
   computeInverse();
 }
 
@@ -51,6 +57,16 @@ mat3_t CoordTransformVV::getInvMatrix()
 vec3_t CoordTransformVV::getInvVector()
 {
   return m_transform_inverse.getVector();
+}
+
+CoordTransform CoordTransformVV::extractForward()
+{
+  return m_transform;
+}
+
+CoordTransform CoordTransformVV::extractReverse()
+{
+  return m_transform_inverse;
 }
 
 void CoordTransformVV::computeInverse()

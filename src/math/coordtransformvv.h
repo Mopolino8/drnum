@@ -17,14 +17,17 @@ public:
 
   CoordTransformVV();
 
-  void setMatrix(mat3_t A);
-  void setVector(vec3_t b);
-  void setAll(mat3_t A, vec3_t b);
+  void setMatrix(const mat3_t& A);
+  void setVector(const vec3_t& b);
+  void setAll(const mat3_t& A, const vec3_t& b);
+  void setAll(const CoordTransform& transform);
   void setTransFromTo(const CoordTransformVV& c_from, const CoordTransformVV& c_to);
   mat3_t getMatrix();
   vec3_t getVector();
   mat3_t getInvMatrix();
   vec3_t getInvVector();
+  CoordTransform extractForward();
+  CoordTransform extractReverse();
 
   CoordTransformVV concatenate(const CoordTransformVV& c) const;  ///< ret = this * c;
   void concatenate_reflexive(const CoordTransformVV& c);          ///< this = this * c;

@@ -50,14 +50,14 @@ private: // attributes
   size_t  m_FieldSize;    ///< length of each field
   size_t  m_VariableSize; ///< length of each variable
 
-//<<<<<<< HEAD
-//protected: // methods
-//=======
-Transformation m_Transformation;    /// @todo merge: kept for compatibility
-//
-//
-//private: // methods
-//>>>>>>> master
+  //<<<<<<< HEAD
+  //protected: // methods
+  //=======
+  Transformation m_Transformation;    /// @todo merge: kept for compatibility
+  //
+  //
+  //private: // methods
+  //>>>>>>> master
 
   void  allocateData();
 
@@ -165,25 +165,13 @@ public: // methods
     * Access
     * @return lower coordinates of bounding box
     */
-  vec3_t accessBBoxXYZoMin()
-  {
-    if(!m_bbox_OK) {
-      buildBoundingBox();
-    }
-    return m_bbox_xyzo_min;
-  }
+  vec3_t accessBBoxXYZoMin();
 
   /**
     * Access
     * @return upper coordinates of bounding box
     */
-  vec3_t accessBBoxXYZoMax()
-  {
-    if(!m_bbox_OK) {
-      buildBoundingBox();
-    }
-    return m_bbox_xyzo_max;
-  }
+  vec3_t accessBBoxXYZoMax();
 
   /**
    * Insert a neighbouring donor patch and insert it.
@@ -264,11 +252,26 @@ public: // methods
                                              WeightedSet<real>& w_set)=0;
 
   /**
-    * Data access from donor patches via m_InterCoeffData_WS
+    * Data access from all donor patches via m_InterCoeffData_WS
     * NOTE: Non padded version employing WeightedSet pattern.
     * @param field the field, for which all variables are transfered
     */
-  void accessForeignData_WS(size_t field);
+  void accessDonorData_WS(const size_t& field);
+
+  /**
+    * Data access from all donor patches via m_InterCoeffData_WS
+    * Includes turning of one vectorial variable (example: speed vector) given by indicees (i_vx, i_vy, i_vz) in var type sequence
+    * NOTE: donor_data and receive_data are small vectors with one entry per variable type to transfer
+    *
+    * @todo must improve variable selection for transformFree operation to allow better optimization.
+    *
+    * @param field the field, for which all variables are transfered
+    * @param i_vx variable index forming the x-comp. of a vectorial variable. Example: "1" for speed (p,u,v,w,T)
+    * @param i_vx variable index forming the y-comp. of a vectorial variable. Example: "2" for speed (p,u,v,w,T)
+    * @param i_vx variable index forming the z-comp. of a vectorial variable. Example: "3" for speed (p,u,v,w,T)
+    */
+  void accessTurnDonorData_WS(const size_t& field,
+                              const size_t& i_vx, const size_t& i_vy, const size_t& i_vz);
 
   /**
     * This is one of the main methods which will be used for data exchange.
@@ -369,5 +372,24 @@ inline real* Patch::getVariable(size_t i_field, size_t i_variable)
   return getField(i_field) + i_variable*m_VariableSize;
 }
 
+inline vec3_t Patch::accessBBoxXYZoMin()
+{
+  if(!m_bbox_OK) {
+    buildBoundingBox();
+  }
+  return m_bbox_xyzo_min;
+}
+
+/**
+  * Access
+  * @return upper coordinates of bounding box
+  */
+inline vec3_t Patch::accessBBoxXYZoMax()
+{
+  if(!m_bbox_OK) {
+    buildBoundingBox();
+  }
+  return m_bbox_xyzo_max;
+}
 
 #endif // PATCH_H
