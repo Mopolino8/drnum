@@ -36,10 +36,10 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
   real x2, real y2, real z2
 )
 {
-  real k, nx, ny, nz;
+  real weight, nx, ny, nz;
 
   // check if the edge (i1, j1, k1) -> (i2, j2, k2) crosses an immersed boundary
-  if (m_Shape->getBoundaryMetric(x1, y1, z1, x2, y2, z2, k, nx, ny, nz)) {
+  if (m_Shape->getBoundaryMetric(x1, y1, z1, x2, y2, z2, weight, nx, ny, nz)) {
 
     // auxilary variable sets
     real* var0 = new real [num_vars];
@@ -51,25 +51,25 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
       swap(i1, i2);
       swap(j1, j2);
       swap(k1, k2);
-      k = 1 - k;
+      weight = 1 - weight;
     }
     if (!patch->checkRange(i1, j1, k1)) {
       BUG;
     }
+
     countFlops(9);
 
     // compute corrected values on the surface of the shape
-    k *= 2;
+    weight *= 2;
     m_Reconstruction.project(patch, var, i_field, num_vars, i1, j1, k1, i2, j2, k2);
     patch->getVar(i_field, i1, j1, k1, var1);
     for (size_t i_var = 0; i_var < num_vars; ++i_var) {
-      bvar[i_var] = k*var[i_var] + (1-k)*var1[i_var];
+      bvar[i_var] = weight*var[i_var] + (1-weight)*var1[i_var];
     }
     TBoundaryCondition::correct(nx, ny, nz, bvar);
     countFlops(1 + 4*num_vars);
 
     // compute the indices of one node further away from the boundary surface
-    k = 3.0/(2 + k);
     size_t i0 = 2*i1 - i2;
     size_t j0 = 2*j1 - j2;
     size_t k0 = 2*k1 - k2;
@@ -80,8 +80,10 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
     // extrapolate (interpolate) to the face i + 1/2
     patch->getVar(i_field, i0, j0, k0, var0);
     for (size_t i_var = 0; i_var < num_vars; ++i_var) {
-      var[i_var] = k*bvar[i_var] + (1-k)*var0[i_var];
+      //var[i_var] = final_weight*bvar[i_var] + (1 - final_weight)*var0[i_var];
+      var[i_var] = bvar[i_var] + 0.5*(1 - weight)*(bvar[i_var] - var0[i_var])/(1 + 0.5*weight);
     }
+
     countFlops(8 + 4*num_vars);
 
     delete [] var0;
@@ -90,8 +92,30 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
     return;
   }
 
-  // default to normal reconstruction
-  m_Reconstruction.project(patch, var, i_field, num_vars, i1, j1, k1, i2, j2, k2);
+  if (m_Shape->isInside(2*x1 - x2, 2*y1 - y2, 2*z1 - z2)) {
+    /// @todo look at improving this
+    /*
+    if (!patch->checkRange(i2, j2, k2)) {
+      // first order upwind ...
+      patch->getVar(i_field, i1, j1, k1, var);
+    } else {
+      // central ...
+      real* var1 = new real [num_vars];
+      real* var2 = new real [num_vars];
+      patch->getVar(i_field, i1, j1, k1, var1);
+      patch->getVar(i_field, i2, j2, k2, var2);
+      for (size_t i_var = 0; i_var < num_vars; ++i_var) {
+        var[i_var] = 0.5*(var1[i_var] + var2[i_var]);
+      }
+    }
+    */
+    // first order upwind ...
+    patch->getVar(i_field, i1, j1, k1, var);
+
+  } else {
+    // default to normal reconstruction
+    m_Reconstruction.project(patch, var, i_field, num_vars, i1, j1, k1, i2, j2, k2);
+  }
 }
 
 #endif // IMMERSEDBOUNDARYRECONSTRUCTION_H

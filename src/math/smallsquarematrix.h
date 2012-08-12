@@ -537,10 +537,10 @@ public:
 
 
 
-typedef SmallSquareMatrix<double,2> mat2_t;
-typedef SmallSquareMatrix<double,3> mat3_t;
-typedef SmallSquareMatrix<double,4> mat4_t;
-typedef SmallSquareMatrix<double,5> mat5_t;
+typedef SmallSquareMatrix<real,2> mat2_t;
+typedef SmallSquareMatrix<real,3> mat3_t;
+typedef SmallSquareMatrix<real,4> mat4_t;
+typedef SmallSquareMatrix<real,5> mat5_t;
 
 template <class T, uint_t N>
 SmallSquareMatrix<T,N>::SmallSquareMatrix(string row_col_type,

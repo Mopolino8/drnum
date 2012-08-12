@@ -112,8 +112,8 @@ inline void MyFlux<TShape>::xWallP(CartesianPatch *P, size_t i, size_t j, size_t
 template <typename TShape>
 inline void MyFlux<TShape>::yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarFlux->yWallP(P, i, j, k, x, y, z, A, flux);
-  //m_WallFlux->yWallP(P, i, j, k, x, y, z, A, flux);
+  //m_FarFlux->yWallP(P, i, j, k, x, y, z, A, flux);
+  m_WallFlux->yWallP(P, i, j, k, x, y, z, A, flux);
 }
 
 template <typename TShape>
@@ -159,12 +159,7 @@ void write(CartesianPatch &patch, QString file_name, int count)
   patch.writeToVtk(0, file_name, cvars);
 }
 
-#define N  50
-#define NI 4*N
-#define NJ 1*N
-#define NK 3
-
-int main1()
+void main1()
 {
   /// Testing transformations (debug only)
   CoordTransformVV ct;
@@ -192,12 +187,18 @@ int main1()
   patch_1.insertNeighbour(&patch_0);  /// will be automatic later
 }
 
-int main2()
+
+#define N  50
+#define NI 4*N
+#define NJ 1*N
+#define NK 1*N
+
+void main2()
 {
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
-  patch.setupAligned(-2, 0, 0, 2, 1.5, 1.5);
+  patch.setupAligned(-3, 0, 0, 3, 1.5, 1.5);
   patch.resize(NI, NJ, NK);
   real init_var[5];
   real zero_var[5];
@@ -220,28 +221,28 @@ int main2()
   runge_kutta.addAlpha(0.50);
   runge_kutta.addAlpha(1.00);
 
-  //Sphere shape;
-  //shape.setCentre(0, 0, 0);
-  //shape.setRadius(0.25);
+  Sphere shape;
+  shape.setCentre(0, 0, 0);
+  shape.setRadius(0.25);
 
-  HalfSpace shape;
-  shape.setPoint(0, 0.2, 0);
-  shape.setNormal(-1,20,0);
+  //HalfSpace shape;
+  //shape.setPoint(0, 0.2, 0);
+  //shape.setNormal(-1,20,0);
 
   shape.transform(patch.getTransformation());
 
-  typedef HalfSpace shape_t;
+  typedef Sphere shape_t;
 
   MyFlux<shape_t> flux(u, shape);
   CartesianDirectionalPatchOperation<5, MyFlux<shape_t> > operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
   runge_kutta.addIterator(&iterator);
 
-  real dt             = 1e-5;
+  real dt             = 3e-5;
   real dt_max         = 5e-5;
   real dt_ramp        = 1.0;
   real t_write        = 0;
-  real write_interval = 1e-2;
+  real write_interval = 1e-3;
   real total_time     = 1;
 
   int count = 0;
@@ -300,8 +301,6 @@ int main2()
   write(patch, "testrun", -1);
 
   cout << iter << " iterations" << endl;
-
-  return 0;
 }
 
 int main()
