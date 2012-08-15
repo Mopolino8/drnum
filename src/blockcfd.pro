@@ -46,7 +46,9 @@ SOURCES += main.cpp \
     math/coordtransformvv.cpp \
     transformation.cpp \
     shapes/sphere.cpp \
-    shapes/halfspace.cpp
+    shapes/halfspace.cpp \
+    cartesianraster.cpp \
+    utility/TInsectionList.cc
 
 HEADERS += \
     patch.h \
@@ -90,4 +92,8 @@ HEADERS += \
     math/linsolve.h \
     transformation.h \
     shapes/halfspace.h \
-    compressiblevariables.h
+    compressiblevariables.h \
+    cartesianraster.h \
+    utility/TInsectionList.hh \
+    vectorhashraster.h \
+    tinsecthashraster.h

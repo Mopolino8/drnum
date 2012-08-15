@@ -199,8 +199,9 @@ void CartesianPatch::extractReceiveCells()
   }
 }
 
-void CartesianPatch::computeDependencies(const size_t& i_neighbour)
+bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
 {
+  bool found_dependency = false;
   Patch* neighbour_patch = m_neighbours[i_neighbour].first;
   CoordTransformVV trans = m_neighbours[i_neighbour].second;
   // patch bounding normal vectors in coord syst of donor
@@ -227,6 +228,7 @@ void CartesianPatch::computeDependencies(const size_t& i_neighbour)
                                                       w_set)) {
         m_InterCoeffData_WS[i_neighbour].push(ll_rc, l_rc, w_set);  // note: since l_rc are unique, no "add" is required
         m_receive_cell_data_hits[ll_rc]++;
+        found_dependency = true;
       }
       if(m_InterpolateGrad1N) {
         int direction = boundingNVecDirection(l_rc); // note: trivial function, that ommits normal storage
@@ -241,7 +243,8 @@ void CartesianPatch::computeDependencies(const size_t& i_neighbour)
       }
     }
   }
-};
+  return found_dependency;
+}
 
 
 void CartesianPatch::setupInterpolators()

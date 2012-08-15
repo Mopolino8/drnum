@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <vector>
 #include "blockcfd.h"
-//<<<<<<< HEAD
 #include "weightedset.h"
 
 class Patch;
@@ -50,14 +49,7 @@ private: // attributes
   size_t  m_FieldSize;    ///< length of each field
   size_t  m_VariableSize; ///< length of each variable
 
-  //<<<<<<< HEAD
-  //protected: // methods
-  //=======
   Transformation m_Transformation;    /// @todo merge: kept for compatibility
-  //
-  //
-  //private: // methods
-  //>>>>>>> master
 
   void  allocateData();
 
@@ -66,6 +58,7 @@ protected: // attributes
   // settings
   bool m_InterpolateData;    ///< Flag indicates wether to interpolate data on interpatch transfers
   bool m_InterpolateGrad1N;  ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
+  bool m_TransferPadded;     ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
   size_t m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
   size_t m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
 
@@ -81,7 +74,7 @@ protected: // attributes
   // lists related to receiving cells in overlap layers
   vector<size_t> m_receive_cells;           ///< cells of "this", expecting to get data (and/or grads) from any donor neighbour
   vector<size_t> m_receive_cell_data_hits;  ///< number of contributing patches for data, note indexing as receive_cells
-  vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for data, note indexing as receive_cells
+  vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for grad1N, note indexing as receive_cells
 
   // lists related to neighbouring donor patches
   vector<pair<Patch*, CoordTransformVV> > m_neighbours; ///< neighbouring donor patches and coord transformation. NOTE: receiving patches not stored.
@@ -162,6 +155,16 @@ public: // methods
   }
 
   /**
+    * Set all dependency transfers from any donors to be padded, employing data transfer
+    * classes of type "InterCoeffPad".
+    * @param trans_padded bool to cause padded data transfers
+    */
+  void setTransferPadded(bool trans_padded = true)
+  {
+    m_TransferPadded = trans_padded;
+  }
+
+  /**
     * Access
     * @return lower coordinates of bounding box
     */
@@ -186,8 +189,16 @@ public: // methods
      * receiving patch: "this"
      * donor patch:     neighbour_patch
      * @param i_neighbour index of neighbour patch from which to receive data
+     * @return bool indicating any dependency was found
      */
-  virtual void computeDependencies(const size_t& i_neighbour)=0;
+  virtual bool computeDependencies(const size_t& i_neighbour)=0;
+
+  /**
+     * Finalize the computation of dependencies from neighbouring patches.
+     * - Reduce contribution weights for receiving cells, being influenced by more than one donor patch.
+     * - Transfer data to padded data sets, if required.
+     */
+  void finalizeDependencies();
 
   /**
    * Set up interpolation methods for giving data to foreign patches.

@@ -64,17 +64,55 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   m_neighbours.push_back(dependency_h);
   size_t i_neighbour = m_neighbours.size() - 1;
   // Depending on calculation type, insert donor and relative coord transformation into InterCoeffWS lists
-  if(m_InterpolateData) {
+  if (m_InterpolateData) {
     m_InterCoeffData_WS.resize(i_neighbour + 1);
     m_InterCoeffData_WS[i_neighbour].setDonorPatch(neighbour_patch);
     m_InterCoeffData_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
   }   /// @todo would be nice to have a link_vector<T>
-  if(m_InterpolateGrad1N) {
+  if (m_InterpolateGrad1N) {
     m_InterCoeffGrad1N_WS.resize(i_neighbour + 1);
     m_InterCoeffGrad1N_WS[i_neighbour].setDonorPatch(neighbour_patch);
     m_InterCoeffGrad1N_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
   }
-  computeDependencies(i_neighbour);
+  bool found_dependency = computeDependencies(i_neighbour);
+  if (!found_dependency) {// discard donor neighbourship relation, if not any was found
+    m_neighbours.pop_back();
+    if (m_InterpolateGrad1N) {m_InterCoeffGrad1N_WS.pop_back();}
+    if (m_InterpolateData) {m_InterCoeffData_WS.pop_back();}
+  }
+  /** @todo Must apply InterCoeffxxxx_WS::adjust2Average AFTER all neighbouring donor patches have been inserted.
+    *       This ensures, the correct number of hits (in case of multiple donor patches contributing to single cells)
+    *       is known. */  // DONE!!!
+}
+
+void Patch::finalizeDependencies()
+{
+  // Reduce contribution weights for receiving cells, being influenced by more than one donor patch.
+  for (size_t i_donor = 0; i_donor < m_neighbours.size(); i_donor++) {
+    if(m_InterpolateData) {
+      m_InterCoeffData_WS[i_donor].adjust2Average(m_receive_cell_data_hits);
+    }
+    if(m_InterpolateGrad1N) {
+       m_InterCoeffGrad1N_WS[i_donor].adjust2Average(m_receive_cell_grad1N_hits);
+    }
+  }
+  // Transfer data to padded data sets, if required.
+  if(m_TransferPadded) {    /// @todo I dislike the if-trees. Too many options. Get experience and discard options.
+    if(m_InterpolateData) {
+      m_InterCoeffData.resize(m_InterCoeffData_WS.size());
+      for (size_t i_donor = 0; i_donor < m_neighbours.size(); i_donor++) {
+        m_InterCoeffData[i_donor].build(m_InterCoeffData_WS[i_donor]);
+        // postponed delete m_InterCoeffData_WS[i_donor];  // erase previous WS-version to save some memory on CPU.
+      }
+    }
+    if(m_InterpolateGrad1N) {
+      m_InterCoeffGrad1N.resize(m_InterCoeffGrad1N_WS.size());
+      for (size_t i_donor = 0; i_donor < m_neighbours.size(); i_donor++) {
+        m_InterCoeffGrad1N[i_donor].build(m_InterCoeffGrad1N_WS[i_donor]);
+        // postponed delete m_InterCoeffGrad1N_WS[i_donor];  // erase previous WS-version to save some memory on CPU.
+      }
+    }
+  }
 }
 
 void Patch::compactReceiveCellLists()
