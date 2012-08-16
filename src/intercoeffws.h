@@ -18,6 +18,9 @@ struct SingleInterCoeffWS
   size_t indirect_receiveindex;         ///< Index in indirect array receive_cells of receiving Patch
   size_t direct_receiveindex;           ///< Cell index in receiving Patch
   WeightedSet<real> donor_contribution; ///< WeightedSet containing contributions of donor patch
+  /** @todo Storing indirect_receiveindex might be ommitted, if hit counters (Patch::m_receive_cell_data_hits)
+    * work on true addresses. This wastes some memory on Patch classes, but might be easyer to understand.
+    */
 };
 
 /**
@@ -49,6 +52,7 @@ protected: // attributes
 
   /// Contributing pairs(cells, weights) in giving Patch.
   vector<SingleInterCoeffWS> m_DonorCellContribsWS;
+
 
 public: // methods
 
@@ -98,7 +102,7 @@ public: // methods
     * NOTE: A receiving cell might be located in the core region of several donor patches.
     * @param hits a vector containing the number of contributing donor patches.
     */
-  void adjust2Average(vector<size_t> hits);
+  void adjust2Average(const vector<size_t>& hits);
 
   /**
     * Apply WeightedSet pattern to donor_data and add to receive_data.
@@ -183,13 +187,12 @@ inline void InterCoeffWS::push(const size_t& i_indirect, const size_t& i_direct,
   sic_h.direct_receiveindex = i_direct;
   sic_h.donor_contribution = contribution;
   m_DonorCellContribsWS.push_back(sic_h);  /// @todo strange debug error on ddd: cannot access operator[] unless the folowing line is active
-  //cout << m_DonorCellContribsWS[0].indirect_receiveindex << endl;
-  cout << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].indirect_receiveindex;
-  cout << " w_set-size = " << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].donor_contribution.v.size() << endl;
+  // cout << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].indirect_receiveindex;
+  // cout << " w_set-size = " << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].donor_contribution.v.size() << endl;
 }
 
 
-inline void InterCoeffWS::adjust2Average(vector<size_t> hits)
+inline void InterCoeffWS::adjust2Average(const vector<size_t>& hits)
 {
   for(size_t ll=0; ll<m_DonorCellContribsWS.size(); ll++) {
     // indirect address (equal to index in hits)

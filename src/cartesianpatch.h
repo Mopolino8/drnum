@@ -92,7 +92,7 @@ public: // methods
   CartesianPatch();
   void setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2);
   void resize(size_t num_i, size_t num_j, size_t num_k);
-  virtual void computeDependencies(const size_t& i_neighbour);
+  virtual bool computeDependencies(const size_t& i_neighbour);
 
   size_t sizeI() { return m_NumI; }
   size_t sizeJ() { return m_NumJ; }

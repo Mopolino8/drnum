@@ -71,7 +71,7 @@ protected: // attributes
 public: // methods
 
   /**
-    * Constructor.
+    * Build up from a previously existing InterCoeffWS.
     * @param icws InterCoeffWS with data content to copy into padded data structure of "this".
     */
   void build(InterCoeffWS& icws);

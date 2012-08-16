@@ -199,8 +199,9 @@ void CartesianPatch::extractReceiveCells()
   }
 }
 
-void CartesianPatch::computeDependencies(const size_t& i_neighbour)
+bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
 {
+  bool found_dependency = false;
   Patch* neighbour_patch = m_neighbours[i_neighbour].first;
   CoordTransformVV trans = m_neighbours[i_neighbour].second;
   // patch bounding normal vectors in coord syst of donor
@@ -227,6 +228,7 @@ void CartesianPatch::computeDependencies(const size_t& i_neighbour)
                                                       w_set)) {
         m_InterCoeffData_WS[i_neighbour].push(ll_rc, l_rc, w_set);  // note: since l_rc are unique, no "add" is required
         m_receive_cell_data_hits[ll_rc]++;
+        found_dependency = true;
       }
       if(m_InterpolateGrad1N) {
         int direction = boundingNVecDirection(l_rc); // note: trivial function, that ommits normal storage
@@ -241,7 +243,8 @@ void CartesianPatch::computeDependencies(const size_t& i_neighbour)
       }
     }
   }
-};
+  return found_dependency;
+}
 
 
 void CartesianPatch::setupInterpolators()
@@ -816,8 +819,8 @@ bool CartesianPatch::xyzToRefCell(real x, real y, real z,
     if(y < m_yCCMin+m_EpsDY) {y = m_yCCMin+m_EpsDY;}
     if(z < m_zCCMin+m_EpsDZ) {z = m_zCCMin+m_EpsDZ;}
     if(x > m_xCCMax-m_EpsDX) {x = m_xCCMax-m_EpsDX;}
-    if(y > m_yCCMax-m_EpsDY) {y = m_xCCMax-m_EpsDY;}
-    if(z > m_zCCMax-m_EpsDZ) {z = m_xCCMax-m_EpsDZ;}
+    if(y > m_yCCMax-m_EpsDY) {y = m_yCCMax-m_EpsDY;}
+    if(z > m_zCCMax-m_EpsDZ) {z = m_zCCMax-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
     real ric_ref = (x - m_xCCMin) / m_Dx;
     real rjc_ref = (y - m_yCCMin) / m_Dy;
@@ -886,12 +889,12 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
     //.. Manipulate x,y,z if these coords depass the borders
     //   NOTE: inside==true means that x,y,z is in eps-bounds anyway
     //         if close, shift x,y,z to inside to ensure correct address pick
-    if(x < m_xCCMin+m_EpsDX) {x = m_xCCMin+m_EpsDX;}
-    if(y < m_yCCMin+m_EpsDY) {y = m_yCCMin+m_EpsDY;}
-    if(z < m_zCCMin+m_EpsDZ) {z = m_zCCMin+m_EpsDZ;}
-    if(x > m_xCCMax-m_EpsDX) {x = m_xCCMax-m_EpsDX;}
-    if(y > m_yCCMax-m_EpsDY) {y = m_xCCMax-m_EpsDY;}
-    if(z > m_zCCMax-m_EpsDZ) {z = m_xCCMax-m_EpsDZ;}
+    if(x < m_EpsDX) {x = m_EpsDX;}
+    if(y < m_EpsDY) {y = m_EpsDY;}
+    if(z < m_EpsDZ) {z = m_EpsDZ;}
+    if(x > m_Lx-m_EpsDX) {x = m_Lx-m_EpsDX;}
+    if(y > m_Ly-m_EpsDY) {y = m_Ly-m_EpsDY;}
+    if(z > m_Lz-m_EpsDZ) {z = m_Lz-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
     real rin_ref = (x - m_xCCMin) / m_Dx;
     real rjn_ref = (y - m_yCCMin) / m_Dy;
