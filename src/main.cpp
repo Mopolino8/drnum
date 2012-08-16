@@ -22,8 +22,9 @@ template <typename TShape>
 class MyFlux
 {
 
-  typedef ImmersedBoundaryReconstruction<Upwind2<SecondOrder>, TShape, CompressibleEulerWall> reconstruction_t;
+  //typedef ImmersedBoundaryReconstruction<Upwind2<SecondOrder>, TShape, CompressibleEulerWall> reconstruction_t;
   //typedef ImmersedBoundaryReconstruction<Upwind2<MinMod>, TShape, CompressibleEulerWall> reconstruction_t;
+  typedef ImmersedBoundaryReconstruction<Upwind2<VanAlbada2>, TShape, CompressibleEulerWall> reconstruction_t;
   //typedef ImmersedBoundaryReconstruction<Upwind1, TShape, CompressibleEulerWall> reconstruction_t;
   typedef AusmDV<reconstruction_t, PerfectGas> euler_t;
   typedef CompressibleWallFlux<reconstruction_t, PerfectGas> wall_t;
@@ -112,8 +113,8 @@ inline void MyFlux<TShape>::xWallP(CartesianPatch *P, size_t i, size_t j, size_t
 template <typename TShape>
 inline void MyFlux<TShape>::yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  //m_FarFlux->yWallP(P, i, j, k, x, y, z, A, flux);
-  m_WallFlux->yWallP(P, i, j, k, x, y, z, A, flux);
+  m_FarFlux->yWallP(P, i, j, k, x, y, z, A, flux);
+  //m_WallFlux->yWallP(P, i, j, k, x, y, z, A, flux);
 }
 
 template <typename TShape>
@@ -227,22 +228,22 @@ void main1()
 }
 
 
-#define N  50
-#define NI 4*N
-#define NJ 1*N
-#define NK 1*N
+#define N  30
+#define NI 1*N
+#define NJ 2*N
+#define NK 2*N
 
 void main2()
 {
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
-  patch.setupAligned(-3, 0, 0, 3, 1.5, 1.5);
+  patch.setupAligned(-1, 0, 0, 0, 2, 2);
   patch.resize(NI, NJ, NK);
   real init_var[5];
   real zero_var[5];
 
-  real Ma = 0.3;
+  real Ma = 3;
   real u  = Ma*sqrt(1.4*287*300.0);
 
   PerfectGas::primitiveToConservative(1e5, 300, u, 0, 0, init_var);
@@ -256,33 +257,34 @@ void main2()
   }
 
   RungeKutta runge_kutta;
+  //runge_kutta.addAlpha(0.125);
   runge_kutta.addAlpha(0.25);
   runge_kutta.addAlpha(0.50);
   runge_kutta.addAlpha(1.00);
 
   Sphere shape;
   shape.setCentre(0, 0, 0);
-  shape.setRadius(0.25);
+  shape.setRadius(0.75);
+  typedef Sphere shape_t;
 
   //HalfSpace shape;
-  //shape.setPoint(0, 0.2, 0);
-  //shape.setNormal(-1,20,0);
+  //shape.setPoint(0, 0, 0);
+  //shape.setNormal(-0.17365, 0.98481, 0);
+  //typedef HalfSpace shape_t;
 
   shape.transform(patch.getTransformation());
-
-  typedef Sphere shape_t;
 
   MyFlux<shape_t> flux(u, shape);
   CartesianDirectionalPatchOperation<5, MyFlux<shape_t> > operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
   runge_kutta.addIterator(&iterator);
 
-  real dt             = 3e-5;
-  real dt_max         = 5e-5;
+  real dt             = 20e-6;
+  real dt_max         = 20e-6;
   real dt_ramp        = 1.0;
   real t_write        = 0;
   real write_interval = 1e-3;
-  real total_time     = 1;
+  real total_time     = 0.1;
 
   int count = 0;
   int iter = 0;
