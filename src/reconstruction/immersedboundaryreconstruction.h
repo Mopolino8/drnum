@@ -2,6 +2,7 @@
 #define IMMERSEDBOUNDARYRECONSTRUCTION_H
 
 #include "blockcfd.h"
+#include  "perfectgas.h"
 
 /**
  * A genric reconstruction which respects immersed boundaries.
@@ -62,6 +63,15 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
     // compute corrected values on the surface of the shape
     weight *= 2;
     m_Reconstruction.project(patch, var, i_field, num_vars, i1, j1, k1, i2, j2, k2);
+
+    // check if it is a boundary flux
+    // stop here if yes and if the intersection is outside of the domain (patch)
+    // ... ==> default to normal reconstruction
+    //
+    if (!patch->checkRange(i2, j2, k2) && weight > 1) {
+      return;
+    }
+
     patch->getVar(i_field, i1, j1, k1, var1);
     for (size_t i_var = 0; i_var < num_vars; ++i_var) {
       bvar[i_var] = weight*var[i_var] + (1-weight)*var1[i_var];
@@ -82,6 +92,7 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
     for (size_t i_var = 0; i_var < num_vars; ++i_var) {
       //var[i_var] = final_weight*bvar[i_var] + (1 - final_weight)*var0[i_var];
       var[i_var] = bvar[i_var] + 0.5*(1 - weight)*(bvar[i_var] - var0[i_var])/(1 + 0.5*weight);
+      //var[i_var] = bvar[i_var];// + (1 - weight)*(bvar[i_var] - 0.5*(var0[i_var] + var1[i_var])/(1 + weight));
     }
 
     countFlops(8 + 4*num_vars);
