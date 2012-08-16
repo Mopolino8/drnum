@@ -14,7 +14,7 @@ protected: // attributes
 
   vector<Patch*> m_patches;                ///< List of patches in the grid
 
-  VectorHashRaster<size_t> m_HashRaster;   ///< Hash raster to assist orientation
+  //VectorHashRaster<size_t> m_HashRaster;   ///< Hash raster to assist orientation
 
   // settings (same as individually defined in patch.h)
   bool m_InterpolateData;    ///< Flag indicates wether to interpolate data on interpatch transfers
@@ -100,6 +100,13 @@ public: // methods
   void computeDependencies(const bool& with_intercoeff);
 
   /**
+     * Envoque same function for all patches.
+     * - Reduce contribution weights for receiving cells, being influenced by more than one donor patch.
+     * - Transfer data to padded data sets, if required.
+     */
+  void finalizeDependencies();
+
+  /**
     * Build bounding box around whole grid
     */
   void buildBoundingBox(const bool& force = true);
@@ -107,7 +114,9 @@ public: // methods
   /**
     * Build a hash box around whole grid
     */
-  void buildHashRaster(size_t resolution = 1000000, bool force = true);
+  //void buildHashRaster(size_t resolution = 1000000, bool force = true);
+  void buildHashRaster(size_t resolution, bool force,
+                       VectorHashRaster<size_t>& m_HashRaster);
 
   // Access methods
   size_t getNumPatches() {return m_patches.size();}

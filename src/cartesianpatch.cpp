@@ -819,8 +819,8 @@ bool CartesianPatch::xyzToRefCell(real x, real y, real z,
     if(y < m_yCCMin+m_EpsDY) {y = m_yCCMin+m_EpsDY;}
     if(z < m_zCCMin+m_EpsDZ) {z = m_zCCMin+m_EpsDZ;}
     if(x > m_xCCMax-m_EpsDX) {x = m_xCCMax-m_EpsDX;}
-    if(y > m_yCCMax-m_EpsDY) {y = m_xCCMax-m_EpsDY;}
-    if(z > m_zCCMax-m_EpsDZ) {z = m_xCCMax-m_EpsDZ;}
+    if(y > m_yCCMax-m_EpsDY) {y = m_yCCMax-m_EpsDY;}
+    if(z > m_zCCMax-m_EpsDZ) {z = m_zCCMax-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
     real ric_ref = (x - m_xCCMin) / m_Dx;
     real rjc_ref = (y - m_yCCMin) / m_Dy;
@@ -889,12 +889,12 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
     //.. Manipulate x,y,z if these coords depass the borders
     //   NOTE: inside==true means that x,y,z is in eps-bounds anyway
     //         if close, shift x,y,z to inside to ensure correct address pick
-    if(x < m_xCCMin+m_EpsDX) {x = m_xCCMin+m_EpsDX;}
-    if(y < m_yCCMin+m_EpsDY) {y = m_yCCMin+m_EpsDY;}
-    if(z < m_zCCMin+m_EpsDZ) {z = m_zCCMin+m_EpsDZ;}
-    if(x > m_xCCMax-m_EpsDX) {x = m_xCCMax-m_EpsDX;}
-    if(y > m_yCCMax-m_EpsDY) {y = m_xCCMax-m_EpsDY;}
-    if(z > m_zCCMax-m_EpsDZ) {z = m_xCCMax-m_EpsDZ;}
+    if(x < m_EpsDX) {x = m_EpsDX;}
+    if(y < m_EpsDY) {y = m_EpsDY;}
+    if(z < m_EpsDZ) {z = m_EpsDZ;}
+    if(x > m_Lx-m_EpsDX) {x = m_Lx-m_EpsDX;}
+    if(y > m_Ly-m_EpsDY) {y = m_Ly-m_EpsDY;}
+    if(z > m_Lz-m_EpsDZ) {z = m_Lz-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
     real rin_ref = (x - m_xCCMin) / m_Dx;
     real rjn_ref = (y - m_yCCMin) / m_Dy;

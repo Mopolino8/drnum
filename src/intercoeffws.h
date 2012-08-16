@@ -187,9 +187,8 @@ inline void InterCoeffWS::push(const size_t& i_indirect, const size_t& i_direct,
   sic_h.direct_receiveindex = i_direct;
   sic_h.donor_contribution = contribution;
   m_DonorCellContribsWS.push_back(sic_h);  /// @todo strange debug error on ddd: cannot access operator[] unless the folowing line is active
-  //cout << m_DonorCellContribsWS[0].indirect_receiveindex << endl;
-  cout << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].indirect_receiveindex;
-  cout << " w_set-size = " << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].donor_contribution.v.size() << endl;
+  // cout << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].indirect_receiveindex;
+  // cout << " w_set-size = " << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].donor_contribution.v.size() << endl;
 }
 
 
