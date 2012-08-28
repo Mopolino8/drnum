@@ -52,19 +52,19 @@ BEGIN_MOUSE
  *    item_main_add (li. to item_list):  List linked to item_list, additionally containing
  *                                       the main_list address, the item belongs to.
  *
- * 
+ *
  *  <pre>
  *  [-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-] (item_list)
  *  [-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-][-] (item_main_add)
- *   ^        ^           ^        ^        ^     ^     ^        ^                        
- *   |   _____|           |        |        |     |     |        |                            
- *   |  |   ______________|        |        |     |     |        |            
- *   |  |  |   ____________________|        |     |     |        |                       
- *   |  |  |  |   __________________________|     |     |        |                          
- *   |  |  |  |  |   _____________________________|     |        |                       
+ *   ^        ^           ^        ^        ^     ^     ^        ^
+ *   |   _____|           |        |        |     |     |        |
+ *   |  |   ______________|        |        |     |     |        |
+ *   |  |  |   ____________________|        |     |     |        |
+ *   |  |  |  |   __________________________|     |     |        |
+ *   |  |  |  |  |   _____________________________|     |        |
  *   |  |  |  |  |  |   ________________________________|        |
  *   |  |  |  |  |  |  |   ______________________________________|
- *   |  |  |  |  |  |  |  |                                                              
+ *   |  |  |  |  |  |  |  |
  *  [-][-][-][-][-][-][-][-] (start)
  *  </pre>
 
@@ -80,149 +80,149 @@ BEGIN_MOUSE
 template <class T>
 class TInsectionList : public List
 {
-protected:
-    /** Pointer to a main_list list (no own data) */
-    List* main_list;
+  protected:
+  /** Pointer to a main_list list (no own data) */
+  List* main_list;
 
-    /** list of starting addresses in item_list (linked to main_list, persistent) */
-    TList<size_t>* start;
+  /** list of starting addresses in item_list (linked to main_list, persistent) */
+  TList<size_t>* start;
 
-    /** List to hold item data */
-    TList<T>* item_list;
+  /** List to hold item data */
+  TList<T>* item_list;
 
-    /** List to hold main_list_address for items (linked to item_list). */
-    TList<size_t>* item_main_add;
+  /** List to hold main_list_address for items (linked to item_list). */
+  TList<size_t>* item_main_add;
 
-    size_t default_size;
-    size_t increment;
+  size_t default_size;
+  size_t increment;
 
-    /** Maximum number of items for any of the main_list entries. This is the
+  /** Maximum number of items for any of the main_list entries. This is the
      *  maximum size in the "second dimension". */
-    size_t max_num_items_second_dim;
+  size_t max_num_items_second_dim;
 
-    /** Debug method to write start and item_main_add data.
+  /** Debug method to write start and item_main_add data.
      */
-    void WriteActual();
-	
-public:
-    /** constructor
+  void WriteActual();
+
+  public:
+  /** constructor
      *  @param a_main_list the main_list list to link to
      *  @param default_size the default size of the item_list to build
      *  @param increment the default incrementof the item_list to build
      *  NOTE: if default_size or increment are set to zero, the size of the
      *        main_list will be chosen.
      */
-    TInsectionList(List *a_main_list, size_t default_size=0, size_t increment=0);
+  TInsectionList(List *a_main_list, size_t default_size=0, size_t increment=0);
 
-    /** Initialize data collecton. Allocates data lists needed.
+  /** Initialize data collecton. Allocates data lists needed.
      */
-    void Initialize();
+  void Initialize();
 
-    /** Method to collect pairs of data.
+  /** Method to collect pairs of data.
      *  @param main_list_address the main_list address for which the item will be stored
      *  @param item_address the address to store
      */
-    void ConsiderStore(const size_t& main_list_address, T& item) {
-    	// insert the pair in (non-sorted) item_list
-    	size_t item_address = item_list->AddEntry();
-    	item_list->At(item_address) = item;
-    	item_main_add->At(item_address) = main_list_address;
-    }
+  void ConsiderStore(const size_t& main_list_address, T& item) {
+    // insert the pair in (non-sorted) item_list
+    size_t item_address = item_list->AddEntry();
+    item_list->At(item_address) = item;
+    item_main_add->At(item_address) = main_list_address;
+  }
 
-    /** Method to Create data fields after all data pairs are stored.
+  /** Method to Create data fields after all data pairs are stored.
      *  @param sparse true directs Finalize() to delete the item_main_add after
      *                sorting the item_list
      */
-    void Finalize(bool sparse = false);
+  void Finalize(bool sparse = false);
 
-    /** Compute max number of items for any of the main_list entries. This is the
+  /** Compute max number of items for any of the main_list entries. This is the
      *  maximum size in the "second dimension".
      */
   void ComputeMaxNumItemsSecondDim();
 
-    /** Eliminate multiple entries in 2nd dimension: All entries of item_list in range of
+  /** Eliminate multiple entries in 2nd dimension: All entries of item_list in range of
      *  start(nn) .. start(nn*1)-1 will be made unique for each index nn in first dimension.
      */
-    void MakeUnique();
+  void MakeUnique();
 
-    /** Sort and eliminate multiple entries in 2nd dimension: All entries of item_list in
+  /** Sort and eliminate multiple entries in 2nd dimension: All entries of item_list in
      *  range of start(nn) .. start(nn*1)-1 will be sorted and made unique for each index nn
      *  in first dimension.
      */
-//    void MakeUniqueSorted();
+  //    void MakeUniqueSorted();
 
-    /** Method to Reset all stored data. After this, new allocations can be made.
+  /** Method to Reset all stored data. After this, new allocations can be made.
      */
-    void Reset();
+  void Reset();
 
-    /** Get the number of entries in the second dimension.
+  /** Get the number of entries in the second dimension.
      *  @param i the index in the main_list (first dimension)
      *  @return the number of items stored for i
      */
-    size_t NumItems(size_t i) {
-	if(i<(NumEntries()-1)) {
-	    return (start->At(i+1) - start->At(i));
-	} else {
-	    return (item_list->NumEntries() - start->At(i));
-	};
-    }
+  size_t NumItems(size_t i) {
+    if(i<(NumEntries()-1)) {
+      return (start->At(i+1) - start->At(i));
+    } else {
+      return (item_list->NumEntries() - start->At(i));
+    };
+  }
 
-    /** Get the total number of entires in the item_list.
+  /** Get the total number of entires in the item_list.
      *  @return number of entires in the item_list
      */
-    size_t NumItems() {
-	return (item_list->NumEntries());
-    }
+  size_t NumItems() {
+    return (item_list->NumEntries());
+  }
 
-    /** Access max number of items for any of the main_list entries. This is the
+  /** Access max number of items for any of the main_list entries. This is the
      *  maximum size in the "second dimension".
      *  @return number of entires in the item_list
      */
-    size_t MaxNumItemsSecondDim() {
-	return max_num_items_second_dim;
-    }
+  size_t MaxNumItemsSecondDim() {
+    return max_num_items_second_dim;
+  }
 
-    /** Data access method (read/write)
+  /** Data access method (read/write)
      *  @param i the address in the main_list (first dimension)
      *  @param k the index in the second dimension
      *  @return a reference to the entry
      */
-    T& At(size_t& i, size_t& k) {
-	return item_list->At(start->At(i)+k);
-    }
+  T& At(size_t& i, size_t& k) {
+    return item_list->At(start->At(i)+k);
+  }
 
-    /** Get the address of an entry in the item_list
+  /** Get the address of an entry in the item_list
      *  @param i the address in the main_list (first address)
      *  @param k the index in the second dimension
      *  @return the address of the entry
      */
-    size_t ItemIndex(size_t& i, size_t& k) {
-	return start->At(i)+k;
-    }
-    
-    /** Get a link point on the start array.
+  size_t ItemIndex(size_t& i, size_t& k) {
+    return start->At(i)+k;
+  }
+
+  /** Get a link point on the start array.
      *  @return pointer to start.
      */
-    TList<size_t>* StartLinkPoint() {
-	return start;
-    }
+  TList<size_t>* StartLinkPoint() {
+    return start;
+  }
 
-    /** Get a link point on the item_list.
+  /** Get a link point on the item_list.
      *  @return pointer to item_list.
      */
-    TList<T>* ItemLinkPoint() {
-	return item_list;
-    }
+  TList<T>* ItemLinkPoint() {
+    return item_list;
+  }
 
-    /** Get a link point on the item_main_add.
+  /** Get a link point on the item_main_add.
      *  @return pointer to item_main_add.
      */
-    TList<size_t>* ItemMainAddLinkPoint() {
-	return item_main_add;
-    }
+  TList<size_t>* ItemMainAddLinkPoint() {
+    return item_main_add;
+  }
 
-    /** destructor */
-    virtual ~TInsectionList ();
+  /** destructor */
+  virtual ~TInsectionList ();
 };
 
 #include "TInsectionList.cc"
