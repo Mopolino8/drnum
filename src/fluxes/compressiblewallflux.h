@@ -1,5 +1,5 @@
-#ifndef COMPRESSIBLEFLUX_H
-#define COMPRESSIBLEFLUX_H
+#ifndef COMPRESSIBLEWALLFLUX_H
+#define COMPRESSIBLEWALLFLUX_H
 
 #include "cartesianpatch.h"
 
@@ -116,4 +116,4 @@ inline void CompressibleWallFlux<TReconstruction, TGas>::zWallM(CartesianPatch *
   countFlops(2);
 }
 
-#endif // COMPRESSIBLEFLUX_H
+#endif // COMPRESSIBLEWALLFLUX_H
