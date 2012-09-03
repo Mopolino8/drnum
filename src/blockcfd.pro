@@ -34,7 +34,6 @@ QMAKE_CXXFLAGS_RELEASE += -funroll-loops
 SOURCES += main.cpp \
     patch.cpp \
     cartesianpatch.cpp \
-    reconstruction/limitedreconstruction.cpp \
     blockcfd.cpp \
     timeintegration.cpp \
     patchiterator.cpp \
@@ -48,18 +47,20 @@ SOURCES += main.cpp \
     shapes/sphere.cpp \
     shapes/halfspace.cpp \
     cartesianraster.cpp \
-    utility/TInsectionList.cc
+    utility/TInsectionList.cc \
+    shapes/triangulatedshape.cpp \
+    shapes/box.cpp \
+    debug.cpp \
+    shapes/cylindery.cpp
 
 HEADERS += \
     patch.h \
     cartesianpatch.h \
     blockcfd.h \
     reconstruction/upwind1.h \
-    fluxes/ausmbase.h \
     fluxes/ausmplus.h \
     fluxes/ausmplus.h \
     reconstruction/upwind2.h \
-    reconstruction/limitedreconstruction.h \
     iterators/cartesianpatchoperation.h \
     timeintegration.h \
     patchiterator.h \
@@ -96,4 +97,21 @@ HEADERS += \
     cartesianraster.h \
     utility/TInsectionList.hh \
     vectorhashraster.h \
-    tinsecthashraster.h
+    tinsecthashraster.h \
+    shapes/triangulatedshape.h \
+    shapes/noshape.h \
+    shapes/box.h \
+    reconstruction/minmod.h \
+    reconstruction/vanalbada.h \
+    fluxes/compressibleflux.h \
+    fluxes/kt.h \
+    fluxes/knp.h \
+    reconstruction/upwindcentral.h \
+    reconstruction/vanleerlim.h \
+    debug.h \
+    fluxes/roe.h \
+    fluxes/vanleer.h \
+    reconstruction/roelim.h \
+    fluxes/compressibleviscflux.h \
+    shapes/cylindery.h \
+    reconstruction/secondorder.h
