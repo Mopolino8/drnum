@@ -8,14 +8,19 @@
 #include "reconstruction/minmod.h"
 #include "reconstruction/vanalbada.h"
 #include "reconstruction/vanleerlim.h"
+#include "reconstruction/roelim.h"
+#include "reconstruction/secondorder.h"
 
 #include "fluxes/ausmplus.h"
 #include "fluxes/ausmdv.h"
 #include "fluxes/ausm.h"
 #include "fluxes/kt.h"
 #include "fluxes/knp.h"
+#include "fluxes/roe.h"
+#include "fluxes/vanleer.h"
 #include "fluxes/compressiblewallflux.h"
 #include "fluxes/compressiblefarfieldflux.h"
+#include "fluxes/compressibleviscflux.h"
 #include "iterators/cartesianstandarditerator.h"
 #include "iterators/cartesianstandardpatchoperation.h"
 #include "iterators/cartesiandirectionalpatchoperation.h"
@@ -27,24 +32,35 @@
 #include "shapes/noshape.h"
 #include "shapes/triangulatedshape.h"
 #include "shapes/box.h"
+#include "shapes/cylindery.h"
 #include "boundary_conditions/compressibleeulerwall.h"
 #include "compressiblevariables.h"
+
+#define FLUX    VanLeer
+#define LIMITER MinMod
+#define EULER
 
 template <typename TShape>
 class MyFlux
 {
 
-  typedef ImmersedBoundaryReconstruction<Upwind2<MinMod>, TShape, CompressibleEulerWall> reconstruction_t;
-  //typedef ImmersedBoundaryReconstruction<Upwind1, TShape, CompressibleEulerWall> reconstruction_t;
-  typedef AusmPlus<reconstruction_t, PerfectGas> euler_t;
-  typedef CompressibleWallFlux<reconstruction_t, PerfectGas> wall_t;
-  typedef CompressibleFarfieldFlux<reconstruction_t, PerfectGas> farfield_t;
+  typedef ImmersedBoundaryReconstruction<Upwind2<LIMITER>, TShape, CompressibleEulerWall> reconstruction2_t;
+  typedef ImmersedBoundaryReconstruction<Upwind1, TShape, CompressibleEulerWall> reconstruction1_t;
+  typedef FLUX<reconstruction1_t, PerfectGas> euler1_t;
+  typedef FLUX<reconstruction2_t, PerfectGas> euler2_t;
+  typedef CompressibleWallFlux<reconstruction1_t, PerfectGas> wall_t;
+  typedef CompressibleFarfieldFlux<reconstruction1_t, PerfectGas> farfield_t;
 
-  reconstruction_t* m_Reconstruction;
-  euler_t*          m_EulerFlux;
-  wall_t*           m_WallFlux;
-  farfield_t*       m_FarFlux;
-  TShape*           m_Shape;
+  reconstruction1_t*    m_Reconstruction1;
+  reconstruction2_t*    m_Reconstruction2;
+  euler1_t*             m_EulerFlux1;
+  euler2_t*             m_EulerFlux2;
+  wall_t*               m_WallFlux;
+  farfield_t*           m_FarFlux;
+  TShape*               m_Shape;
+  CompressibleViscFlux<PerfectGas>* m_ViscousFlux;
+
+  bool                  m_SecondOrder;
 
 
 public: // methods
@@ -63,6 +79,9 @@ public: // methods
   void yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   void zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
 
+  void secondOrderOn()  { m_SecondOrder = true; }
+  void secondOrderOff() { m_SecondOrder = false; }
+
 };
 
 
@@ -70,11 +89,15 @@ template <typename TShape>
 MyFlux<TShape>::MyFlux(real u, TShape* shape)
 {
   m_Shape = shape;
-  m_Reconstruction = new reconstruction_t(m_Shape);
-  m_EulerFlux = new euler_t(m_Reconstruction);
-  m_FarFlux = new farfield_t(m_Reconstruction);
+  m_Reconstruction1 = new reconstruction1_t(m_Shape);
+  m_Reconstruction2 = new reconstruction2_t(m_Shape);
+  m_EulerFlux1 = new euler1_t(m_Reconstruction1);
+  m_EulerFlux2 = new euler2_t(m_Reconstruction2);
+  m_ViscousFlux = new CompressibleViscFlux<PerfectGas>();
+  m_FarFlux = new farfield_t(m_Reconstruction1);
   m_FarFlux->setFarfield(1e5, 300, u, 0, 0);
-  m_WallFlux = new wall_t(m_Reconstruction);
+  m_WallFlux = new wall_t(m_Reconstruction1);
+  m_SecondOrder = false;
 }
 
 template <typename TShape>
@@ -86,7 +109,11 @@ inline void MyFlux<TShape>::xField
   real A, real* flux
 )
 {
-  m_EulerFlux->xField(patch, i, j, k, x, y, z, A, flux);
+  if (m_SecondOrder) m_EulerFlux2->xField(patch, i, j, k, x, y, z, A, flux);
+  else               m_EulerFlux1->xField(patch, i, j, k, x, y, z, A, flux);
+#ifndef EULER
+  m_ViscousFlux->xField(patch, i, j, k, x, y, z, A, flux);
+#endif
 }
 
 template <typename TShape>
@@ -98,7 +125,11 @@ inline void MyFlux<TShape>::yField
   real A, real* flux
 )
 {
-  m_EulerFlux->yField(patch, i, j, k, x, y, z, A, flux);
+  if (m_SecondOrder) m_EulerFlux2->yField(patch, i, j, k, x, y, z, A, flux);
+  else               m_EulerFlux1->yField(patch, i, j, k, x, y, z, A, flux);
+#ifndef EULER
+  m_ViscousFlux->yField(patch, i, j, k, x, y, z, A, flux);
+#endif
 }
 
 template <typename TShape>
@@ -110,7 +141,11 @@ inline void MyFlux<TShape>::zField
   real A, real* flux
 )
 {
-  m_EulerFlux->zField(patch, i, j, k, x, y, z, A, flux);
+  if (m_SecondOrder) m_EulerFlux2->zField(patch, i, j, k, x, y, z, A, flux);
+  else               m_EulerFlux1->zField(patch, i, j, k, x, y, z, A, flux);
+#ifndef EULER
+  m_ViscousFlux->zField(patch, i, j, k, x, y, z, A, flux);
+#endif
 }
 
 template <typename TShape>
@@ -238,17 +273,21 @@ void main1()
 }
 
 
-#define N  100
-#define NI 4*N
-#define NJ 3
-#define NK N
+//#define N  100
+//#define NI 3*N
+//#define NJ 3
+//#define NK N
 
 void main2()
 {
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
-  patch.setupAligned(0, -0.1, 0, 4, 0.1, 1);
+  patch.setupAligned(0, -0.1, 0, 3, 1, 1);
+  size_t N = 50;
+  size_t NI = 3*N;
+  size_t NJ = 3;
+  size_t NK = N;
   patch.resize(NI, NJ, NK);
   real init_var[5];
   real zero_var[5];
@@ -275,21 +314,23 @@ void main2()
   typedef Box shape_t;
   shape_t shape;
   shape.setGeometry(0.6, -1, -1, 10, 1, 0.2);
+  //shape.setCentre(0.15, 0.15);
+  //shape.setRadius(0.05);
 
   shape.transform(patch.getTransformation());
 
   MyFlux<shape_t> flux(u, &shape);
-  CartesianDirectionalPatchOperation<5, MyFlux<shape_t> > operation(&patch, &flux);
+  CartesianStandardPatchOperation<5, MyFlux<shape_t> > operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
   //iterator.setDomain(0, 1, 0, NI, 2, NK);
   runge_kutta.addIterator(&iterator);
 
-  real dt             = 5e-6;
-  real dt_max         = dt;
-  real dt_ramp        = 1.0;
+  real dt             = 5e-4/N;
+  real dt2            = 1*dt;
+  real t_switch       = 0.0;//2e-2;
   real t_write        = 0;
-  real write_interval = 5e-5;
-  real total_time     = 1;
+  real write_interval = 1e-3;
+  real total_time     = 3e-3;
 
   int count = 0;
   int iter = 0;
@@ -302,6 +343,10 @@ void main2()
   startTiming();
 
   while (t < total_time) {
+    if (t > t_switch) {
+      flux.secondOrderOn();
+      dt = dt2;
+    }
     runge_kutta(dt);
     real CFL_max = 0;
     real x = 0.5*patch.dx();
@@ -345,7 +390,6 @@ void main2()
     cout << t << "  dt: " << dt << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm;
     cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
     ++iter;
-    dt = min(dt_max, dt_ramp*dt);
   }
 
   stopTiming();
@@ -375,7 +419,7 @@ void shockTube()
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
   patch.setupAligned(0, 0, 0, 0.3048, 0.02, 0.02);
-  int num_cells = 1000;
+  int num_cells = 100;
   patch.resize(num_cells, 3, 3);
   real high_press[5];
   real low_press[5];
@@ -408,7 +452,7 @@ void shockTube()
   real dt             = 5e-4/num_cells;
   real dt_max         = dt;
   real dt_ramp        = 1.0;
-  real total_time     = 2.5e-4;
+  real total_time     = 2.4999e-4;
 
   int count = 0;
   int iter = 0;
