@@ -8,10 +8,12 @@ class PerfectGas
 
 public: // static methods
 
-  static real R(real* = NULL)     { return 287.6977; }    ///< @todo find a concept for this
-  static real gamma(real* = NULL) { return 1.40097; }    ///< @todo find a concept for this
+  static real R(real* = NULL)     { return 287.6977; }  ///< @todo find a concept for this
+  static real gamma(real* = NULL) { return 1.40097; }   ///< @todo find a concept for this
   static real cp(real* = NULL)    { return 1005.1977; } ///< @todo find a concept for this
-  static real cv(real* = NULL)    { return 717.5; }  ///< @todo find a concept for this
+  static real cv(real* = NULL)    { return 717.5; }     ///< @todo find a concept for this
+  static real mu(real* = NULL)    { return 1.8e-5; }    ///< @todo find a concept for this
+  static real Pr(real* = NULL)    { return 0.7; }       ///< @todo find a concept for this
 
   static void primitiveToConservative(real p, real T, real* var);
   static void primitiveToConservative(real p, real T, real u, real v, real w, real* var);
