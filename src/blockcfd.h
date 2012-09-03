@@ -13,12 +13,47 @@ using namespace std;
 
 using namespace fvmouse;
 
+
+// configuration macros
+//
+#define DEBUG
+#define SINGLE_PRECISION
+
+
+
+#ifdef SINGLE_PRECISION
+
 typedef float real;
+
+static real global_eps = 1e-10;
+
+inline int posReal2Int(real v)
+{
+  v -= 0.5 - 1.5e-7;
+  v += 12582912;
+  ((char*)&v)[2] &= 63;
+  ((char*)&v)[3] &= 0;
+  return ((int*)&v)[0];
+}
+
+#else
+
+typedef double real;
+
+inline int posReal2Int(real v)
+{
+  v -= 0.5 - 1.5e-11;
+  v += 6755399441055744;
+  return ((int*)&v)[0];
+}
+
+#endif
 
 #include "math/mathvector.h"
 #include "math/smallsquarematrix.h"
+#include "debug.h"
 
-#define DEBUG
+
 
 using namespace std;
 
@@ -57,10 +92,12 @@ inline real checkedReal(real x, int line, const char *file_name)
 {
   if (isnan(x)) {
     cout << "NaN encountered in file \"" << file_name << "\" at line " << line << endl;
+    GlobalDebug::print();
     abort();
   }
   if (isinf(x)) {
     cout << "Inf encountered (division by zero?) in file \"" << file_name << "\" at line " << line << endl;
+    GlobalDebug::print();
     abort();
   }
   return x;
@@ -150,6 +187,8 @@ inline real nonZero(const real x, const real eps)
     return max(eps, x);
   }
 }
+
+
 
 
 
