@@ -52,6 +52,7 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
       BUG;
     }
     patch->getVar(i_field, i1, j1, k1, var);
+    //m_Reconstruction.project(patch, var, i_field, num_vars, i1, j1, k1, i2, j2, k2);
     TBoundaryCondition::correct(nx, ny, nz, var);
     return;
   }
