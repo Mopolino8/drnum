@@ -7,7 +7,7 @@ struct VanAlbada
 {
   static real delta(real delta1, real delta2)
   {
-    return 2*sqr(delta1)*delta2/nonZero(sqr(delta1) + sqr(delta2), global_eps);
+    return delta1*(2*delta1*delta2/max(real(1e-6), sqr(delta1)+sqr(delta2)));
   }
 };
 
