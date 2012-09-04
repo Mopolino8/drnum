@@ -56,7 +56,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           GlobalDebug::xyz(x,y,z);
 
           // x direction
-          if (i > 0) {
+          if (i > 0 && patch()->sizeI() > 2) {
             fill(flux, 5, 0);
             m_Flux->xField(patch(), i, j, k, x, y, z, Ax, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -67,7 +67,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           }
 
           // y direction
-          if (j > 0) {
+          if (j > 0 && patch()->sizeJ() > 2) {
             fill(flux, 5, 0);
             m_Flux->yField(patch(), i, j, k, x, y, z, Ay, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -78,7 +78,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           }
 
           // z direction
-          if (k > 0) {
+          if (k > 0 && patch()->sizeK() > 2) {
             fill(flux, 5, 0);
             m_Flux->zField(patch(), i, j, k, x, y, z, Az, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -99,7 +99,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute x walls
   //
   // .. left wall
-  if (i1 == 0) {
+  if (i1 == 0 && patch()->sizeI() > 2) {
     real x = 0.5*patch()->dx();
     real y = 0.5*patch()->dy();
     for (size_t j = j1; j < j2; ++j) {
@@ -118,7 +118,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   }
 
   // .. right wall
-  if (i2 == patch()->sizeI()) {
+  if (i2 == patch()->sizeI() && patch()->sizeI() > 2) {
     real x = 0.5*patch()->dx() + patch()->sizeI()*patch()->dx();
     real y = 0.5*patch()->dy();
     for (size_t j = j1; j < j2; ++j) {
@@ -139,7 +139,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute y walls
   //
   // .. front wall
-  if (j1 == 0) {
+  if (j1 == 0 && patch()->sizeJ() > 2) {
     real x = 0.5*patch()->dx();
     real y = 0.5*patch()->dy();
     for (size_t i = i1; i < i2; ++i) {
@@ -158,7 +158,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   }
 
   // .. back wall
-  if (j2 == patch()->sizeJ()) {
+  if (j2 == patch()->sizeJ() && patch()->sizeJ() > 2) {
     real x = 0.5*patch()->dx();
     real y = 0.5*patch()->dy() + patch()->sizeJ()*patch()->dy();
     for (size_t i = i1; i < i2; ++i) {
@@ -179,7 +179,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute z walls
   //
   // .. bottom wall
-  if (k1 == 0) {
+  if (k1 == 0 && patch()->sizeK() > 2) {
     real x = 0.5*patch()->dx();
     real z = 0.5*patch()->dz();
     for (size_t i = i1; i < i2; ++i) {
@@ -198,7 +198,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   }
 
   // .. top wall
-  if (k2 == patch()->sizeK()) {
+  if (k2 == patch()->sizeK() && patch()->sizeK() > 2) {
     real x = 0.5*patch()->dx();
     real z = 0.5*patch()->dz() + patch()->sizeK()*patch()->dz();
     for (size_t i = i1; i < i2; ++i) {
