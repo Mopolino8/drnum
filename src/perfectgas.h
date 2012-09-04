@@ -8,17 +8,19 @@ class PerfectGas
 
 public: // static methods
 
-  static real R(real* = NULL)     { return 287.6977; }  ///< @todo find a concept for this
-  static real gamma(real* = NULL) { return 1.40097; }   ///< @todo find a concept for this
-  static real cp(real* = NULL)    { return 1005.1977; } ///< @todo find a concept for this
+  static real R(real* = NULL)     { return 287; }       ///< @todo find a concept for this
+  static real gamma(real* = NULL) { return 1.4; }       ///< @todo find a concept for this
+  static real cp(real* = NULL)    { return 1004.5; }    ///< @todo find a concept for this
   static real cv(real* = NULL)    { return 717.5; }     ///< @todo find a concept for this
   static real mu(real* = NULL)    { return 1.8e-5; }    ///< @todo find a concept for this
   static real Pr(real* = NULL)    { return 0.7; }       ///< @todo find a concept for this
 
   static void primitiveToConservative(real p, real T, real* var);
   static void primitiveToConservative(real p, real T, real u, real v, real w, real* var);
+  static void primitiveToConservative(real p, real T, vec3_t U, real* var);
   static void conservativeToPrimitive(real* var, real& p, real& T);
   static void conservativeToPrimitive(real* var, real& p, real& T, real& u, real& v, real& w);
+  static void conservativeToPrimitive(real* var, real& p, real& T, vec3_t& U);
 
 };
 
@@ -43,6 +45,11 @@ inline void PerfectGas::primitiveToConservative(real p, real T, real u, real v, 
   countFlops(14);
 }
 
+inline void PerfectGas::primitiveToConservative(real p, real T, vec3_t U, real *var)
+{
+  primitiveToConservative(p, T, U[0], U[1], U[2], var);
+}
+
 inline void PerfectGas::conservativeToPrimitive(real *var, real &p, real &T)
 {
   real ir = 1.0/var[0];
@@ -63,6 +70,11 @@ inline void PerfectGas::conservativeToPrimitive(real *var, real &p, real &T, rea
   T = (var[4]*ir - 0.5*(u*u + v*v + w*w))/cv();
   p = var[0]*R()*T;
   countFlops(15);
+}
+
+inline void PerfectGas::conservativeToPrimitive(real *var, real &p, real &T, vec3_t& U)
+{
+  conservativeToPrimitive(var, p, T, U[0], U[1], U[2]);
 }
 
 #endif // PERFECTGAS_H
