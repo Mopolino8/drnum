@@ -181,7 +181,7 @@ inline real sign1(const real x)
 
 inline real nonZero(const real x, const real eps)
 {
-  if (fabs(x) < 0) {
+  if (x < 0) {
     return min(-eps, x);
   } else {
     return max(eps, x);
