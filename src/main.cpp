@@ -36,7 +36,8 @@
 #include "boundary_conditions/compressibleeulerwall.h"
 #include "compressiblevariables.h"
 
-#define FLUX    VanLeer
+#define PROJ    Upwind2
+#define FLUX    KT
 #define LIMITER MinMod
 #define EULER
 
@@ -44,8 +45,9 @@ template <typename TShape>
 class MyFlux
 {
 
-  typedef ImmersedBoundaryReconstruction<Upwind2<LIMITER>, TShape, CompressibleEulerWall> reconstruction2_t;
-  typedef ImmersedBoundaryReconstruction<Upwind1, TShape, CompressibleEulerWall> reconstruction1_t;
+  typedef ImmersedBoundaryReconstruction<PROJ<LIMITER>, TShape, CompressibleEulerWall> reconstruction2_t;
+  typedef ImmersedBoundaryReconstruction<PROJ<MinMod>, TShape, CompressibleEulerWall> reconstruction1_t;
+  //typedef ImmersedBoundaryReconstruction<Upwind1, TShape, CompressibleEulerWall> reconstruction1_t;
   typedef FLUX<reconstruction1_t, PerfectGas> euler1_t;
   typedef FLUX<reconstruction2_t, PerfectGas> euler2_t;
   typedef CompressibleWallFlux<reconstruction1_t, PerfectGas> wall_t;
@@ -278,16 +280,46 @@ void main1()
 //#define NJ 3
 //#define NK N
 
+void entropyCorrection(CartesianPatch* patch, size_t i, size_t k)
+{
+  for (size_t j = 0; j < patch->sizeJ(); ++j) {
+    real var0[5];
+    patch->getVar(0, i, j, k, var0);
+    real p0, T0;
+    vec3_t U0;
+    PerfectGas::conservativeToPrimitive(var0, p0, T0, U0);
+    real ht = PerfectGas::cp()*T0 + 0.5*U0.abs2();
+    static const int N = 6;
+    size_t ic[N] = { i+1, i+2, i+3, i+4, i+1, i+2 };
+    size_t kc[N] = { k,   k,   k,   k,   k+1, k+1 };
+    for (int i_cell = 0; i_cell < N; ++i_cell) {
+      real var[5];
+      patch->getVar(0, ic[i_cell], j, kc[i_cell], var);
+      real p, T;
+      vec3_t U;
+      PerfectGas::conservativeToPrimitive(var, p, T, U);
+      if (U.abs2() > 1) {
+        T = T0*pow(p/p0, (PerfectGas::gamma() - 1)/PerfectGas::gamma());
+        U[2] = 0;
+        U.normalise();
+        U *= sqrt(2*(ht - PerfectGas::cp()*T));
+        PerfectGas::primitiveToConservative(p, T, U, var);
+      }
+      patch->setVar(0, ic[i_cell], j, kc[i_cell], var);
+    }
+  }
+}
+
 void main2()
 {
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
-  patch.setupAligned(0, -0.1, 0, 3, 1, 1);
-  size_t N = 50;
+  patch.setupAligned(0, -0.01, 0, 3, 0.01, 1);
+  size_t N = 100;
   size_t NI = 3*N;
-  size_t NJ = 3;
-  size_t NK = N;
+  size_t NJ = 1;
+  size_t NK = 1*N;
   patch.resize(NI, NJ, NK);
   real init_var[5];
   real zero_var[5];
@@ -306,31 +338,30 @@ void main2()
   }
 
   RungeKutta runge_kutta;
-  //runge_kutta.addAlpha(0.125);
+  //runge_kutta.addAlpha(0.059);
+  //runge_kutta.addAlpha(0.14);
   runge_kutta.addAlpha(0.25);
-  runge_kutta.addAlpha(0.50);
-  runge_kutta.addAlpha(1.00);
+  runge_kutta.addAlpha(0.5);
+  runge_kutta.addAlpha(1.000);
 
   typedef Box shape_t;
   shape_t shape;
   shape.setGeometry(0.6, -1, -1, 10, 1, 0.2);
-  //shape.setCentre(0.15, 0.15);
-  //shape.setRadius(0.05);
 
   shape.transform(patch.getTransformation());
 
   MyFlux<shape_t> flux(u, &shape);
   CartesianStandardPatchOperation<5, MyFlux<shape_t> > operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
-  //iterator.setDomain(0, 1, 0, NI, 2, NK);
   runge_kutta.addIterator(&iterator);
 
+  real T              = 1.4401e-3;
   real dt             = 5e-4/N;
   real dt2            = 1*dt;
-  real t_switch       = 0.0;//2e-2;
+  real t_switch       = 0*T;//2e-2;
   real t_write        = 0;
-  real write_interval = 1e-3;
-  real total_time     = 3e-3;
+  real write_interval = T;
+  real total_time     = 10*write_interval;
 
   int count = 0;
   int iter = 0;
@@ -342,12 +373,23 @@ void main2()
 
   startTiming();
 
+  // compute "corner" indices
+  size_t i_corner, k_corner;
+  {
+    real x = 0.6 - 0.5*patch.dx();
+    real z = 0.2 + 0.5*patch.dz();
+    i_corner = x/patch.dx();
+    k_corner = z/patch.dz();
+  }
+
   while (t < total_time) {
     if (t > t_switch) {
       flux.secondOrderOn();
       dt = dt2;
     }
     runge_kutta(dt);
+    //entropyCorrection(&patch, i_corner, k_corner);
+
     real CFL_max = 0;
     real x = 0.5*patch.dx();
     real rho_min = 1000;
@@ -387,7 +429,7 @@ void main2()
     }
     real max_norm, l2_norm;
     patch.computeVariableDifference(0, 0, 1, 0, max_norm, l2_norm);
-    cout << t << "  dt: " << dt << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm;
+    cout << t/T << "  dt: " << dt << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm;
     cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
     ++iter;
   }
@@ -398,124 +440,9 @@ void main2()
   cout << iter << " iterations" << endl;
 }
 
-void main3()
-{
-  cout << sizeof(int) << endl;
-  for (int i = 0; i < 10; ++i) {
-    real v = 10000.0*(real)rand()/RAND_MAX;
-    cout << v << "   " << posReal2Int(v) << endl;
-  }
-  real v;
-  do {
-    cout << "v = ";
-    cin >> v;
-    cout << v << "   " << posReal2Int(v) << endl;
-  } while (fabs(v - 999) > 1e-3);
-}
-
-void shockTube()
-{
-  CartesianPatch patch;
-  patch.setNumberOfFields(2);
-  patch.setNumberOfVariables(5);
-  patch.setupAligned(0, 0, 0, 0.3048, 0.02, 0.02);
-  int num_cells = 100;
-  patch.resize(num_cells, 3, 3);
-  real high_press[5];
-  real low_press[5];
-
-  PerfectGas::primitiveToConservative(68970, 288.89, 0, 0, 0, high_press);
-  PerfectGas::primitiveToConservative( 6897, 231.11, 0, 0, 0, low_press);
-  for (size_t i = 0; i < num_cells; ++i) {
-    for (size_t j = 0; j < 3; ++j) {
-      for (size_t k = 0; k < 3; ++k) {
-        if (patch.xyzCell(i,j,k)[0] >= 0.1542) {
-          patch.setVar(0, i, j, k, low_press);
-        } else {
-          patch.setVar(0, i, j, k, high_press);
-        }
-      }
-    }
-  }
-
-  RungeKutta runge_kutta;
-  runge_kutta.addAlpha(0.25);
-  runge_kutta.addAlpha(0.50);
-  runge_kutta.addAlpha(1.00);
-
-  NoShape shape;
-  MyFlux<NoShape> flux(0, &shape);
-  CartesianDirectionalPatchOperation<5, MyFlux<NoShape> > operation(&patch, &flux);
-  CartesianStandardIterator iterator(&operation);
-  runge_kutta.addIterator(&iterator);
-
-  real dt             = 5e-4/num_cells;
-  real dt_max         = dt;
-  real dt_ramp        = 1.0;
-  real total_time     = 2.4999e-4;
-
-  int count = 0;
-  int iter = 0;
-  real t = 0;
-  write(patch, "testrun", count);
-
-  cout << "Press <ENTER> to start!";
-  cin.get();
-
-  startTiming();
-
-  while (t < total_time) {
-    runge_kutta(dt);
-    real CFL_max = 0;
-    real x = 0.5*patch.dx();
-    for (size_t i = 0; i < num_cells; ++i) {
-      real y = 0.5*patch.dy();
-      for (size_t j = 0; j < 3; ++j) {
-        real z = 0.5*patch.dz();
-        for (size_t k = 0; k < 3; ++k) {
-          real p, u, v, w, T, var[5];
-          patch.getVar(0, i, j, k, var);
-          PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
-          real a = sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-          CFL_max = max(CFL_max, fabs(u)*dt/patch.dx());
-          CFL_max = max(CFL_max, fabs(u+a)*dt/patch.dx());
-          CFL_max = max(CFL_max, fabs(u-a)*dt/patch.dx());
-          countSqrts(1);
-          countFlops(10);
-          z += patch.dz();
-        }
-        y += patch.dy();
-      }
-      x += patch.dx();
-    }
-    t += dt;
-    real max_norm, l2_norm;
-    patch.computeVariableDifference(0, 0, 1, 0, max_norm, l2_norm);
-    cout << t << "  dt: " << dt << "  CFL: " << CFL_max << "  max: " << max_norm << "  L2: " << l2_norm << endl;
-    ++iter;
-    dt = min(dt_max, dt_ramp*dt);
-  }
-
-  stopTiming();
-
-  {
-    ofstream f("p.dat");
-    real x = 0.5*patch.dx();
-    for (size_t i = 0; i < num_cells; ++i) {
-      real p, u, v, w, T, var[5];
-      patch.getVar(0, i, 1, 1, var);
-      PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
-      f << x << ", " << p << endl;
-      x += patch.dx();
-    }
-  }
-
-  cout << iter << " iterations" << endl;
-}
-
 int main()
 {
+  //main1();
   main2();
-  //shockTube();
 }
 
