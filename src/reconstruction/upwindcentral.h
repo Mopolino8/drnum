@@ -31,7 +31,9 @@ inline void UpwindCentral<TLimiter>::project(CartesianPatch *patch, real *var, s
     for (size_t i_var = 0; i_var < num_vars; ++i_var) {
       real delta01 = patch->f(i_field, i_var, i1, j1, k1) - patch->f(i_field, i_var, i0, j0, k0);
       real delta12 = patch->f(i_field, i_var, i2, j2, k2) - patch->f(i_field, i_var, i1, j1, k1);
-      var[i_var] += 0.5*TLimiter::lim(delta01, delta12)*delta12;
+      if (fabs(delta01) > global_eps) {
+        var[i_var] += 0.5*TLimiter::lim(delta01, delta12)*delta12;
+      }
     }
   }
 }

@@ -5,14 +5,11 @@
 
 struct VanLeerLim
 {
-  static real delta(real delta1, real delta2)
+  static real lim(real delta1, real delta2)
   {
-    //return 2/(1/nonZero(delta1, global_eps) + 1/nonZero(delta2, global_eps));
-    if (delta1*delta2 <= 0) {
-      return 0;
-    }
-    countFlops(4);
-    return 2/(1/delta1 + 1/delta2);
+    countFlops(5);
+    real r   = delta2/nonZero(delta1, global_eps);
+    return (r + fabs(r))/(1 + fabs(r));
   }
 };
 

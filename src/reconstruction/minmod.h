@@ -5,15 +5,9 @@
 
 struct MinMod
 {
-  static real delta(real delta1, real delta2)
+  static real lim(real delta1, real delta2)
   {
-    countFlops(1);
-    if (delta1*delta2 <= 0) {
-      return 0;
-    } else if (fabs(delta1) > fabs(delta2)) {
-      return delta2;
-    }
-    return delta1;
+    return max(real(0), min(real(1), real(1)*delta2/nonZero(delta1, global_eps)));
   }
 };
 

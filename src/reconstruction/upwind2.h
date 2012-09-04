@@ -29,9 +29,9 @@ inline void Upwind2<TLimiter>::project(CartesianPatch *patch, real *var, size_t 
   size_t k0 = 2*k1 - k2;
   if (patch->checkRange(i0, j0, k0) && patch->checkRange(i2, j2, k2)) {
     for (size_t i_var = 0; i_var < num_vars; ++i_var) {
-      real delta01 = patch->f(i_field, i_var, i1, j1, k1) - patch->f(i_field, i_var, i0, j0, k0);
-      real delta12 = patch->f(i_field, i_var, i2, j2, k2) - patch->f(i_field, i_var, i1, j1, k1);      
-      var[i_var] += 0.5*TLimiter::delta(delta01, delta12);
+      real delta01 = (patch->f(i_field, i_var, i1, j1, k1) - patch->f(i_field, i_var, i0, j0, k0));
+      real delta12 = (patch->f(i_field, i_var, i2, j2, k2) - patch->f(i_field, i_var, i1, j1, k1));
+      var[i_var] += 0.5*TLimiter::lim(delta01, delta12)*delta01;
     }
   }
 }
