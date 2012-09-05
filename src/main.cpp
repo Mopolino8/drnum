@@ -37,8 +37,8 @@
 #include "compressiblevariables.h"
 
 #define PROJ    Upwind2
-#define FLUX    KT
-#define LIMITER MinMod
+#define FLUX    KNP
+#define LIMITER VanAlbada
 #define EULER
 
 template <typename TShape>
@@ -46,9 +46,9 @@ class MyFlux
 {
 
   typedef ImmersedBoundaryReconstruction<PROJ<LIMITER>, TShape, CompressibleEulerWall> reconstruction2_t;
-  typedef ImmersedBoundaryReconstruction<PROJ<MinMod>, TShape, CompressibleEulerWall> reconstruction1_t;
+  typedef ImmersedBoundaryReconstruction<Upwind2<MinMod>, TShape, CompressibleEulerWall> reconstruction1_t;
   //typedef ImmersedBoundaryReconstruction<Upwind1, TShape, CompressibleEulerWall> reconstruction1_t;
-  typedef FLUX<reconstruction1_t, PerfectGas> euler1_t;
+  typedef KNP<reconstruction1_t, PerfectGas> euler1_t;
   typedef FLUX<reconstruction2_t, PerfectGas> euler2_t;
   typedef CompressibleWallFlux<reconstruction1_t, PerfectGas> wall_t;
   typedef CompressibleFarfieldFlux<reconstruction1_t, PerfectGas> farfield_t;
@@ -315,9 +315,9 @@ void main2()
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
-  patch.setupAligned(0, -0.01, 0, 3, 0.01, 1);
+  patch.setupAligned(0, -0.01, 0, 4, 0.01, 1);
   size_t N = 100;
-  size_t NI = 3*N;
+  size_t NI = 4*N;
   size_t NJ = 1;
   size_t NK = 1*N;
   patch.resize(NI, NJ, NK);
@@ -355,13 +355,13 @@ void main2()
   CartesianStandardIterator iterator(&operation);
   runge_kutta.addIterator(&iterator);
 
-  real T              = 1.4401e-3;
+  real T              = 2*1.4401e-3;
   real dt             = 5e-4/N;
   real dt2            = 1*dt;
-  real t_switch       = 0*T;//2e-2;
+  real t_switch       = 0.0*T;
   real t_write        = 0;
-  real write_interval = T;
-  real total_time     = 10*write_interval;
+  real write_interval = T/2;
+  real total_time     = 4*T;
 
   int count = 0;
   int iter = 0;
