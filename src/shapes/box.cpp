@@ -101,7 +101,7 @@ bool Box::getBoundaryMetric(real x1, real y1, real z1,
   }
 
   // top
-  if ((z1 <= m_Z1 && z2 > m_Z1) || (z1 >= m_Z1 && z2 < m_Z1)) {
+  if ((z1 <= m_Z2 && z2 > m_Z2) || (z1 >= m_Z2 && z2 < m_Z2)) {
     k = (m_Z2 - z2)/(z1 - z2);
     real x = x1 + k*(x2 - x1);
     real y = y1 + k*(y2 - y1);
