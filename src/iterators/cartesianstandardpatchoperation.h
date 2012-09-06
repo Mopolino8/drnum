@@ -31,7 +31,9 @@ CartesianStandardPatchOperation<DIM, TFlux>::CartesianStandardPatchOperation(Car
 template <unsigned int DIM, class TFlux>
 void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2)
 {
-  checkResFieldSize(i1, j1, k1, i2, j2, k2);
+  /// @todo look at "core" concept
+  //checkResFieldSize(i1, j1, k1, i2, j2, k2);
+  checkResFieldSize(0, 0, 0, patch()->sizeI(), patch()->sizeJ(), patch()->sizeK());
 
   real Ax = patch()->dy()*patch()->dz();
   real Ay = patch()->dx()*patch()->dz();
@@ -47,11 +49,11 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute main block
   {
     real x = 0.5*patch()->dx();
-    for (size_t i = 0; i < patch()->sizeI(); ++i) {
+    for (size_t i = i1; i < i2; ++i) {
       real y = 0.5*patch()->dy();
-      for (size_t j = 0; j < patch()->sizeJ(); ++j) {
+      for (size_t j = j1; j < j2; ++j) {
         real z = 0.5*patch()->dz();
-        for (size_t k = 0; k < patch()->sizeK(); ++k) {
+        for (size_t k = k1; k < k2; ++k) {
 
           GlobalDebug::xyz(x,y,z);
 
@@ -218,9 +220,9 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
 
   // advance to next iteration level (time)
   factor /= patch()->dV();
-  for (size_t i = 0; i < patch()->sizeI(); ++i) {
-    for (size_t j = 0; j < patch()->sizeJ(); ++j) {
-      for (size_t k = 0; k < patch()->sizeK(); ++k) {
+  for (size_t i = i1; i < i2; ++i) {
+    for (size_t j = j1; j < j2; ++j) {
+      for (size_t k = k1; k < k2; ++k) {
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
           patch()->f(0, i_var, i, j, k) = patch()->f(1, i_var, i, j, k) + factor*m_Res[resIndex(i_var, i, j, k)];
         }
