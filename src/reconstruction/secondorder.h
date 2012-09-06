@@ -5,9 +5,9 @@
 
 struct SecondOrder
 {
-  static real delta(real delta1, real)
+  static real lim(real delta1, real)
   {
-    return delta1;
+    return 1;
   }
 };
 
