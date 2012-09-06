@@ -67,7 +67,7 @@ void CompressibleViscFlux<TGas>::xField(CartesianPatch *patch,
   patch->getZGrad(0, i, j, k, gradz_r);
   real D = 1.0/patch->dx();
   for (int i_var = 0; i_var < 5; ++i_var) {
-    gradx[i_var] = (var_r[i_var] - var_r[i_var])*D;
+    gradx[i_var] = (var_r[i_var] - var_l[i_var])*D;
     grady[i_var] = 0.5*(grady_l[i_var] + grady_r[i_var]);
     gradz[i_var] = 0.5*(gradz_l[i_var] + gradz_r[i_var]);
   }
@@ -97,10 +97,10 @@ void CompressibleViscFlux<TGas>::xField(CartesianPatch *patch,
   countFlops(1);
 
   // The viscous fluxes for the cons. quantities
-  flux[1] += tau_xx*A;
-  flux[2] += tau_xy*A;
-  flux[3] += tau_xz*A;
-  flux[4] += ((tau_xx*var[1] + tau_xy*var[2] + tau_xz*var[3])*ir + q_dot_x)*A;
+  flux[1] -= tau_xx*A;
+  flux[2] -= tau_xy*A;
+  flux[3] -= tau_xz*A;
+  flux[4] -= ((tau_xx*var[1] + tau_xy*var[2] + tau_xz*var[3])*ir + q_dot_x)*A;
   countFlops(15);
 }
 
@@ -145,7 +145,7 @@ void CompressibleViscFlux<TGas>::yField(CartesianPatch *patch,
   real D = 1.0/patch->dy();
   for (int i_var = 0; i_var < 5; ++i_var) {
     gradx[i_var] = 0.5*(gradx_l[i_var] + gradx_r[i_var]);
-    grady[i_var] = (var_r[i_var] - var_r[i_var])*D;
+    grady[i_var] = (var_r[i_var] - var_l[i_var])*D;
     gradz[i_var] = 0.5*(gradz_l[i_var] + gradz_r[i_var]);
   }
   countFlops(31);
@@ -174,10 +174,10 @@ void CompressibleViscFlux<TGas>::yField(CartesianPatch *patch,
   countFlops(1);
 
   // The viscous fluxes for the cons. quantities
-  flux[1] += tau_xy*A;
-  flux[2] += tau_yy*A;
-  flux[3] += tau_yz*A;
-  flux[4] += ((tau_xy*var[1] + tau_yy*var[2] + tau_yz*var[3])*ir + q_dot_y)*A;
+  flux[1] -= tau_xy*A;
+  flux[2] -= tau_yy*A;
+  flux[3] -= tau_yz*A;
+  flux[4] -= ((tau_xy*var[1] + tau_yy*var[2] + tau_yz*var[3])*ir + q_dot_y)*A;
   countFlops(15);
 }
 
@@ -223,7 +223,7 @@ void CompressibleViscFlux<TGas>::zField(CartesianPatch *patch,
   for (int i_var = 0; i_var < 5; ++i_var) {
     gradx[i_var] = 0.5*(gradx_l[i_var] + gradx_r[i_var]);
     grady[i_var] = 0.5*(grady_l[i_var] + grady_r[i_var]);
-    gradz[i_var] = (var_r[i_var] - var_r[i_var])*D;
+    gradz[i_var] = (var_r[i_var] - var_l[i_var])*D;
   }
   countFlops(31);
 
@@ -251,10 +251,10 @@ void CompressibleViscFlux<TGas>::zField(CartesianPatch *patch,
   countFlops(1);
 
   // The viscous fluxes for the cons. quantities
-  flux[1] += tau_xz*A;
-  flux[2] += tau_yz*A;
-  flux[3] += tau_zz*A;
-  flux[4] += ((tau_xz*var[1] + tau_yz*var[2] + tau_zz*var[3])*ir + q_dot_z)*A;
+  flux[1] -= tau_xz*A;
+  flux[2] -= tau_yz*A;
+  flux[3] -= tau_zz*A;
+  flux[4] -= ((tau_xz*var[1] + tau_yz*var[2] + tau_zz*var[3])*ir + q_dot_z)*A;
   countFlops(15);
 }
 
