@@ -22,7 +22,7 @@ LIBS        += -lvtkVolumeRendering
 LIBS        += -lvtkWidgets
 
 QMAKE_CXXFLAGS += -Wno-deprecated
-#QMAKE_CXXFLAGS_RELEASE += -g
+QMAKE_CXXFLAGS_RELEASE += -g
 QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_CXXFLAGS_RELEASE += -finline-limit=100000
 QMAKE_CXXFLAGS_RELEASE += --param large-function-growth=100000
@@ -114,4 +114,12 @@ HEADERS += \
     reconstruction/roelim.h \
     fluxes/compressibleviscflux.h \
     shapes/cylindery.h \
-    reconstruction/secondorder.h
+    reconstruction/secondorder.h \
+    examples/ffs1.h \
+    examples/interpolation1.h \
+    examples/overexpandedjet2d.h \
+    examples/kelvinhelmholtz.h \
+    examples/flatplate.h \
+    genericoperation.h \
+    fluxes/ktmod.h \
+    examples/wedge.h
