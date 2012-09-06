@@ -43,7 +43,7 @@ CompressibleFarfieldFlux<TReconstruction, TGas>::CompressibleFarfieldFlux(TRecon
   real a1 = CHECKED_REAL(sqrt(TGas::gamma()*TGas::R()*T1));
 
 #define FARFIELD_SPLIT \
-  real M = 0.5*(M0 + M1);  \
+  real M = real(0.5)*(M0 + M1);  \
   if (M >= 0) { \
     if (M >= 1) { \
       p = p0; \

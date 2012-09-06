@@ -42,11 +42,13 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
   if (m_Shape->getBoundaryMetric(x1, y1, z1, x2, y2, z2, weight, nx, ny, nz)) {
 
     // make sure we always extrapolate from outside the shape (i.e. from the fluid part)
+    countFlops(8);
     if ((x2-x1)*nx + (y2-y1)*ny + (z2-z1)*nz > 0) {
       swap(i1, i2);
       swap(j1, j2);
       swap(k1, k2);
       weight = 1 - weight;
+      countFlops(1);
     }
     if (!patch->checkRange(i1, j1, k1)) {
       BUG;
@@ -57,6 +59,7 @@ inline void ImmersedBoundaryReconstruction<TReconstruction, TShape, TBoundaryCon
     return;
   }
 
+  countFlops(6);
   if (m_Shape->isInside(2*x1 - x2, 2*y1 - y2, 2*z1 - z2)) {
 
     // first order upwind ...

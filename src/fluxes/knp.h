@@ -32,10 +32,10 @@ public: // methods
 
 
 template <typename TReconstruction, typename TGas>
-void KNP<TReconstruction, TGas>::xField(CartesianPatch *patch,
-                                        size_t i, size_t j, size_t k,
-                                        real x, real y, real z,
-                                        real A, real* flux)
+inline void KNP<TReconstruction, TGas>::xField(CartesianPatch *patch,
+                                               size_t i, size_t j, size_t k,
+                                               real x, real y, real z,
+                                               real A, real* flux)
 {
   COMPRESSIBLE_LEFT_PROJX;
   COMPRESSIBLE_RIGHT_PROJX;
@@ -72,10 +72,10 @@ void KNP<TReconstruction, TGas>::xField(CartesianPatch *patch,
 }
 
 template <typename TReconstruction, typename TGas>
-void KNP<TReconstruction, TGas>::yField(CartesianPatch *patch,
-                                        size_t i, size_t j, size_t k,
-                                        real x, real y, real z,
-                                        real A, real* flux)
+inline void KNP<TReconstruction, TGas>::yField(CartesianPatch *patch,
+                                               size_t i, size_t j, size_t k,
+                                               real x, real y, real z,
+                                               real A, real* flux)
 {
   COMPRESSIBLE_LEFT_PROJY;
   COMPRESSIBLE_RIGHT_PROJY;
@@ -112,10 +112,10 @@ void KNP<TReconstruction, TGas>::yField(CartesianPatch *patch,
 }
 
 template <typename TReconstruction, typename TGas>
-void KNP<TReconstruction, TGas>::zField(CartesianPatch *patch,
-                                        size_t i, size_t j, size_t k,
-                                        real x, real y, real z,
-                                        real A, real* flux)
+inline void KNP<TReconstruction, TGas>::zField(CartesianPatch *patch,
+                                               size_t i, size_t j, size_t k,
+                                               real x, real y, real z,
+                                               real A, real* flux)
 {
   COMPRESSIBLE_LEFT_PROJZ;
   COMPRESSIBLE_RIGHT_PROJZ;

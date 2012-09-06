@@ -24,7 +24,7 @@ public:
 
 #define COMPR_VARS \
   real r  = var[0]; \
-  real ir = CHECKED_REAL(1.0/r); \
+  real ir = CHECKED_REAL(real(1.0)/r); \
   real ru = var[1]; \
   real rv = var[2]; \
   real rw = var[3]; \
@@ -32,7 +32,7 @@ public:
   real v  = rv*ir; \
   real w  = rw*ir; \
   real rE = var[4]; \
-  real T  = CHECKED_REAL((rE*ir - 0.5*(u*u + v*v + w*w))/TGas::cv(var)); \
+  real T  = CHECKED_REAL((rE*ir - real(0.5)*(u*u + v*v + w*w))/TGas::cv(var)); \
   real p  = r*TGas::R(var)*T; \
   countFlops(15);
 
