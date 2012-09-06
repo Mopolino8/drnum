@@ -20,3 +20,10 @@ void TimeIntegration::computeIterators(real factor)
   }
 }
 
+void TimeIntegration::runPostOperations()
+{
+  for (list<GenericOperation*>::iterator i = m_PostOperations.begin(); i != m_PostOperations.end(); ++i) {
+    (*(*i))();
+  }
+}
+
