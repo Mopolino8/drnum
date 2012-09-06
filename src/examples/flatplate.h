@@ -29,7 +29,7 @@ class MyFlux
   typedef Upwind1 reconstruction1_t;
   typedef Upwind2<SecondOrder> reconstruction2_t;
   typedef KNP<reconstruction1_t, PerfectGas> euler1_t;
-  typedef KNP<reconstruction2_t, PerfectGas> euler2_t;
+  typedef AusmPlus<reconstruction2_t, PerfectGas> euler2_t;
   typedef CompressibleWallFlux<reconstruction1_t, PerfectGas> wall_t;
   typedef CompressibleFarfieldFlux<reconstruction1_t, PerfectGas> farfield_t;
   typedef CompressibleViscFlux<PerfectGas> viscous_t;
@@ -167,6 +167,7 @@ void write(CartesianPatch &patch, QString file_name, int count)
 struct BC : public GenericOperation
 {
   CartesianPatch *patch;
+  real* init_var;
   virtual void operator()()
   {
     real var[5];
@@ -178,8 +179,10 @@ struct BC : public GenericOperation
       }
       patch->setVar(0, i, 0, 0, var);
     }
-    for (size_t k = 0; k < patch->sizeI(); ++i) {
-
+    for (size_t k = 0; k < patch->sizeK(); ++k) {
+      patch->setVar(0, 0, 0, k, init_var);
+      patch->getVar(0, patch->sizeI() - 2, 0, k, var);
+      patch->setVar(0, patch->sizeI() - 1, 0, k, var);
     }
   }
 };
@@ -192,7 +195,7 @@ void run()
   real T  = 300;
   real r  = p/(PerfectGas::R()*T);
   real u  = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-  real Re  = 1000;
+  real Re  = 500;
   real CFL = 0.25;
   real L   = PerfectGas::mu()*Re/(u*r);
   real h   = 0.5*L/N;
@@ -222,6 +225,7 @@ void run()
 
   BC bc;
   bc.patch = &patch;
+  bc.init_var = init_var;
 
   RungeKutta runge_kutta;
   runge_kutta.addPostOperation(&bc);
