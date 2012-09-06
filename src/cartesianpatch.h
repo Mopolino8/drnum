@@ -490,26 +490,32 @@ inline void CartesianPatch::getXGrad(size_t i_field, size_t i, size_t j, size_t 
 
 inline void CartesianPatch::getYGrad(size_t i_field, size_t i, size_t j, size_t k, real *grad)
 {
-  real* var = new real[numVariables()];
-  real D = 1.0/dy();
-  if (j > 0 && j < sizeJ()-1) {
-    getVar(i_field, i, j+1, k, grad);
-    getVar(i_field, i, j-1, k, var);
-    D *= 0.5;
-    countFlops(1);
-  } else if (j > 0) {
-    getVar(i_field, i, j, k, grad);
-    getVar(i_field, i, j-1, k, var);
+  if (sizeJ() > 2) {
+    real* var = new real[numVariables()];
+    real D = 1.0/dy();
+    if (j > 0 && j < sizeJ()-1) {
+      getVar(i_field, i, j+1, k, grad);
+      getVar(i_field, i, j-1, k, var);
+      D *= 0.5;
+      countFlops(1);
+    } else if (j > 0) {
+      getVar(i_field, i, j, k, grad);
+      getVar(i_field, i, j-1, k, var);
+    } else {
+      getVar(i_field, i, j+1, k, grad);
+      getVar(i_field, i, j, k, var);
+    }
+    for (int i_var = 0; i_var < numVariables(); ++i_var) {
+      grad[i_var] -= var[i_var];
+      grad[i_var] *= D;
+    }
+    countFlops(2*numVariables());
+    delete [] var;
   } else {
-    getVar(i_field, i, j+1, k, grad);
-    getVar(i_field, i, j, k, var);
+    for (int i_var = 0; i_var < numVariables(); ++i_var) {
+      grad[i_var] = 0;
+    }
   }
-  for (int i_var = 0; i_var < numVariables(); ++i_var) {
-    grad[i_var] -= var[i_var];
-    grad[i_var] *= D;
-  }
-  countFlops(2*numVariables());
-  delete [] var;
 }
 
 inline void CartesianPatch::getZGrad(size_t i_field, size_t i, size_t j, size_t k, real *grad)
