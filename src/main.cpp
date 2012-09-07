@@ -200,9 +200,9 @@ void main1()
     for (size_t j = 0; j < nn_j; j++) {
       for (size_t k = 0; k < nn_k; k++) {
         size_t l = i*nn_j*nn_k + j*nn_k + k;
-        real x_low = 5*i;
-        real y_low = 5*j;
-        real z_low = 5*k;
+        real x_low = 5.3*i;
+        real y_low = 5.3*j;
+        real z_low = 5.3*k;
         patches[l].setupAligned(x_low, y_low, z_low, x_low+10.0, y_low+10.0, z_low+10.0);
         patches[l].resize(10,10,10);
         patchGrid.insertPatch(&patches[l]);

@@ -48,7 +48,9 @@ SOURCES += main.cpp \
     shapes/sphere.cpp \
     shapes/halfspace.cpp \
     cartesianraster.cpp \
-    utility/TInsectionList.cc
+    utility/TInsectionList.cc \
+    structuredhexraster.cpp \
+    raster.cpp
 
 HEADERS += \
     patch.h \
@@ -96,4 +98,8 @@ HEADERS += \
     cartesianraster.h \
     utility/TInsectionList.hh \
     vectorhashraster.h \
-    tinsecthashraster.h
+    tinsecthashraster.h \
+    utility/sparseweightedset.h \
+    utility/usparseweightedset.h \
+    structuredhexraster.h \
+    raster.h

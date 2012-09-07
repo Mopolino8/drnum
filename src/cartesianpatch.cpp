@@ -21,7 +21,7 @@ CartesianPatch::CartesianPatch()
   m_NumK = 1;
   //do allways with computeDeltas() m_Interpol_Initialized = false;
   /// @todo need a better eps-handling.
-  m_Eps = 1.e-6;
+  m_Eps = 1.e-5;
 }
 
 void CartesianPatch::computeDeltas()
@@ -756,8 +756,8 @@ bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
     if(y < m_yCCInterMin+m_EpsDY) {y = m_yCCInterMin+m_EpsDY;}
     if(z < m_zCCInterMin+m_EpsDZ) {z = m_zCCInterMin+m_EpsDZ;}
     if(x > m_xCCInterMax-m_EpsDX) {x = m_xCCInterMax-m_EpsDX;}
-    if(y > m_yCCInterMax-m_EpsDY) {y = m_xCCInterMax-m_EpsDY;}
-    if(z > m_zCCInterMax-m_EpsDZ) {z = m_xCCInterMax-m_EpsDZ;}
+    if(y > m_yCCInterMax-m_EpsDY) {y = m_yCCInterMax-m_EpsDY;}
+    if(z > m_zCCInterMax-m_EpsDZ) {z = m_zCCInterMax-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
     real ric_ref = (x - m_xCCMin) / m_Dx;
     real rjc_ref = (y - m_yCCMin) / m_Dy;

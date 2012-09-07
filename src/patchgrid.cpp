@@ -79,6 +79,7 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
 
   vector<vector<size_t> > pot_neigh;
   pot_neigh.resize(m_patches.size());
+
   // 1) Build up a hash raster VectorHashRaster<size_t> as background grid, covering the whole geometric
   //    region of the mesh.
   { // start mem_block
@@ -154,8 +155,8 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
     typename vector<size_t>::iterator it;
     it = unique(pot_neigh[patch].begin(), pot_neigh[patch].end());
     pot_neigh[patch].resize(it - pot_neigh[patch].begin());
+    vector<size_t>(pot_neigh[patch]).swap(pot_neigh[patch]);
   }
-
   // 4) Find real neighbour dependencies (e.g. interpolation partners) for all potentially dependend patches.
   //    - If a potential neighbour-dependency does not serve any interpol request, it will be excluded
   //      from Patch::m_neighbours.

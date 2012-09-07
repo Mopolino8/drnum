@@ -4,14 +4,11 @@
 #include <cstddef>
 //#include <namespace_mouse.hh>
 
-BEGIN_MOUSE
 template <class T> class VectorHashRaster;
-END_MOUSE
 
 #include "cartesianraster.h"
 #include <vector>
 
-BEGIN_MOUSE
 
 /** Class to hold a VectorHashRaster on a CartesianRaster
  *
@@ -244,6 +241,5 @@ inline T& VectorHashRaster<T>::at(const size_t& l, const size_t& l_i) {
 
 
 #include "vectorhashraster.cpp"
-END_MOUSE
 
 #endif  //VectorHashRaster_HH

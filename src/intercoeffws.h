@@ -8,8 +8,8 @@
 struct SingleInterCoeffWS;
 class InterCoeffWS;
 
-
 #include "patch.h"
+#include "usparseweightedset.h"
 
 /// @todo Structures need some better naming conventions to allow easyer understanding
 
@@ -17,7 +17,7 @@ struct SingleInterCoeffWS
 {
   size_t indirect_receiveindex;         ///< Index in indirect array receive_cells of receiving Patch
   size_t direct_receiveindex;           ///< Cell index in receiving Patch
-  WeightedSet<real> donor_contribution; ///< WeightedSet containing contributions of donor patch
+  USparseWeightedSet<real> donor_contribution; ///< WeightedSet containing contributions of donor patch
   /** @todo Storing indirect_receiveindex might be ommitted, if hit counters (Patch::m_receive_cell_data_hits)
     * work on true addresses. This wastes some memory on Patch classes, but might be easyer to understand.
     */
@@ -87,7 +87,7 @@ public: // methods
     * Get WeightedSet-ptr for contribution to one receiving cell
     * @param ll_rec index in list of contributions
     */
-  WeightedSet<real>* getWS(const size_t& ll_rec);
+  USparseWeightedSet<real>* getWS(const size_t& ll_rec);
 
   /**
     * Insert a WeightedSet for a given indexed request
@@ -175,7 +175,7 @@ inline size_t InterCoeffWS::getDirectRecCell(const size_t& ll_rec) const
   return m_DonorCellContribsWS[ll_rec].direct_receiveindex;
 }
 
-inline WeightedSet<real>* InterCoeffWS::getWS(const size_t& ll_rec)
+inline USparseWeightedSet<real>* InterCoeffWS::getWS(const size_t& ll_rec)
 {
   return &(m_DonorCellContribsWS[ll_rec].donor_contribution);
 }
@@ -212,7 +212,7 @@ inline void InterCoeffWS::transFromTo(const vector<real*>& donor_data, const vec
   size_t num_vars = donor_data.size();
   for (size_t i_ind = 0; i_ind < m_DonorCellContribsWS.size(); i_ind++) {
     size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
-    WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
+    USparseWeightedSet<real> &dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
     for(size_t i_v=0; i_v<num_vars; i_v++) {
       *(receiver_data[i_v]+i_receive) += dccws.computeValue(donor_data[i_v]);
     }
@@ -235,7 +235,7 @@ inline void InterCoeffWS::transTurnFromTo(const vector<real*>& donor_data, const
   real* vars_h = new real[num_vars];
   for(size_t i_ind=0; i_ind<m_DonorCellContribsWS.size(); i_ind++) {
     size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
-    WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
+    USparseWeightedSet<real> &dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
     for(size_t i_v=0; i_v<num_vars; i_v++) {
       vars_h[i_v] = dccws.computeValue(donor_data[i_v]);
     }
@@ -260,7 +260,7 @@ inline void InterCoeffWS::transTurnFromTo(const vector<real*>& donor_data, const
   size_t num_vars = donor_data.size();
   for(size_t i_ind=0; i_ind<m_DonorCellContribsWS.size(); i_ind++) {
     size_t i_receive = m_DonorCellContribsWS[i_ind].direct_receiveindex;
-    WeightedSet<real> dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
+    USparseWeightedSet<real> &dccws = m_DonorCellContribsWS[i_ind].donor_contribution;
     // do vectorial var first
     real vec_vars_0 = dccws.computeValue(donor_data[0]);    // x_comp vectorial var to turn
     real vec_vars_1 = dccws.computeValue(donor_data[1]);    // y_comp vectorial var to turn

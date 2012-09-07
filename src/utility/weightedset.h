@@ -59,7 +59,7 @@ public:
   /** Construction considering a single index with weight "1"
     * @param j the index for the single pair
   */
-  WeightedSet(size_t j) {WeightedSet(j, t_one);}
+  WeightedSet(size_t j);
 
   /** Construction considering equiweighted average for an index vector
     * @param vn the index vector
@@ -143,6 +143,13 @@ inline WeightedSet<T>::WeightedSet(size_t j, T t)
   new_pair.second = t;
   v.push_back(new_pair);
   sure_sorted = true;
+}
+
+template<class T>
+inline WeightedSet<T>::WeightedSet(size_t j)
+{
+  setup();
+  WeightedSet(j, t_one);
 }
 
 template<class T>
@@ -357,6 +364,10 @@ inline void WeightedSet<T>::Unify()
     it++;
   }
   v.resize(hold_it+1);
+
+  // test explicit memory shrinking
+  vector<pair<size_t, T> >(v).swap(v);
+
   sure_sorted = true;
 }
 
