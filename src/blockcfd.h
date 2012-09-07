@@ -16,7 +16,7 @@ using namespace fvmouse;
 
 // configuration macros
 //
-#define DEBUG
+//#define DEBUG
 #define SINGLE_PRECISION
 
 
@@ -24,6 +24,10 @@ using namespace fvmouse;
 #ifdef SINGLE_PRECISION
 
 typedef float real;
+
+#define FR12 real(0.5)
+#define FR13 real(0.3333333)
+#define FR23 real(0.6666666)
 
 static real global_eps = 1e-10;
 
