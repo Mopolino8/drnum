@@ -468,6 +468,7 @@ inline void CartesianPatch::getXGrad(size_t i_field, size_t i, size_t j, size_t 
 {
   real* var = new real[numVariables()];
   real D = 1.0/dx();
+  countFlops(1);
   if (i > 0 && i < sizeI()-1) {
     getVar(i_field, i+1, j, k, grad);
     getVar(i_field, i-1, j, k, var);
@@ -493,6 +494,7 @@ inline void CartesianPatch::getYGrad(size_t i_field, size_t i, size_t j, size_t 
   if (sizeJ() > 2) {
     real* var = new real[numVariables()];
     real D = 1.0/dy();
+    countFlops(1);
     if (j > 0 && j < sizeJ()-1) {
       getVar(i_field, i, j+1, k, grad);
       getVar(i_field, i, j-1, k, var);
@@ -522,6 +524,7 @@ inline void CartesianPatch::getZGrad(size_t i_field, size_t i, size_t j, size_t 
 {
   real* var = new real[numVariables()];
   real D = 1.0/dz();
+  countFlops(1);
   if (k > 0 && k < sizeK()-1) {
     getVar(i_field, i, j, k+1, grad);
     getVar(i_field, i, j, k-1, var);
