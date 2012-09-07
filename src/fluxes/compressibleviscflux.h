@@ -53,10 +53,10 @@ void CompressibleViscFlux<TGas>::xField(CartesianPatch *patch,
   real cp = TGas::cp(var);
   real R  = TGas::R(var);
   real k_heat = mu*cp/Pr;
-  F2 = 2.0/3.0*mu;
+  F2 = FR23*mu;
   F3 = mu;
   F4 = k_heat/R;
-  countFlops(5);
+  countFlops(4);
 
   real gradx[5];
   real grady[5], grady_l[5], grady_r[5];
@@ -84,13 +84,13 @@ void CompressibleViscFlux<TGas>::xField(CartesianPatch *patch,
   real dv_dy = (grady[2] - grady[0]*var[2]*ir)*ir;
   real du_dz = (gradz[1] - gradz[0]*var[1]*ir)*ir;
   real dw_dz = (gradz[3] - gradz[0]*var[3]*ir)*ir;
-  countFlops(46);
+  countFlops(48);
 
   // tensions
   real tau_xx = F2 * (2.0*du_dx - dv_dy - dw_dz);
   real tau_xy = F3 * ( du_dy + dv_dx);
   real tau_xz = F3 * ( du_dz + dw_dx);
-  countFlops(8);
+  countFlops(9);
 
   // heat flux
   real q_dot_x = F4 * dT_dx;
@@ -130,10 +130,10 @@ void CompressibleViscFlux<TGas>::yField(CartesianPatch *patch,
   real cp = TGas::cp(var);
   real R  = TGas::R(var);
   real k_heat = mu*cp/Pr;
-  F2 = 2.0/3.0*mu;
+  F2 = FR23*mu;
   F3 = mu;
   F4 = k_heat/R;
-  countFlops(5);
+  countFlops(4);
 
   real gradx[5], gradx_l[5], gradx_r[5];
   real grady[5];
@@ -161,13 +161,13 @@ void CompressibleViscFlux<TGas>::yField(CartesianPatch *patch,
                                + grady[0]*ir*(var[1]*var[1] + var[2]*var[2] + var[3]*var[3]));
   real dv_dz = (gradz[2] - gradz[0]*var[2]*ir)*ir;
   real dw_dz = (gradz[3] - gradz[0]*var[3]*ir)*ir;
-  countFlops(46);
+  countFlops(48);
 
   // tensions
   real tau_yy = F2 * (-du_dx + 2.0*dv_dy - dw_dz);
   real tau_xy = F3 * ( du_dy + dv_dx);
   real tau_yz = F3 * ( dv_dz + dw_dy);
-  countFlops(8);
+  countFlops(9);
 
   // heat flux
   real q_dot_y = F4 * dT_dy;
@@ -207,10 +207,10 @@ void CompressibleViscFlux<TGas>::zField(CartesianPatch *patch,
   real cp = TGas::cp(var);
   real R  = TGas::R(var);
   real k_heat = mu*cp/Pr;
-  F2 = 2.0/3.0*mu;
+  F2 = FR23*mu;
   F3 = mu;
   F4 = k_heat/R;
-  countFlops(5);
+  countFlops(4);
 
   real gradx[5], gradx_l[5], gradx_r[5];
   real grady[5], grady_l[5], grady_r[5];
@@ -238,13 +238,13 @@ void CompressibleViscFlux<TGas>::zField(CartesianPatch *patch,
   real dT_dz = gamma1*ir*ir*(  gradz[4]*var[0] - gradz[0]*var[4] - var[1]*gradz[1]
                                - var[2]*gradz[2] - var[3]*gradz[3]
                                + gradz[0]*ir*(var[1]*var[1] + var[2]*var[2] + var[3]*var[3]));
-  countFlops(46);
+  countFlops(48);
 
   // tensions
   real tau_zz = F2 * (-du_dx - dv_dy + 2.0*dw_dz);
   real tau_xz = F3 * ( du_dz + dw_dx);
   real tau_yz = F3 * ( dv_dz + dw_dy);
-  countFlops(8);
+  countFlops(9);
 
   // heat flux
   real q_dot_z = F4 * dT_dz;
