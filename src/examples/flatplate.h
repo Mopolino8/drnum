@@ -171,31 +171,53 @@ struct BC : public GenericOperation
   virtual void operator()()
   {
     real var[5];
+    real p, T, p0, T0;
+    vec3_t U, U0;
+    PerfectGas::conservativeToPrimitive(init_var, p0, T0, U0);
     for (size_t i = 0; i < patch->sizeI(); ++i) {
+
       patch->getVar(0, i, 0, 1, var);
       var[3] = -var[3];
       if (i >= patch->sizeI()/2) {
         var[1] = -var[1];
       }
       patch->setVar(0, i, 0, 0, var);
+
+      patch->getVar(0, i, 0, patch->sizeK() - 2, var);
+      PerfectGas::conservativeToPrimitive(var, p, T, U);
+      p = p0;
+      PerfectGas::primitiveToConservative(p, T, U, var);
+      patch->setVar(0, i, 0, patch->sizeK() - 1, var);
+
     }
     for (size_t k = 0; k < patch->sizeK(); ++k) {
-      patch->setVar(0, 0, 0, k, init_var);
+
+      patch->getVar(0, 0, 0, k, var);
+      PerfectGas::conservativeToPrimitive(var, p, T, U);
+      T = T0;
+      U = U0;
+      PerfectGas::primitiveToConservative(p, T, U, var);
+      patch->setVar(0, 0, 0, k, var);
+
       patch->getVar(0, patch->sizeI() - 2, 0, k, var);
+      PerfectGas::conservativeToPrimitive(var, p, T, U);
+      p = p0;
+      PerfectGas::primitiveToConservative(p, T, U, var);
       patch->setVar(0, patch->sizeI() - 1, 0, k, var);
+
     }
   }
 };
 
 void run()
 {
-  size_t N = 50;
+  size_t N = 100;
   real Ma = 0.1;
   real p  = 1e5;
   real T  = 300;
   real r  = p/(PerfectGas::R()*T);
   real u  = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-  real Re  = 500;
+  real Re  = 100;
   real CFL = 0.25;
   real L   = PerfectGas::mu()*Re/(u*r);
   real h   = 0.5*L/N;
@@ -318,16 +340,6 @@ void run()
   stopTiming();
   cout << iter << " iterations" << endl;
 
-  ofstream f("cf.csv");
-  for (size_t i = NI/2; i < NI; ++i) {
-    real var[5];
-    patch.getVar(0, i, 0, 1, var);
-    real p1, T1, u1, v1, w1;
-    PerfectGas::conservativeToPrimitive(var, p1, T1, u1, v1, w1);
-    real du_dz = 2*u1/patch.dz();
-    real cf = 2*du_dz*PerfectGas::mu()/(r*u*u);
-    f << ((0.5 + real(i))*patch.dx() - L)/L << ", " << cf << endl;
-  }
 }
 
 #endif // FLATPLATE_H
