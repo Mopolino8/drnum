@@ -52,6 +52,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
         real x = 0.5*patch()->dx();
         for (size_t i = 0; i < patch()->sizeI(); ++i) {
           if (i > 0) {
+            GlobalDebug::xyz(x,y,z);
             fill(flux, 5, 0);
             m_Flux->xField(patch(), i, j, k, x, y, z, Ax, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -77,6 +78,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
         real y = 0.5*patch()->dy();
         for (size_t j = 0; j < patch()->sizeJ(); ++j) {
           if (j > 0) {
+            GlobalDebug::xyz(x,y,z);
             fill(flux, 5, 0);
             m_Flux->yField(patch(), i, j, k, x, y, z, Ay, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -102,6 +104,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
         real z = 0.5*patch()->dz();
         for (size_t k = 0; k < patch()->sizeK(); ++k) {
           if (k > 0) {
+            GlobalDebug::xyz(x,y,z);
             fill(flux, 5, 0);
             m_Flux->zField(patch(), i, j, k, x, y, z, Az, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -127,6 +130,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
     for (size_t j = j1; j < j2; ++j) {
       real z = 0.5*patch()->dz();
       for (size_t k = k1; k < k2; ++k) {
+        GlobalDebug::xyz(x,y,z);
         fill(flux, 5, 0);
         m_Flux->xWallM(patch(), i1, j, k, x, y, z, Ax, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -146,6 +150,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
     for (size_t j = j1; j < j2; ++j) {
       real z = 0.5*patch()->dz();
       for (size_t k = k1; k < k2; ++k) {
+        GlobalDebug::xyz(x,y,z);
         fill(flux, 5, 0);
         m_Flux->xWallP(patch(), i2, j, k, x, y, z, Ax, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -167,6 +172,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
     for (size_t i = i1; i < i2; ++i) {
       real z = 0.5*patch()->dz();
       for (size_t k = k1; k < k2; ++k) {
+        GlobalDebug::xyz(x,y,z);
         fill(flux, 5, 0);
         m_Flux->yWallM(patch(), i, j1, k, x, y, z, Ay, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -186,6 +192,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
     for (size_t i = i1; i < i2; ++i) {
       real z = 0.5*patch()->dz();
       for (size_t k = k1; k < k2; ++k) {
+        GlobalDebug::xyz(x,y,z);
         fill(flux, 5, 0);
         m_Flux->yWallP(patch(), i, j2, k, x, y, z, Ay, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -207,6 +214,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
     for (size_t i = i1; i < i2; ++i) {
       real y = 0.5*patch()->dy();
       for (size_t j = j1; j < j2; ++j) {
+        GlobalDebug::xyz(x,y,z);
         fill(flux, 5, 0);
         m_Flux->zWallM(patch(), i, j, k1, x, y, z, Az, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
@@ -226,6 +234,7 @@ void CartesianDirectionalPatchOperation<DIM, TFlux>::compute(real factor, size_t
     for (size_t i = i1; i < i2; ++i) {
       real y = 0.5*patch()->dy();
       for (size_t j = j1; j < j2; ++j) {
+        GlobalDebug::xyz(x,y,z);
         fill(flux, 5, 0);
         m_Flux->zWallP(patch(), i, j, k2, x, y, z, Az, flux);
         for (size_t i_var = 0; i_var < DIM; ++i_var) {

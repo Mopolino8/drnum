@@ -22,7 +22,7 @@ LIBS        += -lvtkVolumeRendering
 LIBS        += -lvtkWidgets
 
 QMAKE_CXXFLAGS += -Wno-deprecated
-#QMAKE_CXXFLAGS_RELEASE += -g
+QMAKE_CXXFLAGS_RELEASE += -g
 QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_CXXFLAGS_RELEASE += -finline-limit=100000
 QMAKE_CXXFLAGS_RELEASE += --param large-function-growth=100000
@@ -34,7 +34,6 @@ QMAKE_CXXFLAGS_RELEASE += -funroll-loops
 SOURCES += main.cpp \
     patch.cpp \
     cartesianpatch.cpp \
-    reconstruction/limitedreconstruction.cpp \
     blockcfd.cpp \
     timeintegration.cpp \
     patchiterator.cpp \
@@ -50,18 +49,21 @@ SOURCES += main.cpp \
     cartesianraster.cpp \
     utility/TInsectionList.cc \
     structuredhexraster.cpp \
-    raster.cpp
+    raster.cpp \
+    shapes/triangulatedshape.cpp \
+    shapes/box.cpp \
+    debug.cpp \
+    shapes/cylindery.cpp \
+    rungekuttapg1.cpp
 
 HEADERS += \
     patch.h \
     cartesianpatch.h \
     blockcfd.h \
     reconstruction/upwind1.h \
-    fluxes/ausmbase.h \
     fluxes/ausmplus.h \
     fluxes/ausmplus.h \
     reconstruction/upwind2.h \
-    reconstruction/limitedreconstruction.h \
     iterators/cartesianpatchoperation.h \
     timeintegration.h \
     patchiterator.h \
@@ -102,4 +104,33 @@ HEADERS += \
     utility/sparseweightedset.h \
     utility/usparseweightedset.h \
     structuredhexraster.h \
-    raster.h
+    raster.h \
+    shapes/triangulatedshape.h \
+    shapes/noshape.h \
+    shapes/box.h \
+    reconstruction/minmod.h \
+    reconstruction/vanalbada.h \
+    fluxes/compressibleflux.h \
+    fluxes/kt.h \
+    fluxes/knp.h \
+    reconstruction/upwindcentral.h \
+    reconstruction/vanleerlim.h \
+    debug.h \
+    fluxes/roe.h \
+    fluxes/vanleer.h \
+    reconstruction/roelim.h \
+    fluxes/compressibleviscflux.h \
+    shapes/cylindery.h \
+    reconstruction/secondorder.h \
+    examples/ffs1.h \
+    examples/interpolation1.h \
+    examples/overexpandedjet2d.h \
+    examples/kelvinhelmholtz.h \
+    examples/flatplate.h \
+    genericoperation.h \
+    fluxes/ktmod.h \
+    examples/wedge.h \
+    examples/two_patches_1.h \
+    examples/two_patches_2.h \
+    examples/two_patches_3.h \
+    rungekuttapg1.h

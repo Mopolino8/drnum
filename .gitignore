@@ -88,7 +88,10 @@ docs
 .*
 
 *.vtk
+*.vtr
 *.kdevses
+doxygen/*
+misc/*
 
 # ignore Visual Studio local files
 *.suo

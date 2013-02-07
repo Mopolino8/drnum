@@ -1,11 +1,11 @@
 #ifndef AUSM_H
 #define AUSM_H
 
-#include "fluxes/ausmbase.h"
+#include "fluxes/compressibleflux.h"
 #include "cartesianpatch.h"
 
 template <typename TReconstruction, typename TGas>
-class Ausm : public AusmBase
+class Ausm : public CompressibleFlux
 {
 
   TReconstruction* m_Reconstruction;
@@ -37,8 +37,8 @@ void Ausm<TReconstruction, TGas>::xField(CartesianPatch *patch,
                                          real x, real y, real z,
                                          real A, real* flux)
 {
-  AUSM_LEFT_PROJX;
-  AUSM_RIGHT_PROJX;
+  COMPRESSIBLE_LEFT_PROJX;
+  COMPRESSIBLE_RIGHT_PROJX;
 
   real a   = 0.5*(a_l + a_r);
   real u   = 0.5*(u_l + u_r);
@@ -72,8 +72,8 @@ void Ausm<TReconstruction, TGas>::yField(CartesianPatch *patch,
                                          real x, real y, real z,
                                          real A, real* flux)
 {
-  AUSM_LEFT_PROJY;
-  AUSM_RIGHT_PROJY;
+  COMPRESSIBLE_LEFT_PROJY;
+  COMPRESSIBLE_RIGHT_PROJY;
 
   real a   = 0.5*(a_l + a_r);
   real v   = 0.5*(v_l + v_r);
@@ -107,8 +107,8 @@ void Ausm<TReconstruction, TGas>::zField(CartesianPatch *patch,
                                          real x, real y, real z,
                                          real A, real* flux)
 {
-  AUSM_LEFT_PROJZ;
-  AUSM_RIGHT_PROJZ;
+  COMPRESSIBLE_LEFT_PROJZ;
+  COMPRESSIBLE_RIGHT_PROJZ;
 
   real a   = 0.5*(a_l + a_r);
   real w   = 0.5*(w_l + w_r);

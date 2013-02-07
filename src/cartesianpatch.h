@@ -237,6 +237,39 @@ public: // methods
   real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k);
 
   /**
+   * Get the gradient in x direction at a specifed (i,j,k) position.
+   * This method will automaitically respect domain borders (one sided gradient)
+   * @param i_field the field index
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
+   * @param grad will hold the conservative x gradient set afterwards (needs to be allocated beforehand)
+   */
+  void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad);
+
+  /**
+   * Get the gradient in y direction at a specifed (i,j,k) position.
+   * This method will automaitically respect domain borders (one sided gradient)
+   * @param i_field the field index
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
+   * @param grad will hold the conservative y gradient set afterwards (needs to be allocated beforehand)
+   */
+  void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad);
+
+  /**
+   * Get the gradient in z direction at a specifed (i,j,k) position.
+   * This method will automaitically respect domain borders (one sided gradient)
+   * @param i_field the field index
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
+   * @param grad will hold the conservative z gradient set afterwards (needs to be allocated beforehand)
+   */
+  void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad);
+
+  /**
    * Check if an (i,j,k) triple is inside the patch.
    * Attention only the upper limit will be checked (unsigned data type).
    * @param i first index
@@ -245,6 +278,8 @@ public: // methods
    * @return true if it is a valid (i,j,k) triple, false otherwise
    */
   bool checkRange(size_t i, size_t j, size_t k);
+
+
 
 //  real xo(size_t i, size_t j, size_t k) { return m_Xco + i*m_Dixo + j*m_Djxo + k*m_Dkxo; }
 //  real yo(size_t i, size_t j, size_t k) { return m_Yco + i*m_Diyo + j*m_Djyo + k*m_Dkyo; }
@@ -409,11 +444,13 @@ inline real& CartesianPatch::f(size_t i_field, size_t i_var, size_t i, size_t j,
     BUG;
   }
 #endif
+  GlobalDebug::ijk(i, j, k);
   return getVariable(i_field, i_var)[i*m_NumJ*m_NumK + j*m_NumK + k];
 }
 
 inline void CartesianPatch::getVar(size_t i_field, size_t i, size_t j, size_t k, real *var)
 {
+  GlobalDebug::ijk(i, j, k);
   for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
     var[i_var] = f(i_field, i_var, i, j, k);
   }
@@ -421,13 +458,96 @@ inline void CartesianPatch::getVar(size_t i_field, size_t i, size_t j, size_t k,
 
 inline void CartesianPatch::setVar(size_t i_field, size_t i, size_t j, size_t k, real *var)
 {
+  GlobalDebug::ijk(i, j, k);
   for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
     f(i_field, i_var, i, j, k) = var[i_var];
   }
 }
 
+inline void CartesianPatch::getXGrad(size_t i_field, size_t i, size_t j, size_t k, real *grad)
+{
+  real* var = new real[numVariables()];
+  real D = 1.0/dx();
+  countFlops(1);
+  if (i > 0 && i < sizeI()-1) {
+    getVar(i_field, i+1, j, k, grad);
+    getVar(i_field, i-1, j, k, var);
+    D *= 0.5;
+    countFlops(1);
+  } else if (i > 0) {
+    getVar(i_field, i, j, k, grad);
+    getVar(i_field, i-1, j, k, var);
+  } else {
+    getVar(i_field, i+1, j, k, grad);
+    getVar(i_field, i, j, k, var);
+  }
+  for (int i_var = 0; i_var < numVariables(); ++i_var) {
+    grad[i_var] -= var[i_var];
+    grad[i_var] *= D;
+  }
+  countFlops(2*numVariables());
+  delete [] var;
+}
+
+inline void CartesianPatch::getYGrad(size_t i_field, size_t i, size_t j, size_t k, real *grad)
+{
+  if (sizeJ() > 2) {
+    real* var = new real[numVariables()];
+    real D = 1.0/dy();
+    countFlops(1);
+    if (j > 0 && j < sizeJ()-1) {
+      getVar(i_field, i, j+1, k, grad);
+      getVar(i_field, i, j-1, k, var);
+      D *= 0.5;
+      countFlops(1);
+    } else if (j > 0) {
+      getVar(i_field, i, j, k, grad);
+      getVar(i_field, i, j-1, k, var);
+    } else {
+      getVar(i_field, i, j+1, k, grad);
+      getVar(i_field, i, j, k, var);
+    }
+    for (int i_var = 0; i_var < numVariables(); ++i_var) {
+      grad[i_var] -= var[i_var];
+      grad[i_var] *= D;
+    }
+    countFlops(2*numVariables());
+    delete [] var;
+  } else {
+    for (int i_var = 0; i_var < numVariables(); ++i_var) {
+      grad[i_var] = 0;
+    }
+  }
+}
+
+inline void CartesianPatch::getZGrad(size_t i_field, size_t i, size_t j, size_t k, real *grad)
+{
+  real* var = new real[numVariables()];
+  real D = 1.0/dz();
+  countFlops(1);
+  if (k > 0 && k < sizeK()-1) {
+    getVar(i_field, i, j, k+1, grad);
+    getVar(i_field, i, j, k-1, var);
+    D *= 0.5;
+    countFlops(1);
+  } else if (k > 0) {
+    getVar(i_field, i, j, k, grad);
+    getVar(i_field, i, j, k-1, var);
+  } else {
+    getVar(i_field, i, j, k+1, grad);
+    getVar(i_field, i, j, k, var);
+  }
+  for (int i_var = 0; i_var < numVariables(); ++i_var) {
+    grad[i_var] -= var[i_var];
+    grad[i_var] *= D;
+  }
+  countFlops(2*numVariables());
+  delete [] var;
+}
+
 inline bool CartesianPatch::checkRange(size_t i, size_t j, size_t k)
 {
+  GlobalDebug::ijk(i, j, k);
   if (i >= sizeI() || j >= sizeJ() || k >= sizeK()) {
     return false;
   }

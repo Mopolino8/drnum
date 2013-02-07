@@ -1,9 +1,9 @@
-#ifndef AUSMBASE_H
-#define AUSMBASE_H
+#ifndef COMPRESSIBLEFLUX_H
+#define COMPRESSIBLEFLUX_H
 
 #include "blockcfd.h"
 
-class AusmBase
+class CompressibleFlux
 {
 
 protected: // methods
@@ -15,19 +15,19 @@ protected: // methods
 
 };
 
-inline real AusmBase::M1(real M,real s)
+inline real CompressibleFlux::M1(real M,real s)
 {
   countFlops(3);
   return CHECKED_REAL(0.5*(M + s*fabs(M)));
 }
 
-inline real AusmBase::M2(real M,real s)
+inline real CompressibleFlux::M2(real M,real s)
 {
   countFlops(4);
   return CHECKED_REAL(0.25*s*sqr(M + s));
 }
 
-inline real AusmBase::M4(real M,real s)
+inline real CompressibleFlux::M4(real M,real s)
 {
   if (fabs(M) >= 1) {
     return M1(M, s);
@@ -36,7 +36,7 @@ inline real AusmBase::M4(real M,real s)
   return CHECKED_REAL(M2(M, s)*(1 - 2*s*M2(M, -s)));
 }
 
-inline real AusmBase::P5(real M, real s)
+inline real CompressibleFlux::P5(real M, real s)
 {
   if (fabs(M) >= 1) {
     countFlops(1);
@@ -46,7 +46,7 @@ inline real AusmBase::P5(real M, real s)
   return M2(M, s)*((2*s - M) - 3*s*M*M2(M, -s));
 }
 
-#define AUSM_LEFT_VARS \
+#define COMPRESSIBLE_LEFT_VARS \
   REGREAL r_l  = var_l[0]; \
   REGREAL ir_l = CHECKED_REAL(1.0/r_l); \
   REGREAL ru_l = var_l[1]; \
@@ -56,14 +56,14 @@ inline real AusmBase::P5(real M, real s)
   REGREAL v_l  = rv_l*ir_l; \
   REGREAL w_l  = rw_l*ir_l; \
   REGREAL rE_l = var_l[4]; \
-  REGREAL T_l  = CHECKED_REAL((rE_l*ir_l - 0.5*(u_l*u_l + v_l*v_l + w_l*w_l))/TGas::cv(var_l)); \
+  REGREAL T_l  = CHECKED_REAL((rE_l*ir_l - real(0.5)*(u_l*u_l + v_l*v_l + w_l*w_l))/TGas::cv(var_l)); \
   REGREAL p_l  = r_l*TGas::R(var_l)*T_l; \
   REGREAL a_l  = CHECKED_REAL(sqrt(TGas::gamma(var_l)*TGas::R(var_l)*T_l)); \
   REGREAL H_l  = (rE_l + p_l)/r_l; \
   countFlops(19); \
   countSqrts(1);
 
-#define AUSM_RIGHT_VARS \
+#define COMPRESSIBLE_RIGHT_VARS \
   REGREAL r_r  = var_r[0]; \
   REGREAL ir_r = CHECKED_REAL(1.0/r_r); \
   REGREAL ru_r = var_r[1]; \
@@ -73,42 +73,42 @@ inline real AusmBase::P5(real M, real s)
   REGREAL v_r  = rv_r*ir_r; \
   REGREAL w_r  = rw_r*ir_r; \
   REGREAL rE_r = var_r[4]; \
-  REGREAL T_r  = CHECKED_REAL((rE_r*ir_r - 0.5*(u_r*u_r + v_r*v_r + w_r*w_r))/TGas::cv(var_r)); \
+  REGREAL T_r  = CHECKED_REAL((rE_r*ir_r - real(0.5)*(u_r*u_r + v_r*v_r + w_r*w_r))/TGas::cv(var_r)); \
   REGREAL p_r  = r_r*TGas::R(var_r)*T_r; \
   REGREAL a_r  = CHECKED_REAL(sqrt(TGas::gamma(var_r)*TGas::R(var_r)*T_r)); \
   REGREAL H_r  = (rE_r + p_r)/r_r; \
   countFlops(19); \
   countSqrts(1);
 
-#define AUSM_LEFT_PROJX \
+#define COMPRESSIBLE_LEFT_PROJX \
   real var_l[5]; \
   m_Reconstruction->project(patch, var_l, 0, 5, i-1, j, k, i, j, k, x - patch->dx(), y, z, x, y, z); \
-  AUSM_LEFT_VARS
+  COMPRESSIBLE_LEFT_VARS
 
-#define AUSM_RIGHT_PROJX \
+#define COMPRESSIBLE_RIGHT_PROJX \
   real var_r[5]; \
   m_Reconstruction->project(patch, var_r, 0, 5, i, j, k, i-1, j, k, x, y, z, x - patch->dx(), y, z); \
-  AUSM_RIGHT_VARS
+  COMPRESSIBLE_RIGHT_VARS
 
-#define AUSM_LEFT_PROJY \
+#define COMPRESSIBLE_LEFT_PROJY \
   real var_l[5]; \
   m_Reconstruction->project(patch, var_l, 0, 5, i, j-1, k, i, j, k, x, y - patch->dy(), z, x, y, z); \
-  AUSM_LEFT_VARS
+  COMPRESSIBLE_LEFT_VARS
 
-#define AUSM_RIGHT_PROJY \
+#define COMPRESSIBLE_RIGHT_PROJY \
   real var_r[5]; \
   m_Reconstruction->project(patch, var_r, 0, 5, i, j, k, i, j-1, k, x, y, z, x, y - patch->dy(), z); \
-  AUSM_RIGHT_VARS
+  COMPRESSIBLE_RIGHT_VARS
 
-#define AUSM_LEFT_PROJZ \
+#define COMPRESSIBLE_LEFT_PROJZ \
   real var_l[5]; \
   m_Reconstruction->project(patch, var_l, 0, 5, i, j, k-1, i, j, k, x, y, z - patch->dz(), x, y, z); \
-  AUSM_LEFT_VARS
+  COMPRESSIBLE_LEFT_VARS
 
-#define AUSM_RIGHT_PROJZ \
+#define COMPRESSIBLE_RIGHT_PROJZ \
   real var_r[5]; \
   m_Reconstruction->project(patch, var_r, 0, 5, i, j, k, i, j, k-1, x, y, z, x, y, z - patch->dz()); \
-  AUSM_RIGHT_VARS
+  COMPRESSIBLE_RIGHT_VARS
 
 
-#endif // AUSMBASE_H
+#endif // COMPRESSIBLEFLUX_H

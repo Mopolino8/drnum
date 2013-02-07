@@ -9,15 +9,7 @@ class CartesianStandardPatchOperation : public CartesianPatchOperation
 
 private: // attributes
 
-  TFlux  m_Flux;
-  real*  m_Res;
-  size_t m_ResLength;
-  size_t m_I1;
-  size_t m_J1;
-  size_t m_K1;
-  size_t m_SizeI;
-  size_t m_SizeJ;
-  size_t m_SizeK;
+  TFlux*  m_Flux;
 
 
 public:
@@ -39,7 +31,9 @@ CartesianStandardPatchOperation<DIM, TFlux>::CartesianStandardPatchOperation(Car
 template <unsigned int DIM, class TFlux>
 void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2)
 {
-  checkResFieldSize(i1, j1, k1, i2, j2, k2);
+  /// @todo look at "core" concept
+  //checkResFieldSize(i1, j1, k1, i2, j2, k2);
+  checkResFieldSize(0, 0, 0, patch()->sizeI(), patch()->sizeJ(), patch()->sizeK());
 
   real Ax = patch()->dy()*patch()->dz();
   real Ay = patch()->dx()*patch()->dz();
@@ -55,16 +49,18 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute main block
   {
     real x = 0.5*patch()->dx();
-    for (size_t i = 0; i < patch()->sizeI(); ++i) {
+    for (size_t i = i1; i < i2; ++i) {
       real y = 0.5*patch()->dy();
-      for (size_t j = 0; j < patch()->sizeJ(); ++j) {
+      for (size_t j = j1; j < j2; ++j) {
         real z = 0.5*patch()->dz();
-        for (size_t k = 0; k < patch()->sizeK(); ++k) {
+        for (size_t k = k1; k < k2; ++k) {
+
+          GlobalDebug::xyz(x,y,z);
 
           // x direction
-          if (i > 0) {
+          if (i > 0 && patch()->sizeI() > 2) {
             fill(flux, 5, 0);
-            m_Flux.x(patch(), i, j, k, x, y, z, Ax, flux);
+            m_Flux->xField(patch(), i, j, k, x, y, z, Ax, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
               m_Res[resIndex(i_var, i-1, j, k)] -= flux[i_var];
               m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
@@ -73,9 +69,9 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           }
 
           // y direction
-          if (j > 0) {
+          if (j > 0 && patch()->sizeJ() > 2) {
             fill(flux, 5, 0);
-            m_Flux.y(patch(), i, j, k, x, y, z, Ay, flux);
+            m_Flux->yField(patch(), i, j, k, x, y, z, Ay, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
               m_Res[resIndex(i_var, i, j-1, k)] -= flux[i_var];
               m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
@@ -84,9 +80,9 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
           }
 
           // z direction
-          if (k > 0) {
+          if (k > 0 && patch()->sizeK() > 2) {
             fill(flux, 5, 0);
-            m_Flux.z(patch(), i, j, k, x, y, z, Az, flux);
+            m_Flux->zField(patch(), i, j, k, x, y, z, Az, flux);
             for (size_t i_var = 0; i_var < DIM; ++i_var) {
               m_Res[resIndex(i_var, i, j, k-1)] -= flux[i_var];
               m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
@@ -105,7 +101,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute x walls
   //
   // .. left wall
-  if (i1 == 0) {
+  if (i1 == 0 && patch()->sizeI() > 2) {
     real x = 0.5*patch()->dx();
     real y = 0.5*patch()->dy();
     for (size_t j = j1; j < j2; ++j) {
@@ -124,7 +120,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   }
 
   // .. right wall
-  if (i2 == patch()->sizeI()) {
+  if (i2 == patch()->sizeI() && patch()->sizeI() > 2) {
     real x = 0.5*patch()->dx() + patch()->sizeI()*patch()->dx();
     real y = 0.5*patch()->dy();
     for (size_t j = j1; j < j2; ++j) {
@@ -145,7 +141,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute y walls
   //
   // .. front wall
-  if (j1 == 0) {
+  if (j1 == 0 && patch()->sizeJ() > 2) {
     real x = 0.5*patch()->dx();
     real y = 0.5*patch()->dy();
     for (size_t i = i1; i < i2; ++i) {
@@ -164,7 +160,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   }
 
   // .. back wall
-  if (j2 == patch()->sizeJ()) {
+  if (j2 == patch()->sizeJ() && patch()->sizeJ() > 2) {
     real x = 0.5*patch()->dx();
     real y = 0.5*patch()->dy() + patch()->sizeJ()*patch()->dy();
     for (size_t i = i1; i < i2; ++i) {
@@ -185,7 +181,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   // compute z walls
   //
   // .. bottom wall
-  if (k1 == 0) {
+  if (k1 == 0 && patch()->sizeK() > 2) {
     real x = 0.5*patch()->dx();
     real z = 0.5*patch()->dz();
     for (size_t i = i1; i < i2; ++i) {
@@ -204,7 +200,7 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   }
 
   // .. top wall
-  if (k2 == patch()->sizeK()) {
+  if (k2 == patch()->sizeK() && patch()->sizeK() > 2) {
     real x = 0.5*patch()->dx();
     real z = 0.5*patch()->dz() + patch()->sizeK()*patch()->dz();
     for (size_t i = i1; i < i2; ++i) {
@@ -224,9 +220,9 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
 
   // advance to next iteration level (time)
   factor /= patch()->dV();
-  for (size_t i = 0; i < patch()->sizeI(); ++i) {
-    for (size_t j = 0; j < patch()->sizeJ(); ++j) {
-      for (size_t k = 0; k < patch()->sizeK(); ++k) {
+  for (size_t i = i1; i < i2; ++i) {
+    for (size_t j = j1; j < j2; ++j) {
+      for (size_t k = k1; k < k2; ++k) {
         for (size_t i_var = 0; i_var < DIM; ++i_var) {
           patch()->f(0, i_var, i, j, k) = patch()->f(1, i_var, i, j, k) + factor*m_Res[resIndex(i_var, i, j, k)];
         }

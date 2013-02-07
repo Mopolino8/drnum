@@ -189,6 +189,9 @@ typedef MathVector<StaticVector<real,4> > vec4_t;
 typedef MathVector<StaticVector<real,5> > vec5_t;
 typedef MathVector<StaticVector<real,6> > vec6_t;
 
+typedef MathVector<StaticVector<double,3> > dpvec3_t;
+typedef MathVector<StaticVector<float,3> > spvec3_t;
+
 #include "mathvector_operators.h"
 #include "mathvector_methods.h"
 
