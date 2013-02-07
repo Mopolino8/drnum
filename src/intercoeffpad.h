@@ -99,8 +99,8 @@ public: // methods
     * @param i_vz variable index forming the z-comp. of a vectorial variable. Example: "3" for speed (p,u,v,w,T)
 
     */
-  void transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data,
-                       const size_t& i_vx, const size_t& i_vy, const size_t& i_vz);
+//  void transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data,
+//                       const size_t& i_vx, const size_t& i_vy, const size_t& i_vz);
 
   /**
     * Apply WeightedSet pattern to donor_data and add to receive_data.
@@ -131,7 +131,7 @@ inline void InterCoeffPad::build(InterCoeffWS& icws)
   //.. loop through receiving cells
   for (size_t ll_rec = 0; ll_rec < m_NumRecCells; ll_rec++) {
     m_RecCells[ll_rec] = icws.getDirectRecCell(ll_rec); // direct receiving cell index in receiving patch
-    WeightedSet<real>* ws_h = icws.getWS(ll_rec);
+    USparseWeightedSet<real>* ws_h = icws.getWS(ll_rec);
     for( size_t l_contrib = 0; l_contrib < ws_h->getSize(); l_contrib++) { // fill contents
       m_DonorCells[start+l_contrib] = ws_h->getIndex(l_contrib);
       m_DonorWeights[start+l_contrib] = ws_h->getWeight(l_contrib);
@@ -169,11 +169,11 @@ inline void InterCoeffPad::transFromTo(const vector<real*>& donor_data, const ve
 }
 
 
-inline void InterCoeffPad::transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data,
-                                           const size_t& i_vx, const size_t& i_vy, const size_t& i_vz)
-{
-  BUG;  // not implemented, probably never needed
-}
+//inline void InterCoeffPad::transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data,
+//                                           const size_t& i_vx, const size_t& i_vy, const size_t& i_vz)
+//{
+//  BUG;  // not implemented, probably never needed
+//}
 
 
 inline void InterCoeffPad::transTurnFromTo(const vector<real*>& donor_data, const vector<real*>& receiver_data)

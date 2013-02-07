@@ -1,8 +1,12 @@
 #ifndef CARTESIANRASTER_H
 #define CARTESIANRASTER_H
 
-//#include <cstddef>
-#include "structuredhexraster.h"
+#include <cstddef>
+#include <vector>
+#include "blockcfd.h"
+#include "weightedset.h"
+#include "math/coordtransformvv.h"
+//#include "List.hh"
 
 //class CartesianRaster;
 
@@ -16,10 +20,18 @@
 //#include <vtkCellData.h>
 //#endif
 
-class CartesianRaster : public StructuredHexRaster
+class CartesianRaster
 {
 
 protected: // attributes
+
+  size_t m_NumI;
+  size_t m_NumJ;
+  size_t m_NumK;
+
+  real m_Xo;
+  real m_Yo;
+  real m_Zo;
 
   real m_Uxo;
   real m_Uyo;
@@ -33,6 +45,9 @@ protected: // attributes
   real m_Wyo;
   real m_Wzo;
 
+  real m_Lx;
+  real m_Ly;
+  real m_Lz;
 
   real m_Dx;
   real m_Dy;
@@ -41,10 +56,26 @@ protected: // attributes
   real m_InvDy;
   real m_InvDz;
 
+  /// @todo change to vec3_t later
+  //  SVec3 m_xyzCCMin;      ///< Cell center coords of lowest address cell
+  //  SVec3 m_xyzInterMin;   ///< lower CC coord-limits to access data from foreign patches
+  //  SVec3 m_xyzInterMax;   ///< upper CC coord-limits to access data from foreign patches
+
+  /** @todo attention: m_NumProtectLayers has been defined in "patch". If ever "cartesianpatch" will
+    * be derived from this raster pattern, the following attributes will cause an inheritance conflict:
+    * m_transformInertial2This, m_bbox_xyzo_min, m_bbox_xyzo_max, m_NumProtectLayers. */
+  CoordTransformVV m_transformInertial2This; ///< transformation matrix to transform intertial coords into system of "this"
+  vec3_t m_bbox_xyzo_min;                    ///< lowest coordinates of smallest box around patch in inertial coords.
+  vec3_t m_bbox_xyzo_max;                    ///< highest coordinates of smallest box around patch in inertial coords.
+  size_t m_NumProtectLayers;                 ///< Number of protection layers
+
   real m_xCCMin,      m_yCCMin,      m_zCCMin;
   real m_xCCMax,      m_yCCMax,      m_zCCMax;
   real m_xCCInterMin, m_yCCInterMin, m_zCCInterMin;
   real m_xCCInterMax, m_yCCInterMax, m_zCCInterMax;
+  real m_Eps, m_EpsDX, m_EpsDY, m_EpsDZ;
+
+ // List* m_CellLink;  ///< Link point for FVMOUSE::List derived classes
 
 protected: // methods
 
@@ -54,11 +85,34 @@ protected: // methods
 public: // methods
 
   CartesianRaster();
-
-  virtual void resize(size_t num_i, size_t num_j, size_t num_k);
-
   void setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2);
+  void resize(size_t num_i, size_t num_j, size_t num_k);
+  void setNumProtectLayers(size_t num_protectlayers);  ///< Set number of protection layers
 
+  size_t sizeI() { return m_NumI; }
+  size_t sizeJ() { return m_NumJ; }
+  size_t sizeK() { return m_NumK; }
+  size_t sizeL() { return m_NumI * m_NumJ * m_NumK; }
+
+  /**
+   * @brief Get the field index of an (i, j, k) triple/
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
+   * @return the index in the one dimensional data field
+   */
+  size_t index(int i, int j, int k) { return i*m_NumJ*m_NumK + j*m_NumK + k; }
+
+  /**
+   * @brief Get the indicees (i, j, k) from field index/
+   * @param l the field index
+   * @param i first Cartesian index  (return reference)
+   * @param j second Cartesian index (return reference)
+   * @param k third Cartesian index  (return reference)
+   * @return the index in the one dimensional data field
+   */
+  inline void ijk(const size_t& l,
+                  size_t& i, size_t& j, size_t& k) const;
 
   /**
    * @brief Get cell center from 1D field index/
@@ -69,18 +123,18 @@ public: // methods
 
   /**
    * @brief Get cell center from indicees (i,j,k)/
-   * @param i first  index
-   * @param j second  index
-   * @param k third  index
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
    * @return the vector xyz of cell center coordinates
    */
   inline vec3_t xyzCell(const size_t& i, const size_t& j, const size_t& k) const;
 
   /**
    * @brief Get cell center from indicees (i,j,k)/
-   * @param i first  index
-   * @param j second  index
-   * @param k third  index
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
    * @param x x-coord of cell center (return reference)
    * @param y y-coord of cell center (return reference)
    * @param z z-coord of cell center (return reference)
@@ -89,10 +143,10 @@ public: // methods
                       real& x, real& y, real& z) const;
 
   /**
-   * Build a bounding box in inertial coordinates around the  CartesianRaster.
-   * NOTE: CartesianRaster coords may be non-aligned to the xyzo-system.
+   * Build a bounding box in inertial coordinates around the cartesian raster.
+   * NOTE: This cartesian raster may be non-aligned to the xyzo-system.
    */
-  virtual void buildBoundingBox();
+  void buildBoundingBox();
 
   /**
    * @brief Get normal direction of nearest boundary of the raster
@@ -100,6 +154,27 @@ public: // methods
    * @return an integer 0, 1 or 2 for the directions i,j,k respectively
    */
   inline int boundingNVecDirection(const size_t& lc) const;
+
+  /**
+   * @brief Get the field index of an (i, j, k) triple/
+   * @param i first Cartesian index
+   * @param j second Cartesian index
+   * @param k third Cartesian index
+   * @param error true, if (i, j, k) are out of bounds
+   * @return the index in the one dimensional data field
+   */
+  size_t save_index(int i, int j, int k,
+                    bool& error);
+
+  /**
+   * Check if an (i,j,k) triple is inside the patch.
+   * Attention only the upper limit will be checked (unsigned data type).
+   * @param i first index
+   * @param j second index
+   * @param k third index
+   * @return true if it is a valid (i,j,k) triple, false otherwise
+   */
+  bool checkRange(size_t i, size_t j, size_t k);
 
 
   real dx() { return m_Dx; }
@@ -109,6 +184,7 @@ public: // methods
   real idx() { return m_InvDx; }
   real idy() { return m_InvDy; }
   real idz() { return m_InvDz; }
+//  List* accessCellLink() { return m_CellLink; }
 
   /**
    * Set up interpolation methods for giving data to foreign patches.
@@ -204,7 +280,7 @@ public: // methods
    * @return boolean, indicating point (x,y,z) is inside core region
    */
   bool xyzToRefInterCell(real x, real y, real z,
-                         size_t& i_ref, size_t& j_ref, size_t& k_ref);
+			 size_t& i_ref, size_t& j_ref, size_t& k_ref);
 
   /**
    * Find inverse mesh cell, in which the point (x,y,z) resides.
@@ -237,6 +313,25 @@ public: // methods
                     size_t& in_ref, size_t& jn_ref, size_t& kn_ref);
 
 };
+
+inline bool CartesianRaster::checkRange(size_t i, size_t j, size_t k)
+{
+  if (i >= sizeI() || j >= sizeJ() || k >= sizeK()) {
+    return false;
+  }
+  return true;
+}
+
+
+inline void CartesianRaster::ijk(const size_t& l,
+                                 size_t& i, size_t& j, size_t& k) const {
+  size_t rest;
+  i = l / (m_NumJ*m_NumK);
+  rest = l - i*(m_NumJ*m_NumK);
+  j = rest / m_NumK;
+  k = rest - j*m_NumK;
+}
+
 
 inline vec3_t CartesianRaster::xyzCell(const size_t& l) const
 {
@@ -287,6 +382,23 @@ inline int CartesianRaster::boundingNVecDirection(const size_t& lc) const
     direction = 2;
   }
   return direction;
+}
+
+
+inline size_t CartesianRaster::save_index(int i, int j, int k,
+                                          bool& error)
+{
+  size_t si = i;  // avoid vast compiler warnings
+  size_t sj = j;
+  size_t sk = k;
+  error = false;
+  if(i < 0) error = true;
+  if(j < 0) error = true;
+  if(k < 0) error = true;
+  if(si > m_NumI-1) error = true;
+  if(sj > m_NumJ-1) error = true;
+  if(sk > m_NumK-1) error = true;
+  return si*m_NumJ*m_NumK + sj*m_NumK + sk;
 }
 
 

@@ -48,10 +48,13 @@ SOURCES += main.cpp \
     shapes/halfspace.cpp \
     cartesianraster.cpp \
     utility/TInsectionList.cc \
+    structuredhexraster.cpp \
+    raster.cpp \
     shapes/triangulatedshape.cpp \
     shapes/box.cpp \
     debug.cpp \
-    shapes/cylindery.cpp
+    shapes/cylindery.cpp \
+    rungekuttapg1.cpp
 
 HEADERS += \
     patch.h \
@@ -98,6 +101,10 @@ HEADERS += \
     utility/TInsectionList.hh \
     vectorhashraster.h \
     tinsecthashraster.h \
+    utility/sparseweightedset.h \
+    utility/usparseweightedset.h \
+    structuredhexraster.h \
+    raster.h \
     shapes/triangulatedshape.h \
     shapes/noshape.h \
     shapes/box.h \
@@ -123,4 +130,8 @@ HEADERS += \
     genericoperation.h \
     fluxes/ktmod.h \
     examples/wedge.h \
-    examples/tjunction.h
+    examples/tjunction.h \
+    examples/two_patches_1.h \
+    examples/two_patches_2.h \
+    examples/two_patches_3.h \
+    rungekuttapg1.h

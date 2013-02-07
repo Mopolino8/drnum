@@ -64,7 +64,7 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
   //    PERF-NOTE: a) Most likely Splittree or Octree search algorithm would enhance performace, if ever needed.
   //               b) VectorHashRaster might be slow, due to large vector<vector<T> > implementation.
   //
-  // 2) Fill in patch indicees. Save side inclusion: mark all hash raster calls covered by the bounding box
+  // 2) Fill in patch indicees. Save side inclusion: mark all hash raster cells covered by the bounding box
   //    of respective patches.
   //    PERF-NOTE: Very save side inclusion of patches on boxes of hash raster. might be improved, if needed.
   //
@@ -79,6 +79,7 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
 
   vector<vector<size_t> > pot_neigh;
   pot_neigh.resize(m_patches.size());
+
   // 1) Build up a hash raster VectorHashRaster<size_t> as background grid, covering the whole geometric
   //    region of the mesh.
   { // start mem_block
@@ -86,18 +87,22 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
     buildHashRaster(10*m_patches.size(), true,   // resolution chosen upon testing, may also use fixed size
                     m_HashRaster);
 
-    // 2) Fill in patch indicees. Save side inclusion: mark all hash raster calls covered by the bounding box
+    // 2) Fill in patch indicees. Save side inclusion: mark all hash raster cells covered by the bounding box
     //    of respective patches.
     for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
       //.. Find cell address range in hash raster covered by bounding box of patch
+      //.... min-max in inertial coords
       vec3_t xyzo_min = m_patches[i_p]->accessBBoxXYZoMin();
       vec3_t xyzo_max = m_patches[i_p]->accessBBoxXYZoMax();
+      //.... min-max in m_HashRaster coords in
+      vec3_t xyz_min = m_HashRaster.getTransformI2T()->transform(xyzo_min);
+      vec3_t xyz_max = m_HashRaster.getTransformI2T()->transform(xyzo_max);
       size_t ic_min, jc_min, kc_min;
       size_t ic_max, jc_max, kc_max;
       bool inside_min, inside_max;
-      inside_min = m_HashRaster.xyzToRefNode(xyzo_min[0], xyzo_min[1], xyzo_min[2],
+      inside_min = m_HashRaster.xyzToRefNode(xyz_min[0], xyz_min[1], xyz_min[2],
                                              ic_min, jc_min, kc_min);
-      inside_max = m_HashRaster.xyzToRefNode(xyzo_max[0], xyzo_max[1], xyzo_max[2],
+      inside_max = m_HashRaster.xyzToRefNode(xyz_max[0], xyz_max[1], xyz_max[2],
                                              ic_max, jc_max, kc_max);
       //#ifdef DEBUG
       // Folowing should never happen, check anyway
@@ -154,8 +159,8 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
     typename vector<size_t>::iterator it;
     it = unique(pot_neigh[patch].begin(), pot_neigh[patch].end());
     pot_neigh[patch].resize(it - pot_neigh[patch].begin());
+    vector<size_t>(pot_neigh[patch]).swap(pot_neigh[patch]);
   }
-
   // 4) Find real neighbour dependencies (e.g. interpolation partners) for all potentially dependend patches.
   //    - If a potential neighbour-dependency does not serve any interpol request, it will be excluded
   //      from Patch::m_neighbours.
@@ -168,6 +173,7 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
   // 5) Finish building up inter-patch transfer lists.
   /// @todo Needs an error handling mechanism, at least a diagnose, if any receiving cell of a patch finds no donor at all.
   finalizeDependencies();
+  m_dependencies_OK = true;
 }
 
 
@@ -175,6 +181,14 @@ void PatchGrid::finalizeDependencies()
 {
   for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
     m_patches[i_p]->finalizeDependencies();
+  }
+}
+
+
+void PatchGrid::accessAllDonorData_WS(const size_t& field)
+{
+  for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
+    m_patches[i_p]->accessDonorData_WS(field);
   }
 }
 

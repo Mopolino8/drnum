@@ -2,12 +2,10 @@
 
 CartesianRaster::CartesianRaster()
 {
-  m_NumI = 1;
-  m_NumJ = 1;
-  m_NumK = 1;
-  //m_CellLink = new List(1,1);
-  //m_CellLink = NULL;
-  m_Eps = 1.e-6;  /// @todo need a better eps-handling.
+  //  m_NumI = 1;
+  //  m_NumJ = 1;
+  //  m_NumK = 1;
+  //  m_Eps = 1.e-6;  /// @todo need a better eps-handling.
 }
 
 
@@ -82,33 +80,20 @@ void CartesianRaster::setupAligned(real xo1, real yo1, real zo1, real xo2, real 
   shift_inertial2this[1] = -m_Yo;
   shift_inertial2this[2] = -m_Zo;
   m_transformInertial2This.setVector(shift_inertial2this);
-/// @todo rotation NOT implemented!!!
+  /// @todo rotation NOT implemented!!!
 
   computeDeltas();
 
-//  Transformation t;    /// @todo keep for compatibility
-//  t.setVector(vec3_t(xo1, yo1, zo1));
-//  setTransformation(t.inverse());
+  //  Transformation t;    /// @todo keep for compatibility
+  //  t.setVector(vec3_t(xo1, yo1, zo1));
+  //  setTransformation(t.inverse());
 }
 
 
 void CartesianRaster::resize(size_t num_i, size_t num_j, size_t num_k)
 {
-  m_NumI = num_i;
-  m_NumJ = num_j;
-  m_NumK = num_k;
+  StructuredHexRaster::resize(num_i, num_j, num_k);
   computeDeltas();
-//  if(m_CellLink) {
-//    delete m_CellLink;
-//  }
-//  size_t num_cells = m_NumI * m_NumJ * m_NumK;
-//  m_CellLink = new List(num_cells, num_cells/10);  /// @todo Our version of "List" sets a minimum increment
-}
-
-
-void CartesianRaster::setNumProtectLayers(size_t num_protectlayers)
-{
-  m_NumProtectLayers = num_protectlayers;
 }
 
 
@@ -128,7 +113,7 @@ void CartesianRaster::setupInterpolators()
 
 
 bool CartesianRaster::computeCCDataInterpolCoeffs(real x, real y, real z,
-                                                 WeightedSet<real>& w_set)
+                                                  WeightedSet<real>& w_set)
 {
   size_t ic_ref, jc_ref, kc_ref;
   bool inside;
@@ -168,8 +153,8 @@ bool CartesianRaster::computeCCDataInterpolCoeffs(real x, real y, real z,
 }
 
 bool CartesianRaster::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
-						   real nx, real ny, real nz,
-                                                   WeightedSet<real>& d_dn)
+                                                    real nx, real ny, real nz,
+                                                    WeightedSet<real>& d_dn)
 {
   size_t ic_ref, jc_ref, kc_ref;
   bool inside;
@@ -310,8 +295,8 @@ bool CartesianRaster::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
 
 
 void CartesianRaster::computeCCInterpolWeights(real& x, real& y, real& z,
-					      size_t& ic_ref, size_t& jc_ref, size_t& kc_ref,
-					      real* w_octet)
+                                               size_t& ic_ref, size_t& jc_ref, size_t& kc_ref,
+                                               real* w_octet)
 {
   // Perform a tri-linear interpolation for a point with coordinates (x,y,z)
   // Interpolate values using a box of the inverse mesh build up of geometric centers of cells
@@ -325,7 +310,7 @@ void CartesianRaster::computeCCInterpolWeights(real& x, real& y, real& z,
   //   6:         ( ic_ref+1, jc_ref+1, kc_ref   )
   //   7:         ( ic_ref+1, jc_ref+1, kc_ref+1 )
 
-  // cartesian distances to bounding element sides
+  // StructuredHex distances to bounding element sides
   real x_ref = 0.5*m_Dx + ic_ref*m_Dx;
   real y_ref = 0.5*m_Dy + jc_ref*m_Dy;
   real z_ref = 0.5*m_Dz + kc_ref*m_Dz;
@@ -336,8 +321,8 @@ void CartesianRaster::computeCCInterpolWeights(real& x, real& y, real& z,
 }
 
 void CartesianRaster::computeNCInterpolWeights(real& x, real& y, real& z,
-					      size_t& in_ref, size_t& jn_ref, size_t& kn_ref,
-					      real* w_octet)
+                                               size_t& in_ref, size_t& jn_ref, size_t& kn_ref,
+                                               real* w_octet)
 {
   // Perform a tri-linear interpolation for a point with coordinates (x,y,z)
   // Interpolate values using natural mesh nodes
@@ -351,7 +336,7 @@ void CartesianRaster::computeNCInterpolWeights(real& x, real& y, real& z,
   //   6:         ( in_ref+1, jn_ref+1, kn_ref   )
   //   7:         ( in_ref+1, jn_ref+1, kn_ref+1 )
 
-  // cartesian distances to bounding element sides
+  // StructuredHex distances to bounding element sides
   real x_ref = in_ref*m_Dx;
   real y_ref = jn_ref*m_Dy;
   real z_ref = kn_ref*m_Dz;
@@ -362,8 +347,8 @@ void CartesianRaster::computeNCInterpolWeights(real& x, real& y, real& z,
 }
 
 void CartesianRaster::computeInterpolWeights(real& x, real& y, real& z,
-					    real& x_ref, real& y_ref, real& z_ref,
-					    real* w_octet)
+                                             real& x_ref, real& y_ref, real& z_ref,
+                                             real* w_octet)
 {
   // Perform a tri-linear interpolation for a point with coordinates (x,y,z)
   // in a box given by the frame corner coordinates.
@@ -381,7 +366,7 @@ void CartesianRaster::computeInterpolWeights(real& x, real& y, real& z,
   //   6:          ( x_ref+m_Dx, y_ref+m_Dy, z_ref      )
   //   7:          ( x_ref+m_Dx, y_ref+m_Dy, z_ref+m_Dz )
 
-  // cartesian distances to box sides
+  // StructuredHex distances to box sides
   real low_diff_x_ref = x - x_ref;
   real low_diff_y_ref = y - y_ref;
   real low_diff_z_ref = z - z_ref;
@@ -581,7 +566,7 @@ void CartesianRaster::computeInterpolWeights(real& x, real& y, real& z,
 // d_dn->Unify();
 
 bool CartesianRaster::xyzToRefInterCell(real x, real y, real z,
-				       size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
+                                        size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
 {
   bool inside = true;
 
@@ -656,7 +641,7 @@ bool CartesianRaster::xyzToRefInterCell(real x, real y, real z,
 }
 
 bool CartesianRaster::xyzToRefCell(real x, real y, real z,
-				  size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
+                                   size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
 {
   bool inside = true;
 

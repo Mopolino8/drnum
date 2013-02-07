@@ -1,56 +1,17 @@
-#include "cartesianpatch.h"
+#include "cartesianraster.h"
 
-//<<<<<<< HEAD
-//#ifdef WITH_VTK
-//#include <vtkSmartPointer.h>
-//#include <vtkRectilinearGrid.h>
-//#include <vtkXMLRectilinearGridWriter.h>
-//#include <vtkFloatArray.h>
-//#include <vtkCellData.h>
-//#include <QVector>
-//#endif
-
-
-//=======
-//>>>>>>> master
-CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
-  : Patch(num_protectlayers, num_overlaplayers)
+CartesianRaster::CartesianRaster()
 {
   m_NumI = 1;
   m_NumJ = 1;
   m_NumK = 1;
-  //do allways with computeDeltas() m_Interpol_Initialized = false;
-  /// @todo need a better eps-handling.
-  m_Eps = 1.e-5;
-  setNumProtectLayers(m_NumProtectLayers);
+  //m_CellLink = new List(1,1);
+  //m_CellLink = NULL;
+  m_Eps = 1.e-6;  /// @todo need a better eps-handling.
 }
 
-void CartesianPatch::setNumProtectLayers(size_t num_protectlayers)
-{
-  m_ProtectException = false;
-  m_NumProtectLayers = num_protectlayers;
-  m_numProtXmin = num_protectlayers;
-  m_numProtXmax = num_protectlayers;
-  m_numProtYmin = num_protectlayers;
-  m_numProtYmax = num_protectlayers;
-  m_numProtZmin = num_protectlayers;
-  m_numProtZmax = num_protectlayers;
-}
 
-void CartesianPatch::setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
-                                            const size_t& numProtYmin, const size_t& numProtYmax,
-                                            const size_t& numProtZmin, const size_t& numProtZmax)
-{
-  m_ProtectException = true;
-  m_numProtXmin = numProtXmin;
-  m_numProtXmax = numProtXmax;
-  m_numProtYmin = numProtYmin;
-  m_numProtYmax = numProtYmax;
-  m_numProtZmin = numProtZmin;
-  m_numProtZmax = numProtZmax;
-}
-
-void CartesianPatch::computeDeltas()
+void CartesianRaster::computeDeltas()
 {
   m_Lx = sqrt(sqr(m_Uxo) + sqr(m_Uyo) + sqr(m_Uzo));
   m_Ly = sqrt(sqr(m_Vxo) + sqr(m_Vyo) + sqr(m_Vzo));
@@ -76,27 +37,21 @@ void CartesianPatch::computeDeltas()
   m_zCCMax = m_Lz - 0.5 * m_Dz;
   countFlops(6);
 
-  m_xCCInterMin = (m_numProtXmin + 0.5) * m_Dx;
-  m_yCCInterMin = (m_numProtYmin + 0.5) * m_Dy;
-  m_zCCInterMin = (m_numProtZmin + 0.5) * m_Dz;
-  m_xCCInterMax = m_Lx - (m_numProtXmax + 0.5) * m_Dx;
-  m_yCCInterMax = m_Ly - (m_numProtYmax + 0.5) * m_Dy;
-  m_zCCInterMax = m_Lz - (m_numProtZmax + 0.5) * m_Dz;
-  //  m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
-  //  m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
-  //  m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
-  //  m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
-  //  m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
-  //  m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
+  m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
+  m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
+  m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
+  m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
+  m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
+  m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
   countFlops(6);
 
-  m_EpsDX = m_Dx * m_Eps;
-  m_EpsDY = m_Dy * m_Eps;
-  m_EpsDZ = m_Dz * m_Eps;
+  m_EpsDX = m_Lx * m_Eps;
+  m_EpsDY = m_Ly * m_Eps;
+  m_EpsDZ = m_Lz * m_Eps;
   countFlops(3);
 }
 
-void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2)
+void CartesianRaster::setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2)
 {
 
   /** @todo Use a more general alignment method with trafo-matrix and internal coord system.
@@ -121,36 +76,43 @@ void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real y
   m_Wzo = zo2 - zo1;
   countFlops(1);
 
-  //<<<<<<< HEAD
   // position relative to inertial system
   vec3_t shift_inertial2this;
   shift_inertial2this[0] = -m_Xo;
   shift_inertial2this[1] = -m_Yo;
   shift_inertial2this[2] = -m_Zo;
   m_transformInertial2This.setVector(shift_inertial2this);
-  /// @todo rotationm NOT implemented!!!
+/// @todo rotation NOT implemented!!!
 
   computeDeltas();
 
-  //=======
-  Transformation t;    /// @todo keep for compatibility
-  t.setVector(vec3_t(xo1, yo1, zo1));
-  setTransformation(t.inverse());
-  //>>>>>>> master
+//  Transformation t;    /// @todo keep for compatibility
+//  t.setVector(vec3_t(xo1, yo1, zo1));
+//  setTransformation(t.inverse());
 }
 
-void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
+
+void CartesianRaster::resize(size_t num_i, size_t num_j, size_t num_k)
 {
   m_NumI = num_i;
   m_NumJ = num_j;
   m_NumK = num_k;
-  deleteData();
-  Patch::resize(m_NumI*m_NumJ*m_NumK);
   computeDeltas();
+//  if(m_CellLink) {
+//    delete m_CellLink;
+//  }
+//  size_t num_cells = m_NumI * m_NumJ * m_NumK;
+//  m_CellLink = new List(num_cells, num_cells/10);  /// @todo Our version of "List" sets a minimum increment
 }
 
-//<<<<<<< HEAD
-void CartesianPatch::buildBoundingBox()
+
+void CartesianRaster::setNumProtectLayers(size_t num_protectlayers)
+{
+  m_NumProtectLayers = num_protectlayers;
+}
+
+
+void CartesianRaster::buildBoundingBox()
 {
   vec3_t bbox_xyz_min(0., 0., 0.);
   vec3_t bbox_xyz_max(m_Lx, m_Ly, m_Lz);
@@ -158,149 +120,24 @@ void CartesianPatch::buildBoundingBox()
   m_bbox_xyzo_max = m_transformInertial2This.transformReverse(bbox_xyz_max);
 }
 
-void CartesianPatch::extractReceiveCells()
-{
-  bool any_error = false;
-  bool error;
-  size_t cell_h;
-  /** @todo check!! very prone to cut&paste errors.
-    * Can do better than below looping: inserts many duplicates, that will be eliminated later.
-    */
-  for(size_t layer=0; layer<m_NumOverlapLayers; layer++) {
-    // i_cell=[0, m_NumOverlapLayers-1] and i_cell=[m_NumI-1, m_NumI-1-m_NumOverlapLayers-1]
-    for(size_t j_cell=0; j_cell<m_NumJ; j_cell++) {
-      for(size_t k_cell=0; k_cell<m_NumK; k_cell++) {
-        cell_h = save_index(layer, j_cell, k_cell,
-                            error);
-        any_error = any_error || error;
-        m_receive_cells.push_back(cell_h);
-        cell_h = save_index(m_NumI-1-layer, j_cell, k_cell,
-                            error);
-        any_error = any_error || error;
-        m_receive_cells.push_back(cell_h);
-      }
-    }
-    // j_cell=[0, m_NumOverlapLayers-1] and j_cell=[m_NumJ-1, m_NumJ-1-m_NumOverlapLayers-1]
-    for(size_t k_cell=0; k_cell<m_NumK; k_cell++) {
-      for(size_t i_cell=0; i_cell<m_NumI; i_cell++) {
-        cell_h = save_index(i_cell, layer, k_cell,
-                            error);
-        any_error = any_error || error;
-        m_receive_cells.push_back(cell_h);
-        cell_h = save_index(i_cell, m_NumJ-1-layer, k_cell,
-                            error);
-        any_error = any_error || error;
-        m_receive_cells.push_back(cell_h);
-      }
-    }
-    // k_cell=[0, m_NumOverlapLayers-1] and k_cell=[m_NumK-1, m_NumK-1-m_NumOverlapLayers-1]
-    for(size_t i_cell=0; i_cell<m_NumI; i_cell++) {
-      for(size_t j_cell=0; j_cell<m_NumJ; j_cell++) {
-        cell_h = save_index(i_cell, j_cell, layer,
-                            error);
-        any_error = any_error || error;
-        m_receive_cells.push_back(cell_h);
-        cell_h = save_index(i_cell, j_cell, m_NumK-1-layer,
-                            error);
-        any_error = any_error || error;
-        m_receive_cells.push_back(cell_h);
-      }
-    }
-  }
-}
 
-bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
-{
-  bool found_dependency = false;
-  Patch* neighbour_patch = m_neighbours[i_neighbour].first;
-  CoordTransformVV trans = m_neighbours[i_neighbour].second;
-  // patch bounding normal vectors in coord syst of donor
-  vector<vec3_t> nxxyyzz_ijk;
-  nxxyyzz_ijk.resize(3);
-  nxxyyzz_ijk[0] = trans.transfree(vec3_t(1., 0., 0.));
-  nxxyyzz_ijk[1] = trans.transfree(vec3_t(0., 1., 0.));
-  nxxyyzz_ijk[2] = trans.transfree(vec3_t(0., 0., 1.));
-  // Process all receiving cells and get interpolation sets
-  //  - get own coeffs
-  //  - transform into system of neighbour patch
-  //  - interpolate there if receiving cell hits neighbours core region
-  for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
-    size_t l_rc = m_receive_cells[ll_rc];
-    //    real x_rc = cellX(l_rc);
-    //    real y_rc = cellY(l_rc);
-    //    real z_rc = cellZ(l_rc);
-    //    real xx_rc, yy_rc, zz_rc;
-    vec3_t xyz_rc = xyzCell(l_rc);
-    vec3_t xxyyzz_rc = trans.transform(xyz_rc);
-    WeightedSet<real> w_set;
-    if(m_InterpolateData) {
-      if(neighbour_patch->computeCCDataInterpolCoeffs(xxyyzz_rc,
-                                                      w_set)) {
-        m_InterCoeffData_WS[i_neighbour].push(ll_rc, l_rc, w_set);  // note: since l_rc are unique, no "add" is required
-        m_receive_cell_data_hits[ll_rc]++;
-        found_dependency = true;
-      }
-      if(m_InterpolateGrad1N) {
-        int direction = boundingNVecDirection(l_rc); // note: trivial function, that ommits normal storage
-        //        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xx_rc, yy_rc, zz_rc,
-        //                                                          nxxyyzz_ijk[direction][0], nxxyyzz_ijk[direction][1], nxxyyzz_ijk[direction][2],
-        //                                                          w_set)) {
-        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xxyyzz_rc, nxxyyzz_ijk[direction],
-                                                          w_set)) {
-          m_InterCoeffGrad1N_WS[i_neighbour].push(ll_rc, l_rc, w_set);
-          m_receive_cell_grad1N_hits[ll_rc]++;
-        }
-      }
-    }
-  }
-  return found_dependency;
-}
-
-
-void CartesianPatch::setupInterpolators()
+void CartesianRaster::setupInterpolators()
 {
   // nothing to be done here.
-  /** @note it is likely that setupInterpolators will be meaningful for other
-      * patch types. If allways envoqued, shift stuff from computeDeltas back here.
-      */
 }
 
-// void CartesianPatch::setupInterpolators(size_t num_protectlayers)
-// {
 
-//   m_NumProtectLayers = num_protectlayers;
-
-//   // Cell center coords of lowest address cell (i,j,k) = (0,0,0)
-//   //  m_xCCMin = 0.5 * m_Dx;
-//   //  m_yCCMin = 0.5 * m_Dy;
-//   //  m_zCCMin = 0.5 * m_Dz;
-
-//   // CC-coordinates limits to access data from foreign patches
-//   m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
-//   m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
-//   m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
-//   m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
-//   m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
-//   m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
-
-//   m_EpsDX = m_Eps * m_Dx;
-//   m_EpsDY = m_Eps * m_Dy;
-//   m_EpsDZ = m_Eps * m_Dz;
-
-//   //  m_Interpol_Initialized = true;
-// }
-
-bool CartesianPatch::computeCCDataInterpolCoeffs(real x, real y, real z,
+bool CartesianRaster::computeCCDataInterpolCoeffs(real x, real y, real z,
                                                  WeightedSet<real>& w_set)
 {
   size_t ic_ref, jc_ref, kc_ref;
   bool inside;
   real w_octet[8];
 
-  //  // May not request a value, if m_NumProtectLayers<1
-  //  if(m_NumProtectLayers < 1) {
-  //    cout << "CartesianPatch::computeCCDataInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
-  //  }
+  // May not request a value, if m_NumProtectLayers<1
+  if(m_NumProtectLayers < 1) {
+    cout << "CartesianRaster::computeCCDataInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
+  }
 
   // Check inside and get reference cell
   inside = xyzToRefInterCell(x, y, z,
@@ -330,7 +167,7 @@ bool CartesianPatch::computeCCDataInterpolCoeffs(real x, real y, real z,
   return inside;
 }
 
-bool CartesianPatch::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
+bool CartesianRaster::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
 						   real nx, real ny, real nz,
                                                    WeightedSet<real>& d_dn)
 {
@@ -353,10 +190,10 @@ bool CartesianPatch::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
     *
     */
 
-  //  // May not request a value, if m_NumProtectLayers<2
-  //  if(m_NumProtectLayers<2) {
-  //    cout << "CartesianPatch::computeCCGrad1NInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
-  //  }
+  // May not request a value, if m_NumProtectLayers<2
+  if(m_NumProtectLayers<2) {
+    cout << "CartesianRaster::computeCCGrad1NInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
+  }
   // Check inside and get reference cell
   inside = xyzToRefInterCell(x, y, z,
 			     ic_ref, jc_ref, kc_ref);
@@ -472,7 +309,7 @@ bool CartesianPatch::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
 }
 
 
-void CartesianPatch::computeCCInterpolWeights(real& x, real& y, real& z,
+void CartesianRaster::computeCCInterpolWeights(real& x, real& y, real& z,
 					      size_t& ic_ref, size_t& jc_ref, size_t& kc_ref,
 					      real* w_octet)
 {
@@ -498,7 +335,7 @@ void CartesianPatch::computeCCInterpolWeights(real& x, real& y, real& z,
                          w_octet);
 }
 
-void CartesianPatch::computeNCInterpolWeights(real& x, real& y, real& z,
+void CartesianRaster::computeNCInterpolWeights(real& x, real& y, real& z,
 					      size_t& in_ref, size_t& jn_ref, size_t& kn_ref,
 					      real* w_octet)
 {
@@ -524,7 +361,7 @@ void CartesianPatch::computeNCInterpolWeights(real& x, real& y, real& z,
                          w_octet);
 }
 
-void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
+void CartesianRaster::computeInterpolWeights(real& x, real& y, real& z,
 					    real& x_ref, real& y_ref, real& z_ref,
 					    real* w_octet)
 {
@@ -603,7 +440,7 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
 };
 
 
-// void CartesianPatch::computeCCGrad1NInterpolCoeffs(real& x, real& y, real& z,
+// void CartesianRaster::computeCCGrad1NInterpolCoeffs(real& x, real& y, real& z,
 // 						   size_t& ic_ref, size_t& jc_ref, size_t& kc_ref,
 // 						   real nx, real ny, real nz,
 // 						   WeightedSet<real>* d_dn)
@@ -743,7 +580,7 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
 // d_dn->Concatenate(d_dz, nz);
 // d_dn->Unify();
 
-bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
+bool CartesianRaster::xyzToRefInterCell(real x, real y, real z,
 				       size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
 {
   bool inside = true;
@@ -766,8 +603,8 @@ bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
     if(y < m_yCCInterMin+m_EpsDY) {y = m_yCCInterMin+m_EpsDY;}
     if(z < m_zCCInterMin+m_EpsDZ) {z = m_zCCInterMin+m_EpsDZ;}
     if(x > m_xCCInterMax-m_EpsDX) {x = m_xCCInterMax-m_EpsDX;}
-    if(y > m_yCCInterMax-m_EpsDY) {y = m_yCCInterMax-m_EpsDY;}
-    if(z > m_zCCInterMax-m_EpsDZ) {z = m_zCCInterMax-m_EpsDZ;}
+    if(y > m_yCCInterMax-m_EpsDY) {y = m_xCCInterMax-m_EpsDY;}
+    if(z > m_zCCInterMax-m_EpsDZ) {z = m_xCCInterMax-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
     real ric_ref = (x - m_xCCMin) / m_Dx;
     real rjc_ref = (y - m_yCCMin) / m_Dy;
@@ -786,27 +623,39 @@ bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
     if(ric_ref < 0.) {ic_ref = 0;}
     if(rjc_ref < 0.) {jc_ref = 0;}
     if(rkc_ref < 0.) {kc_ref = 0;}
-    //    //.. Error checking, actually impossible: Be sure to be in addressing range
-    //    bool error = false;
-    //    if(ic_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, i_min"; error = true;}
-    //    if(jc_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, j_min"; error = true;}
-    //    if(kc_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, k_min"; error = true;}
-    //    if(ic_ref > m_NumI-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, i_max"; error = true;}
-    //    if(jc_ref > m_NumJ-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, j_max"; error = true;}
-    //    if(kc_ref > m_NumK-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, k_max"; error = true;}
-    //    if(error) {
-    //      /// @todo may put this in debug condition
-    //      cout << endl;
-    //      cout << " m_xyzCCInterMin = " << m_xCCInterMin << ", " << m_yCCInterMin << ", " << m_zCCInterMin << endl;
-    //      cout << " m_xyzCCInterMax = " << m_xCCInterMax << ", " << m_yCCInterMax << ", " << m_zCCInterMax << endl;
-    //      cout << " (x,y,z)         = " << x             << ", " << y             << ", " << z             << endl;
-    //      exit(EXIT_FAILURE);
-    //    }
+    //.. Error checking, actually impossible: Be sure to be in addressing range
+    bool error = false;
+    if(ic_ref < m_NumProtectLayers) {
+      cout << "CartesianRaster::xyzToRefInterCell, i_min" << endl; error = true;
+    }
+    if(jc_ref < m_NumProtectLayers) {
+      cout << "CartesianRaster::xyzToRefInterCell, j_min" << endl; error = true;
+    }
+    if(kc_ref < m_NumProtectLayers) {
+      cout << "CartesianRaster::xyzToRefInterCell, k_min" << endl; error = true;
+    }
+    if(ic_ref > m_NumI-2-m_NumProtectLayers) {
+      cout << "CartesianRaster::xyzToRefInterCell, i_max" << endl; error = true;
+    }
+    if(jc_ref > m_NumJ-2-m_NumProtectLayers) {
+      cout << "CartesianRaster::xyzToRefInterCell, j_max" << endl; error = true;
+    }
+    if(kc_ref > m_NumK-2-m_NumProtectLayers) {
+      cout << "CartesianRaster::xyzToRefInterCell, k_max" << endl; error = true;
+    }
+    if(error) {
+      /// @todo may put this in debug condition
+      cout << endl;
+      cout << " m_xyzCCInterMin = " << m_xCCInterMin << ", " << m_yCCInterMin << ", " << m_zCCInterMin << endl;
+      cout << " m_xyzCCInterMax = " << m_xCCInterMax << ", " << m_yCCInterMax << ", " << m_zCCInterMax << endl;
+      cout << " (x,y,z)         = " << x             << ", " << y             << ", " << z             << endl;
+      BUG;
+    }
   }
   return inside;
 }
 
-bool CartesianPatch::xyzToRefCell(real x, real y, real z,
+bool CartesianRaster::xyzToRefCell(real x, real y, real z,
 				  size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
 {
   bool inside = true;
@@ -847,25 +696,22 @@ bool CartesianPatch::xyzToRefCell(real x, real y, real z,
     //.. Error checking, actually impossible: Be sure to be in addressing range
     bool error = false;
     if(ric_ref < 0.) {  // use real ric_ref, due to size_t cycling
-      cout << "CartesianPatch::xyzToRefInterCell, i_min"; error = true;
-      ic_ref = 0;
+      cout << "CartesianRaster::xyzToRefCell, i_min" << endl; error = true;
     }
     if(rjc_ref < 0.) {
-      cout << "CartesianPatch::xyzToRefInterCell, j_min"; error = true;
-      jc_ref = 0;
+      cout << "CartesianRaster::xyzToRefCell, j_min" << endl; error = true;
     }
     if(rkc_ref < 0.) {
-      cout << "CartesianPatch::xyzToRefInterCell, k_min"; error = true;
-      kc_ref = 0;
+      cout << "CartesianRaster::xyzToRefCell, k_min" << endl; error = true;
     }
     if(ic_ref > m_NumI-2) {
-      cout << "CartesianPatch::xyzToRefInterCell, i_max"; error = true;
+      cout << "CartesianRaster::xyzToRefCell, i_max" << endl; error = true;
     }
     if(jc_ref > m_NumJ-2) {
-      cout << "CartesianPatch::xyzToRefInterCell, j_max"; error = true;
+      cout << "CartesianRaster::xyzToRefCell, j_max" << endl; error = true;
     }
     if(kc_ref > m_NumK-2) {
-      cout << "CartesianPatch::xyzToRefInterCell, k_max"; error = true;
+      cout << "CartesianRaster::xyzToRefCell, k_max" << endl; error = true;
     }
     if(error) {
       /// @todo may put this in debug condition
@@ -873,14 +719,14 @@ bool CartesianPatch::xyzToRefCell(real x, real y, real z,
       cout << " m_xyzCCMin = " << m_xCCMin << ", " << m_yCCMin << ", " << m_zCCMin << endl;
       cout << " m_xyzCCMax = " << m_xCCMax << ", " << m_yCCMax << ", " << m_zCCMax << endl;
       cout << " (x,y,z)    = " << x        << ", " << y        << ", " << z        << endl;
-      exit(EXIT_FAILURE);
+      BUG;
     }
   }
   return inside;
 }
 
-bool CartesianPatch::xyzToRefNode(real x, real y, real z,
-				  size_t& in_ref, size_t& jn_ref, size_t& kn_ref)
+bool CartesianRaster::xyzToRefNode(real x, real y, real z,
+                                   size_t& in_ref, size_t& jn_ref, size_t& kn_ref)
 {
   bool inside = true;
 
@@ -906,9 +752,9 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
     if(y > m_Ly-m_EpsDY) {y = m_Ly-m_EpsDY;}
     if(z > m_Lz-m_EpsDZ) {z = m_Lz-m_EpsDZ;}
     //.. Position relative to lowest CC-coords.
-    real rin_ref = (x - m_xCCMin) / m_Dx;
-    real rjn_ref = (y - m_yCCMin) / m_Dy;
-    real rkn_ref = (z - m_zCCMin) / m_Dz;
+    real rin_ref = (x - 0.) / m_Dx;
+    real rjn_ref = (y - 0.) / m_Dy;
+    real rkn_ref = (z - 0.) / m_Dz;
     //    iin_ref = lrint(floor(rin_ref));
     //    jjn_ref = lrint(floor(rjn_ref));
     //    kkn_ref = lrint(floor(rkn_ref));
@@ -921,101 +767,32 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
     //.. Error checking, actually impossible: Be sure to be in addressing range
     bool error = false;
     if(rin_ref < 0.) {
-      cout << "CartesianPatch::xyzToRefInterCell, i_min"; error = true;
-      in_ref = 0;
+      cout << "CartesianRaster::xyzToRefNode, i_min" << endl; error = true;
     }
     if(rjn_ref < 0.) {
-      cout << "CartesianPatch::xyzToRefInterCell, j_min"; error = true;
-      jn_ref = 0;
+      cout << "CartesianRaster::xyzToRefNode, j_min" << endl; error = true;
     }
     if(rkn_ref < 0.) {
-      cout << "CartesianPatch::xyzToRefInterCell, k_min"; error = true;
-      kn_ref = 0;
+      cout << "CartesianRaster::xyzToRefNode, k_min" << endl; error = true;
     }
-    if(in_ref > m_NumI-2) {
-      cout << "CartesianPatch::xyzToRefInterCell, i_max"; error = true;
+    if(in_ref > m_NumI-1) {
+      cout << "CartesianRaster::xyzToRefNode, i_max" << endl; error = true;
     }
-    if(jn_ref > m_NumJ-2) {
-      cout << "CartesianPatch::xyzToRefInterCell, j_max"; error = true;
+    if(jn_ref > m_NumJ-1) {
+      cout << "CartesianRaster::xyzToRefNode, j_max" << endl; error = true;
     }
-    if(kn_ref > m_NumK-2) {
-      cout << "CartesianPatch::xyzToRefInterCell, k_max"; error = true;
+    if(kn_ref > m_NumK-1) {
+      cout << "CartesianRaster::xyzToRefNode, k_max" << endl; error = true;
     }
     if(error) {
       /// @todo may put this in debug condition
       cout << endl;
-      cout << " m_xyzCCMin = " << m_xCCMin << ", " << m_yCCMin << ", " << m_zCCMin << endl;
-      cout << " m_xyzCCMax = " << m_xCCMax << ", " << m_yCCMax << ", " << m_zCCMax << endl;
+      cout << " xyz Min = " << 0. << ", " << 0. << ", " << 0. << endl;
+      cout << " xyz Max = " << m_Lx << ", " << m_Ly << ", " << m_Lz << endl;
       cout << " (x,y,z)    = " << x        << ", " << y        << ", " << z             << endl;
-      exit(EXIT_FAILURE);
+      BUG;
     }
   }
   return inside;
 }
 
-
-/*
-#ifdef WITH_VTK
-
-void CartesianPatch::writeToVtk(QString file_name)
-{
-  vtkSmartPointer<vtkRectilinearGrid> grid = vtkSmartPointer<vtkRectilinearGrid>::New();
-
-  vtkSmartPointer<vtkFloatArray> xc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t i = 0; i < m_NumI + 1; ++i) {
-    xc->InsertNextValue(i*dx());
-  }
-
-  vtkSmartPointer<vtkFloatArray> yc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t j = 0; j < m_NumJ + 1; ++j) {
-    yc->InsertNextValue(j*dy());
-  }
-
-  vtkSmartPointer<vtkFloatArray> zc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t k = 0; k < m_NumK + 1; ++k) {
-    zc->InsertNextValue(k*dz());
-  }
-
-  grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
-  grid->SetXCoordinates(xc);
-  grid->SetYCoordinates(yc);
-  grid->SetZCoordinates(zc);
-
-  for (size_t i_field = 0; i_field < numFields(); ++i_field) {
-    QString field_name;
-    field_name.setNum(i_field + 1);
-    if (field_name.size() < 2) {
-      field_name = "0" + field_name;
-    }
-    for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
-      QString var_name;
-      var_name.setNum(i_var + 1);
-      if (var_name.size() < 2) {
-        var_name = "0" + var_name;
-      }
-      vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-      var->SetName(qPrintable("f_" + field_name + "_" + var_name));
-      var->SetNumberOfValues(variableSize());
-      grid->GetCellData()->AddArray(var);
-      vtkIdType id = 0;
-      for (size_t k = 0; k < m_NumK; ++k) {
-        for (size_t j = 0; j < m_NumJ; ++j) {
-          for (size_t i = 0; i < m_NumI; ++i) {
-            var->SetValue(id, f(getVariable(i_field, i_var), i, j, k));
-            ++id;
-          }
-        }
-      }
-    }
-  }
-
-  vtkSmartPointer<vtkXMLRectilinearGridWriter> vtr = vtkSmartPointer<vtkXMLRectilinearGridWriter>::New();
-  vtr->SetFileName(qPrintable(file_name + ".vtr"));
-  vtr->SetInput(grid);
-  vtr->Write();
-}
-
-#endif
-*/
-//=======
-//>>>>>>> master

@@ -4,15 +4,15 @@
 #include <cstddef>
 #include <namespace_mouse.hh>
 
-BEGIN_MOUSE
+//BEGIN_MOUSE
 template <class T> class TInsectHashRaster;
-END_MOUSE
+//END_MOUSE
 
 #include <TInsectHashRaster.hh>
 #include "CartesianRaster.hh"
 //#include <vector>
 
-BEGIN_MOUSE
+//BEGIN_MOUSE
 
 /** Class to hold a TInsectHashRaster on a CartesianRaster
  *
@@ -134,6 +134,6 @@ inline void TInsectHashRaster<T>::getItemPtrAndNum(size_t l,
 }
 
 #include "TInsectHashRaster.cc"
-END_MOUSE
+//END_MOUSE
 
 #endif  //TINSECTHASHRASTER_HH

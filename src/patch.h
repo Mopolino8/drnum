@@ -56,9 +56,10 @@ private: // attributes
 protected: // attributes
 
   // settings
-  bool m_InterpolateData;    ///< Flag indicates wether to interpolate data on interpatch transfers
-  bool m_InterpolateGrad1N;  ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
-  bool m_TransferPadded;     ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
+  bool m_InterpolateData;     ///< Flag indicates wether to interpolate data on interpatch transfers
+  bool m_InterpolateGrad1N;   ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
+  bool m_TransferPadded;      ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
+  bool m_ProtectException ;   ///< Flag indicates a protection exception: the number of protection layers is not constant.
   size_t m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
   size_t m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
 
@@ -122,7 +123,7 @@ public: // methods
     * Set number of protection layers
     * @param num_protectlayers number of protection layers
     */
-  void setNumProtectLayers(size_t num_protectlayers)
+  virtual void setNumProtectLayers(size_t num_protectlayers)
   {
     m_NumProtectLayers = num_protectlayers;
   }
@@ -265,6 +266,7 @@ public: // methods
   /**
     * Data access from all donor patches via m_InterCoeffData_WS
     * NOTE: Non padded version employing WeightedSet pattern.
+    * ATTENTION: DOES NOT TURN ANY VECTORIAL VARIABLES !!
     * @param field the field, for which all variables are transfered
     */
   void accessDonorData_WS(const size_t& field);
