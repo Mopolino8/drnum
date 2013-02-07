@@ -158,11 +158,11 @@ void run()
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
-  patch.setupAligned(0, -0.01, 0, 3, 0.01, 1);
+  patch.setupAligned(0, 0 , -0.01, 3, 1, 0.01);
   size_t N = 100;
   size_t NI = 3*N;
-  size_t NJ = 1;
-  size_t NK = 1*N;
+  size_t NJ = 1*N;
+  size_t NK = 1;
   patch.resize(NI, NJ, NK);
   real init_var[5];
   real zero_var[5];
@@ -189,14 +189,13 @@ void run()
 
   typedef Box shape_t;
   shape_t shape;
-  shape.setGeometry(0.6, -1, -1, 10, 1, 0.2);
+  shape.setGeometry(0.6, -1, -1, 10, 0.2, 1);
 
   shape.transform(patch.getTransformation());
 
   MyFlux flux(p, T, u, &shape);
   CartesianStandardPatchOperation<5, MyFlux> operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
-  iterator.setI1(1);
   runge_kutta.addIterator(&iterator);
 
   real time           = 3.0/u;
