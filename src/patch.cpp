@@ -7,6 +7,7 @@ Patch::Patch(size_t num_protectlayers, size_t num_overlaplayers)
   m_NumVariables = 0;
   m_VariableSize = 0;
   m_FieldSize = 0;
+  m_ProtectException = false;
   m_NumProtectLayers = num_protectlayers;
   m_NumOverlapLayers = num_overlaplayers;
   m_InterpolateData = false;
@@ -62,7 +63,7 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   ctvv_relative.setTransFromTo(m_transformInertial2This, neighbour_patch->m_transformInertial2This);
   dependency_h.second = ctvv_relative;
   m_neighbours.push_back(dependency_h);
-  size_t i_neighbour = m_neighbours.size() - 1;
+  size_t i_neighbour = m_neighbours.size() - 1;  // checked: OK, since size() >= 1
   // Depending on calculation type, insert donor and relative coord transformation into InterCoeffWS lists
   if (m_InterpolateData) {
     m_InterCoeffData_WS.resize(i_neighbour + 1);
@@ -146,7 +147,7 @@ void Patch::accessDonorData_WS(const size_t& field)
   }
   // set all receiving data variables to 0, as donors will add their contributions onto
   for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
-    size_t l_rc = m_receive_cells[ll_rc];
+    size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
     for(size_t i_v=0; i_v<numVariables(); i_v++) {
       this_vars[i_v][l_rc] = 0.;
     }

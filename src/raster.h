@@ -104,6 +104,14 @@ public: // methods
   virtual bool computeCCGrad1NInterpolCoeffs(real x, real y, real z,
 					     real nx, real ny, real nz,
                                              WeightedSet<real>& w_set)=0; // {BUG;}
+
+  /**
+   * Access m_transformInertial2This as pointer for extrnal use.
+   */
+    CoordTransformVV* getTransformI2T()
+    {
+      return &m_transformInertial2This;
+    }
 };
 
 #endif // RASTER_H

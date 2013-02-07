@@ -107,6 +107,20 @@ public: // methods
   void finalizeDependencies();
 
   /**
+    * Envoque data access to neighbour patches for all patches in the grid.
+    * Version using m_InterCoeffData_WS data
+    * NOTE: Non padded version employing WeightedSet pattern.
+    * ATTENTION: DOES NOT TURN ANY VECTORIAL VARIABLES !!
+    * @param field the field, for which all variables are transfered
+    */
+  void accessAllDonorData_WS(const size_t& field);
+
+
+  /** @todo Let patch grid know, if any vectorial variables must be turned (default:yes) and which variables are affected
+    *       (idicees in variable set, like 1,2,3 for speeds in (p, u, v, w, ...) */
+
+
+  /**
     * Build bounding box around whole grid
     */
   void buildBoundingBox(const bool& force = true);

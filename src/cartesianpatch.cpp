@@ -13,8 +13,8 @@
 
 //=======
 //>>>>>>> master
-CartesianPatch::CartesianPatch()
-  : Patch()
+CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
+  : Patch(num_protectlayers, num_overlaplayers)
 {
   m_NumI = 1;
   m_NumJ = 1;
@@ -22,6 +22,32 @@ CartesianPatch::CartesianPatch()
   //do allways with computeDeltas() m_Interpol_Initialized = false;
   /// @todo need a better eps-handling.
   m_Eps = 1.e-5;
+  setNumProtectLayers(m_NumProtectLayers);
+}
+
+void CartesianPatch::setNumProtectLayers(size_t num_protectlayers)
+{
+  m_ProtectException = false;
+  m_NumProtectLayers = num_protectlayers;
+  m_numProtXmin = num_protectlayers;
+  m_numProtXmax = num_protectlayers;
+  m_numProtYmin = num_protectlayers;
+  m_numProtYmax = num_protectlayers;
+  m_numProtZmin = num_protectlayers;
+  m_numProtZmax = num_protectlayers;
+}
+
+void CartesianPatch::setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
+                                            const size_t& numProtYmin, const size_t& numProtYmax,
+                                            const size_t& numProtZmin, const size_t& numProtZmax)
+{
+  m_ProtectException = true;
+  m_numProtXmin = numProtXmin;
+  m_numProtXmax = numProtXmax;
+  m_numProtYmin = numProtYmin;
+  m_numProtYmax = numProtYmax;
+  m_numProtZmin = numProtZmin;
+  m_numProtZmax = numProtZmax;
 }
 
 void CartesianPatch::computeDeltas()
@@ -42,22 +68,6 @@ void CartesianPatch::computeDeltas()
   m_InvDz = 1.0/m_Dx;
   countFlops(3);
 
-//  m_Dixo = m_Uxo/m_NumI;
-//  m_Diyo = m_Uyo/m_NumI;
-//  m_Dizo = m_Uzo/m_NumI;
-//  countFlops(3);
-
-//  m_Djxo = m_Vxo/m_NumJ;
-//  m_Djyo = m_Vyo/m_NumJ;
-//  m_Djzo = m_Vzo/m_NumJ;
-//  countFlops(3);
-
-//  m_Djxo = m_Wxo/m_NumK;
-//  m_Djyo = m_Wyo/m_NumK;
-//  m_Djzo = m_Wzo/m_NumK;
-//  countFlops(3);
-
-//<<<<<<< HEAD
   m_xCCMin = 0.5 * m_Dx;
   m_yCCMin = 0.5 * m_Dy;
   m_zCCMin = 0.5 * m_Dz;
@@ -66,24 +76,24 @@ void CartesianPatch::computeDeltas()
   m_zCCMax = m_Lz - 0.5 * m_Dz;
   countFlops(6);
 
-  m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
-  m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
-  m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
-  m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
-  m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
-  m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
+  m_xCCInterMin = (m_numProtXmin + 0.5) * m_Dx;
+  m_yCCInterMin = (m_numProtYmin + 0.5) * m_Dy;
+  m_zCCInterMin = (m_numProtZmin + 0.5) * m_Dz;
+  m_xCCInterMax = m_Lx - (m_numProtXmax + 0.5) * m_Dx;
+  m_yCCInterMax = m_Ly - (m_numProtYmax + 0.5) * m_Dy;
+  m_zCCInterMax = m_Lz - (m_numProtZmax + 0.5) * m_Dz;
+  //  m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
+  //  m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
+  //  m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
+  //  m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
+  //  m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
+  //  m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
   countFlops(6);
 
   m_EpsDX = m_Dx * m_Eps;
   m_EpsDY = m_Dy * m_Eps;
   m_EpsDZ = m_Dz * m_Eps;
   countFlops(3);
-//=======
-//  m_Xco = m_Xo + 0.5*(m_Dixo + m_Djxo + m_Dkxo);  /// @todo Name conflict? Why not m_xCCMin?
-//  m_Yco = m_Yo + 0.5*(m_Diyo + m_Djyo + m_Dkyo);
-//  m_Zco = m_Zo + 0.5*(m_Dizo + m_Djzo + m_Dkzo);
-//  countFlops(12);
-//>>>>>>> master
 }
 
 void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2)
@@ -111,22 +121,22 @@ void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real y
   m_Wzo = zo2 - zo1;
   countFlops(1);
 
-//<<<<<<< HEAD
+  //<<<<<<< HEAD
   // position relative to inertial system
   vec3_t shift_inertial2this;
   shift_inertial2this[0] = -m_Xo;
   shift_inertial2this[1] = -m_Yo;
   shift_inertial2this[2] = -m_Zo;
   m_transformInertial2This.setVector(shift_inertial2this);
-/// @todo rotationm NOT implemented!!!
+  /// @todo rotationm NOT implemented!!!
 
   computeDeltas();
 
-//=======
+  //=======
   Transformation t;    /// @todo keep for compatibility
   t.setVector(vec3_t(xo1, yo1, zo1));
   setTransformation(t.inverse());
-//>>>>>>> master
+  //>>>>>>> master
 }
 
 void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
@@ -287,10 +297,10 @@ bool CartesianPatch::computeCCDataInterpolCoeffs(real x, real y, real z,
   bool inside;
   real w_octet[8];
 
-  // May not request a value, if m_NumProtectLayers<1
-  if(m_NumProtectLayers < 1) {
-    cout << "CartesianPatch::computeCCDataInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
-  }
+  //  // May not request a value, if m_NumProtectLayers<1
+  //  if(m_NumProtectLayers < 1) {
+  //    cout << "CartesianPatch::computeCCDataInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
+  //  }
 
   // Check inside and get reference cell
   inside = xyzToRefInterCell(x, y, z,
@@ -343,10 +353,10 @@ bool CartesianPatch::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
     *
     */
 
-  // May not request a value, if m_NumProtectLayers<2
-  if(m_NumProtectLayers<2) {
-    cout << "CartesianPatch::computeCCGrad1NInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
-  }
+  //  // May not request a value, if m_NumProtectLayers<2
+  //  if(m_NumProtectLayers<2) {
+  //    cout << "CartesianPatch::computeCCGrad1NInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
+  //  }
   // Check inside and get reference cell
   inside = xyzToRefInterCell(x, y, z,
 			     ic_ref, jc_ref, kc_ref);
@@ -776,22 +786,22 @@ bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
     if(ric_ref < 0.) {ic_ref = 0;}
     if(rjc_ref < 0.) {jc_ref = 0;}
     if(rkc_ref < 0.) {kc_ref = 0;}
-    //.. Error checking, actually impossible: Be sure to be in addressing range
-    bool error = false;
-    if(ic_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, i_min"; error = true;}
-    if(jc_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, j_min"; error = true;}
-    if(kc_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, k_min"; error = true;}
-    if(ic_ref > m_NumI-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, i_max"; error = true;}
-    if(jc_ref > m_NumJ-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, j_max"; error = true;}
-    if(kc_ref > m_NumK-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, k_max"; error = true;}
-    if(error) {
-      /// @todo may put this in debug condition
-      cout << endl;
-      cout << " m_xyzCCInterMin = " << m_xCCInterMin << ", " << m_yCCInterMin << ", " << m_zCCInterMin << endl;
-      cout << " m_xyzCCInterMax = " << m_xCCInterMax << ", " << m_yCCInterMax << ", " << m_zCCInterMax << endl;
-      cout << " (x,y,z)         = " << x             << ", " << y             << ", " << z             << endl;
-      exit(EXIT_FAILURE);
-    }
+    //    //.. Error checking, actually impossible: Be sure to be in addressing range
+    //    bool error = false;
+    //    if(ic_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, i_min"; error = true;}
+    //    if(jc_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, j_min"; error = true;}
+    //    if(kc_ref < m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, k_min"; error = true;}
+    //    if(ic_ref > m_NumI-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, i_max"; error = true;}
+    //    if(jc_ref > m_NumJ-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, j_max"; error = true;}
+    //    if(kc_ref > m_NumK-2-m_NumProtectLayers) {cout << "CartesianPatch::xyzToRefInterCell, k_max"; error = true;}
+    //    if(error) {
+    //      /// @todo may put this in debug condition
+    //      cout << endl;
+    //      cout << " m_xyzCCInterMin = " << m_xCCInterMin << ", " << m_yCCInterMin << ", " << m_zCCInterMin << endl;
+    //      cout << " m_xyzCCInterMax = " << m_xCCInterMax << ", " << m_yCCInterMax << ", " << m_zCCInterMax << endl;
+    //      cout << " (x,y,z)         = " << x             << ", " << y             << ", " << z             << endl;
+    //      exit(EXIT_FAILURE);
+    //    }
   }
   return inside;
 }
