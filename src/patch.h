@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <vector>
 #include "blockcfd.h"
-#include "weightedset.h"
+#include "utility/weightedset.h"
 
 class Patch;
 

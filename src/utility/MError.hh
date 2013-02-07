@@ -27,7 +27,7 @@
 #ifndef MError_HH
 #define MError_HH
  
-#include <namespace_mouse.hh>
+#include "utility/namespace_mouse.hh"
 BEGIN_MOUSE
  
  
@@ -39,7 +39,7 @@ END_MOUSE
  
 class MError;
  
-#include <mouse_types.hh>
+#include "utility/mouse_types.hh"
 #include <string>
  
 BEGIN_MOUSE

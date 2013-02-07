@@ -2,7 +2,6 @@ TEMPLATE = app
 CONFIG += console
 
 INCLUDEPATH += $(VTKINCDIR)
-INCLUDEPATH += utility
 
 LIBS        += -L$(VTKLIBDIR)
 LIBS        += -lQVTK
@@ -134,4 +133,5 @@ HEADERS += \
     examples/two_patches_1.h \
     examples/two_patches_2.h \
     examples/two_patches_3.h \
-    rungekuttapg1.h
+    rungekuttapg1.h \
+    utility/namespace_mouse.hh
