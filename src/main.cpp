@@ -1,4 +1,4 @@
-//#include "examples/ffs1.h"
+#include "examples/ffs1.h"
 //#include "examples/interpolation1.h"
 //#include "examples/overexpandedjet2d.h"
 //#include "examples/kelvinhelmholtz.h"
@@ -8,11 +8,13 @@
 // #include "examples/wedge.h"
 
 //#include "examples/two_patches_1.h"
-#include "examples/two_patches_2.h"
+//#include "examples/two_patches_2.h"
 //#include "examples/two_patches_3.h"
+
 
 int main()
 {
+  omp_set_num_threads(4);
   run();
 }
 
