@@ -22,13 +22,31 @@ LIBS        += -lvtkVolumeRendering
 LIBS        += -lvtkWidgets
 
 QMAKE_CXXFLAGS += -Wno-deprecated
+QMAKE_CXXFLAGS += -fopenmp
 #QMAKE_CXXFLAGS_RELEASE += -g
 QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_CXXFLAGS_RELEASE += -finline-limit=100000
 QMAKE_CXXFLAGS_RELEASE += --param large-function-growth=100000
 QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
-QMAKE_CXXFLAGS_RELEASE += -funroll-loops
+#QMAKE_CXXFLAGS_RELEASE += -funroll-loops
 #QMAKE_CXXFLAGS_RELEASE += -Winline
+
+
+# CUDA
+# ====
+#
+LIBS                  += -lcudart
+LIBS                  += -lgomp
+INCLUDEPATH           += /opt/CUDA-4.2
+NVCCFLAGS             += -Xcompiler -fopenmp -O3 -m64 -arch=sm_13# -Xptxas -dlcm=cg #NVCCFLAGS  += -g -G
+CUDA_INC               = $$join(INCLUDEPATH,' -I','-I',' ')
+cuda.input             = CUDA_SOURCES
+cuda.output            = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
+cuda.commands          = nvcc -c $$NVCCFLAGS $$CUDA_INC ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT}
+cuda.dependency_type   = TYPE_C
+cuda.depend_command    = nvcc -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
+QMAKE_EXTRA_COMPILERS += cuda
+
 
 
 SOURCES += main.cpp \

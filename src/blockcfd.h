@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <ctime>
+#include <omp.h>
 
 using namespace std;
 
@@ -191,9 +192,5 @@ inline real nonZero(const real x, const real eps)
     return max(eps, x);
   }
 }
-
-
-
-
 
 #endif // BLOCKCFD_H
