@@ -152,4 +152,11 @@ HEADERS += \
     examples/two_patches_1.h \
     examples/two_patches_2.h \
     examples/two_patches_3.h \
-    rungekuttapg1.h
+    rungekuttapg1.h \
+    gpu_cartesianpatch.h \
+    cartesianpatch_common.h \
+    patch_common.h \
+    blockcfd_cuda.h \
+    examples/cpuduct.h \
+    examples/cpujet.h \
+    gpu_patch.h

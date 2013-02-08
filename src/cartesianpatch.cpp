@@ -64,8 +64,8 @@ void CartesianPatch::computeDeltas()
   countFlops(3);
 
   m_InvDx = 1.0/m_Dx;
-  m_InvDy = 1.0/m_Dx;
-  m_InvDz = 1.0/m_Dx;
+  m_InvDy = 1.0/m_Dy;
+  m_InvDz = 1.0/m_Dz;
   countFlops(3);
 
   m_xCCMin = 0.5 * m_Dx;
