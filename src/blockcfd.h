@@ -32,15 +32,6 @@ typedef float real;
 
 static real global_eps = 1e-10;
 
-inline int posReal2Int(real v)
-{
-  v -= 0.5 - 1.5e-7;
-  v += 12582912;
-  ((char*)&v)[2] &= 63;
-  ((char*)&v)[3] &= 0;
-  return ((int*)&v)[0];
-}
-
 #else
 
 typedef double real;
@@ -192,5 +183,7 @@ inline real nonZero(const real x, const real eps)
     return max(eps, x);
   }
 }
+
+
 
 #endif // BLOCKCFD_H
