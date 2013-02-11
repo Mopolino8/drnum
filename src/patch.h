@@ -178,7 +178,8 @@ public: // methods
   vec3_t accessBBoxXYZoMax();
 
   /**
-   * Insert a neighbouring donor patch and insert it.
+   * Check receiving of any data from a neighbouring donor patch
+   * an,d if so, insert it.
    * receiving block: "this"
    * donor block:     neighbour_patch
    * @param neighbour_patch the new donor neighbour patch of "this".

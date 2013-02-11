@@ -20,9 +20,9 @@ class CartesianPatch : public Patch
 
 protected: // attributes
 
-  size_t m_NumI;
-  size_t m_NumJ;
-  size_t m_NumK;
+  size_t m_NumI; // number of CELLS in I-direction (num nodes = m_NumI+1)
+  size_t m_NumJ; // number of CELLS in J-direction (num nodes = m_NumJ+1)
+  size_t m_NumK; // number of CELLS in K-direction (num nodes = m_NumK+1)
 
   real m_Xo;
   real m_Yo;

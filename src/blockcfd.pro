@@ -133,5 +133,7 @@ HEADERS += \
     examples/two_patches_1.h \
     examples/two_patches_2.h \
     examples/two_patches_3.h \
+    examples/cpujet.h \
+    examples/cpujet_mb1.h \
     rungekuttapg1.h \
     utility/namespace_mouse.hh

@@ -44,23 +44,24 @@ class InterCoeffWS
 protected: // attributes
 
   /// @todo new mem-structure: m_DonorPatch probably obsolete due to borrowed pointers anyway
+  /// => OK
   /// Patch from which data will be received.
-  Patch* m_DonorPatch;
+  // Patch* m_DonorPatch;
 
-  /// Coordinate transformation from m_DonorPatch to receiving Patch.
+  /// Coordinate transformation from "donor patch" to "receiving patch.
   CoordTransform m_ct;
 
-  /// Contributing pairs(cells, weights) in giving Patch.
+  /// Data transfer list (see above SingleInterCoeffWS contents: Cell indices of receiveing patch, ws of donor)
   vector<SingleInterCoeffWS> m_DonorCellContribsWS;
 
 
 public: // methods
 
-  /**
-    * Set donor patch.
-    * @param donor_patch
-    */
-  void setDonorPatch(Patch* donor_patch);
+//  /**
+//    * Set donor patch.
+//    * @param donor_patch
+//    */
+//  void setDonorPatch(Patch* donor_patch);
 
   /**
     * Set relative coordinate transformation. Required for later access when transfering vectorial data.
@@ -142,10 +143,10 @@ public: // methods
 };  // end class definition
 
 
-inline void InterCoeffWS::setDonorPatch(Patch* donor_patch)
-{
-  m_DonorPatch = donor_patch;
-}
+//inline void InterCoeffWS::setDonorPatch(Patch* donor_patch)
+//{
+//  m_DonorPatch = donor_patch;
+//}
 
 
 inline void InterCoeffWS::setCoordTransform(const CoordTransform& ct_donor2owner)

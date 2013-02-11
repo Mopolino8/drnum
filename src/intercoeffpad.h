@@ -116,7 +116,10 @@ public: // methods
 
 inline void InterCoeffPad::build(InterCoeffWS& icws)
 {
-  m_DonorPatch = icws.m_DonorPatch;
+
+    // CHANGE_DONOR! m_DonorPatch = icws.m_DonorPatch;
+
+
   m_ct = icws.m_ct;
   // Number of receiving cells
   m_NumRecCells = icws.getNumRecCells();

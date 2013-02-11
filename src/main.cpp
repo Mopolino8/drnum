@@ -8,8 +8,10 @@
 // #include "examples/wedge.h"
 
 //#include "examples/two_patches_1.h"
-#include "examples/two_patches_2.h"
+//#include "examples/two_patches_2.h"
 //#include "examples/two_patches_3.h"
+//#include "examples/cpujet.h"
+#include "examples/cpujet_mb1.h"
 
 int main()
 {
