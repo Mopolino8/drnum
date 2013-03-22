@@ -8,15 +8,13 @@
 class TimeIntegration
 {
 
-private: // attributes
+protected:
 
   list<PatchIterator*>    m_Iterators;
   list<GenericOperation*> m_PostOperations;
 
+  virtual void copyField(size_t i_src, size_t i_dst);
 
-protected:
-
-  void copyField(size_t i_src, size_t i_dst);
   void computeIterators(real factor);
   void runPostOperations();
 

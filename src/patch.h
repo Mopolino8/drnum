@@ -349,16 +349,6 @@ inline void Patch::addField(size_t i_op1, real factor, size_t i_op2, size_t i_ds
   addField(getField(i_op1), factor, getField(i_op2), getField(i_dst));
 }
 
-inline real* Patch::getField(size_t i_field)
-{
-  return m_Data + i_field*m_FieldSize;
-}
-
-inline real* Patch::getVariable(size_t i_field, size_t i_variable)
-{
-  return getField(i_field) + i_variable*m_VariableSize;
-}
-
 inline vec3_t Patch::accessBBoxXYZoMin()
 {
   if(!m_bbox_OK) {

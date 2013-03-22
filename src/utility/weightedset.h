@@ -403,7 +403,7 @@ inline void WeightedSet<T>::Unify()
 template<class T>
 inline void WeightedSet<T>::Concatenate(const WeightedSet<T>& w)
 {
-  for(size_t i=0; i < w.size(); i++) {
+  for(size_t i=0; i < w.v.size(); i++) {
     push_back(w[i]);
   };
   sure_sorted = false;
@@ -412,7 +412,7 @@ inline void WeightedSet<T>::Concatenate(const WeightedSet<T>& w)
 template<class T>
 inline void WeightedSet<T>::Concatenate(const WeightedSet<T>& w, const T& s)
 {
-  for(size_t i=0; i < w.size(); i++) {
+  for(size_t i=0; i < w.v.size(); i++) {
     pair<size_t, T> pp;
     pp.first = w[i].first;
     pp.second = w[i].second * s;

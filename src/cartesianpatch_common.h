@@ -1,10 +1,11 @@
-#include "blockcfd_cuda.h"
+#include "blockcfd.h"
 
 private:
 
 size_t m_NumI;
 size_t m_NumJ;
 size_t m_NumK;
+size_t m_NumJK;
 
 real m_Dx;
 real m_Dy;
@@ -14,22 +15,19 @@ real m_InvDy;
 real m_InvDz;
 
 
-protected:
-
-
 public:
 
-CUDA_DH size_t sizeI() { return m_NumI; }
-CUDA_DH size_t sizeJ() { return m_NumJ; }
-CUDA_DH size_t sizeK() { return m_NumK; }
+CUDA_DH size_t sizeI() const { return m_NumI; }
+CUDA_DH size_t sizeJ() const { return m_NumJ; }
+CUDA_DH size_t sizeK() const { return m_NumK; }
 
-CUDA_DH real dx()  { return m_Dx; }
-CUDA_DH real dy()  { return m_Dy; }
-CUDA_DH real dz()  { return m_Dz; }
-CUDA_DH real dV()  { return m_Dx*m_Dy*m_Dz; }
-CUDA_DH real idx() { return m_InvDx; }
-CUDA_DH real idy() { return m_InvDy; }
-CUDA_DH real idz() { return m_InvDz; }
+CUDA_DH real dx()  const { return m_Dx; }
+CUDA_DH real dy()  const { return m_Dy; }
+CUDA_DH real dz()  const { return m_Dz; }
+CUDA_DH real dV()  const { return m_Dx*m_Dy*m_Dz; }
+CUDA_DH real idx() const { return m_InvDx; }
+CUDA_DH real idy() const { return m_InvDy; }
+CUDA_DH real idz() const { return m_InvDz; }
 
 /**
  * @brief Get the field index of an (i, j, k) triple/
@@ -89,7 +87,7 @@ CUDA_DH real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k)
   }
 #endif
   GlobalDebug::ijk(i, j, k);
-  return getVariable(i_field, i_var)[i*m_NumJ*m_NumK + j*m_NumK + k];
+  return getVariable(i_field, i_var)[i*m_NumJK + j*m_NumK + k];
 }
 
 /**
@@ -103,9 +101,8 @@ CUDA_DH real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k)
  */
 CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
-  real* var = new real[numVariables()];
+  real var[10]; /// @todo possibly better done with a template parameter
   real D = 1.0/dx();
-  countFlops(1);
   if (i > 0 && i < sizeI()-1) {
     getVar(i_field, i+1, j, k, grad);
     getVar(i_field, i-1, j, k, var);
@@ -123,7 +120,6 @@ CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
     grad[i_var] *= D;
   }
   countFlops(2*numVariables());
-  delete [] var;
 }
 
 /**
@@ -138,7 +134,7 @@ CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
   if (sizeJ() > 2) {
-    real* var = new real[numVariables()];
+    real var[10]; /// @todo possibly better done with a template parameter
     real D = 1.0/dy();
     countFlops(1);
     if (j > 0 && j < sizeJ()-1) {
@@ -158,7 +154,6 @@ CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
       grad[i_var] *= D;
     }
     countFlops(2*numVariables());
-    delete [] var;
   } else {
     for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
       grad[i_var] = 0;
@@ -177,7 +172,7 @@ CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
  */
 CUDA_DH void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
-  real* var = new real[numVariables()];
+  real var[10]; /// @todo possibly better done with a template parameter
   real D = 1.0/dz();
   countFlops(1);
   if (k > 0 && k < sizeK()-1) {
@@ -197,7 +192,6 @@ CUDA_DH void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
     grad[i_var] *= D;
   }
   countFlops(2*numVariables());
-  delete [] var;
 }
 
 /**
@@ -223,17 +217,18 @@ CUDA_DH bool checkRange(size_t i, size_t j, size_t k)
  * param obj a constant reference to the other object
  */
 template <typename T>
-CUDA_HO void copyAttributes(const T& obj)
+CUDA_HO void copyAttributes(T* obj)
 {
-  m_NumI  = obj.sizeI();
-  m_NumJ  = obj.sizeJ();
-  m_NumK  = obj.sizeK();
-  m_Dx    = obj.dx();
-  m_Dy    = obj.dy();
-  m_Dz    = obj.dz();
-  m_InvDx = obj.idx();
-  m_InvDy = obj.idy();
-  m_InvDz = obj.idz();
+  m_NumI  = obj->sizeI();
+  m_NumJ  = obj->sizeJ();
+  m_NumK  = obj->sizeK();
+  m_NumJK = obj->sizeJ()*obj->sizeK();
+  m_Dx    = obj->dx();
+  m_Dy    = obj->dy();
+  m_Dz    = obj->dz();
+  m_InvDx = obj->idx();
+  m_InvDy = obj->idy();
+  m_InvDz = obj->idz();
 }
 
 

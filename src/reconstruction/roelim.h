@@ -5,7 +5,7 @@
 
 struct RoeLim
 {
-  static real delta(real delta1, real delta2)
+  static CUDA_DH real delta(real delta1, real delta2)
   {
     countFlops(1);
     if (delta1*delta2 <= 0) {

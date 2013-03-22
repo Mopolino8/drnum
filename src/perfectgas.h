@@ -8,19 +8,19 @@ class PerfectGas
 
 public: // static methods
 
-  static real R(real* = NULL)     { return 287; }       ///< @todo find a concept for this
-  static real gamma(real* = NULL) { return 1.4; }       ///< @todo find a concept for this
-  static real cp(real* = NULL)    { return 1004.5; }    ///< @todo find a concept for this
-  static real cv(real* = NULL)    { return 717.5; }     ///< @todo find a concept for this
-  static real mu(real* = NULL)    { return 1.8e-5; }    ///< @todo find a concept for this
-  static real Pr(real* = NULL)    { return 0.7; }       ///< @todo find a concept for this
+  static CUDA_DH real R(real* = NULL)     { return 287; }       ///< @todo find a concept for this
+  static CUDA_DH real gamma(real* = NULL) { return 1.4; }       ///< @todo find a concept for this
+  static CUDA_DH real cp(real* = NULL)    { return 1004.5; }    ///< @todo find a concept for this
+  static CUDA_DH real cv(real* = NULL)    { return 717.5; }     ///< @todo find a concept for this
+  static CUDA_DH real mu(real* = NULL)    { return 1.8e-5; }    ///< @todo find a concept for this
+  static CUDA_DH real Pr(real* = NULL)    { return 0.7; }       ///< @todo find a concept for this
 
-  static void primitiveToConservative(real p, real T, real* var);
-  static void primitiveToConservative(real p, real T, real u, real v, real w, real* var);
-  static void primitiveToConservative(real p, real T, vec3_t U, real* var);
-  static void conservativeToPrimitive(real* var, real& p, real& T);
-  static void conservativeToPrimitive(real* var, real& p, real& T, real& u, real& v, real& w);
-  static void conservativeToPrimitive(real* var, real& p, real& T, vec3_t& U);
+  static CUDA_DH void primitiveToConservative(real p, real T, real* var);
+  static CUDA_DH void primitiveToConservative(real p, real T, real u, real v, real w, real* var);
+  static CUDA_DH void primitiveToConservative(real p, real T, vec3_t U, real* var);
+  static CUDA_DH void conservativeToPrimitive(real* var, real& p, real& T);
+  static CUDA_DH void conservativeToPrimitive(real* var, real& p, real& T, real& u, real& v, real& w);
+  static CUDA_DH void conservativeToPrimitive(real* var, real& p, real& T, vec3_t& U);
 
 };
 

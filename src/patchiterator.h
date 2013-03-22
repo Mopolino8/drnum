@@ -20,7 +20,7 @@ public:
 
   Patch* patch() { return m_Patch; }
 
-  virtual void compute(real factor) = 0;  
+  virtual void compute(real factor) = 0;
 
 };
 

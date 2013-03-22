@@ -5,10 +5,10 @@
 
 struct VanLeerLim
 {
-  static real lim(real delta1, real delta2)
+  static CUDA_DH real lim(real delta1, real delta2)
   {
     countFlops(5);
-    real r   = delta2/nonZero(delta1, global_eps);
+    real r   = delta2/nonZero(delta1, GLOBAL_EPS);
     return (r + fabs(r))/(1 + fabs(r));
   }
 };

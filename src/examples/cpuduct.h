@@ -24,7 +24,7 @@ class MyFlux
   typedef Upwind1            reconstruction1_t;
   typedef KNP<reconstruction1_t, PerfectGas> euler1_t;
   typedef AusmDV<reconstruction2_t, PerfectGas> euler2_t;
-  typedef CompressibleWallFlux<reconstruction1_t, PerfectGas> wall_t;
+  typedef CompressibleSlipFlux<reconstruction1_t, PerfectGas> wall_t;
   typedef CompressibleFarfieldFlux<reconstruction1_t, PerfectGas> farfield_t;
   typedef CompressibleViscFlux<PerfectGas> viscous_t;
 

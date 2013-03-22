@@ -5,6 +5,7 @@ INCLUDEPATH += $(VTKINCDIR)
 INCLUDEPATH += utility
 
 LIBS        += -L$(VTKLIBDIR)
+LIBS        += -L/nopt/cuda/5.0/lib64
 LIBS        += -lQVTK
 LIBS        += -lvtkCommon
 LIBS        += -lvtkDICOMParser
@@ -35,10 +36,19 @@ QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
 # CUDA
 # ====
 #
+USEGPU                 = -DGPU
 LIBS                  += -lcudart
 LIBS                  += -lgomp
-INCLUDEPATH           += /opt/CUDA-4.2
-NVCCFLAGS             += -Xcompiler -fopenmp -O3 -m64 -arch=sm_13# -Xptxas -dlcm=cg #NVCCFLAGS  += -g -G
+INCLUDEPATH           += .
+INCLUDEPATH           += /usr/include/QtCore
+NVCCFLAGS             += -Xcompiler -fopenmp
+NVCCFLAGS             += -O3
+#NVCCFLAGS             += -g -G
+NVCCFLAGS             += -m64
+NVCCFLAGS             += -arch=sm_20
+#NVCCFLAGS             += -keep
+NVCCFLAGS             += -Xcompiler -Wno-deprecated
+NVCCFLAGS             += -Xcompiler $$USEGPU
 CUDA_INC               = $$join(INCLUDEPATH,' -I','-I',' ')
 cuda.input             = CUDA_SOURCES
 cuda.output            = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
@@ -46,6 +56,7 @@ cuda.commands          = nvcc -c $$NVCCFLAGS $$CUDA_INC ${QMAKE_FILE_NAME} -o ${
 cuda.dependency_type   = TYPE_C
 cuda.depend_command    = nvcc -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
 QMAKE_EXTRA_COMPILERS += cuda
+QMAKE_CXXFLAGS        += $$USEGPU
 
 
 
@@ -72,7 +83,10 @@ SOURCES += main.cpp \
     shapes/box.cpp \
     debug.cpp \
     shapes/cylindery.cpp \
-    rungekuttapg1.cpp
+    rungekuttapg1.cpp \
+    main.cu
+
+SOURCES -= main.cu
 
 HEADERS += \
     patch.h \
@@ -98,7 +112,6 @@ HEADERS += \
     math/coordtransformvv.h \
     fluxes/ausmdv.h \
     fluxes/ausm.h \
-    fluxes/compressiblewallflux.h \
     perfectgas.h \
     iterators/cartesiandirectionalpatchoperation.h \
     shapes/sphere.h \
@@ -156,7 +169,17 @@ HEADERS += \
     gpu_cartesianpatch.h \
     cartesianpatch_common.h \
     patch_common.h \
-    blockcfd_cuda.h \
     examples/cpuduct.h \
     examples/cpujet.h \
-    gpu_patch.h
+    gpu_patch.h \
+    examples/gpujet.h \
+    iterators/gpu_cartesianiterator.h \
+    examples/jetflux.h \
+    gpu_rungekutta.h \
+    iterators/gpu_patchiterator.h \
+    fluxes/compressibleslipflux.h \
+    fluxes/compressiblewallflux.h \
+    examples/jet_common.h
+
+CUDA_SOURCES += main.cu
+

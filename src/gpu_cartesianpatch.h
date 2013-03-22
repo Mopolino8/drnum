@@ -1,10 +1,10 @@
 #ifndef GPU_CARTESIANPATCH_H
 #define GPU_CARTESIANPATCH_H
 
-#include "cartesianpatch.h"
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
+#include "cartesianpatch.h"
 #include "gpu_patch.h"
 
 class GPU_CartesianPatch : public GPU_Patch
@@ -14,7 +14,7 @@ class GPU_CartesianPatch : public GPU_Patch
 
 public:
 
-  CUDA_HO GPU_CartesianPatch(const CartesianPatch& patch)
+  CUDA_HO GPU_CartesianPatch(CartesianPatch* patch) : GPU_Patch(patch)
   {
     copyAttributes(patch);
   }

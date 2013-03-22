@@ -141,9 +141,10 @@ void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real y
 
 void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
 {
-  m_NumI = num_i;
-  m_NumJ = num_j;
-  m_NumK = num_k;
+  m_NumI  = num_i;
+  m_NumJ  = num_j;
+  m_NumK  = num_k;
+  m_NumJK = num_j*num_k;
   deleteData();
   Patch::resize(m_NumI*m_NumJ*m_NumK);
   computeDeltas();

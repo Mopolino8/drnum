@@ -20,25 +20,25 @@ extern real   z;
 void print();
 
 #ifdef DEBUG
-inline void xyz(real X, real Y, real Z)
+inline CUDA_DH void xyz(real X, real Y, real Z)
 {
   x = X;
   y = Y;
   z = Z;
 }
 #else
-inline void xyz(real, real, real) {};
+inline void xyz(real, real, real) {}
 #endif
 
 #ifdef DEBUG
-inline void ijk(size_t I, size_t J, size_t K)
+inline CUDA_DH void ijk(size_t I, size_t J, size_t K)
 {
   i = I;
   j = J;
   k = K;
 }
 #else
-inline void ijk(size_t, size_t, size_t) {};
+inline CUDA_DH void ijk(size_t, size_t, size_t) {}
 #endif
 
 }

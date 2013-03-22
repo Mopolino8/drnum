@@ -7,7 +7,7 @@
 class RungeKutta : public TimeIntegration
 {
 
-private: // attributes
+protected: // attributes
 
   list<real> m_Alpha;
 
