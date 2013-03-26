@@ -2,9 +2,13 @@
 #define PATCHGRID_H
 
 #include <cstddef>
+#include <string.h>
+#include <iostream>
+#include <fstream>
 
 #include "blockcfd.h"
 #include "patch.h"
+#include "cartesianpatch.h"
 #include "vectorhashraster.h"
 
 class PatchGrid
@@ -86,7 +90,7 @@ public: // methods
   /**
    * Read patch list from file.
    */
-  void readGrid() {BUG;}
+  void readGrid();
 
   /**
    * Write patch list to file.

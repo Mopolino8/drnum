@@ -166,6 +166,20 @@ public: // methods
   }
 
   /**
+    * Read mesh data from file
+    * @param s_mesh the stream to read from
+    * @return true, if successful
+    */
+  virtual bool readFromFile(ifstream& s_mesh) { };
+
+  /**
+    * Write mesh data to file
+    * @param s_mesh the stream to write to
+    * @return true, if successful
+    */
+  virtual bool writeToFile(ifstream& s_mesh) { };
+
+  /**
     * Access
     * @return lower coordinates of bounding box
     */

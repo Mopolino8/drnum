@@ -248,6 +248,83 @@ void PatchGrid::deletePatch(size_t i_patch)
 }
 
 
+void PatchGrid::readGrid()
+{
+  // Get file path
+  /** @todo Use a better file path definition. */
+  char base_files_path[4096];
+  char grid_file[4096];
+  if(getcwd(base_files_path, sizeof(base_files_path)) == NULL) {
+    cout << " Could not get current working directory" << endl;
+    BUG;
+  };
+  strcpy(grid_file, base_files_path);
+  strcat(grid_file,"/grid/patches");
+  // Open grid file
+  ifstream s_grid(grid_file);
+  if (s_grid.fail()) {
+    cout << " faild to open grid file:" << grid_file << endl;
+    BUG;
+  };
+  // Say something
+  cout << "Reading PatchGrid::readGrid() from file " << grid_file << " ... ";
+  /** @todo Preliminary format. */
+  while(!s_grid.eof()) {
+    // read int-code of patch
+    size_t patch_type;
+    s_grid >> patch_type;
+    if(patch_type == 1001) { // CartesianPatch
+      //.. Create a new CartesianPatch
+      CartesianPatch* new_patch;
+      new_patch = new CartesianPatch();
+//      Patch* new_patch;
+//      new_patch = new Patch();
+      insertPatch(new_patch);
+
+// HIER GEHTS WEITER
+    };
+  };
+}
+
+
+
+
+
+//  strcpy(defprop_file, base_files_path);
+//  strcat(defprop_file,"/default_files/particles.defprop");
+//  //
+//  // Open "defprop" file
+
+//  ifstream s_defprop(defprop_file);
+//  if (s_defprop.fail()) {
+//    cout << " faild to open default properties file:" << defprop_file << endl;
+//    exit(EXIT_FAILURE);
+//  };
+//  // Say something
+//  cout << "Reading CParticleDefaults::ReadFile() from file " << defprop_file << " ... ";
+//  //
+//  // Read file
+//  char c;
+//  //.. Number of particles per cell
+//  while (!s_defprop.fail()) {
+//    s_defprop.get(c);
+//    if(c==':') {
+//      break;
+//    };
+//  };
+
+
+
+
+//  ifstream s_scene((scene_file).c_str());
+//      if (s_scene.fail()) Error("couldn't open " + scene_file);
+
+
+//  // read line by line and pass over to individual patch reader
+
+//};
+
+
 void PatchGrid::buildBoundingBox(const bool& force)
 {
   if(!m_bbox_OK || force) {

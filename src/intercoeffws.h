@@ -99,6 +99,12 @@ public: // methods
   void push(const size_t& i_indirect, const size_t& i_direct, const WeightedSet<real>& contribution);
 
   /**
+    * Shift indirect receive indicees of type
+    *  SingleInterCoeffWS::indirect_receiveindex[index_new_from_old[ll]] = SingleInterCoeffWS::indirect_receiveindex[ll]
+    */
+  void reindexIndReceive(const vector<size_t>& index_new_from_old);
+
+  /**
     * Prepare for averiging: divide contributions for a receiving cell by number of contributing patches
     * NOTE: A receiving cell might be located in the core region of several donor patches.
     * @param hits a vector containing the number of contributing donor patches.
@@ -190,6 +196,15 @@ inline void InterCoeffWS::push(const size_t& i_indirect, const size_t& i_direct,
   m_DonorCellContribsWS.push_back(sic_h);  /// @todo strange debug error on ddd: cannot access operator[] unless the folowing line is active
   // cout << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].indirect_receiveindex;
   // cout << " w_set-size = " << m_DonorCellContribsWS[m_DonorCellContribsWS.size()-1].donor_contribution.v.size() << endl;
+}
+
+
+inline void InterCoeffWS::reindexIndReceive(const vector<size_t>& index_new_from_old)
+{
+  for(size_t ll=0; ll<m_DonorCellContribsWS.size(); ll++) {
+    size_t ind_rec_h = m_DonorCellContribsWS[ll].indirect_receiveindex;
+    m_DonorCellContribsWS[ll].indirect_receiveindex = index_new_from_old[m_DonorCellContribsWS[ll].indirect_receiveindex];
+  }
 }
 
 
