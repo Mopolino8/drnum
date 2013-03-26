@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <vector>
 #include "blockcfd.h"
-#include "weightedset.h"
+#include "utility/weightedset.h"
 
 class Patch;
 
@@ -167,6 +167,20 @@ public: // methods
   }
 
   /**
+    * Read mesh data from file
+    * @param s_mesh the stream to read from
+    * @return true, if successful
+    */
+  virtual bool readFromFile(ifstream& s_mesh) { };
+
+  /**
+    * Write mesh data to file
+    * @param s_mesh the stream to write to
+    * @return true, if successful
+    */
+  virtual bool writeToFile(ifstream& s_mesh) { };
+
+  /**
     * Access
     * @return lower coordinates of bounding box
     */
@@ -179,7 +193,8 @@ public: // methods
   vec3_t accessBBoxXYZoMax();
 
   /**
-   * Insert a neighbouring donor patch and insert it.
+   * Check receiving of any data from a neighbouring donor patch
+   * an,d if so, insert it.
    * receiving block: "this"
    * donor block:     neighbour_patch
    * @param neighbour_patch the new donor neighbour patch of "this".

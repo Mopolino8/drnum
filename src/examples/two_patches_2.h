@@ -191,6 +191,7 @@ void run()
   patch_grid.insertPatch(&patches[0]); // NOTE: must be inserted before setting protection exceptions
   patches[0].setNumberOfFields(2);
   patches[0].setNumberOfVariables(5);
+  patches[0].setNumOverlapLayers(2);
   patches[0].setNumProtectException(1, 1, 0, 0, 0, 0);
   patches[0].setupAligned(x_min, y_min, z_min, x_max, y_max, z_max);
   patches[0].resize(NI_0, NJ, NK);
@@ -202,6 +203,7 @@ void run()
   patch_grid.insertPatch(&patches[1]);
   patches[1].setNumberOfFields(2);
   patches[1].setNumberOfVariables(5);
+  patches[1].setNumOverlapLayers(2);
   patches[1].setNumProtectException(1, 1, 0, 0, 0, 0);
   patches[1].setupAligned(x_min, y_min, z_min, x_max, y_max, z_max);
   patches[1].resize(NI_1, NJ, NK);

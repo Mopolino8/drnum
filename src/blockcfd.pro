@@ -2,7 +2,6 @@ TEMPLATE = app
 CONFIG += console
 
 INCLUDEPATH += $(VTKINCDIR)
-INCLUDEPATH += utility
 
 LIBS        += -L$(VTKLIBDIR)
 LIBS        += -L/nopt/cuda/5.0/lib64
@@ -89,97 +88,99 @@ SOURCES += main.cpp \
 SOURCES -= main.cu
 
 HEADERS += \
-    patch.h \
-    cartesianpatch.h \
     blockcfd.h \
-    reconstruction/upwind1.h \
-    fluxes/ausmplus.h \
-    fluxes/ausmplus.h \
-    reconstruction/upwind2.h \
-    iterators/cartesianpatchoperation.h \
-    timeintegration.h \
-    patchiterator.h \
-    iterators/cartesianstandarditerator.h \
-    iterators/cartesianstandardpatchoperation.h \
-    rungekutta.h \
-    patchgrid.h \
-    intercoeffpad.h \
-    intercoeffws.h \
-    utility/weightedset.h \
-    utility/List.hh \
-    utility/MError.hh \
-    math/coordtransform.h \
-    math/coordtransformvv.h \
-    fluxes/ausmdv.h \
-    fluxes/ausm.h \
-    perfectgas.h \
-    iterators/cartesiandirectionalpatchoperation.h \
-    shapes/sphere.h \
-    fluxes/compressiblefarfieldflux.h \
-    reconstruction/immersedboundaryreconstruction.h \
     boundary_conditions/compressibleeulerwall.h \
-    shapes/shape.h \
-    math/smallsquarematrix.h \
-    math/mathvector_structs.h \
-    math/mathvector_operators.h \
-    math/mathvector_methods.h \
-    math/mathvector.h \
-    math/linsolve.h \
-    transformation.h \
-    shapes/halfspace.h \
-    compressiblevariables.h \
+    cartesianpatch_common.h \
+    cartesianpatch.h \
     cartesianraster.h \
-    utility/TInsectionList.hh \
-    vectorhashraster.h \
-    tinsecthashraster.h \
-    utility/sparseweightedset.h \
-    utility/usparseweightedset.h \
-    structuredhexraster.h \
-    raster.h \
-    shapes/triangulatedshape.h \
-    shapes/noshape.h \
-    shapes/box.h \
-    reconstruction/minmod.h \
-    reconstruction/vanalbada.h \
-    fluxes/compressibleflux.h \
-    fluxes/kt.h \
-    fluxes/knp.h \
-    reconstruction/upwindcentral.h \
-    reconstruction/vanleerlim.h \
+    compressiblevariables.h \
     debug.h \
-    fluxes/roe.h \
-    fluxes/vanleer.h \
-    reconstruction/roelim.h \
-    fluxes/compressibleviscflux.h \
-    shapes/cylindery.h \
-    reconstruction/secondorder.h \
+    examples/cpuduct.h \
+    examples/cpujet.h \
+    examples/cpujet_mb1.h \
     examples/ffs1.h \
-    examples/interpolation1.h \
-    examples/overexpandedjet2d.h \
-    examples/kelvinhelmholtz.h \
     examples/flatplate.h \
-    genericoperation.h \
-    fluxes/ktmod.h \
-    examples/wedge.h \
+    examples/gpujet.h \
+    examples/interpolation1.h \
+    examples/jet_common.h \
+    examples/jetflux.h \
+    examples/kelvinhelmholtz.h \
+    examples/overexpandedjet2d.h \
     examples/tjunction.h \
     examples/two_patches_1.h \
     examples/two_patches_2.h \
     examples/two_patches_3.h \
-    rungekuttapg1.h \
-    gpu_cartesianpatch.h \
-    cartesianpatch_common.h \
-    patch_common.h \
-    examples/cpuduct.h \
-    examples/cpujet.h \
-    gpu_patch.h \
-    examples/gpujet.h \
-    iterators/gpu_cartesianiterator.h \
-    examples/jetflux.h \
-    gpu_rungekutta.h \
-    iterators/gpu_patchiterator.h \
+    examples/wedge.h \
+    fluxes/ausmdv.h \
+    fluxes/ausm.h \
+    fluxes/ausmplus.h \
+    fluxes/compressiblefarfieldflux.h \
+    fluxes/compressibleflux.h \
     fluxes/compressibleslipflux.h \
+    fluxes/compressibleviscflux.h \
     fluxes/compressiblewallflux.h \
-    examples/jet_common.h
+    fluxes/knp.h \
+    fluxes/kt.h \
+    fluxes/ktmod.h \
+    fluxes/roe.h \
+    fluxes/vanleer.h \
+    genericoperation.h \
+    gpu_cartesianpatch.h \
+    gpu_patch.h \
+    gpu_rungekutta.h \
+    intercoeffpad.h \
+    intercoeffws.h \
+    iterators/cartesiandirectionalpatchoperation.h \
+    iterators/cartesianpatchoperation.h \
+    iterators/cartesianstandarditerator.h \
+    iterators/cartesianstandardpatchoperation.h \
+    iterators/gpu_cartesianiterator.h \
+    iterators/gpu_patchiterator.h \
+    math/coordtransform.h \
+    math/coordtransformvv.h \
+    math/linsolve.h \
+    math/mathvector.h \
+    math/mathvector_methods.h \
+    math/mathvector_operators.h \
+    math/mathvector_structs.h \
+    math/smallsquarematrix.h \
+    patch_common.h \
+    patchgrid.h \
+    patch.h \
+    patchiterator.h \
+    perfectgas.h \
+    raster.h \
+    reconstruction/immersedboundaryreconstruction.h \
+    reconstruction/minmod.h \
+    reconstruction/roelim.h \
+    reconstruction/secondorder.h \
+    reconstruction/upwind1.h \
+    reconstruction/upwind2.h \
+    reconstruction/upwindcentral.h \
+    reconstruction/vanalbada.h \
+    reconstruction/vanleerlim.h \
+    rungekutta.h \
+    rungekuttapg1.h \
+    shapes/box.h \
+    shapes/cylindery.h \
+    shapes/halfspace.h \
+    shapes/noshape.h \
+    shapes/shape.h \
+    shapes/sphere.h \
+    shapes/triangulatedshape.h \
+    structuredhexraster.h \
+    timeintegration.h \
+    tinsecthashraster.h \
+    transformation.h \
+    utility/List.hh \
+    utility/MError.hh \
+    utility/namespace_mouse.hh \
+    utility/sparseweightedset.h \
+    utility/TInsectionList.hh \
+    utility/usparseweightedset.h \
+    utility/weightedset.h \
+    vectorhashraster.h \
+
 
 CUDA_SOURCES += main.cu
 

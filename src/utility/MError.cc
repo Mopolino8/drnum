@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <typeinfo>
  
-#include <namespace_mouse.hh>
+#include "utility/namespace_mouse.hh"
 BEGIN_MOUSE
  
  

@@ -9,8 +9,8 @@
 
 using namespace std;
 
-#include "namespace_mouse.hh"
-#include "mouse_types.hh"    /// @todo mouse_types needed for namespace (?)
+#include "utility/namespace_mouse.hh"
+#include "utility/mouse_types.hh"    /// @todo mouse_types needed for namespace (?)
 
 using namespace fvmouse;
 

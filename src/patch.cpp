@@ -67,12 +67,12 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   // Depending on calculation type, insert donor and relative coord transformation into InterCoeffWS lists
   if (m_InterpolateData) {
     m_InterCoeffData_WS.resize(i_neighbour + 1);
-    m_InterCoeffData_WS[i_neighbour].setDonorPatch(neighbour_patch);
+    //CHANGE_DONOR! m_InterCoeffData_WS[i_neighbour].setDonorPatch(neighbour_patch);
     m_InterCoeffData_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
   }   /// @todo would be nice to have a link_vector<T>
   if (m_InterpolateGrad1N) {
     m_InterCoeffGrad1N_WS.resize(i_neighbour + 1);
-    m_InterCoeffGrad1N_WS[i_neighbour].setDonorPatch(neighbour_patch);
+    //CHANGE_DONOR! m_InterCoeffGrad1N_WS[i_neighbour].setDonorPatch(neighbour_patch);
     m_InterCoeffGrad1N_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
   }
   bool found_dependency = computeDependencies(i_neighbour);
@@ -88,13 +88,81 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
 
 void Patch::finalizeDependencies()
 {
+  // Eliminate pretended receiving cells, if these received no hits at all,
+  // m_receive_cell_data_hits[i] == 0 && m_receive_cell_grad1N_hits[i] == 0
+  // Do the following:
+  //  1) Build a scratch list v_shift with index shifts
+  //  2) Build a scratch list index_new_from_old, so that an operation of type
+  //     m_receive_cells..new[ll] = m_receive_cells..old[index_new_from_old[ll]]
+  //     eliminates all zeros
+  //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
+  //  4) Apply on indirect receive indicees stored in InterCoeffWS
+
+  //    ATTENTION: Actually indirect_receiveindex is needed only until InterCoeffWS::adjust2Average is done
+
+  //  1) Build a scratch list v_shift with index shifts
+  size_t shift = 0;
+  vector<size_t> v_shift;
+  v_shift.resize(m_receive_cells.size(), 0);
+  for(size_t i_rec = 0; i_rec < m_receive_cells.size(); i_rec++) {
+    v_shift[i_rec] = shift;
+    bool any_hit = false;
+    if(m_InterpolateData) {
+      if(m_receive_cell_data_hits[i_rec] > 0) {
+        any_hit = true;
+      }
+    }
+    if(m_InterpolateGrad1N) {
+      if(m_receive_cell_grad1N_hits[i_rec] > 0) {
+        any_hit = true;
+      }
+    }
+    if(!any_hit) { // not any donor contribution found
+      shift++;
+    }
+  }
+  //  2) Build a scratch list index_new_from_old, so that an operation of type
+  //     m_receive_cells..new[ll] = m_receive_cells..old[index_new_from_old[ll]]
+  //     eliminates all zeros
+  vector<size_t> index_new_from_old;
+  index_new_from_old.resize(m_receive_cells.size(), 0);
+  for(size_t i_rec = 0; i_rec < m_receive_cells.size(); i_rec++) {
+    index_new_from_old[i_rec] = i_rec - v_shift[i_rec];
+  }
+  //.. Total number of cells with neighbour contribs
+  size_t num_cells_w_contrib = m_receive_cells.size() - v_shift[m_receive_cells.size() - 1];
+
+  //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
+  for(size_t i_rec = 0; i_rec < m_receive_cells.size(); i_rec++) {
+    m_receive_cells[index_new_from_old[i_rec]] = m_receive_cells[i_rec];
+    if(m_InterpolateData) {
+      m_receive_cell_data_hits[index_new_from_old[i_rec]] = m_receive_cell_data_hits[i_rec];
+    }
+    if(m_InterpolateGrad1N) {
+      m_receive_cell_grad1N_hits[index_new_from_old[i_rec]] = m_receive_cell_grad1N_hits[i_rec];
+    }
+  }
+  //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
+  m_receive_cells.resize(num_cells_w_contrib);
+  if(m_InterpolateData) {
+      m_receive_cell_data_hits.resize(num_cells_w_contrib);
+  }
+  if(m_InterpolateGrad1N) {
+      m_receive_cell_grad1N_hits.resize(num_cells_w_contrib);
+  }
+
+//  Hier gehts weiter
+
+
   // Reduce contribution weights for receiving cells, being influenced by more than one donor patch.
   for (size_t i_donor = 0; i_donor < m_neighbours.size(); i_donor++) {
     if(m_InterpolateData) {
+      m_InterCoeffData_WS[i_donor].reindexIndReceive(index_new_from_old);
       m_InterCoeffData_WS[i_donor].adjust2Average(m_receive_cell_data_hits);
     }
     if(m_InterpolateGrad1N) {
-       m_InterCoeffGrad1N_WS[i_donor].adjust2Average(m_receive_cell_grad1N_hits);
+      m_InterCoeffGrad1N_WS[i_donor].reindexIndReceive(index_new_from_old);
+      m_InterCoeffGrad1N_WS[i_donor].adjust2Average(m_receive_cell_grad1N_hits);
     }
   }
   // Transfer data to padded data sets, if required.
@@ -147,9 +215,12 @@ void Patch::accessDonorData_WS(const size_t& field)
   }
   // set all receiving data variables to 0, as donors will add their contributions onto
   for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
-    size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
-    for(size_t i_v=0; i_v<numVariables(); i_v++) {
-      this_vars[i_v][l_rc] = 0.;
+    /// @todo Eliminate cells from m_receive_cells that did not find any donor neighbour. Eliminates next line.
+    if(m_receive_cell_data_hits[ll_rc] != 0) { // only if at least one donor was found. Else do not alter variables.
+      size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
+      for(size_t i_v=0; i_v<numVariables(); i_v++) {
+        this_vars[i_v][l_rc] = 0.;
+      }
     }
   }
   // loop through neighbouring donor patches
