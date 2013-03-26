@@ -97,3 +97,13 @@ misc/*
 *.suo
 *.ncb
 *.vcproj.*
+
+# VTK
+*.pvsm
+
+blockcfd*
+
+# CUDA
+*.i
+*.ii
+main.*
