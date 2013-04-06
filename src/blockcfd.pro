@@ -98,6 +98,7 @@ HEADERS += \
     examples/cpuduct.h \
     examples/cpujet.h \
     examples/cpujet_mb1.h \
+    examples/cpujet_mb_grid1.h \
     examples/ffs1.h \
     examples/flatplate.h \
     examples/gpujet.h \

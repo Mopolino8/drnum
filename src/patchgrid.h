@@ -21,11 +21,13 @@ protected: // attributes
   //VectorHashRaster<size_t> m_HashRaster;   ///< Hash raster to assist orientation
 
   // settings (same as individually defined in patch.h)
+  size_t  m_NumFields;       ///< number of fields (e.g. old, new, ...)
+  size_t  m_NumVariables;    ///< number of variables (e.g. rho, rhou, ...)
   bool m_InterpolateData;    ///< Flag indicates wether to interpolate data on interpatch transfers
   bool m_InterpolateGrad1N;  ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
   bool m_TransferPadded;     ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
-  size_t m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
-  size_t m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
+  size_t m_NumProtectLayers; ///< number of boundary protection layers, in which no interpol access from other patches is allowed
+  size_t m_NumOverlapLayers; ///< number of boundary cell layers, for which to get data from donor neighbour patches
 
   vec3_t m_bbox_xyzo_min;   ///< lowest coordinates of smallest box around grid in inertial coords.
   vec3_t m_bbox_xyzo_max;   ///< highest coordinates of smallest box around grid in inertial coords.
@@ -39,6 +41,17 @@ protected: // methods
 public: // methods
 
   PatchGrid(size_t num_protectlayers=1, size_t num_overlaplayers=1);
+
+  /** Set number of variable fields on all patches of patchgrid.
+    * @param num_fields number of variable fields.
+    */
+  void  setNumberOfFields(size_t num_fields);
+
+  /**
+    * Set number of variables on all patches of patchgrid.
+    * @param num_variables number of variables.
+    */
+  void  setNumberOfVariables(size_t num_variables);
 
   /**
     * Set interaction with/without data transfers
@@ -98,6 +111,13 @@ public: // methods
   void writeGrid() {BUG;}
 
   /**
+    * Scale total patchgrid relative to origin of parental coordsyst.
+    * NOTE: Affects reference positions and physical patch sizes.
+    * @param scfactor scaling factor.
+    */
+  void scaleRefParental(real scfactor);
+
+  /**
    * Find the patch dependencies, if not given as input.
    * @param with_intercoeff flag directive to build transfer coefficients
    */
@@ -135,6 +155,12 @@ public: // methods
   //void buildHashRaster(size_t resolution = 1000000, bool force = true);
   void buildHashRaster(size_t resolution, bool force,
                        VectorHashRaster<size_t>& m_HashRaster);
+  /**
+    * Initialize. variables: Copy a variable set onto each cell of all patches.
+    * @param i_field variable field on which to copy data
+    * @param var single set of variables, example (u, v, w, p).
+    */
+  void setFieldToConst(size_t i_field, real *var);
 
   // Access methods
   size_t getNumPatches() {return m_patches.size();}

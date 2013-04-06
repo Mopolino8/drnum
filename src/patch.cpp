@@ -21,6 +21,42 @@ Patch::~Patch()
   deleteData();
 }
 
+bool Patch::readFromFile(ifstream &s_mesh)
+{
+  vec3_t xyzoref;        // reference point in parental coords
+  vec3_t base_i, base_j; // base vectors of bloc orientation in parental coords.
+  real generalscale;
+  s_mesh >> xyzoref[0];
+  s_mesh >> xyzoref[1];
+  s_mesh >> xyzoref[2];
+  s_mesh >> base_i[0];
+  s_mesh >> base_i[1];
+  s_mesh >> base_i[2];
+  s_mesh >> base_j[0];
+  s_mesh >> base_j[1];
+  s_mesh >> base_j[2];
+  s_mesh >> m_ioscale;
+  setupTransformation(xyzoref,
+                      base_i, base_j);
+}
+
+void Patch::setupTransformation(vec3_t xyzoref,
+                                vec3_t base_i, vec3_t base_j)
+{
+  // build up transformation matrix
+  //.. translation
+  vec3_t shift_inertial2this;
+  shift_inertial2this[0] = -xyzoref[0];  /** @todo implement operator - for Mathvector (?) */
+  shift_inertial2this[1] = -xyzoref[1];
+  shift_inertial2this[2] = -xyzoref[2];
+  m_transformInertial2This.setVector(shift_inertial2this);
+  //.. turn matrix
+  m_transformInertial2This.setMatrixFromBaseIJ(base_i, base_j);
+
+  Transformation t;    /// @todo for compatibility only. Get rid if no longer needed
+  t.setVector(xyzoref);
+  setTransformation(t.inverse());
+}
 //void Patch::insertNeighbour(Patch* neighbour_patch) {
 //  // Check, if boundary cells are yet extracted. If not, do so.
 //  if(!m_receiveCells_OK) {

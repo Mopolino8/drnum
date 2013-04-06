@@ -2,9 +2,9 @@
 
 CoordTransform::CoordTransform()
 {
-  axx = 1; axy = 0; axz = 0, bx = 0;
-  ayx = 0; ayy = 1; ayz = 0, by = 0;
-  azx = 0; azy = 0; azz = 1, bz = 0;
+  axx = 1; axy = 0; axz = 0; bx = 0;
+  ayx = 0; ayy = 1; ayz = 0; by = 0;
+  azx = 0; azy = 0; azz = 1; bz = 0;
 }
 
 void CoordTransform::setMatrix(mat3_t A)
@@ -12,6 +12,29 @@ void CoordTransform::setMatrix(mat3_t A)
   axx = A[0][0]; axy = A[0][1]; axz = A[0][2];
   ayx = A[1][0]; ayy = A[1][1]; ayz = A[1][2];
   azx = A[2][0]; azy = A[2][1]; azz = A[2][2];
+}
+
+real CoordTransform::setMatrixFromBaseIJ(vec3_t base_i, vec3_t base_j)
+{
+  // normalize inputs base_i and base_j
+  base_i.normalise();
+  base_j.normalise();
+  // compute base_k
+  vec3_t base_k = base_i.cross(base_j);
+  // length of base_k is measure for linear independence of base_i and base_j
+  real base_k_len = base_k.abs();
+  real health = base_k_len;
+  // make base_j orthogonal to base_i
+  real scal_ij = base_i * base_j;
+  base_j = base_j - scal_ij * base_i;
+  // re-normalize orthogonalised base_j and normalize base_k vectors (base_i unchanged)
+  base_j.normalise();
+  base_k = (1./base_k_len) * base_k;
+  // fill in matrix
+  axx = base_i[0]; axy = base_j[0]; axz = base_k[0];
+  ayx = base_i[1]; ayy = base_j[1]; ayz = base_k[1];
+  azx = base_i[2]; azy = base_j[2]; azz = base_k[2];
+  return health;
 }
 
 void CoordTransform::setVector(vec3_t b)
@@ -25,6 +48,13 @@ void CoordTransform::setAll(mat3_t A, vec3_t b)
   ayx = A[1][0]; ayy = A[1][1]; ayz = A[1][2];
   azx = A[2][0]; azy = A[2][1]; azz = A[2][2];
   bx = b[0]; by = b[1]; bz = b[2];
+}
+
+void CoordTransform::scaleVector(real scfactor)
+{
+  bx *= scfactor;
+  by *= scfactor;
+  bz *= scfactor;
 }
 
 void CoordTransform::setTransFromTo(const CoordTransform& c_from, const CoordTransform& c_to)

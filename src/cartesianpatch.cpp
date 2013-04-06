@@ -1,6 +1,5 @@
 #include "cartesianpatch.h"
 
-//<<<<<<< HEAD
 //#ifdef WITH_VTK
 //#include <vtkSmartPointer.h>
 //#include <vtkRectilinearGrid.h>
@@ -11,52 +10,95 @@
 //#endif
 
 
-//=======
-//>>>>>>> master
 CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
-    : Patch(num_protectlayers, num_overlaplayers)
+  : Patch(num_protectlayers, num_overlaplayers)
 {
-    m_NumI = 1;
-    m_NumJ = 1;
-    m_NumK = 1;
-    //do allways with computeDeltas() m_Interpol_Initialized = false;
-    /// @todo need a better eps-handling.
-    m_Eps = 1.e-5;
-    setNumProtectLayers(m_NumProtectLayers);
+  m_NumI = 1;
+  m_NumJ = 1;
+  m_NumK = 1;
+  //do allways with computeDeltas() m_Interpol_Initialized = false;
+  /// @todo need a better eps-handling.
+  m_Eps = 1.e-5;
+  setNumProtectLayers(m_NumProtectLayers);
+}
+
+bool CartesianPatch::readFromFile(ifstream &s_mesh)
+{
+  Patch::readFromFile(s_mesh);
+  // number of nodes in block axis directions
+  size_t num_i, num_j, num_k;
+  s_mesh >> num_i;
+  s_mesh >> num_j;
+  s_mesh >> num_k;
+  // protection exceptions
+  size_t numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax;
+  s_mesh >> numProtXmin;
+  s_mesh >> numProtXmax;
+  s_mesh >> numProtYmin;
+  s_mesh >> numProtYmax;
+  s_mesh >> numProtZmin;
+  s_mesh >> numProtZmax;
+  setNumProtectException(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
+  // physical size of cartesian block
+  real ilength, jlength, klength;
+  s_mesh >> ilength;
+  s_mesh >> jlength;
+  s_mesh >> klength;
+  // scale length according to IO-scaling factor
+  ilength *= m_ioscale;
+  jlength *= m_ioscale;
+  klength *= m_ioscale;
+  // apply patch modifiers
+  resize(num_i, num_j, num_k);
+  setupMetrics(ilength, jlength, klength);
+}
+
+bool CartesianPatch::writeToFile(ifstream &s_mesh)
+{
+}
+
+void CartesianPatch::scaleRefParental(real scfactor)
+{
+  Patch::scaleRefParental(scfactor);
+  m_Lx = scfactor * m_Lx;
+  m_Ly = scfactor * m_Ly;
+  m_Lz = scfactor * m_Lz;
+  computeDeltas();
 }
 
 void CartesianPatch::setNumProtectLayers(size_t num_protectlayers)
 {
-    m_ProtectException = false;
-    m_NumProtectLayers = num_protectlayers;
-    m_numProtXmin = num_protectlayers;
-    m_numProtXmax = num_protectlayers;
-    m_numProtYmin = num_protectlayers;
-    m_numProtYmax = num_protectlayers;
-    m_numProtZmin = num_protectlayers;
-    m_numProtZmax = num_protectlayers;
+  m_ProtectException = false;
+  m_NumProtectLayers = num_protectlayers;
+  m_numProtXmin = num_protectlayers;
+  m_numProtXmax = num_protectlayers;
+  m_numProtYmin = num_protectlayers;
+  m_numProtYmax = num_protectlayers;
+  m_numProtZmin = num_protectlayers;
+  m_numProtZmax = num_protectlayers;
 }
 
 void CartesianPatch::setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
                                             const size_t& numProtYmin, const size_t& numProtYmax,
                                             const size_t& numProtZmin, const size_t& numProtZmax)
 {
-    m_ProtectException = true;
-    m_numProtXmin = numProtXmin;
-    m_numProtXmax = numProtXmax;
-    m_numProtYmin = numProtYmin;
-    m_numProtYmax = numProtYmax;
-    m_numProtZmin = numProtZmin;
-    m_numProtZmax = numProtZmax;
+  m_ProtectException = true;
+  m_numProtXmin = numProtXmin;
+  m_numProtXmax = numProtXmax;
+  m_numProtYmin = numProtYmin;
+  m_numProtYmax = numProtYmax;
+  m_numProtZmin = numProtZmin;
+  m_numProtZmax = numProtZmax;
 }
 
 void CartesianPatch::computeDeltas()
 {
-  m_Lx = sqrt(sqr(m_Uxo) + sqr(m_Uyo) + sqr(m_Uzo));
-  m_Ly = sqrt(sqr(m_Vxo) + sqr(m_Vyo) + sqr(m_Vzo));
-  m_Lz = sqrt(sqr(m_Wxo) + sqr(m_Wyo) + sqr(m_Wzo));
-  countFlops(15);
-  countSqrts(3);
+  /// @todo delete this block
+  //  m_Lx = sqrt(sqr(m_Uxo) + sqr(m_Uyo) + sqr(m_Uzo));
+  //  m_Ly = sqrt(sqr(m_Vxo) + sqr(m_Vyo) + sqr(m_Vzo));
+  //  m_Lz = sqrt(sqr(m_Wxo) + sqr(m_Wyo) + sqr(m_Wzo));
+  //  countFlops(15);
+  //  countSqrts(3);
 
   m_Dx = m_Lx/m_NumI;
   m_Dy = m_Ly/m_NumJ;
@@ -108,48 +150,95 @@ void CartesianPatch::computeDeltas()
   countFlops(3);
 }
 
+/// @todo Get rid of setupAligned, if setupMetrics works correctly
 void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2)
 {
 
-    /** @todo Use a more general alignment method with trafo-matrix and internal coord system.
-     *  I assume these are co-aligned here. */
+  /** @todo Use a more general alignment method with trafo-matrix and internal coord system.
+   *  I assume these are co-aligned here. */
 
-    m_Xo = xo1;
-    m_Yo = yo1;
-    m_Zo = zo1;
+  cout << "WARNING: CartesianPatch::setupAligned to be omitted" << endl;
 
-    m_Uxo = xo2 - xo1;
-    m_Uyo = 0;
-    m_Uzo = 0;
-    countFlops(1);
+  m_Xo = xo1;
+  m_Yo = yo1;
+  m_Zo = zo1;
 
-    m_Vxo = 0;
-    m_Vyo = yo2 - yo1;
-    m_Vzo = 0;
-    countFlops(1);
+  m_Uxo = xo2 - xo1;
+  m_Uyo = 0;
+  m_Uzo = 0;
+  countFlops(1);
 
-    m_Wxo = 0;
-    m_Wyo = 0;
-    m_Wzo = zo2 - zo1;
-    countFlops(1);
+  m_Vxo = 0;
+  m_Vyo = yo2 - yo1;
+  m_Vzo = 0;
+  countFlops(1);
 
-    //<<<<<<< HEAD
-    // position relative to inertial system
-    vec3_t shift_inertial2this;
-    shift_inertial2this[0] = -m_Xo;
-    shift_inertial2this[1] = -m_Yo;
-    shift_inertial2this[2] = -m_Zo;
-    m_transformInertial2This.setVector(shift_inertial2this);
-    /// @todo rotationm NOT implemented!!!
+  m_Wxo = 0;
+  m_Wyo = 0;
+  m_Wzo = zo2 - zo1;
+  countFlops(1);
 
-    computeDeltas();
+  // position relative to inertial system
+  vec3_t shift_inertial2this;
+  shift_inertial2this[0] = -m_Xo;
+  shift_inertial2this[1] = -m_Yo;
+  shift_inertial2this[2] = -m_Zo;
+  m_transformInertial2This.setVector(shift_inertial2this);
+  /// @todo rotation NOT implemented!!!
 
-    //=======
-    Transformation t;    /// @todo keep for compatibility
-    t.setVector(vec3_t(xo1, yo1, zo1));
-    setTransformation(t.inverse());
-    //>>>>>>> master
+
+  /// @todo following 5 lines copied here to get it gone from computeDeltas, as readFromFile(ifstream &s_mesh) gets length directly
+  m_Lx = sqrt(sqr(m_Uxo) + sqr(m_Uyo) + sqr(m_Uzo));
+  m_Ly = sqrt(sqr(m_Vxo) + sqr(m_Vyo) + sqr(m_Vzo));
+  m_Lz = sqrt(sqr(m_Wxo) + sqr(m_Wyo) + sqr(m_Wzo));
+  countFlops(15);
+  countSqrts(3);
+  /// until here
+
+  computeDeltas();
+
+  //=======
+  Transformation t;    /// @todo keep for compatibility
+  t.setVector(vec3_t(xo1, yo1, zo1));
+  setTransformation(t.inverse());
+  //>>>>>>> master
 }
+
+void CartesianPatch::setupMetrics(real ilength, real jlength, real klength)
+{
+  // copy physical size (lengths) of block
+  m_Lx = ilength;
+  m_Ly = jlength;
+  m_Lz = klength;
+  // build up increments, etc ...
+  computeDeltas();
+}
+
+//{
+//  // copy reference position, coords of point i=j=k=0
+//  //  m_Xo = xyzoref[0];
+//  //  m_Yo = xyzoref[1];
+//  //  m_Zo = xyzoref[2];
+//  // copy lengths
+//  m_Lx = ijklength[0];
+//  m_Ly = ijklength[1];
+//  m_Lz = ijklength[2];
+//  // build up transformation matrix
+//  //.. translation
+//  vec3_t shift_inertial2this;
+//  shift_inertial2this[0] = -xyzoref[0];  /** @TODO implement operator - for Mathvector (?) */
+//  shift_inertial2this[1] = -xyzoref[1];
+//  shift_inertial2this[2] = -xyzoref[2];
+//  m_transformInertial2This.setVector(shift_inertial2this);
+//  //.. turn matrix
+//  m_transformInertial2This.setMatrixFromBaseIJ(base_i, base_j);
+//  // build up increments, etc ...
+//  computeDeltas();
+
+//  Transformation t;    /// @todo keep for compatibility. get rid if no longer needed
+//  t.setVector(xyzoref);
+//  setTransformation(t.inverse());
+//}
 
 void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
 {
@@ -162,7 +251,6 @@ void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
   computeDeltas();
 }
 
-//<<<<<<< HEAD
 void CartesianPatch::buildBoundingBox()
 {
   vec3_t bbox_xyz_min(0., 0., 0.);
@@ -634,7 +722,7 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
   w_octet[5] *= low_diff_z_ref;
   w_octet[7] *= low_diff_z_ref;
 
-};
+}
 
 
 // void CartesianPatch::computeCCGrad1NInterpolCoeffs(real& x, real& y, real& z,

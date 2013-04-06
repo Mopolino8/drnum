@@ -4,6 +4,8 @@
 
 extern "C" void GPU_main();
 
+//#include "examples/cpujet_mb_grid1.h"
+
 int main()
 {
 #ifdef GPU
