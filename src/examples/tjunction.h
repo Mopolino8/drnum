@@ -26,7 +26,7 @@ class MyFlux
   typedef Upwind2<VanAlbada> reconstruction2_t;
   typedef VanLeer<reconstruction1_t, PerfectGas> euler1_t;
   typedef AusmPlus<reconstruction2_t, PerfectGas> euler2_t;
-  typedef CompressibleWallFlux<reconstruction1_t, PerfectGas> wall_t;
+  typedef CompressibleSlipFlux<reconstruction1_t, PerfectGas> wall_t;
   typedef CompressibleFarfieldFlux<reconstruction1_t, PerfectGas> farfield_t;
   typedef CompressibleViscFlux<PerfectGas> viscous_t;
 

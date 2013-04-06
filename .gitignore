@@ -98,5 +98,17 @@ misc/*
 *.ncb
 *.vcproj.*
 
+
 src/litter/*
 blockcfd-build-desktop/*
+
+# VTK
+*.pvsm
+
+blockcfd*
+
+# CUDA
+*.i
+*.ii
+main.*
+

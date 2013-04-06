@@ -1,21 +1,18 @@
-//#include "examples/ffs1.h"
-//#include "examples/interpolation1.h"
-//#include "examples/overexpandedjet2d.h"
-//#include "examples/kelvinhelmholtz.h"
-//#include "examples/flatplate.h"
-//#include "examples/wedge.h"
-//#include "examples/tjunction.h"
-// #include "examples/wedge.h"
+#ifndef GPU
+#include "examples/cpujet.h"
+#endif
 
-//#include "examples/two_patches_1.h"
-//#include "examples/two_patches_2.h"
-//#include "examples/two_patches_3.h"
-//#include "examples/cpujet.h"
-#include "examples/cpujet_mb1.h"
+extern "C" void GPU_main();
+
 //#include "examples/cpujet_mb_grid1.h"
 
 int main()
 {
+#ifdef GPU
+  GPU_main();
+#else
+  omp_set_num_threads(4);
   run();
+#endif
 }
 

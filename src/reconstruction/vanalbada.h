@@ -5,14 +5,12 @@
 
 struct VanAlbada
 {
-  static real lim(real delta1, real delta2);
+  static CUDA_DH real lim(real delta1, real delta2)
+  {
+    countFlops(4);
+    real r = delta2/nonZero(delta1, GLOBAL_EPS);
+    return (sqr(r) + r)/(sqr(r) + 1);
+  }
 };
-
-inline real VanAlbada::lim(real delta1, real delta2)
-{
-  countFlops(4);
-  real r = delta2/nonZero(delta1, global_eps);
-  return (sqr(r) + r)/(sqr(r) + 1);
-}
 
 #endif // VANALBADA_H

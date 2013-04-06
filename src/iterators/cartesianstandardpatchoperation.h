@@ -47,54 +47,73 @@ void CartesianStandardPatchOperation<DIM, TFlux>::compute(real factor, size_t i1
   countFlops(3);
 
   // compute main block
-  {
-    real x = 0.5*patch()->dx();
-    for (size_t i = i1; i < i2; ++i) {
-      real y = 0.5*patch()->dy();
-      for (size_t j = j1; j < j2; ++j) {
-        real z = 0.5*patch()->dz();
-        for (size_t k = k1; k < k2; ++k) {
+  for (int offset = 0; offset <= 1; ++offset) {
+    #ifndef DEBUG
+    #pragma omp parallel
+    #endif
+    {
+      size_t num_threads = omp_get_num_threads();
+      size_t tid         = omp_get_thread_num();
+      size_t n           = patch()->sizeI()/(2*num_threads) + 1;
+      size_t i_start     = max(i1, (offset + 2*tid)*n);
+      size_t i_stop      = min(i2, i_start + n);
 
-          GlobalDebug::xyz(x,y,z);
+      real flux[5];
 
-          // x direction
-          if (i > 0 && patch()->sizeI() > 2) {
-            fill(flux, 5, 0);
-            m_Flux->xField(patch(), i, j, k, x, y, z, Ax, flux);
-            for (size_t i_var = 0; i_var < DIM; ++i_var) {
-              m_Res[resIndex(i_var, i-1, j, k)] -= flux[i_var];
-              m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
-            }
-            countFlops(2*DIM);
-          }
-
-          // y direction
-          if (j > 0 && patch()->sizeJ() > 2) {
-            fill(flux, 5, 0);
-            m_Flux->yField(patch(), i, j, k, x, y, z, Ay, flux);
-            for (size_t i_var = 0; i_var < DIM; ++i_var) {
-              m_Res[resIndex(i_var, i, j-1, k)] -= flux[i_var];
-              m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
-            }
-            countFlops(2*DIM);
-          }
-
-          // z direction
-          if (k > 0 && patch()->sizeK() > 2) {
-            fill(flux, 5, 0);
-            m_Flux->zField(patch(), i, j, k, x, y, z, Az, flux);
-            for (size_t i_var = 0; i_var < DIM; ++i_var) {
-              m_Res[resIndex(i_var, i, j, k-1)] -= flux[i_var];
-              m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
-            }
-            countFlops(2*DIM);
-          }
-
-          z += patch()->dz();
-        }
-        y += patch()->dy();
+      #ifdef DEBUG
+      if (num_threads != 1) {
+        BUG;
       }
-      x += patch()->dx();
+      #endif
+
+      real x = 0.5*patch()->dx() + i_start * patch()->dx();
+      for (size_t i = i_start; i < i_stop; ++i) {
+        real y = 0.5*patch()->dy();
+        for (size_t j = j1; j < j2; ++j) {
+          real z = 0.5*patch()->dz();
+          for (size_t k = k1; k < k2; ++k) {
+
+            GlobalDebug::xyz(x,y,z);
+
+            // x direction
+            if (i > 0 && patch()->sizeI() > 2) {
+              fill(flux, 5, 0);
+              m_Flux->xField(patch(), i, j, k, x, y, z, Ax, flux);
+              for (size_t i_var = 0; i_var < DIM; ++i_var) {
+                m_Res[resIndex(i_var, i-1, j, k)] -= flux[i_var];
+                m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
+              }
+              countFlops(2*DIM);
+            }
+
+            // y direction
+            if (j > 0 && patch()->sizeJ() > 2) {
+              fill(flux, 5, 0);
+              m_Flux->yField(patch(), i, j, k, x, y, z, Ay, flux);
+              for (size_t i_var = 0; i_var < DIM; ++i_var) {
+                m_Res[resIndex(i_var, i, j-1, k)] -= flux[i_var];
+                m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
+              }
+              countFlops(2*DIM);
+            }
+
+            // z direction
+            if (k > 0 && patch()->sizeK() > 2) {
+              fill(flux, 5, 0);
+              m_Flux->zField(patch(), i, j, k, x, y, z, Az, flux);
+              for (size_t i_var = 0; i_var < DIM; ++i_var) {
+                m_Res[resIndex(i_var, i, j, k-1)] -= flux[i_var];
+                m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
+              }
+              countFlops(2*DIM);
+            }
+
+            z += patch()->dz();
+          }
+          y += patch()->dy();
+        }
+        x += patch()->dx();
+      }
     }
   }
 

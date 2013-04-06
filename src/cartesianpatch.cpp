@@ -10,8 +10,6 @@
 //#endif
 
 
-//=======
-//>>>>>>> master
 CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
   : Patch(num_protectlayers, num_overlaplayers)
 {
@@ -95,6 +93,7 @@ void CartesianPatch::setNumProtectException(const size_t& numProtXmin, const siz
 
 void CartesianPatch::computeDeltas()
 {
+  /// @todo delete this block
   //  m_Lx = sqrt(sqr(m_Uxo) + sqr(m_Uyo) + sqr(m_Uzo));
   //  m_Ly = sqrt(sqr(m_Vxo) + sqr(m_Vyo) + sqr(m_Vzo));
   //  m_Lz = sqrt(sqr(m_Wxo) + sqr(m_Wyo) + sqr(m_Wzo));
@@ -243,9 +242,10 @@ void CartesianPatch::setupMetrics(real ilength, real jlength, real klength)
 
 void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
 {
-  m_NumI = num_i;
-  m_NumJ = num_j;
-  m_NumK = num_k;
+  m_NumI  = num_i;
+  m_NumJ  = num_j;
+  m_NumK  = num_k;
+  m_NumJK = num_j*num_k;
   deleteData();
   Patch::resize(m_NumI*m_NumJ*m_NumK);
   computeDeltas();
@@ -722,7 +722,7 @@ void CartesianPatch::computeInterpolWeights(real& x, real& y, real& z,
   w_octet[5] *= low_diff_z_ref;
   w_octet[7] *= low_diff_z_ref;
 
-};
+}
 
 
 // void CartesianPatch::computeCCGrad1NInterpolCoeffs(real& x, real& y, real& z,

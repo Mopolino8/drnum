@@ -47,40 +47,40 @@ public:     /// @todo need usefull protection rules
 public:
 
     /** Dummy construction
-  */
+     */
     WeightedSet();
 
     /** Construction considering a single pair (j,w)
-    * @param j the index for the single pair
-    * @param t value of pair
-  */
+     * @param j the index for the single pair
+     * @param t value of pair
+     */
     WeightedSet(size_t j, T t);
 
     /** Construction considering a single index with weight "1"
-    * @param j the index for the single pair
-  */
+     * @param j the index for the single pair
+     */
     WeightedSet(size_t j);
 
     /** Construction considering equiweighted average for an index vector
-    * @param vn the index vector
-  */
+     * @param vn the index vector
+     */
     WeightedSet(vector<size_t> vn);
 
     /** Construction considering same weight for an index vector
-    * @param vn the index vector
-    * @param weight the weight of all entries
-  */
+     * @param vn the index vector
+     * @param weight the weight of all entries
+     */
     WeightedSet(vector<size_t> vn, T t);
 
     /** Construction considering equiweighted average for an int-index vector
-    * @param vn the index vector
-  */
+     * @param vn the index vector
+     */
     WeightedSet(vector<int> vn);
 
     /** Construction considering same weight for an int-index vector
-    * @param vn the index vector
-    * @param weight the weight of all entries
-  */
+     * @param vn the index vector
+     * @param weight the weight of all entries
+     */
     WeightedSet(vector<int> vn, T t);
 
     // Member functions
@@ -111,19 +111,19 @@ public:
     void operator*=(const T& s);                           ///< multiply     v = s*v
 
     /**
-   * Eliminate all entries with absolute values of weight below eps.
-   * @param eps the threshold value
-   * @param relative if true, causes function to work with eps relative to largest absolute weight
-   * @param keep_weight_sum if true, causes distribution of defects on remaining weights
-   */
+     * Eliminate all entries with absolute values of weight below eps.
+     * @param eps the threshold value
+     * @param relative if true, causes function to work with eps relative to largest absolute weight
+     * @param keep_weight_sum if true, causes distribution of defects on remaining weights
+     */
     void EliminateBelowEps(T eps, const bool& relative, const bool& keep_weight_sum);
 
     /**
-   * Adjust sum of weights.
-   * Shift-version: act by adding a constant to all contributors
-   * @param aimed sum of the weights
-   * @return true, if no error occured
-   */
+     * Adjust sum of weights.
+     * Shift-version: act by adding a constant to all contributors
+     * @param aimed sum of the weights
+     * @return true, if no error occured
+     */
     bool adjustWeightSumShift(const T& weight_sum);
 
 };
@@ -404,22 +404,22 @@ inline void WeightedSet<T>::Unify()
 template<class T>
 inline void WeightedSet<T>::Concatenate(const WeightedSet<T>& w)
 {
-    for(size_t i=0; i < w.v.size(); i++) {
-        push_back(w[i]);
-    };
-    sure_sorted = false;
+  for (size_t i = 0; i < w.v.size(); ++i) {
+    push_back(w[i]);
+  }
+  sure_sorted = false;
 }
 
 template<class T>
 inline void WeightedSet<T>::Concatenate(const WeightedSet<T>& w, const T& s)
 {
-    for(size_t i=0; i < w.v.size(); i++) {
-        pair<size_t, T> pp;
-        pp.first = w[i].first;
-        pp.second = w[i].second * s;
-        v.push_back(pp);
-    };
-    sure_sorted = false;
+  for (size_t i = 0; i < w.v.size(); ++i) {
+    pair<size_t, T> pp;
+    pp.first = w[i].first;
+    pp.second = w[i].second * s;
+    v.push_back(pp);
+  }
+  sure_sorted = false;
 }
 
 template<class T>

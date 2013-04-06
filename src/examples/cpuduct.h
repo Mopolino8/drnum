@@ -1,17 +1,16 @@
-#ifndef KELVINHELMHOLTZ_H
-#define KELVINHELMHOLTZ_H
+#ifndef GPUDUCT_H
+#define GPUDUCT_H
 
 #include "reconstruction/upwind1.h"
 #include "reconstruction/upwind2.h"
 #include "reconstruction/vanalbada.h"
-#include "reconstruction/minmod.h"
-#include "fluxes/knp.h"
-#include "fluxes/vanleer.h"
+#include "reconstruction/upwind2.h"
 #include "fluxes/ausmplus.h"
+#include "fluxes/ausmdv.h"
+#include "fluxes/knp.h"
 #include "fluxes/compressiblewallflux.h"
 #include "fluxes/compressiblefarfieldflux.h"
 #include "fluxes/compressibleviscflux.h"
-#include "boundary_conditions/compressibleeulerwall.h"
 #include "perfectgas.h"
 #include "compressiblevariables.h"
 #include "rungekutta.h"
@@ -21,17 +20,19 @@
 class MyFlux
 {
 
-  typedef Upwind1 reconstruction1_t;
   typedef Upwind2<VanAlbada> reconstruction2_t;
+  typedef Upwind1            reconstruction1_t;
   typedef KNP<reconstruction1_t, PerfectGas> euler1_t;
-  typedef AusmPlus<reconstruction2_t, PerfectGas> euler2_t;
+  typedef AusmDV<reconstruction2_t, PerfectGas> euler2_t;
   typedef CompressibleSlipFlux<reconstruction1_t, PerfectGas> wall_t;
   typedef CompressibleFarfieldFlux<reconstruction1_t, PerfectGas> farfield_t;
+  typedef CompressibleViscFlux<PerfectGas> viscous_t;
 
   reconstruction1_t*    m_Reconstruction1;
   reconstruction2_t*    m_Reconstruction2;
   euler1_t*             m_EulerFlux1;
   euler2_t*             m_EulerFlux2;
+  viscous_t*            m_ViscFlux;
   wall_t*               m_WallFlux;
   farfield_t*           m_FarFlux;
   bool                  m_SecondOrder;
@@ -39,8 +40,7 @@ class MyFlux
 
 public: // methods
 
-  MyFlux(real p, real T, real u);
-  bool isInside(size_t i, size_t j, size_t k);
+  MyFlux();
 
   void xField(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   void yField(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
@@ -59,15 +59,13 @@ public: // methods
 };
 
 
-MyFlux::MyFlux(real p, real T, real u)
+MyFlux::MyFlux()
 {
   m_Reconstruction1 = new reconstruction1_t();
   m_Reconstruction2 = new reconstruction2_t();
   m_EulerFlux1 = new euler1_t(m_Reconstruction1);
   m_EulerFlux2 = new euler2_t(m_Reconstruction2);
-  m_FarFlux = new farfield_t(m_Reconstruction1);
-  m_FarFlux->setFarfield(p, T, u, 0, 0);
-  m_WallFlux = new wall_t(m_Reconstruction1);
+  m_ViscFlux = new viscous_t();
   m_SecondOrder = false;
 }
 
@@ -81,6 +79,7 @@ inline void MyFlux::xField
 {
   if (m_SecondOrder) m_EulerFlux2->xField(patch, i, j, k, x, y, z, A, flux);
   else               m_EulerFlux1->xField(patch, i, j, k, x, y, z, A, flux);
+  m_ViscFlux->xField(patch, i, j, k, x, y, z, A, flux);
 }
 
 inline void MyFlux::yField
@@ -93,6 +92,7 @@ inline void MyFlux::yField
 {
   if (m_SecondOrder) m_EulerFlux2->yField(patch, i, j, k, x, y, z, A, flux);
   else               m_EulerFlux1->yField(patch, i, j, k, x, y, z, A, flux);
+  m_ViscFlux->yField(patch, i, j, k, x, y, z, A, flux);
 }
 
 inline void MyFlux::zField
@@ -105,36 +105,31 @@ inline void MyFlux::zField
 {
   if (m_SecondOrder) m_EulerFlux2->zField(patch, i, j, k, x, y, z, A, flux);
   else               m_EulerFlux1->zField(patch, i, j, k, x, y, z, A, flux);
+  m_ViscFlux->zField(patch, i, j, k, x, y, z, A, flux);
 }
 
 inline void MyFlux::xWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarFlux->xWallP(P, i, j, k, x, y, z, A, flux);
 }
 
 inline void MyFlux::yWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_WallFlux->yWallP(P, i, j, k, x, y, z, A, flux);
 }
 
 inline void MyFlux::zWallP(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_WallFlux->zWallP(P, i, j, k, x, y, z, A, flux);
 }
 
 inline void MyFlux::xWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarFlux->xWallM(P, i, j, k, x, y, z, A, flux);
 }
 
 inline void MyFlux::yWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_WallFlux->yWallM(P, i, j, k, x, y, z, A, flux);
 }
 
 inline void MyFlux::zWallM(CartesianPatch *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_WallFlux->zWallM(P, i, j, k, x, y, z, A, flux);
 }
 
 void write(CartesianPatch &patch, QString file_name, int count)
@@ -152,69 +147,124 @@ void write(CartesianPatch &patch, QString file_name, int count)
   patch.writeToVtk(0, file_name, cvars);
 }
 
+struct BC : public GenericOperation
+{
+  CartesianPatch *patch;
+  real delta_p;
+
+  virtual void operator()()
+  {
+    real p, T;
+    vec3_t U;
+    real var[5];
+    for (size_t i = 0; i < patch->sizeI(); ++i) {
+      for (size_t j = 0; j < patch->sizeJ(); ++j) {
+
+        // bottom
+        patch->getVar(0, i, j, 1, var);
+        var[1] = -var[1];
+        var[2] = -var[2];
+        var[3] = -var[3];
+        patch->setVar(0, i, j, 0, var);
+
+        // top
+        patch->getVar(0, i, j, patch->sizeK() - 2, var);
+        var[1] = -var[1];
+        var[2] = -var[2];
+        var[3] = -var[3];
+        patch->setVar(0, i, j, patch->sizeK() - 1, var);
+
+      }
+    }
+    for (size_t j = 0; j < patch->sizeJ(); ++j) {
+      for (size_t k = 0; k < patch->sizeK(); ++k) {
+
+        // left
+        patch->getVar(0, patch->sizeI() - 2, j, k, var);
+        PerfectGas::conservativeToPrimitive(var, p, T, U);
+        p = p + 50;
+        PerfectGas::primitiveToConservative(p, T, U, var);
+        patch->setVar(0, 0, j, k, var);
+
+        // right
+        patch->getVar(0, 1, j, k, var);
+        PerfectGas::conservativeToPrimitive(var, p, T, U);
+        p = p - 50;
+        PerfectGas::primitiveToConservative(p, T, U, var);
+        patch->setVar(0, patch->sizeI() - 1, j, k, var);
+
+      }
+    }
+    for (size_t i = 0; i < patch->sizeI(); ++i) {
+      for (size_t k = 0; k < patch->sizeK(); ++k) {
+
+        // front
+        patch->getVar(0, i, patch->sizeJ() - 2, k, var);
+        patch->setVar(0, i, 0, k, var);
+
+        // back
+        patch->getVar(0, i, 1, k, var);
+        patch->setVar(0, i, patch->sizeJ() - 1, k, var);
+
+      }
+    }
+  }
+};
 
 void run()
 {
-  size_t N = 50;
-  real Ma1 = 0.3;
-  real p1  = 1e5;
-  real T1  = 600;
-  real u1  = Ma1*sqrt(PerfectGas::gamma()*PerfectGas::R()*T1);
-  real Ma2 = 0.3;
-  real p2  = 1e5;
-  real T2  = 300;
-  real u2  = Ma2*sqrt(PerfectGas::gamma()*PerfectGas::R()*T2);
-  real Re  = 100000;
-  real CFL = 1.0;
-  real L   = PerfectGas::mu()*Re/u1;
-
-  cout << "L = " << L << endl;
-
   CartesianPatch patch;
   patch.setNumberOfFields(2);
   patch.setNumberOfVariables(5);
-  patch.setupAligned(0, -0.01*L, 0, 10*L, 0.01*L, 2*L);
-  size_t NI = 10*N;
-  size_t NJ = 1;
-  size_t NK = 2*N;
+  real height = 0.01;
+  real length = 2*height;
+  patch.setupAligned(0, 0 , 0, length, 0.001, height);
+  size_t N = 10;
+  size_t NI = 20*N;
+  size_t NJ = N;
+  size_t NK = 10*N;
   patch.resize(NI, NJ, NK);
-  real init0_var[5];
-  real init1_var[5];
-  real init2_var[5];
+  real init_var[5];
 
-  PerfectGas::primitiveToConservative(p2, T2, 0, 0, 0, init0_var);
-  PerfectGas::primitiveToConservative(p1, T1, u1, 0, 0, init1_var);
-  PerfectGas::primitiveToConservative(p2, T2, u2, 0, 0, init2_var);
+  real Ma = 0.3;
+  real p  = 1e5;
+  real Dp = 106;
+  real T  = 300;
+  real u  = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+
   for (size_t i = 0; i < NI; ++i) {
     for (size_t j = 0; j < NJ; ++j) {
       for (size_t k = 0; k < NK; ++k) {
-        if (k < NK/2) {
-          patch.setVar(0, i, j, k, init1_var);
-        } else {
-          patch.setVar(0, i, j, k, init2_var);
-        }
+        real x = 0.5*patch.dx() + i*patch.dx();
+        real var[5];
+        PerfectGas::primitiveToConservative(p - x*Dp/length, T, vec3_t(u,0,0), var);
+        patch.setVar(0, i, j, k, var);
       }
     }
   }
 
+  BC bc;
+  bc.patch = &patch;
+  bc.delta_p = Dp;
+
   RungeKutta runge_kutta;
+  runge_kutta.addPostOperation(&bc);
   runge_kutta.addAlpha(0.25);
   runge_kutta.addAlpha(0.5);
   runge_kutta.addAlpha(1.000);
 
-  MyFlux flux(p1, T1, u1);
+  MyFlux flux;
   CartesianStandardPatchOperation<5, MyFlux> operation(&patch, &flux);
   CartesianStandardIterator iterator(&operation);
-  iterator.setI1(1);
   runge_kutta.addIterator(&iterator);
 
-  real time           = L/(u1 + sqrt(PerfectGas::gamma()*PerfectGas::R()*T1));
-  real dt             = CFL*time/N;
+  real time           = NI*patch.dx()/u;
+  real dt             = 2e-3*patch.dx();
   real dt2            = dt;
   real t_switch       = 0*time;
   real t_write        = 0;
-  real write_interval = time/10;
-  real total_time     = 100*time;
+  real write_interval = 0.1*time;
+  real total_time     = 4*time;
 
   int count = 0;
   int iter = 0;
@@ -227,7 +277,6 @@ void run()
   startTiming();
 
   while (t < total_time) {
-
     if (t > t_switch) {
       flux.secondOrderOn();
       dt = dt2;
@@ -278,4 +327,4 @@ void run()
   cout << iter << " iterations" << endl;
 }
 
-#endif // KELVINHELMHOLTZ_H
+#endif // GPUDUCT_H

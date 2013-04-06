@@ -42,8 +42,8 @@ void KT<TReconstruction, TGas>::xField(CartesianPatch *patch,
 
   real psi_l = max(max(a_l + u_l, a_r + u_r), real(0.0));
   real psi_r = max(max(a_l - u_l, a_r - u_r), real(0.0));
-  real alpha = 0.5;
-  real omega = alpha*max(psi_l, psi_r);
+  real alpha = psi_l/(psi_l + psi_r);
+  real omega = alpha*(1 - alpha)*(psi_l + psi_r);
   countFlops(5);
 
   real F0_l = r_l;

@@ -42,16 +42,8 @@ class Patch;
 
 class Patch
 {
-  /// @todo Why these should be private? Never any access from child classes???
-private: // attributes
 
-  real*   m_Data;         ///< the main data block of this patch
-  size_t  m_NumFields;    ///< number of fields (e.g. old, new, ...)
-  size_t  m_NumVariables; ///< number of variables (e.g. rho, rhou, ...)
-  size_t  m_FieldSize;    ///< length of each field
-  size_t  m_VariableSize; ///< length of each variable
-
-  Transformation m_Transformation;    /// @todo merge: kept for compatibility. Ommit and use m_transformInertial2This.
+#include "patch_common.h"
 
   void  allocateData();
 
@@ -101,8 +93,6 @@ protected: // methods
   // internal data handling
   void  deleteData();
   void  resize(size_t variable_size);
-  real* getField(size_t i_field);
-  real* getVariable(size_t i_field, size_t i_variable);
 
   void setTransformation(Transformation t) { m_Transformation = t; }  /// @todo keep for compatibility, prefer CoordTransformVV later
 
@@ -110,8 +100,8 @@ protected: // methods
   virtual void buildBoundingBox()=0;
 
   // external data handling
-  virtual void extractReceiveCells(){BUG;}; ///< Extract cells in overlap layers (m_receive_cells)
-  void compactReceiveCellLists();           ///< Clean up m_receive_cells and hit counter lists
+  virtual void extractReceiveCells() { BUG; } ///< Extract cells in overlap layers (m_receive_cells)
+  void compactReceiveCellLists();             ///< Clean up m_receive_cells and hit counter lists
 
 
 public: // methods
@@ -128,6 +118,17 @@ public: // methods
 
   void  setNumberOfFields(size_t num_fields) { m_NumFields = num_fields; }
   void  setNumberOfVariables(size_t num_variables) { m_NumVariables = num_variables; }
+
+  /**
+   * Compute the difference between two variables. This is intended to be used for convergence monitoring.
+   * @param i_field1 index of the first field
+   * @param i_var1 index of the first variable
+   * @param i_field2 index of the first field
+   * @param i_var2 index of the second variable
+   * @param max_norm will hold the maximal absolute difference
+   * @param l2_norm will hold the L2 norm of the difference
+   */
+  void computeVariableDifference(size_t i_field1, size_t i_var1, size_t i_field2, size_t i_var2, real &max_norm, real &l2_norm);
 
   /**
     * Set number of protection layers
@@ -330,33 +331,6 @@ public: // methods
   void accessTurnDonorData_WS(const size_t& field,
                               const size_t& i_vx, const size_t& i_vy, const size_t& i_vz);
 
-  /**
-    * This is one of the main methods which will be used for data exchange.
-    * How this can be used to handle exchange between CPU/GPU, CPU/CPU, GPU/GPU, and NODE/NODE (MPI) needs
-    * to be established as soon as possible.
-    * @todo look into different data exchange methods
-    * @param i_field the index of the field (e.g. old, new, ...)
-    * @param i_var the index of the variable (e.g. rho, rhou, ...)
-    * @param i the spatial index (either cell or node)
-    * @return the value at the specified position
-    */
-  real getValue(size_t i_field, size_t i_var, size_t i) { return m_Data[i_field*m_FieldSize + i_var*m_VariableSize + i]; }
-
-  /**
-   * Compute the difference between two variables. This is intended to be used for convergence monitoring.
-   * @param i_field1 index of the first field
-   * @param i_var1 index of the first variable
-   * @param i_field2 index of the first field
-   * @param i_var2 index of the second variable
-   * @param max_norm will hold the maximal absolute difference
-   * @param l2_norm will hold the L2 norm of the difference
-   */
-  void computeVariableDifference(size_t i_field1, size_t i_var1, size_t i_field2, size_t i_var2, real &max_norm, real &l2_norm);
-
-  size_t numFields()    { return m_NumFields; }
-  size_t numVariables() { return m_NumVariables; }
-  size_t fieldSize()    { return m_FieldSize; }
-  size_t variableSize() { return m_VariableSize; }
 
   void setFieldToZero(real *field);
   void setFieldToZero(size_t i_field);
@@ -436,16 +410,6 @@ inline void Patch::addField(size_t i_src, real factor, size_t i_dst)
 inline void Patch::addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst)
 {
   addField(getField(i_op1), factor, getField(i_op2), getField(i_dst));
-}
-
-inline real* Patch::getField(size_t i_field)
-{
-  return m_Data + i_field*m_FieldSize;
-}
-
-inline real* Patch::getVariable(size_t i_field, size_t i_variable)
-{
-  return getField(i_field) + i_variable*m_VariableSize;
 }
 
 inline vec3_t Patch::accessBBoxXYZoMin()
