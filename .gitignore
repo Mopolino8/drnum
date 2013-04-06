@@ -97,3 +97,6 @@ misc/*
 *.suo
 *.ncb
 *.vcproj.*
+
+src/litter/*
+blockcfd-build-desktop/*
