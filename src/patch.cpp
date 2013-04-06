@@ -43,15 +43,16 @@ bool Patch::readFromFile(ifstream &s_mesh)
 void Patch::setupTransformation(vec3_t xyzoref,
                                 vec3_t base_i, vec3_t base_j)
 {
-  // build up transformation matrix
-  //.. translation
-  vec3_t shift_inertial2this;
-  shift_inertial2this[0] = -xyzoref[0];  /** @todo implement operator - for Mathvector (?) */
-  shift_inertial2this[1] = -xyzoref[1];
-  shift_inertial2this[2] = -xyzoref[2];
-  m_transformInertial2This.setVector(shift_inertial2this);
-  //.. turn matrix
-  m_transformInertial2This.setMatrixFromBaseIJ(base_i, base_j);
+  // Build up transformation matrix
+  //.. build preliminary transformation this --> inertial
+  //   transforms point or freevec given in coord-syst of "this" to
+  //   parental coord-syst.
+  /// @todo needs testing
+  CoordTransform this2inertial;
+  this2inertial.setVector(xyzoref);
+  this2inertial.setMatrixFromBaseIJ(base_i, base_j);
+  //.. build transformation matrix inertial --> this
+  m_transformInertial2This.setAll(this2inertial.inverse());
 
   Transformation t;    /// @todo for compatibility only. Get rid if no longer needed
   t.setVector(xyzoref);
@@ -100,22 +101,31 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   dependency_h.second = ctvv_relative;
   m_neighbours.push_back(dependency_h);
   size_t i_neighbour = m_neighbours.size() - 1;  // checked: OK, since size() >= 1
+
   // Depending on calculation type, insert donor and relative coord transformation into InterCoeffWS lists
   if (m_InterpolateData) {
     m_InterCoeffData_WS.resize(i_neighbour + 1);
     //CHANGE_DONOR! m_InterCoeffData_WS[i_neighbour].setDonorPatch(neighbour_patch);
     m_InterCoeffData_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
   }   /// @todo would be nice to have a link_vector<T>
+
   if (m_InterpolateGrad1N) {
     m_InterCoeffGrad1N_WS.resize(i_neighbour + 1);
     //CHANGE_DONOR! m_InterCoeffGrad1N_WS[i_neighbour].setDonorPatch(neighbour_patch);
     m_InterCoeffGrad1N_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
   }
+
   bool found_dependency = computeDependencies(i_neighbour);
-  if (!found_dependency) {// discard donor neighbourship relation, if not any was found
+
+  // discard donor neighbourship relation, if not any was found
+  if (!found_dependency) {
     m_neighbours.pop_back();
-    if (m_InterpolateGrad1N) {m_InterCoeffGrad1N_WS.pop_back();}
-    if (m_InterpolateData) {m_InterCoeffData_WS.pop_back();}
+    if (m_InterpolateGrad1N) {
+      m_InterCoeffGrad1N_WS.pop_back();
+    }
+    if (m_InterpolateData) {
+      m_InterCoeffData_WS.pop_back();
+    }
   }
   /** @todo Must apply InterCoeffxxxx_WS::adjust2Average AFTER all neighbouring donor patches have been inserted.
     *       This ensures, the correct number of hits (in case of multiple donor patches contributing to single cells)
