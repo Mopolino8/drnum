@@ -1,13 +1,28 @@
+#include <unistd.h>
 #include "patchgrid.h"
 
 PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
 {
+  // parametric settings
   m_NumProtectLayers = num_protectlayers;
   m_NumOverlapLayers = num_overlaplayers;
+  // default settings
+  m_NumFields = 0;
+  m_NumVariables = 0;
   m_InterpolateData = false;
   m_InterpolateGrad1N = false;
   m_bbox_OK = false;
   //  m_hashBox = NULL;
+}
+
+void  PatchGrid::setNumberOfFields(size_t num_fields)
+{
+  m_NumFields = num_fields;
+}
+
+void  PatchGrid::setNumberOfVariables(size_t num_variables)
+{
+  m_NumVariables = num_variables;
 }
 
 void PatchGrid::setInterpolateData(bool interpolatedata)
@@ -231,6 +246,8 @@ size_t PatchGrid::insertPatch(Patch* new_patch)
 
 void PatchGrid::setGeneralAttributes(Patch* patch)
 {
+  patch->setNumberOfFields(m_NumFields);
+  patch->setNumberOfVariables(m_NumVariables);
   patch->setNumOverlapLayers(m_NumOverlapLayers);
   patch->setNumProtectLayers(m_NumProtectLayers);
   patch->setInterpolateData(m_InterpolateData);
@@ -246,6 +263,7 @@ void PatchGrid::deletePatch(size_t i_patch)
     * Most likely this method will never be required, unless for mesh generation purposes.
     */
 }
+
 
 
 void PatchGrid::readGrid()
@@ -270,60 +288,36 @@ void PatchGrid::readGrid()
   cout << "Reading PatchGrid::readGrid() from file " << grid_file << " ... ";
   /** @todo Preliminary format. */
   while(!s_grid.eof()) {
-    // read int-code of patch
+    // Read int-code of patch
     size_t patch_type;
     s_grid >> patch_type;
-    if(patch_type == 1001) { // CartesianPatch
+    // End marker
+    if(patch_type == 0) {
+      break;
+    }
+    // CartesianPatch
+    else if(patch_type == 1001) {
       //.. Create a new CartesianPatch
       CartesianPatch* new_patch;
       new_patch = new CartesianPatch();
-//      Patch* new_patch;
-//      new_patch = new Patch();
+      //      Patch* new_patch;
+      //      new_patch = new Patch();
       insertPatch(new_patch);
-
-// HIER GEHTS WEITER
-    };
-  };
+      new_patch->readFromFile(s_grid);
+    }
+    // Unstructured Patch ??
+    else if(patch_type == 1010) {
+      // ...
+    }
+  }
 }
 
-
-
-
-
-//  strcpy(defprop_file, base_files_path);
-//  strcat(defprop_file,"/default_files/particles.defprop");
-//  //
-//  // Open "defprop" file
-
-//  ifstream s_defprop(defprop_file);
-//  if (s_defprop.fail()) {
-//    cout << " faild to open default properties file:" << defprop_file << endl;
-//    exit(EXIT_FAILURE);
-//  };
-//  // Say something
-//  cout << "Reading CParticleDefaults::ReadFile() from file " << defprop_file << " ... ";
-//  //
-//  // Read file
-//  char c;
-//  //.. Number of particles per cell
-//  while (!s_defprop.fail()) {
-//    s_defprop.get(c);
-//    if(c==':') {
-//      break;
-//    };
-//  };
-
-
-
-
-//  ifstream s_scene((scene_file).c_str());
-//      if (s_scene.fail()) Error("couldn't open " + scene_file);
-
-
-//  // read line by line and pass over to individual patch reader
-
-//};
-
+void PatchGrid::scaleRefParental(real scfactor)
+{
+  for (vector<Patch*>::iterator p = m_patches.begin(); p != m_patches.end(); p++) {
+    (*p)->scaleRefParental(scfactor);
+  }
+}
 
 void PatchGrid::buildBoundingBox(const bool& force)
 {
@@ -350,4 +344,9 @@ void PatchGrid::buildBoundingBox(const bool& force)
   }
 }
 
-
+void PatchGrid::setFieldToConst(size_t i_field, real *var)
+{
+  for (size_t i_p = 1; i_p < m_patches.size(); i_p++) {
+    m_patches[i_p]->setFieldToConst(i_field, var);
+  }
+}

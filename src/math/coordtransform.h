@@ -15,12 +15,35 @@ public:
   CoordTransform();
 
   void setMatrix(mat3_t A);
+
+  /**
+    * Set up turn matrix to transform base vectors.
+    * (1,0,0) into normal(base_i)
+    * (0,1,0) into normal(base_j - dotprod(base_i, base_j) * base_i)
+    * (0,0,1) into dotprod of above two
+    *
+    * NOTES:
+    *  *base vector af j-coords will be modified to get dotprod(i_base, j_base) == 0
+    *  *base vector of k-coordinates is computed as crossprod(i_base, j_base)
+    * @param base_i the base vector of i-coordinates in non transformed system
+    * @param base_j the base vector of j-coordinates in non transformed system
+    * @return abs(crossprod(norm(i_base), norm(j_base))) . Approaches zero for lin. dependency.
+    */
+  real setMatrixFromBaseIJ(vec3_t base_i, vec3_t base_j);
+
   void setVector(vec3_t b);
   void setAll(mat3_t A, vec3_t b);
   void setTransFromTo(const CoordTransform& c_from, const CoordTransform& c_to);
   mat3_t getMatrix();
   vec3_t getVector();
   CoordTransform inverse() const;
+
+  /**
+    * Scale shift vector.
+    * @param scfactor the scaling factor.
+    */
+  void scaleVector(real scfactor);
+
   CoordTransform concatenate(const CoordTransform& c) const;  ///< ret = this * c;
   /// @todo cant overload
   void concatenate_reflexive(const CoordTransform& c);        ///< this = this * c;

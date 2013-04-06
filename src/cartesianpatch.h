@@ -24,14 +24,11 @@ protected: // attributes
   size_t m_NumJ; // number of CELLS in J-direction (num nodes = m_NumJ+1)
   size_t m_NumK; // number of CELLS in K-direction (num nodes = m_NumK+1)
 
-  real m_Xo;
-  real m_Yo;
-  real m_Zo;
+//  real m_Xo; // put reference position in patch.h
+//  real m_Yo; // put reference position in patch.h
+//  real m_Zo; // put reference position in patch.h
 
-  //  real m_Xco;
-  //  real m_Yco;
-  //  real m_Zco;
-
+  /** @todo ommit the following, if no longer needed (setupAligned) */
   real m_Uxo;
   real m_Uyo;
   real m_Uzo;
@@ -43,6 +40,7 @@ protected: // attributes
   real m_Wxo;
   real m_Wyo;
   real m_Wzo;
+  /// until here
 
   real m_Lx;
   real m_Ly;
@@ -61,19 +59,6 @@ protected: // attributes
   size_t m_numProtYmax;
   size_t m_numProtZmin;
   size_t m_numProtZmax;
-
-  //  real m_Dixo;
-  //  real m_Diyo;
-  //  real m_Dizo;
-
-  //  real m_Djxo;
-  //  real m_Djyo;
-  //  real m_Djzo;
-
-  //  real m_Dkxo;
-  //  real m_Dkyo;
-  //  real m_Dkzo;
-  //>>>>>>> master
 
   real m_LimiterEpsilon;
 
@@ -112,6 +97,28 @@ public: // methods
   virtual void setNumProtectLayers(size_t num_protectlayers);
 
   /**
+    * Read mesh data from file
+    * @param s_mesh the stream to read from
+    * @return true, if successful
+    */
+  virtual bool readFromFile(ifstream& s_mesh);
+
+  /**
+    * Write mesh data to file
+    * @param s_mesh the stream to write to
+    * @return true, if successful
+    */
+  virtual bool writeToFile(ifstream& s_mesh);
+
+  /**
+    * Scale patch relative to origin of parental coordsyst.
+    * NOTE: Affects reference position and physical patch size.
+    * Virtual: base class Patch holds reference position. Derived class holds phys. patch size.
+    * @param scfactor scaling factor.
+    */
+  virtual void scaleRefParental(real scfactor);
+
+  /**
     * Set individual number of protection layers on all six boundaries of the CartesianPatch. This setting is
     * intended to allow exceptions, like interpolations along boundaries or reduced (1D, 2D) computations.
     * @param numProtXmin number of protection layers on Xmin-side
@@ -125,7 +132,21 @@ public: // methods
                               const size_t& numProtYmin, const size_t& numProtYmax,
                               const size_t& numProtZmin, const size_t& numProtZmax);
 
+  /** @TODO: Eliminate this method and use setupMetrics instead, if working correctly. */
   void setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2);
+
+  /**
+    * Set up the metrics of the block.
+    * @param ilength physical size of block in i direction
+    * @param jlength physical size of block in j direction
+    * @param klength physical size of block in k direction
+    */
+  void setupMetrics(real ilength, real jlength, real klength);
+//  void setupMetrics(real xo1, real yo1, real zo1,
+//                    real ilength, real jlength, real klength,
+//                    real base_ix, base_iy, base_ik,
+//                    real base_jx, base_jy, base_jk);
+
   void resize(size_t num_i, size_t num_j, size_t num_k);
   virtual bool computeDependencies(const size_t& i_neighbour);
 
@@ -314,12 +335,6 @@ public: // methods
    */
   bool checkRange(size_t i, size_t j, size_t k);
 
-
-
-  //  real xo(size_t i, size_t j, size_t k) { return m_Xco + i*m_Dixo + j*m_Djxo + k*m_Dkxo; }
-  //  real yo(size_t i, size_t j, size_t k) { return m_Yco + i*m_Diyo + j*m_Djyo + k*m_Dkyo; }
-  //  real zo(size_t i, size_t j, size_t k) { return m_Zco + i*m_Dizo + j*m_Djzo + k*m_Dkzo; }
-
   real dx() { return m_Dx; }
   real dy() { return m_Dy; }
   real dz() { return m_Dz; }
@@ -327,17 +342,6 @@ public: // methods
   real idx() { return m_InvDx; }
   real idy() { return m_InvDy; }
   real idz() { return m_InvDz; }
-
-  //  real dixo() { return m_Dixo; }   /// @todo Sure, these will not cause copies?
-  //  real diyo() { return m_Diyo; }
-  //  real dizo() { return m_Dizo; }
-  //  real djxo() { return m_Djxo; }
-  //  real djyo() { return m_Djyo; }
-  //  real djzo() { return m_Djzo; }
-  //  real dkxo() { return m_Dkxo; }
-  //  real dkyo() { return m_Dkyo; }
-  //  real dkzo() { return m_Dkzo; }
-
 
   /**
    * Set up interpolation methods for giving data to foreign patches.

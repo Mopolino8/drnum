@@ -11,6 +11,12 @@ void CoordTransformVV::setMatrix(const mat3_t& A)
   computeInverse();
 }
 
+real CoordTransformVV::setMatrixFromBaseIJ(vec3_t base_i, vec3_t base_j)
+{
+  m_transform.setMatrixFromBaseIJ(base_i, base_j);
+  computeInverse();
+}
+
 void CoordTransformVV::setVector(const vec3_t& b)
 {
   m_transform.setVector(b);
@@ -26,6 +32,12 @@ void CoordTransformVV::setAll(const mat3_t& A, const vec3_t& b)
 void CoordTransformVV::setAll(const CoordTransform& transform)
 {
   m_transform = transform;
+  computeInverse();
+}
+
+void CoordTransformVV::scaleVector(real scfactor)
+{
+  m_transform.scaleVector(scfactor);
   computeInverse();
 }
 

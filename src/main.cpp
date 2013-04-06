@@ -12,6 +12,7 @@
 //#include "examples/two_patches_3.h"
 //#include "examples/cpujet.h"
 #include "examples/cpujet_mb1.h"
+//#include "examples/cpujet_mb_grid1.h"
 
 int main()
 {

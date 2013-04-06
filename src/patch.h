@@ -3,6 +3,8 @@
 
 #include <cstddef>
 #include <vector>
+#include <iostream>
+#include <fstream>
 #include "blockcfd.h"
 #include "utility/weightedset.h"
 
@@ -49,12 +51,17 @@ private: // attributes
   size_t  m_FieldSize;    ///< length of each field
   size_t  m_VariableSize; ///< length of each variable
 
-  Transformation m_Transformation;    /// @todo merge: kept for compatibility
+  Transformation m_Transformation;    /// @todo merge: kept for compatibility. Ommit and use m_transformInertial2This.
 
   void  allocateData();
 
 protected: // attributes
 
+  // reference position
+  /// @todo redundant info: ommit m_Xo,m_Yo,m_Zo as it is contained in m_transformInertial2This
+  real m_Xo;                  ///< X-coord of reference position in parental coordinates
+  real m_Yo;                  ///< Y-coord of reference position in parental coordinates
+  real m_Zo;                  ///< Z-coord of reference position in parental coordinates
   // settings
   bool m_InterpolateData;     ///< Flag indicates wether to interpolate data on interpatch transfers
   bool m_InterpolateGrad1N;   ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
@@ -63,10 +70,13 @@ protected: // attributes
   size_t m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
   size_t m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
 
-  // orientation, geometry
+  // IO-scaling, position, orientation
+  real m_ioscale;                            ///< general scale factor of mesh related to io-values
   CoordTransformVV m_transformInertial2This; ///< transformation matrix to transform intertial coords into system of "this"
-  vec3_t m_bbox_xyzo_min;                     ///< lowest coordinates of smallest box around patch in inertial coords.
-  vec3_t m_bbox_xyzo_max;                     ///< highest coordinates of smallest box around patch in inertial coords.
+
+  // bounding box
+  vec3_t m_bbox_xyzo_min;                    ///< lowest coordinates of smallest box around patch in inertial coords.
+  vec3_t m_bbox_xyzo_max;                    ///< highest coordinates of smallest box around patch in inertial coords.
   bool m_bbox_OK;                            ///< flag indicating wether the bounding box is available
 
   // intermediate variables
@@ -170,7 +180,7 @@ public: // methods
     * @param s_mesh the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(ifstream& s_mesh) { };
+  virtual bool readFromFile(ifstream& s_mesh);
 
   /**
     * Write mesh data to file
@@ -178,6 +188,25 @@ public: // methods
     * @return true, if successful
     */
   virtual bool writeToFile(ifstream& s_mesh) { };
+
+  /**
+    * Build up transformation matrix.
+    * @param xyzoref position of origin of own coord-syst in parental coord system.
+    * @param base_i base vector in i-direction of block, given in parental coords
+    * @param base_j base vector in j-direction of block, given in parental coords
+    */
+  void setupTransformation(vec3_t xyzoref,
+                           vec3_t base_i, vec3_t base_j);
+  /**
+    * Scale patch relative to origin of parental coordsyst.
+    * NOTE: Affects reference position and physical patch size.
+    * Virtual, base class patch only holds reference position.
+    * @param scfactor scaling factor.
+    */
+  virtual void scaleRefParental(real scfactor)
+  {
+    m_transformInertial2This.scaleVector(scfactor);
+  }
 
   /**
     * Access
@@ -331,6 +360,10 @@ public: // methods
 
   void setFieldToZero(real *field);
   void setFieldToZero(size_t i_field);
+
+  void setFieldToConst(real *field, real *var);
+  void setFieldToConst(size_t i_field, real *var);
+
   void copyField(real *src, real *dst);
   void copyField(size_t i_src, size_t i_dst);
   void addField(real *src, real factor, real *dst);
@@ -353,6 +386,21 @@ inline void Patch::setFieldToZero(size_t i_field)
 {
   setFieldToZero(getField(i_field));
 }
+
+inline void Patch::setFieldToConst(real *field, real* var)
+{
+  for (size_t i = 0; i < m_FieldSize; i=i+m_NumVariables) {
+    for(size_t i_var = 0; i_var < m_NumVariables; ++i_var) {
+      field[i+i_var] = var[i_var];
+    }
+  }
+}
+
+inline void Patch::setFieldToConst(size_t i_field, real *var)
+{
+  setFieldToConst(getField(i_field), var);
+}
+
 
 inline void Patch::copyField(real *src, real *dst)
 {
