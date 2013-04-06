@@ -39,132 +39,132 @@ template<class T>
 class WeightedSet
 {
 public:     /// @todo need usefull protection rules
-    vector<pair<size_t, T> > v;
-    bool sure_sorted;
-    T t_zero;
-    T t_one;
+  vector<pair<size_t, T> > v;
+  bool sure_sorted;
+  T t_zero;
+  T t_one;
 
 public:
 
-    /** Dummy construction
-     */
-    WeightedSet();
+  /** Dummy construction
+   */
+  WeightedSet();
 
-    /** Construction considering a single pair (j,w)
-     * @param j the index for the single pair
-     * @param t value of pair
-     */
-    WeightedSet(size_t j, T t);
+  /** Construction considering a single pair (j,w)
+   * @param j the index for the single pair
+   * @param t value of pair
+   */
+  WeightedSet(size_t j, T t);
 
-    /** Construction considering a single index with weight "1"
-     * @param j the index for the single pair
-     */
-    WeightedSet(size_t j);
+  /** Construction considering a single index with weight "1"
+   * @param j the index for the single pair
+   */
+  WeightedSet(size_t j);
 
-    /** Construction considering equiweighted average for an index vector
-     * @param vn the index vector
-     */
-    WeightedSet(vector<size_t> vn);
+  /** Construction considering equiweighted average for an index vector
+   * @param vn the index vector
+   */
+  WeightedSet(vector<size_t> vn);
 
-    /** Construction considering same weight for an index vector
-     * @param vn the index vector
-     * @param weight the weight of all entries
-     */
-    WeightedSet(vector<size_t> vn, T t);
+  /** Construction considering same weight for an index vector
+   * @param vn the index vector
+   * @param weight the weight of all entries
+   */
+  WeightedSet(vector<size_t> vn, T t);
 
-    /** Construction considering equiweighted average for an int-index vector
-     * @param vn the index vector
-     */
-    WeightedSet(vector<int> vn);
+  /** Construction considering equiweighted average for an int-index vector
+   * @param vn the index vector
+   */
+  WeightedSet(vector<int> vn);
 
-    /** Construction considering same weight for an int-index vector
-     * @param vn the index vector
-     * @param weight the weight of all entries
-     */
-    WeightedSet(vector<int> vn, T t);
+  /** Construction considering same weight for an int-index vector
+   * @param vn the index vector
+   * @param weight the weight of all entries
+   */
+  WeightedSet(vector<int> vn, T t);
 
-    // Member functions
-    void pushBack(const size_t& j, const T& t);            ///< appends a pair (j,s)
-    void setup();                                          ///< initializes
-    void sortWS();                                         ///< sort contents by index (first)
-    void clearWS();                                        ///< Erase all contents
-    void PrintNumSets();                                   ///< print to screen
-    void MultScalar(const T& s);                           ///< multiply     v = s*v
-    void Add(const WeightedSet<T>& w);                     ///< add:         v = v + w
-    void MultiplyAdd(const WeightedSet<T>& w, const T& s); ///< mult_add:    v = v + s*w
-    void Concatenate(const WeightedSet<T>& w);             ///< concatenate: v = [v , w]
-    void Concatenate(const WeightedSet<T>& w, const T& s); ///< concatenate: v = [v , s*w]
-    void Unify();    ///< adds up weights for multiple indicees and makes indicees unique
-    size_t getSize() const;                  ///< return number of pairs.
-    size_t getIndex(const size_t& ll) const; ///< return the index of the ll-th pair (index, weight)
-    T getWeight(const size_t& ll) const;     ///< return the weight of the ll-th pair (index, weight)
-    size_t HighNodeAddress() const;   ///< Find highest index stored v[..].first (compatibility)
-    size_t HighestIndex() const;      ///< Find highest index stored v[..].first
-    T WeightSum();                    ///< Compute sum of weights
-    T WeightAbsMax();                 ///< Compute maximum absolute weight
-    T RealValue(T* a);                ///< Compute sum(a[j[i]] * t[i]) for all i (compatibility)
-    T computeValue(const T* a) const; ///< Compute sum(a[j[i]] * t[i]) for all i
+  // Member functions
+  void pushBack(const size_t& j, const T& t);            ///< appends a pair (j,s)
+  void setup();                                          ///< initializes
+  void sortWS();                                         ///< sort contents by index (first)
+  void clearWS();                                        ///< Erase all contents
+  void PrintNumSets();                                   ///< print to screen
+  void MultScalar(const T& s);                           ///< multiply     v = s*v
+  void Add(const WeightedSet<T>& w);                     ///< add:         v = v + w
+  void MultiplyAdd(const WeightedSet<T>& w, const T& s); ///< mult_add:    v = v + s*w
+  void Concatenate(const WeightedSet<T>& w);             ///< concatenate: v = [v , w]
+  void Concatenate(const WeightedSet<T>& w, const T& s); ///< concatenate: v = [v , s*w]
+  void Unify();    ///< adds up weights for multiple indicees and makes indicees unique
+  size_t getSize() const;                  ///< return number of pairs.
+  size_t getIndex(const size_t& ll) const; ///< return the index of the ll-th pair (index, weight)
+  T getWeight(const size_t& ll) const;     ///< return the weight of the ll-th pair (index, weight)
+  size_t HighNodeAddress() const;   ///< Find highest index stored v[..].first (compatibility)
+  size_t HighestIndex() const;      ///< Find highest index stored v[..].first
+  T WeightSum();                    ///< Compute sum of weights
+  T WeightAbsMax();                 ///< Compute maximum absolute weight
+  T RealValue(T* a);                ///< Compute sum(a[j[i]] * t[i]) for all i (compatibility)
+  T computeValue(const T* a) const; ///< Compute sum(a[j[i]] * t[i]) for all i
 
-    // Operators
-    void operator=(const WeightedSet<T>& w);               ///< copy:        v = w
-    void operator+=(const WeightedSet<T>& w);              ///< add:         v = v + w
-    void operator*=(const T& s);                           ///< multiply     v = s*v
+  // Operators
+  void operator=(const WeightedSet<T>& w);               ///< copy:        v = w
+  void operator+=(const WeightedSet<T>& w);              ///< add:         v = v + w
+  void operator*=(const T& s);                           ///< multiply     v = s*v
 
-    /**
-     * Eliminate all entries with absolute values of weight below eps.
-     * @param eps the threshold value
-     * @param relative if true, causes function to work with eps relative to largest absolute weight
-     * @param keep_weight_sum if true, causes distribution of defects on remaining weights
-     */
-    void EliminateBelowEps(T eps, const bool& relative, const bool& keep_weight_sum);
+  /**
+   * Eliminate all entries with absolute values of weight below eps.
+   * @param eps the threshold value
+   * @param relative if true, causes function to work with eps relative to largest absolute weight
+   * @param keep_weight_sum if true, causes distribution of defects on remaining weights
+   */
+  void EliminateBelowEps(T eps, const bool& relative, const bool& keep_weight_sum);
 
-    /**
-     * Adjust sum of weights.
-     * Shift-version: act by adding a constant to all contributors
-     * @param aimed sum of the weights
-     * @return true, if no error occured
-     */
-    bool adjustWeightSumShift(const T& weight_sum);
+  /**
+   * Adjust sum of weights.
+   * Shift-version: act by adding a constant to all contributors
+   * @param aimed sum of the weights
+   * @return true, if no error occured
+   */
+  bool adjustWeightSumShift(const T& weight_sum);
 
 };
 
 template<class T>
 inline WeightedSet<T>::WeightedSet()
 {
-    setup();
-    sure_sorted = true;
+  setup();
+  sure_sorted = true;
 }
 
 template<class T>
 inline WeightedSet<T>::WeightedSet(size_t j, T t)
 {
-    setup();
-    pair<size_t, T> new_pair;
-    new_pair.first = j;
-    new_pair.second = t;
-    v.push_back(new_pair);
-    sure_sorted = true;
+  setup();
+  pair<size_t, T> new_pair;
+  new_pair.first = j;
+  new_pair.second = t;
+  v.push_back(new_pair);
+  sure_sorted = true;
 }
 
 template<class T>
 inline WeightedSet<T>::WeightedSet(size_t j)
 {
-    setup();
-    WeightedSet(j, t_one);
+  setup();
+  WeightedSet(j, t_one);
 }
 
 template<class T>
 inline WeightedSet<T>::WeightedSet(vector<size_t> vn)
 {
-    setup();
-    T t = t_one/vn.size();
-    for(size_t i=0; i<vn.size(); i++) {
-        pair<size_t, T> new_pair;
-        new_pair.first = vn[i];
-        new_pair.second = t;
-        v.push_back(new_pair);
-    }
-    sortWS();
+  setup();
+  T t = t_one/vn.size();
+  for(size_t i=0; i<vn.size(); i++) {
+    pair<size_t, T> new_pair;
+    new_pair.first = vn[i];
+    new_pair.second = t;
+    v.push_back(new_pair);
+  }
+  sortWS();
 }
 
 //  template<class T>
@@ -180,81 +180,81 @@ inline WeightedSet<T>::WeightedSet(vector<size_t> vn)
 template<class T>
 inline WeightedSet<T>::WeightedSet(vector<size_t> vn, T t)
 {
-    setup();
-    for(size_t i=0; i<vn.size(); i++) {
-        pair<size_t, T> new_pair;
-        new_pair.first = vn[i];
-        new_pair.second = t;
-        v.push_back(new_pair);
-    }
-    sortWS();
+  setup();
+  for(size_t i=0; i<vn.size(); i++) {
+    pair<size_t, T> new_pair;
+    new_pair.first = vn[i];
+    new_pair.second = t;
+    v.push_back(new_pair);
+  }
+  sortWS();
 }
 
 template<class T>
 inline WeightedSet<T>::WeightedSet(vector<int> vn)
 {
-    setup();
-    T t = t_one/vn.size();
-    for(size_t i=0; i<vn.size(); i++) {
-        pair<size_t, T> new_pair;
-        new_pair.first = vn[i];
-        new_pair.second = t;
-        v.push_back(new_pair);
-    }
-    sortWS();
+  setup();
+  T t = t_one/vn.size();
+  for(size_t i=0; i<vn.size(); i++) {
+    pair<size_t, T> new_pair;
+    new_pair.first = vn[i];
+    new_pair.second = t;
+    v.push_back(new_pair);
+  }
+  sortWS();
 }
 
 template<class T>
 inline WeightedSet<T>::WeightedSet(vector<int> vn, T t)
 {
-    setup();
-    for(size_t i=0; i<vn.size(); i++) {
-        pair<size_t, T> new_pair;
-        new_pair.first = vn[i];
-        new_pair.second = t;
-        v.push_back(new_pair);
-    }
-    sortWS();
+  setup();
+  for(size_t i=0; i<vn.size(); i++) {
+    pair<size_t, T> new_pair;
+    new_pair.first = vn[i];
+    new_pair.second = t;
+    v.push_back(new_pair);
+  }
+  sortWS();
 }
 
 template<class T>
 inline void WeightedSet<T>::setup()
 {
-    t_zero = T(0);
-    t_one = T(1);
-    v.clear();
+  t_zero = T(0);
+  t_one = T(1);
+  v.clear();
 }
 
 template<>
 inline void WeightedSet<float>::setup()
 {
-    t_zero = 0.;
-    t_one = 1.;
-    v.clear();
+  t_zero = 0.;
+  t_one = 1.;
+  v.clear();
 }
 
 template<>
 inline void WeightedSet<double>::setup()
 {
-    t_zero = 0.;
-    t_one = 1.;
-    v.clear();
+  t_zero = 0.;
+  t_one = 1.;
+  v.clear();
 }
 
 template<>
 inline void WeightedSet<int>::setup()
 {
-    t_zero = 0;
-    t_one = 1;
-    v.clear();
+  t_zero = 0;
+  t_one = 1;
+  v.clear();
 }
 
 template<>
 inline void WeightedSet<size_t>::setup()
 {
-    t_zero = 0;
-    t_one = 1;
-    v.clear();
+  t_zero = 0;
+  t_one = 1;
+  v.clear();
 }
 
 /// @todo Problem with ambigous real definition
@@ -277,63 +277,63 @@ inline void WeightedSet<size_t>::setup()
 template<class T>
 inline void WeightedSet<T>::sortWS()
 {
-    sort(v.begin(), v.end());
-    sure_sorted = true;
+  sort(v.begin(), v.end());
+  sure_sorted = true;
 }
 
 template<class T>
 inline void WeightedSet<T>::clearWS()
 {
-    v.clear();
+  v.clear();
 }
 
 template<class T>
 void WeightedSet<T>::pushBack(const size_t& j, const T& s) {
-    pair<size_t, T> new_pair;
-    new_pair.first = j;
-    new_pair.second = s;
-    v.push_back(new_pair);
-    sure_sorted = false;
+  pair<size_t, T> new_pair;
+  new_pair.first = j;
+  new_pair.second = s;
+  v.push_back(new_pair);
+  sure_sorted = false;
 }
 
 template<class T>
 inline void WeightedSet<T>::PrintNumSets()
 {
-    T weight_sum = WeightSum();
-    for(size_t i=0; i<v.size(); i++) {
-        cout << "i = " << v[i].first << " ; weight = " << v[i].second  << " rel_weight = " << (v[i].second/weight_sum) << endl;
-    }
-    cout << "sum of weights = " << weight_sum << endl;
+  T weight_sum = WeightSum();
+  for(size_t i=0; i<v.size(); i++) {
+    cout << "i = " << v[i].first << " ; weight = " << v[i].second  << " rel_weight = " << (v[i].second/weight_sum) << endl;
+  }
+  cout << "sum of weights = " << weight_sum << endl;
 }
 
 template<class T>
 inline void WeightedSet<T>::operator=(const WeightedSet<T>& a_ws)
 {
-    v.clear();             /// @todo not sure, if this frees the mem
-    v.reserve(a_ws.v.size());
-    v.resize(a_ws.v.size());
-    for(size_t i=0; i<a_ws.v.size(); i++) {
-        v[i] = a_ws.v[i];
-    }
-    sure_sorted = a_ws.sure_sorted;
+  v.clear();             /// @todo not sure, if this frees the mem
+  v.reserve(a_ws.v.size());
+  v.resize(a_ws.v.size());
+  for(size_t i=0; i<a_ws.v.size(); i++) {
+    v[i] = a_ws.v[i];
+  }
+  sure_sorted = a_ws.sure_sorted;
 }
 
 template<class T>
 inline void WeightedSet<T>::operator+=(const WeightedSet<T>& a_ws) {
-    Add(a_ws);
+  Add(a_ws);
 }
 
 template<class T>
 inline void WeightedSet<T>::MultScalar(const T& scalar)
 {
-    for(size_t i=0; i<v.size(); i++) {
-        v[i].second *= scalar;
-    }
+  for(size_t i=0; i<v.size(); i++) {
+    v[i].second *= scalar;
+  }
 }
 
 template<class T>
 inline void WeightedSet<T>::operator*=(const T& scalar) {
-    MultScalar(scalar);
+  MultScalar(scalar);
 }
 
 /// @todo modified 2012_07_30: test carefully.
@@ -342,34 +342,34 @@ inline void WeightedSet<T>::operator*=(const T& scalar) {
 template<class T>
 inline void WeightedSet<T>::Unify()
 {
-    sort(v.begin(), v.end());
-    size_t it = 0;
-    size_t hold_it = 0;
-    bool initial = true;
-    while(it < v.size()) {
-        if(initial) {
-            initial = false;
-            v[hold_it] = v[it];
-            //  it++;
-        } else {
-            if(v[it].first == v[hold_it].first) {
-                // same address: add weights
-                v[hold_it].second += v[it].second;
-                //        it = erase(it);
-            } else {
-                // other address: copy
-                hold_it++;
-                v[hold_it] = v[it];
-            }
-        }
-        it++;
+  sort(v.begin(), v.end());
+  size_t it = 0;
+  size_t hold_it = 0;
+  bool initial = true;
+  while(it < v.size()) {
+    if(initial) {
+      initial = false;
+      v[hold_it] = v[it];
+      //  it++;
+    } else {
+      if(v[it].first == v[hold_it].first) {
+        // same address: add weights
+        v[hold_it].second += v[it].second;
+        //        it = erase(it);
+      } else {
+        // other address: copy
+        hold_it++;
+        v[hold_it] = v[it];
+      }
     }
-    v.resize(hold_it+1);
+    it++;
+  }
+  v.resize(hold_it+1);
 
-    // test explicit memory shrinking
-    vector<pair<size_t, T> >(v).swap(v);
+  // test explicit memory shrinking
+  vector<pair<size_t, T> >(v).swap(v);
 
-    sure_sorted = true;
+  sure_sorted = true;
 }
 
 // old heritage version
@@ -425,36 +425,36 @@ inline void WeightedSet<T>::Concatenate(const WeightedSet<T>& w, const T& s)
 template<class T>
 inline T WeightedSet<T>::WeightSum()
 {
-    T weight_sum = t_zero;
-    for(size_t i=0; i < v.size(); i++) {
-        weight_sum += v[i].second;
-    }
-    return weight_sum;
+  T weight_sum = t_zero;
+  for(size_t i=0; i < v.size(); i++) {
+    weight_sum += v[i].second;
+  }
+  return weight_sum;
 }
 
 /// @todo new since 2012_07_30: test carefully.
 template<class T>
 inline T WeightedSet<T>::WeightAbsMax()
 {
-    T weight_absmax = t_zero;
-    for(size_t i=0; i < v.size(); i++) {
-        T test_w = v[i].second;
-        if(test_w < t_zero) test_w = -test_w;  // no general abs-function for float, double, ...
-        if(test_w > weight_absmax) weight_absmax = test_w;
-    }
-    return weight_absmax;
+  T weight_absmax = t_zero;
+  for(size_t i=0; i < v.size(); i++) {
+    T test_w = v[i].second;
+    if(test_w < t_zero) test_w = -test_w;  // no general abs-function for float, double, ...
+    if(test_w > weight_absmax) weight_absmax = test_w;
+  }
+  return weight_absmax;
 }
 
 template<class T>
 inline void WeightedSet<T>::Add(const WeightedSet<T>& addend_2) {
-    Concatenate(addend_2);
-    Unify();
+  Concatenate(addend_2);
+  Unify();
 }
 
 template<class T>
 inline void WeightedSet<T>::MultiplyAdd(const WeightedSet<T>& addend_2, const T& scalar) {
-    Concatenate(addend_2, scalar);
-    Unify();
+  Concatenate(addend_2, scalar);
+  Unify();
 }
 
 // Include functions previously in WeightedSet.cc below
@@ -527,111 +527,112 @@ inline void WeightedSet<T>::MultiplyAdd(const WeightedSet<T>& addend_2, const T&
 template<class T>
 inline size_t WeightedSet<T>::getSize() const
 {
-    return v.size();
+  return v.size();
 }
 
 template<class T>
 inline size_t WeightedSet<T>::getIndex(const size_t& ll) const
 {
-    return v[ll].first;
+  return v[ll].first;
 }
 
 template<class T>
 inline T WeightedSet<T>::getWeight(const size_t& ll) const
 {
-    return v[ll].second;
+  return v[ll].second;
 }
 
 template<class T>
 inline size_t WeightedSet<T>::HighNodeAddress() const
 {
-    return HighestIndex();
+  return HighestIndex();
 }
 
 template<class T>
 inline size_t WeightedSet<T>::HighestIndex() const
 {
-    // get the maximum internal index of all entries
-    size_t high_index = 0;
-    for (size_t i=0; i<v.size(); i++) {
-        if(v[i].first > high_index) {
-            high_index = v[i].first;
-        };
+  // get the maximum internal index of all entries
+  size_t high_index = 0;
+  for (size_t i=0; i<v.size(); i++) {
+    if(v[i].first > high_index) {
+      high_index = v[i].first;
     };
-    return high_index;
+  };
+  return high_index;
 }
 
 /// @todo new since 2012_07_30: test carefully.
 template<class T>
 inline void WeightedSet<T>::EliminateBelowEps(T eps, const bool& relative, const bool& keep_sum)
 {
-    // eliminate all entries with weights below eps
-    Unify();   /// @todo Unify should check itself wether to do or not
-    //  T weight_sum = WeightSum();
-    if(relative) {
-        eps *= WeightAbsMax();
+  // eliminate all entries with weights below eps
+  Unify();   /// @todo Unify should check itself wether to do or not
+  //  T weight_sum = WeightSum();
+  if(relative) {
+    eps *= WeightAbsMax();
+  }
+  T defect = t_zero;
+  typename vector<pair<size_t, T> >::iterator it = v.begin();
+  while(it != v.end()) {
+    T test_w = (*it).second;
+    if (test_w < t_zero) {
+      test_w = -test_w;  // no general abs-function for float and double
     }
-    T defect = t_zero;
-    typename vector<pair<size_t, T> >::iterator it = v.begin();
-    while(it != v.end()) {
-        T test_w = (*it).second;
-        if (test_w < t_zero) {
-            test_w = -test_w;  // no general abs-function for float and double
-        }
-        if(test_w < eps) {
-            defect += (*it).second;
-            it = v.erase(it);
-        } else {
-            it++;
-        }
+    if(test_w < eps) {
+      defect += (*it).second;
+      it = v.erase(it);
+    } else {
+      it++;
     }
-    /// @todo Correction below is potentially unsafe.
-    if(keep_sum && (v.size()>0) ) {
-        //unsafe T correction = weight_sum/(weight_sum-defect);
-        //unsafe for(vector<pair<size_t, T> >::iterator i = begin(); i!=end(); i++) {
-        //unsafe   (*i).second *= correction;
-        // }
-        T correction = defect / v.size();
-        for(size_t i=0; i<v.size(); i++) {
-            v[i].second += correction;
-        }
+  }
+  /// @todo Correction below is potentially unsafe.
+  if(keep_sum && (v.size()>0) ) {
+    //unsafe T correction = weight_sum/(weight_sum-defect);
+    //unsafe for(vector<pair<size_t, T> >::iterator i = begin(); i!=end(); i++) {
+    //unsafe   (*i).second *= correction;
+    // }
+    T correction = defect / v.size();
+    for(size_t i=0; i<v.size(); i++) {
+      v[i].second += correction;
     }
+  }
 }
 
 template<class T>
 inline bool WeightedSet<T>::adjustWeightSumShift(const T& weight_sum)
 {
-    bool success = true;
-    if(v.size() > 0) {
-        T old_weight_sum = WeightSum();
-        T correction = (weight_sum-old_weight_sum) / v.size();
-        typename vector<pair<size_t, T> >::iterator it;
-        for(it = v.begin(); it!=v.end(); it++) {
-            (*it).second += correction;
-        }
-    } else {
-        success = false;
+  bool success = true;
+  if(v.size() > 0) {
+    T old_weight_sum = WeightSum();
+    T correction = (weight_sum-old_weight_sum) / v.size();
+    typename vector<pair<size_t, T> >::iterator it;
+    for(it = v.begin(); it!=v.end(); it++) {
+      (*it).second += correction;
     }
+  } else {
+    success = false;
+  }
+  return success;
 }
 
 template<class T>
 inline T WeightedSet<T>::RealValue(T* a)
 {
-    T ret_val = t_zero;
-    for(size_t i=0; i<v.size(); i++) {
-        ret_val += a[v[i].first] * v[i].second;
-    }
-    return ret_val;
+  T ret_val = t_zero;
+  for(size_t i=0; i<v.size(); i++) {
+    ret_val += a[v[i].first] * v[i].second;
+  }
+  return ret_val;
 }
 
 template<class T>
 inline T WeightedSet<T>::computeValue(const T* a) const
 {
-    T ret_val = t_zero;
-    for(size_t i=0; i<v.size(); i++) {
-        ret_val += a[v[i].first] * v[i].second;
-    }
-    return ret_val;
+  T ret_val = t_zero;
+  for(size_t i=0; i<v.size(); i++) {
+    ret_val += a[v[i].first] * v[i].second;
+  }
+  return ret_val;
 }
 
 #endif
