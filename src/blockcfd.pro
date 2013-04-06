@@ -3,23 +3,25 @@ CONFIG += console
 
 INCLUDEPATH += $(VTKINCDIR)
 
-LIBS        += -L$(VTKLIBDIR)
-LIBS        += -L/nopt/cuda/5.0/lib64
-LIBS        += -lQVTK
-LIBS        += -lvtkCommon
-LIBS        += -lvtkDICOMParser
-LIBS        += -lvtkexoIIc
-LIBS        += -lvtkFiltering
-LIBS        += -lvtkftgl
-LIBS        += -lvtkGenericFiltering
-LIBS        += -lvtkGraphics
-LIBS        += -lvtkHybrid
-LIBS        += -lvtkImaging
-LIBS        += -lvtkIO
-LIBS        += -lvtkRendering
-LIBS        += -lvtksys
-LIBS        += -lvtkVolumeRendering
-LIBS        += -lvtkWidgets
+LIBS += -L$(VTKLIBDIR)
+LIBS += -L/nopt/cuda/5.0/lib64
+LIBS += -lQVTK
+LIBS += -lvtkCommon
+LIBS += -lvtkDICOMParser
+LIBS += -lvtkexoIIc
+LIBS += -lvtkFiltering
+LIBS += -lvtkftgl
+LIBS += -lvtkGenericFiltering
+LIBS += -lvtkGraphics
+LIBS += -lvtkHybrid
+LIBS += -lvtkImaging
+LIBS += -lvtkIO
+LIBS += -lvtkRendering
+LIBS += -lvtksys
+LIBS += -lvtkVolumeRendering
+LIBS += -lvtkWidgets
+LIBS += -lgomp
+
 
 QMAKE_CXXFLAGS += -Wno-deprecated
 QMAKE_CXXFLAGS += -fopenmp
@@ -32,31 +34,32 @@ QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
 #QMAKE_CXXFLAGS_RELEASE += -Winline
 
 
+
 # CUDA
 # ====
 #
-USEGPU                 = -DGPU
-LIBS                  += -lcudart
-LIBS                  += -lgomp
-INCLUDEPATH           += .
-INCLUDEPATH           += /usr/include/QtCore
-NVCCFLAGS             += -Xcompiler -fopenmp
-NVCCFLAGS             += -O3
-#NVCCFLAGS             += -g -G
-NVCCFLAGS             += -m64
-NVCCFLAGS             += -arch=sm_20
-#NVCCFLAGS             += -keep
-NVCCFLAGS             += -Xcompiler -Wno-deprecated
-NVCCFLAGS             += -Xcompiler $$USEGPU
-CUDA_INC               = $$join(INCLUDEPATH,' -I','-I',' ')
-cuda.input             = CUDA_SOURCES
-cuda.output            = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
-cuda.commands          = nvcc -c $$NVCCFLAGS $$CUDA_INC ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT}
-cuda.dependency_type   = TYPE_C
-cuda.depend_command    = nvcc -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
-QMAKE_EXTRA_COMPILERS += cuda
-QMAKE_CXXFLAGS        += $$USEGPU
-
+cuda {
+  USEGPU                 = -DGPU
+  LIBS                  += -lcudart
+  INCLUDEPATH           += .
+  INCLUDEPATH           += /usr/include/QtCore
+  NVCCFLAGS             += -Xcompiler -fopenmp
+  NVCCFLAGS             += -O3
+  #NVCCFLAGS             += -g -G
+  NVCCFLAGS             += -m64
+  NVCCFLAGS             += -arch=sm_20
+  #NVCCFLAGS             += -keep
+  NVCCFLAGS             += -Xcompiler -Wno-deprecated
+  NVCCFLAGS             += -Xcompiler $$USEGPU
+  CUDA_INC               = $$join(INCLUDEPATH,' -I','-I',' ')
+  cuda.input             = CUDA_SOURCES
+  cuda.output            = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
+  cuda.commands          = nvcc -c $$NVCCFLAGS $$CUDA_INC ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT}
+  cuda.dependency_type   = TYPE_C
+  cuda.depend_command    = nvcc -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
+  QMAKE_EXTRA_COMPILERS += cuda
+  QMAKE_CXXFLAGS        += $$USEGPU
+}
 
 
 SOURCES += main.cpp \
