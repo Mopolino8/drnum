@@ -47,7 +47,7 @@ public: // methods
    * @param k third  index
    * @return the index in the one dimensional data field
    */
-  size_t index(int i, int j, int k) { return i*m_NumJ*m_NumK + j*m_NumK + k; }
+  size_t index(int i, int j, int k) const { return i*m_NumJ*m_NumK + j*m_NumK + k; }
 
   /**
    * @brief Get the indicees (i, j, k) from field index/

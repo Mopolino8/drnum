@@ -13,9 +13,6 @@ private: // attributes
   vector<Patch*> m_Patches;
 
 
-protected: // methods
-
-  void addPatch(Patch* patch) { m_Patches.push_back(patch); }
 
 
 public:
@@ -25,9 +22,11 @@ public:
   size_t numPatches() { return m_Patches.size(); }
   Patch* getPatch(size_t i) { return m_Patches[i]; }
   void   computeAll(real factor);
-  void   copyField(size_t i_src, size_t i_dst);
+
+  void addPatch(Patch* patch) { m_Patches.push_back(patch); }
 
   virtual void compute(real factor, const vector<size_t>& patches) = 0;
+  virtual void copyField(size_t i_src, size_t i_dst);
 
 };
 

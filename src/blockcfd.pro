@@ -50,7 +50,7 @@ cuda {
   NVCCFLAGS             += -arch=sm_20
   #NVCCFLAGS             += -keep
   NVCCFLAGS             += -Xcompiler -Wno-deprecated
-  NVCCFLAGS             += -Xcompiler $$USEGPU
+  NVCCFLAGS             += -Xcompiler $$USEGPU -DCUDA
   CUDA_INC               = $$join(INCLUDEPATH,' -I','-I',' ')
   cuda.input             = CUDA_SOURCES
   cuda.output            = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
@@ -59,6 +59,7 @@ cuda {
   cuda.depend_command    = nvcc -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
   QMAKE_EXTRA_COMPILERS += cuda
   QMAKE_CXXFLAGS        += $$USEGPU -DCUDA
+  INCLUDEPATH           += $(CUDAINCDIR)
 }
 
 
@@ -180,7 +181,8 @@ HEADERS += \
     utility/usparseweightedset.h \
     utility/weightedset.h \
     vectorhashraster.h \
-    iterators/cartesianiterator.h
+    iterators/cartesianiterator.h \
+    cudatools.h
 
 
 CUDA_SOURCES += main.cu

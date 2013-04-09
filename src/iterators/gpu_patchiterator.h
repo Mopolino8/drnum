@@ -1,72 +1,70 @@
 #ifndef GPU_PATCHITERATOR_H
 #define GPU_PATCHITERATOR_H
 
-#include "patchiterator.h"
-#include "cartesianpatch.h"
+#include "tpatchiterator.h"
 #include "gpu_patch.h"
+#include "cudatools.h"
 
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-
-class GPU_PatchIterator : public PatchIterator
+template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
+class GPU_PatchIterator : public TPatchIterator<T_CPU, DIM, OP>
 {
 
-protected:
+protected: // attributes
 
-  GPU_Patch* m_GpuPatch;
+  vector<T_GPU> m_GpuPatches;
 
 
 public:
 
-  GPU_PatchIterator(Patch* patch) : PatchIterator(patch)
-  {
-    m_GpuPatch = NULL;
-  }
+  GPU_PatchIterator(PatchGrid &patch_grid, OP op);
 
-  void copyField(size_t i_src, size_t i_dst)
-  {
-    if (m_GpuPatch == NULL) {
-      BUG;
-    }
-    cudaMemcpy(m_GpuPatch->getField(i_dst), m_GpuPatch->getField(i_src), m_GpuPatch->fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
-  }
+  CUDA_HO void addPatch(T_CPU* patch);
+  CUDA_HO void updateHost();
+  CUDA_HO void updateDevice();
 
-  void gpuInfo()
-  {
-    int count;
-    if (cudaGetDeviceCount(&count) != cudaSuccess) {
-      cerr << "error detecting CUDA devices" << endl;
-      exit(EXIT_FAILURE);
-    }
-    if (count == 0) {
-      cerr << "no CUDA devices found" << endl;
-      exit(EXIT_FAILURE);
-    }
-    for (int i = 0; i < count; ++i) {
-      cout << endl;
-      cout << "device #" << i << ":" << endl;
-      cout << "================================================" << endl;
-      cudaDeviceProp prop;
-      if (cudaGetDeviceProperties(&prop, i) != cudaSuccess) {
-        cerr << "error fetching device properties" << endl;
-        exit(EXIT_FAILURE);
-      }
-      cout << "name                   : " << prop.name << endl;
-      cout << "warpSize               : " << prop.warpSize << endl;
-      cout << "maxThreadsPerBlock     : " << prop.maxThreadsPerBlock << endl;
-      cout << "maxThreadsDim[0]       : " << prop.maxThreadsDim[0] << endl;
-      cout << "maxThreadsDim[1]       : " << prop.maxThreadsDim[1] << endl;
-      cout << "maxThreadsDim[2]       : " << prop.maxThreadsDim[2] << endl;
-      cout << "maxGridSize[0]         : " << prop.maxGridSize[0] << endl;
-      cout << "maxGridSize[1]         : " << prop.maxGridSize[1] << endl;
-      cout << "maxGridSize[2]         : " << prop.maxGridSize[2] << endl;
-      cout << "compute capability     : " << prop.major << "." << prop.minor << endl;
-      cout << "sharedMemPerBlock [kb] : " << double(prop.sharedMemPerBlock)/1024 << endl;
-      cout << "totalGlobalMem [Mb]    : " << double(prop.totalGlobalMem)/(1024*1024) << endl;
-      cout << endl;
-    }
-  }
+  virtual void copyField(size_t i_src, size_t i_dst);
 
 };
+
+
+template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
+GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::GPU_PatchIterator(PatchGrid &patch_grid, OP op)
+  : TPatchIterator<T_CPU, DIM, OP>(patch_grid, op)
+{
+  m_GpuPatches.reserve(max(size_t(100), patch_grid.getNumPatches()));
+}
+
+template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::addPatch(T_CPU *patch)
+{
+  TPatchIterator<T_CPU, DIM, OP>::addPatch(patch);
+  m_GpuPatches.push_back(T_GPU(patch));
+}
+
+template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::copyField(size_t i_src, size_t i_dst)
+{
+  for (size_t i = 0; i < this->m_Patches.size(); ++i) {
+    cudaMemcpy(m_GpuPatches[i].getField(i_dst), m_GpuPatches[i].getField(i_src), m_GpuPatches[i].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
+  }
+}
+
+template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateHost()
+{
+  for (size_t i = 0; i < this->m_Patches.size(); ++i) {
+    m_GpuPatches[i].copyFromDevice(this->m_Patches[i]);
+  }
+}
+
+template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()
+{
+  for (size_t i = 0; i < this->m_Patches.size(); ++i) {
+    m_GpuPatches[i].copyToDevice(this->m_Patches[i]);
+  }
+}
+
+
 
 #endif // GPU_PATCHITERATOR_H
