@@ -8,7 +8,7 @@ class CartesianPatch;
 //#include <iostream>
 //#include <fstream>
 //#include <sstream>
-//#include "patch.h"
+#include "patch.h"
 
 #ifdef WITH_VTK
 #include <QString>
@@ -20,10 +20,9 @@ class CartesianPatch;
 #include <vtkCellData.h>
 #endif
 
-#include "patch.h"
-
 class CartesianPatch : public Patch
 {
+
 
 #include "cartesianpatch_common.h"
 
@@ -134,10 +133,10 @@ public: // methods
     * @param klength physical size of block in k direction
     */
   void setupMetrics(real ilength, real jlength, real klength);
-//  void setupMetrics(real xo1, real yo1, real zo1,
-//                    real ilength, real jlength, real klength,
-//                    real base_ix, base_iy, base_ik,
-//                    real base_jx, base_jy, base_jk);
+  //  void setupMetrics(real xo1, real yo1, real zo1,
+  //                    real ilength, real jlength, real klength,
+  //                    real base_ix, base_iy, base_ik,
+  //                    real base_jx, base_jy, base_jk);
 
   void resize(size_t num_i, size_t num_j, size_t num_k);
   virtual bool computeDependencies(const size_t& i_neighbour);

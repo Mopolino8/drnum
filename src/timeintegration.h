@@ -1,7 +1,7 @@
 #ifndef TIMEINTEGRATION_H
 #define TIMEINTEGRATION_H
 
-#include "patchiterator.h"
+#include "iterators/patchiterator.h"
 #include "genericoperation.h"
 #include <list>
 

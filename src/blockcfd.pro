@@ -50,7 +50,7 @@ cuda {
   NVCCFLAGS             += -arch=sm_20
   #NVCCFLAGS             += -keep
   NVCCFLAGS             += -Xcompiler -Wno-deprecated
-  NVCCFLAGS             += -Xcompiler $$USEGPU
+  NVCCFLAGS             += -Xcompiler $$USEGPU -DCUDA
   CUDA_INC               = $$join(INCLUDEPATH,' -I','-I',' ')
   cuda.input             = CUDA_SOURCES
   cuda.output            = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
@@ -58,16 +58,16 @@ cuda {
   cuda.dependency_type   = TYPE_C
   cuda.depend_command    = nvcc -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
   QMAKE_EXTRA_COMPILERS += cuda
-  QMAKE_CXXFLAGS        += $$USEGPU
+  QMAKE_CXXFLAGS        += $$USEGPU -DCUDA
+  INCLUDEPATH           += $(CUDAINCDIR)
 }
 
 
 SOURCES += main.cpp \
     patch.cpp \
-    cartesianpatch.cpp \
     blockcfd.cpp \
+    cartesianpatch.cpp \
     timeintegration.cpp \
-    patchiterator.cpp \
     rungekutta.cpp \
     patchgrid.cpp \
     utility/List.cc \
@@ -135,12 +135,10 @@ HEADERS += \
     gpu_rungekutta.h \
     intercoeffpad.h \
     intercoeffws.h \
-    iterators/cartesiandirectionalpatchoperation.h \
-    iterators/cartesianpatchoperation.h \
-    iterators/cartesianstandarditerator.h \
-    iterators/cartesianstandardpatchoperation.h \
     iterators/gpu_cartesianiterator.h \
     iterators/gpu_patchiterator.h \
+    iterators/patchiterator.h \
+    iterators/tpatchiterator.h \
     math/coordtransform.h \
     math/coordtransformvv.h \
     math/linsolve.h \
@@ -152,7 +150,6 @@ HEADERS += \
     patch_common.h \
     patchgrid.h \
     patch.h \
-    patchiterator.h \
     perfectgas.h \
     raster.h \
     reconstruction/immersedboundaryreconstruction.h \
@@ -185,6 +182,8 @@ HEADERS += \
     utility/usparseweightedset.h \
     utility/weightedset.h \
     vectorhashraster.h \
+    iterators/cartesianiterator.h \
+    cudatools.h
 
 
 CUDA_SOURCES += main.cu

@@ -44,6 +44,7 @@ public: // methods
    * @param k third  index
    * @return the index in the one dimensional data field
    */
+
   /// @todo check, why "int" and not "size_t"
   size_t index(const int& i, const int& j, const int& k) const
   {

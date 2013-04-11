@@ -3,7 +3,7 @@
 
 #include "examples/jetflux.h"
 #include "iterators/gpu_cartesianiterator.h"
-#include "gpu_rungekutta.h"
+#include "rungekutta.h"
 
 void write(CartesianPatch &patch, QString file_name, int count)
 {
@@ -25,13 +25,15 @@ void run()
 
   #include "jet_common.h"
 
-  GPU_RungeKutta runge_kutta;
+  RungeKutta runge_kutta;
   runge_kutta.addAlpha(0.25);
   runge_kutta.addAlpha(0.5);
   runge_kutta.addAlpha(1.000);
 
-  GPU_CartesianIterator<5, JetFlux> gpu_iterator(&patch, flux);
-  runge_kutta.addIterator(&gpu_iterator);
+  PatchGrid patch_grid;
+  GPU_CartesianIterator<5, JetFlux> iterator(patch_grid, flux);
+  iterator.addPatch(&patch);
+  runge_kutta.addIterator(&iterator);
 
   int write_counter = 0;
   int iter = 0;
@@ -61,7 +63,7 @@ void run()
 
     if (print_full) {
       real CFL_max = 0;
-      gpu_iterator.updateHost();
+      iterator.updateHost();
       for (size_t i = 0; i < NI; ++i) {
         real y = 0.5*patch.dy();
         for (size_t j = 0; j < NJ; ++j) {
@@ -88,7 +90,7 @@ void run()
     }
     if (t_write >= write_interval) {
       ++write_counter;
-      gpu_iterator.updateHost();
+      iterator.updateHost();
       write(patch, "testrun", write_counter);
       t_write -= write_interval;
     }
@@ -106,7 +108,7 @@ void run()
   stopTiming();
   cout << iter << " iterations" << endl;
 
-  gpu_iterator.updateHost();
+  iterator.updateHost();
   write(patch, "testrun_final", -1);
   //gpu_iterator.gpuInfo();
 }

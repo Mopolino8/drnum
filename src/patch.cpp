@@ -25,7 +25,6 @@ bool Patch::readFromFile(istringstream iss_input)
 {
   vec3_t xyzoref;        // reference point in parental coords
   vec3_t base_i, base_j; // base vectors of bloc orientation in parental coords.
-  real generalscale;
   iss_input >> xyzoref[0];
   iss_input >> xyzoref[1];
   iss_input >> xyzoref[2];

@@ -1,21 +1,22 @@
 #ifndef PATCH_H
 #define PATCH_H
 
-
 //#include <cstddef>
 //#include <string.h>
 //#include <iostream>
 //#include <fstream>
 //#include <sstream>
-
-
-#include <cstddef>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
+//#include <vector>
 
 #include "blockcfd.h"
+
+#include <iostream>
+#include <sstream>
+#include <string>
+using namespace std;
+
+//#include "blockcfd.h"
+
 #include "utility/weightedset.h"
 
 class Patch;
@@ -201,7 +202,8 @@ public: // methods
     * @param s_mesh the stream to write to
     * @return true, if successful
     */
-  virtual bool writeToFile(ifstream& s_mesh) {return true;};
+  virtual bool writeToFile(ifstream&) {return true;};
+//  virtual bool writeToFile(ifstream& s_mesh) {return true;};
 
   /**
     * Build up transformation matrix.

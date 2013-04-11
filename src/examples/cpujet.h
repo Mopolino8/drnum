@@ -2,8 +2,7 @@
 #define CPUJET_H
 
 #include "examples/jetflux.h"
-#include "iterators/cartesianstandardpatchoperation.h"
-#include "iterators/cartesianstandarditerator.h"
+#include "iterators/cartesianiterator.h"
 
 
 void write(CartesianPatch &patch, QString file_name, int count)
@@ -30,8 +29,13 @@ void run()
   runge_kutta.addAlpha(0.5);
   runge_kutta.addAlpha(1.000);
 
-  CartesianStandardPatchOperation<5, JetFlux> operation(&patch, &flux);
-  CartesianStandardIterator iterator(&operation);
+  //CartesianStandardPatchOperation<5, JetFlux> operation(&patch, &flux);
+  //CartesianStandardIterator iterator(&operation);
+  //runge_kutta.addIterator(&iterator);
+
+  PatchGrid patch_grid;
+  CartesianIterator<5, JetFlux> iterator(patch_grid, flux);
+  iterator.addPatch(&patch);
   runge_kutta.addIterator(&iterator);
 
   int count = 0;
