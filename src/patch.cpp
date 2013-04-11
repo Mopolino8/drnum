@@ -21,23 +21,25 @@ Patch::~Patch()
   deleteData();
 }
 
-bool Patch::readFromFile(ifstream &s_mesh)
+bool Patch::readFromFile(istringstream iss_input)
 {
   vec3_t xyzoref;        // reference point in parental coords
   vec3_t base_i, base_j; // base vectors of bloc orientation in parental coords.
   real generalscale;
-  s_mesh >> xyzoref[0];
-  s_mesh >> xyzoref[1];
-  s_mesh >> xyzoref[2];
-  s_mesh >> base_i[0];
-  s_mesh >> base_i[1];
-  s_mesh >> base_i[2];
-  s_mesh >> base_j[0];
-  s_mesh >> base_j[1];
-  s_mesh >> base_j[2];
-  s_mesh >> m_ioscale;
+  iss_input >> xyzoref[0];
+  iss_input >> xyzoref[1];
+  iss_input >> xyzoref[2];
+  iss_input >> base_i[0];
+  iss_input >> base_i[1];
+  iss_input >> base_i[2];
+  iss_input >> base_j[0];
+  iss_input >> base_j[1];
+  iss_input >> base_j[2];
+  iss_input >> m_ioscale;
   setupTransformation(xyzoref,
                       base_i, base_j);
+  /// @todo check before returning "true"
+  return true;
 }
 
 void Patch::setupTransformation(vec3_t xyzoref,

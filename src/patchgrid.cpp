@@ -240,7 +240,7 @@ size_t PatchGrid::insertPatch(Patch* new_patch)
   // Insert in list
   m_patches.push_back(new_patch);
   m_dependencies_OK = false;  /// @todo global logics on dependencies?
-  return m_patches.size();
+  return m_patches.size() - 1;
 }
 
 
@@ -279,7 +279,8 @@ void PatchGrid::readGrid()
   strcpy(grid_file, base_files_path);
   strcat(grid_file,"/grid/patches");
   // Open grid file
-  ifstream s_grid(grid_file);
+  ifstream s_grid;
+  s_grid.open(grid_file);
   if (s_grid.fail()) {
     cout << " faild to open grid file:" << grid_file << endl;
     BUG;
@@ -295,21 +296,43 @@ void PatchGrid::readGrid()
     if(patch_type == 0) {
       break;
     }
-    // CartesianPatch
-    else if(patch_type == 1001) {
-      //.. Create a new CartesianPatch
+    // Read contents for patch between delimiting { }
+    char c;
+    while(s_grid.get(c)) {
+      if(c==' ' || c=='\n') {}
+      else if(c=='{') {
+        break;
+      }
+      else {
+        cout << "wrong grid file structure" << endl;
+        // BUG;
+      }
+    }
+    //      char chline[1000];
+    //      s_grid.getline(chline, 1000, '}');
+    string line;
+    getline(s_grid, line, '}');
+    cout << line << endl;
+    istringstream iss(line);
+    // Hand over to patches as needed
+    //.. CartesianPatch
+    if(patch_type == 1001) {
+      //.... Create a new CartesianPatch
       CartesianPatch* new_patch;
       new_patch = new CartesianPatch();
-      //      Patch* new_patch;
-      //      new_patch = new Patch();
       insertPatch(new_patch);
-      new_patch->readFromFile(s_grid);
+      new_patch->readFromFile(iss);
     }
     // Unstructured Patch ??
     else if(patch_type == 1010) {
       // ...
     }
+    else {
+      cout << "unknown patch type code" << patch_type << endl;
+      BUG;
+    }
   }
+  cout << "done. " << endl;
 }
 
 void PatchGrid::scaleRefParental(real scfactor)

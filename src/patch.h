@@ -1,10 +1,20 @@
 #ifndef PATCH_H
 #define PATCH_H
 
+
+//#include <cstddef>
+//#include <string.h>
+//#include <iostream>
+//#include <fstream>
+//#include <sstream>
+
+
 #include <cstddef>
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <sstream>
+
 #include "blockcfd.h"
 #include "utility/weightedset.h"
 
@@ -48,6 +58,9 @@ class Patch
   void  allocateData();
 
 protected: // attributes
+
+  size_t m_mytypecode;        ///< Type-code of a patch, e.g. 1001: CartesianPatch, etc...
+  string m_solvercodes;       ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
 
   // reference position
   /// @todo redundant info: ommit m_Xo,m_Yo,m_Zo as it is contained in m_transformInertial2This
@@ -181,14 +194,14 @@ public: // methods
     * @param s_mesh the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(ifstream& s_mesh);
+  virtual bool readFromFile(istringstream iss_input);
 
   /**
     * Write mesh data to file
     * @param s_mesh the stream to write to
     * @return true, if successful
     */
-  virtual bool writeToFile(ifstream& s_mesh) { };
+  virtual bool writeToFile(ifstream& s_mesh) {return true;};
 
   /**
     * Build up transformation matrix.

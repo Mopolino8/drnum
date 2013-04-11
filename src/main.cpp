@@ -1,9 +1,12 @@
 #ifndef GPU
-#include "examples/cpujet.h"
+//#include "examples/cpujet.h"
+//#include "examples/cpujet_mb_grid1.h"
+#include "examples/cpujet_mb_onlygrid.h"
 #endif
 
 extern "C" void GPU_main();
 
+//#include "examples/cpujet_mb_grid1.h"
 //#include "examples/cpujet_mb_grid1.h"
 
 int main()

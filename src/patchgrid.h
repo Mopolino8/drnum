@@ -5,6 +5,7 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "blockcfd.h"
 #include "patch.h"
@@ -21,6 +22,8 @@ protected: // attributes
   //VectorHashRaster<size_t> m_HashRaster;   ///< Hash raster to assist orientation
 
   // settings (same as individually defined in patch.h)
+
+ /// @todo m_NumFields m_NumVariables must go ...
   size_t  m_NumFields;       ///< number of fields (e.g. old, new, ...)
   size_t  m_NumVariables;    ///< number of variables (e.g. rho, rhou, ...)
   bool m_InterpolateData;    ///< Flag indicates wether to interpolate data on interpatch transfers

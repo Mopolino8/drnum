@@ -27,14 +27,11 @@ protected: // attributes
 
 protected: // methods
 
-  //cart  void computeDeltas();
-
-
 public: // methods
 
   StructuredHexRaster();
 
-  virtual void resize(size_t num_i, size_t num_j, size_t num_k);
+  virtual void resize(const size_t& num_i, const size_t& num_j, const size_t& num_k);
 
   size_t sizeI() { return m_NumI; }
   size_t sizeJ() { return m_NumJ; }
@@ -47,7 +44,11 @@ public: // methods
    * @param k third  index
    * @return the index in the one dimensional data field
    */
-  size_t index(int i, int j, int k) { return i*m_NumJ*m_NumK + j*m_NumK + k; }
+  /// @todo check, why "int" and not "size_t"
+  size_t index(const int& i, const int& j, const int& k) const
+  {
+    return i*m_NumJ*m_NumK + j*m_NumK + k;
+  }
 
   /**
    * @brief Get the indicees (i, j, k) from field index/
@@ -68,8 +69,8 @@ public: // methods
    * @param error true, if (i, j, k) are out of bounds
    * @return the index in the one dimensional data field
    */
-  size_t save_index(int i, int j, int k,
-                    bool& error);
+  size_t save_index(const int& i, const int& j, const int& k,
+                    bool& error) const ;
 
   /**
    * Check if an (i,j,k) triple is inside the patch.
@@ -79,18 +80,11 @@ public: // methods
    * @param k third index
    * @return true if it is a valid (i,j,k) triple, false otherwise
    */
-  bool checkRange(size_t i, size_t j, size_t k);
-
-  /**
-   * Set up interpolation methods for giving data to foreign patches.
-   * Example: Build up Split- or Octrees for search operations, etc ... depending on patch type.
-   * @param num_protection number of overlap cell layers in which no data access is permissible.
-   */
-  virtual void setupInterpolators() {BUG;};
+  bool checkRange(const size_t& i, const size_t& j, const size_t& k);
 
 };
 
-inline bool StructuredHexRaster::checkRange(size_t i, size_t j, size_t k)
+inline bool StructuredHexRaster::checkRange(const size_t& i, const size_t& j, const size_t& k)
 {
   if (i >= sizeI() || j >= sizeJ() || k >= sizeK()) {
     return false;
@@ -100,7 +94,8 @@ inline bool StructuredHexRaster::checkRange(size_t i, size_t j, size_t k)
 
 
 inline void StructuredHexRaster::ijk(const size_t& l,
-                                     size_t& i, size_t& j, size_t& k) const {
+                                     size_t& i, size_t& j, size_t& k) const
+{
   size_t rest;
   i = l / (m_NumJ*m_NumK);
   rest = l - i*(m_NumJ*m_NumK);
@@ -109,8 +104,8 @@ inline void StructuredHexRaster::ijk(const size_t& l,
 }
 
 
-inline size_t StructuredHexRaster::save_index(int i, int j, int k,
-                                              bool& error)
+inline size_t StructuredHexRaster::save_index(const int& i, const int& j, const int& k,
+                                              bool& error) const
 {
   size_t si = i;  // avoid vast compiler warnings
   size_t sj = j;

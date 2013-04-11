@@ -12,18 +12,12 @@ StructuredHexRaster::StructuredHexRaster()
 }
 
 
-void StructuredHexRaster::resize(size_t num_i, size_t num_j, size_t num_k)
+void StructuredHexRaster::resize(const size_t& num_i, const size_t& num_j, const size_t& num_k)
 {
   m_NumI = num_i;
   m_NumJ = num_j;
   m_NumK = num_k;
   m_NumL = m_NumI * m_NumJ * m_NumK; // = 1
-//  computeDeltas();
-//  if(m_CellLink) {
-//    delete m_CellLink;
-//  }
-//  size_t num_cells = m_NumI * m_NumJ * m_NumK;
-//  m_CellLink = new List(num_cells, num_cells/10);  /// @todo Our version of "List" sets a minimum increment
 }
 
 

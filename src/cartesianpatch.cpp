@@ -13,6 +13,8 @@
 CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
   : Patch(num_protectlayers, num_overlaplayers)
 {
+  m_mytypecode = 1001;
+
   m_NumI = 1;
   m_NumJ = 1;
   m_NumK = 1;
@@ -22,28 +24,59 @@ CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayer
   setNumProtectLayers(m_NumProtectLayers);
 }
 
-bool CartesianPatch::readFromFile(ifstream &s_mesh)
+//bool CartesianPatch::readFromFile(ifstream &s_mesh)
+//{
+//  Patch::readFromFile(s_mesh);
+//  // number of nodes in block axis directions
+//  size_t num_i, num_j, num_k;
+//  s_mesh >> num_i;
+//  s_mesh >> num_j;
+//  s_mesh >> num_k;
+//  // protection exceptions
+//  size_t numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax;
+//  s_mesh >> numProtXmin;
+//  s_mesh >> numProtXmax;
+//  s_mesh >> numProtYmin;
+//  s_mesh >> numProtYmax;
+//  s_mesh >> numProtZmin;
+//  s_mesh >> numProtZmax;
+//  setNumProtectException(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
+//  // physical size of cartesian block
+//  real ilength, jlength, klength;
+//  s_mesh >> ilength;
+//  s_mesh >> jlength;
+//  s_mesh >> klength;
+//  // scale length according to IO-scaling factor
+//  ilength *= m_ioscale;
+//  jlength *= m_ioscale;
+//  klength *= m_ioscale;
+//  // apply patch modifiers
+//  resize(num_i, num_j, num_k);
+//  setupMetrics(ilength, jlength, klength);
+//}
+
+bool CartesianPatch::readFromFile(istringstream iss_input)
 {
-  Patch::readFromFile(s_mesh);
+  Patch::readFromFile(iss_input);
   // number of nodes in block axis directions
   size_t num_i, num_j, num_k;
-  s_mesh >> num_i;
-  s_mesh >> num_j;
-  s_mesh >> num_k;
+  iss_input >> num_i;
+  iss_input >> num_j;
+  iss_input >> num_k;
   // protection exceptions
   size_t numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax;
-  s_mesh >> numProtXmin;
-  s_mesh >> numProtXmax;
-  s_mesh >> numProtYmin;
-  s_mesh >> numProtYmax;
-  s_mesh >> numProtZmin;
-  s_mesh >> numProtZmax;
+  iss_input >> numProtXmin;
+  iss_input >> numProtXmax;
+  iss_input >> numProtYmin;
+  iss_input >> numProtYmax;
+  iss_input >> numProtZmin;
+  iss_input >> numProtZmax;
   setNumProtectException(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
   // physical size of cartesian block
   real ilength, jlength, klength;
-  s_mesh >> ilength;
-  s_mesh >> jlength;
-  s_mesh >> klength;
+  iss_input >> ilength;
+  iss_input >> jlength;
+  iss_input >> klength;
   // scale length according to IO-scaling factor
   ilength *= m_ioscale;
   jlength *= m_ioscale;

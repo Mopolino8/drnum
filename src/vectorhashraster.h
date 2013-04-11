@@ -82,14 +82,14 @@ class VectorHashRaster : public CartesianRaster
     * @param j j-index
     * @param k k-index
     */
-  void unify(size_t i, size_t j, size_t k);
+  void unify(const size_t& i, const size_t& j, const size_t& k);
 
   /**
     * Make stored entries unique by sorting and erasing.
     * NOTE: Original order will lost due to sorting.
     * @param l 1D-index in raster
     */
-  void unify(size_t l);
+  void unify(const size_t& l);
 
   /// @todo No save version of "unify" available.
 
@@ -182,7 +182,7 @@ inline bool VectorHashRaster<T>::save_insert(size_t l, T value)
 
 
 template <class T>
-inline void VectorHashRaster<T>::unify(size_t i, size_t j, size_t k)
+inline void VectorHashRaster<T>::unify(const size_t& i, const size_t& j, const size_t& k)
 {
   size_t l = index(i, j, k);
   sort(m_data[l].begin(), m_data[l].end());
@@ -194,7 +194,7 @@ inline void VectorHashRaster<T>::unify(size_t i, size_t j, size_t k)
 
 
 template <class T>
-inline void VectorHashRaster<T>::unify(size_t l)
+inline void VectorHashRaster<T>::unify(const size_t& l)
 {
   sort(m_data[l].begin(), m_data[l].end());
   // Remove duplicates

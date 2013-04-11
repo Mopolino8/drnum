@@ -202,6 +202,7 @@ inline void InterCoeffWS::push(const size_t& i_indirect, const size_t& i_direct,
 inline void InterCoeffWS::reindexIndReceive(const vector<size_t>& index_new_from_old)
 {
   for(size_t ll=0; ll<m_DonorCellContribsWS.size(); ll++) {
+    /// @todo this might be a serious error: ind_rec_h is unused
     size_t ind_rec_h = m_DonorCellContribsWS[ll].indirect_receiveindex;
     m_DonorCellContribsWS[ll].indirect_receiveindex = index_new_from_old[m_DonorCellContribsWS[ll].indirect_receiveindex];
   }

@@ -3,7 +3,12 @@
 
 class CartesianPatch;
 
-#include "patch.h"
+//#include <cstddef>
+//#include <string.h>
+//#include <iostream>
+//#include <fstream>
+//#include <sstream>
+//#include "patch.h"
 
 #ifdef WITH_VTK
 #include <QString>
@@ -14,6 +19,8 @@ class CartesianPatch;
 #include <vtkFloatArray.h>
 #include <vtkCellData.h>
 #endif
+
+#include "patch.h"
 
 class CartesianPatch : public Patch
 {
@@ -86,7 +93,7 @@ public: // methods
     * @param s_mesh the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(ifstream& s_mesh);
+  virtual bool readFromFile(istringstream iss_input);
 
   /**
     * Write mesh data to file
