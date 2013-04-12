@@ -298,15 +298,24 @@ void PatchGrid::readGrid()
     }
     // Read contents for patch between delimiting { }
     char c;
+    string patchcomment;
     while(s_grid.get(c)) {
-      if(c==' ' || c=='\n') {}
-      else if(c=='{') {
+      if(c=='{') {
         break;
       }
       else {
-        cout << "wrong grid file structure" << endl;
-        // BUG;
+        patchcomment.push_back(c);
+        // cout << c;
       }
+
+//      if(c==' ' || c=='\n') {}
+//      else if(c=='{') {
+//        break;
+//      }
+//      else {
+//        cout << "wrong grid file structure" << endl;
+//        // BUG;
+//      }
     }
     string line;
     getline(s_grid, line, '}');
@@ -318,6 +327,7 @@ void PatchGrid::readGrid()
       CartesianPatch* new_patch;
       new_patch = new CartesianPatch();
       insertPatch(new_patch);
+      new_patch->setPatchComment(patchcomment);
       new_patch->readFromFile(iss);
     }
     // Unstructured Patch ??

@@ -61,6 +61,7 @@ class Patch
 protected: // attributes
 
   size_t m_mytypecode;        ///< Type-code of a patch, e.g. 1001: CartesianPatch, etc...
+  string m_patchcomment;      ///< Optional comment for this patch to be read/written in patchgrid files
   string m_solvercodes;       ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
 
   // reference position
@@ -203,7 +204,7 @@ public: // methods
     * @return true, if successful
     */
   virtual bool writeToFile(ifstream&) {return true;};
-//  virtual bool writeToFile(ifstream& s_mesh) {return true;};
+  //  virtual bool writeToFile(ifstream& s_mesh) {return true;};
 
   /**
     * Build up transformation matrix.
@@ -229,6 +230,20 @@ public: // methods
     * @return type-code
     */
   size_t accessTypeCode() {return m_mytypecode;}
+
+  /**
+    * Set
+    * @param patch-comment
+    */
+  void setPatchComment(string patchcomment) {
+    m_patchcomment = patchcomment;
+  }
+
+  /**
+    * Access
+    * @return patch-comment
+    */
+  string accessPatchComment() {return m_patchcomment;}
 
   /**
     * Access
