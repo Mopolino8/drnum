@@ -195,7 +195,7 @@ public: // methods
     * @param s_mesh the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(istringstream iss_input);
+  virtual bool readFromFile(istringstream& iss_input);
 
   /**
     * Write mesh data to file
@@ -223,6 +223,18 @@ public: // methods
   {
     m_transformInertial2This.scaleVector(scfactor);
   }
+
+  /**
+    * Access
+    * @return type-code
+    */
+  size_t accessTypeCode() {return m_mytypecode;}
+
+  /**
+    * Access
+    * @return solver-codes
+    */
+  string accessSolverCodes() {return m_solvercodes;}
 
   /**
     * Access

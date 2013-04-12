@@ -308,11 +308,8 @@ void PatchGrid::readGrid()
         // BUG;
       }
     }
-    //      char chline[1000];
-    //      s_grid.getline(chline, 1000, '}');
     string line;
     getline(s_grid, line, '}');
-    cout << line << endl;
     istringstream iss(line);
     // Hand over to patches as needed
     //.. CartesianPatch

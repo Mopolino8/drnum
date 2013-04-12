@@ -21,7 +21,7 @@ Patch::~Patch()
   deleteData();
 }
 
-bool Patch::readFromFile(istringstream iss_input)
+bool Patch::readFromFile(istringstream& iss_input)
 {
   vec3_t xyzoref;        // reference point in parental coords
   vec3_t base_i, base_j; // base vectors of bloc orientation in parental coords.

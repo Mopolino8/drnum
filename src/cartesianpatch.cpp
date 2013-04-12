@@ -24,38 +24,7 @@ CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayer
   setNumProtectLayers(m_NumProtectLayers);
 }
 
-//bool CartesianPatch::readFromFile(ifstream &s_mesh)
-//{
-//  Patch::readFromFile(s_mesh);
-//  // number of nodes in block axis directions
-//  size_t num_i, num_j, num_k;
-//  s_mesh >> num_i;
-//  s_mesh >> num_j;
-//  s_mesh >> num_k;
-//  // protection exceptions
-//  size_t numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax;
-//  s_mesh >> numProtXmin;
-//  s_mesh >> numProtXmax;
-//  s_mesh >> numProtYmin;
-//  s_mesh >> numProtYmax;
-//  s_mesh >> numProtZmin;
-//  s_mesh >> numProtZmax;
-//  setNumProtectException(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
-//  // physical size of cartesian block
-//  real ilength, jlength, klength;
-//  s_mesh >> ilength;
-//  s_mesh >> jlength;
-//  s_mesh >> klength;
-//  // scale length according to IO-scaling factor
-//  ilength *= m_ioscale;
-//  jlength *= m_ioscale;
-//  klength *= m_ioscale;
-//  // apply patch modifiers
-//  resize(num_i, num_j, num_k);
-//  setupMetrics(ilength, jlength, klength);
-//}
-
-bool CartesianPatch::readFromFile(istringstream iss_input)
+bool CartesianPatch::readFromFile(istringstream& iss_input)
 {
   Patch::readFromFile(iss_input);
   // number of nodes in block axis directions
@@ -84,6 +53,20 @@ bool CartesianPatch::readFromFile(istringstream iss_input)
   // apply patch modifiers
   resize(num_i, num_j, num_k);
   setupMetrics(ilength, jlength, klength);
+  // continue reading flux info from file
+  //  std::string str_rest;
+  m_solvercodes = ""; // empty
+  while (iss_input.good())  // loop while extraction from file is possible
+  {
+    char c = iss_input.get();
+    if(c == '\n') { // get rid of newlines
+      c = ' ';
+    }
+    if (iss_input.good()) { // avoid end marker
+      m_solvercodes.push_back(c);
+    }
+  }
+  // cout << solver;
 }
 
 bool CartesianPatch::writeToFile(ifstream &s_mesh)

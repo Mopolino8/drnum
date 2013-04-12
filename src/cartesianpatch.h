@@ -46,7 +46,6 @@ private:
   real m_Ly;
   real m_Lz;
 
-
 protected: // attributes
 
   size_t m_numProtXmin;
@@ -92,7 +91,7 @@ public: // methods
     * @param s_mesh the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(istringstream iss_input);
+  virtual bool readFromFile(istringstream& iss_input);
 
   /**
     * Write mesh data to file
