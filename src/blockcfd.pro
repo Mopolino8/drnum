@@ -67,6 +67,7 @@ SOURCES += main.cpp \
     patch.cpp \
     blockcfd.cpp \
     cartesianpatch.cpp \
+    codestring.cpp \
     timeintegration.cpp \
     rungekutta.cpp \
     patchgrid.cpp \
@@ -97,6 +98,7 @@ HEADERS += \
     cartesianpatch_common.h \
     cartesianpatch.h \
     cartesianraster.h \
+    codestring.h \
     compressiblevariables.h \
     debug.h \
     examples/cpuduct.h \

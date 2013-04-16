@@ -24,6 +24,7 @@ class Patch;
 #include "intercoeffpad.h"
 #include "intercoeffws.h"
 #include "math/coordtransformvv.h"
+#include "codestring.h"
 
 /** @todo
  *    proposed coord naming convention:
@@ -63,7 +64,7 @@ protected: // attributes
   size_t m_myindex;           ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
   size_t m_mypatchtype;       ///< Type-code as defined by derived patches. Example 1001: CartesianPatch, etc...
   string m_patchcomment;      ///< Optional comment for this patch to be read/written in patchgrid files
-  string m_solvercodes;       ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
+  CodeString m_solvercodes;   ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
 
   // reference position
   /// @todo redundant info: ommit m_Xo,m_Yo,m_Zo as it is contained in m_transformInertial2This
@@ -205,24 +206,6 @@ public: // methods
     * @return true, if successful
     */
   virtual bool readSolverCodes(istringstream& iss_input);
-
-  /**
-    * @todo this function (or similar) might be put in a more general place
-    *
-    * Compare solver codes of "this" with annother solver code
-    * @param othersolvercodes annother solver code
-    * @param allsame true, if both match identically (return reference)
-    * @param overruled true, if one or more solver codes of "this" are "0",
-    *                  while corresponding in othersolvercodes arent (ret ref).
-    * @param underruled true, if one or more solver codes of othersolvercodes
-    *                   are "0", while corresponding in "this" arent (ret ref).
-    * @param concatsolvercodes concatenated solvercodes (return reference).
-    */
-  void compareSolverCodes(const string& othersolvercodes,
-                          bool& allsame,
-                          bool& overruled,
-                          bool& underruled,
-                          string& concatsolvercodes);
 
   /**
     * Write mesh data to file

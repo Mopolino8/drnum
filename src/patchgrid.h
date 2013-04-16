@@ -172,7 +172,12 @@ public: // methods
   // Access methods
 
   size_t getNumPatches() {return m_patches.size();}
+
   Patch* getPatch(const size_t& ip) {return m_patches[ip];}
+
+  PatchGroups* getPatchGroups() {return m_patchgroups;}
+
+  SinglePatchGroup* getSinglePatchGroup(const size_t& ipg);
 
   virtual ~PatchGrid();
 

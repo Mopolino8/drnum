@@ -59,6 +59,7 @@ void PatchGrid::setNumOverlapLayers(size_t num_overlaplayers)
 
 PatchGrid::~PatchGrid()
 {
+  /// @todo missing destructor. Might block mem needed for later computations.
   //  delete m_patchdependencies;  /// @todo delete method available for TInsectionList?
   //  delete m_patches;
   //  delete m_HashRaster;
@@ -267,7 +268,6 @@ void PatchGrid::deletePatch(size_t i_patch)
 }
 
 
-
 void PatchGrid::readGrid()
 {
   // Get file path
@@ -309,15 +309,6 @@ void PatchGrid::readGrid()
         patchcomment.push_back(c);
         // cout << c;
       }
-
-//      if(c==' ' || c=='\n') {}
-//      else if(c=='{') {
-//        break;
-//      }
-//      else {
-//        cout << "wrong grid file structure" << endl;
-//        // BUG;
-//      }
     }
     string line;
     getline(s_grid, line, '}');
@@ -346,12 +337,14 @@ void PatchGrid::readGrid()
   cout << "done. " << endl;
 }
 
+
 void PatchGrid::scaleRefParental(real scfactor)
 {
   for (vector<Patch*>::iterator p = m_patches.begin(); p != m_patches.end(); p++) {
     (*p)->scaleRefParental(scfactor);
   }
 }
+
 
 void PatchGrid::buildBoundingBox(const bool& force)
 {
@@ -378,9 +371,16 @@ void PatchGrid::buildBoundingBox(const bool& force)
   }
 }
 
+
 void PatchGrid::setFieldToConst(size_t i_field, real *var)
 {
   for (size_t i_p = 1; i_p < m_patches.size(); i_p++) {
     m_patches[i_p]->setFieldToConst(i_field, var);
   }
+}
+
+
+SinglePatchGroup* PatchGrid::getSinglePatchGroup(const size_t& ipg)
+{
+    return m_patchgroups->accessSinglePatchGroup(ipg);
 }
