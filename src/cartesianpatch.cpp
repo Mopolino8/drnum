@@ -13,7 +13,7 @@
 CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
   : Patch(num_protectlayers, num_overlaplayers)
 {
-  m_mytypecode = 1001;
+  m_mypatchtype = 1001;
 
   m_NumI = 1;
   m_NumJ = 1;
@@ -53,20 +53,20 @@ bool CartesianPatch::readFromFile(istringstream& iss_input)
   // apply patch modifiers
   resize(num_i, num_j, num_k);
   setupMetrics(ilength, jlength, klength);
-  // continue reading flux info from file
-  //  std::string str_rest;
-  m_solvercodes = ""; // empty
-  while (iss_input.good())  // loop while extraction from file is possible
-  {
-    char c = iss_input.get();
-    if(c == '\n') { // get rid of newlines
-      c = ' ';
-    }
-    if (iss_input.good()) { // avoid end marker
-      m_solvercodes.push_back(c);
-    }
-  }
-  // cout << solver;
+  // continue reading solver codes from file
+  Patch::readSolverCodes(iss_input);
+//  //  std::string str_rest;
+//  m_solvercodes = ""; // empty
+//  while (iss_input.good())  // loop while extraction from file is possible
+//  {
+//    char c = iss_input.get();
+//    if(c == '\n') { // get rid of newlines
+//      c = ' ';
+//    }
+//    if (iss_input.good()) { // avoid end marker
+//      m_solvercodes.push_back(c);
+//    }
+//  }
 }
 
 bool CartesianPatch::writeToFile(ifstream &s_mesh)

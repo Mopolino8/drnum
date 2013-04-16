@@ -7,10 +7,13 @@
 #include <fstream>
 #include <sstream>
 
+class PatchGrid;
+
 #include "blockcfd.h"
 #include "patch.h"
 #include "cartesianpatch.h"
 #include "vectorhashraster.h"
+#include "patchgroups.h"
 
 class PatchGrid
 {
@@ -18,6 +21,7 @@ class PatchGrid
 protected: // attributes
 
   vector<Patch*> m_patches;                ///< List of patches in the grid
+  PatchGroups* m_patchgroups;
 
   //VectorHashRaster<size_t> m_HashRaster;   ///< Hash raster to assist orientation
 
@@ -166,8 +170,9 @@ public: // methods
   void setFieldToConst(size_t i_field, real *var);
 
   // Access methods
+
   size_t getNumPatches() {return m_patches.size();}
-  //TList<Patch*>* getPatches() {return m_patches;}
+  Patch* getPatch(const size_t& ip) {return m_patches[ip];}
 
   virtual ~PatchGrid();
 

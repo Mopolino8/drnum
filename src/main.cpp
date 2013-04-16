@@ -1,5 +1,6 @@
 #ifndef GPU
 //#include "examples/cpujet.h"
+//#include "examples/cpujet_pg_single.h"  // next to test
 //#include "examples/cpujet_mb_grid1.h"
 #include "examples/cpujet_mb_onlygrid.h"
 #endif

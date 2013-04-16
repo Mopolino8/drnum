@@ -41,6 +41,137 @@ bool Patch::readFromFile(istringstream& iss_input)
   return true;
 }
 
+bool Patch::readSolverCodes(istringstream& iss_input)
+{
+  // Read input istringstream until its end and copy to m_solvercodes.
+  //  * treat '/n' ',' ';' as delimiter ' '
+  //  * allow only one ' ' as delimiter
+  //  * eliminate leading and trailing blancs
+  //  * eliminate leading zeroes in code string and let zero code be 1-digit
+  // Example:
+  // input "  aa, 034  00\n 70;5 " converts to "aa 34 0 70 5"
+
+  m_solvercodes = ""; // empty
+  int blanccount = 0;
+  while (iss_input.good())  // loop while extraction from file is possible
+  {
+    char c = iss_input.get();
+    if(c == '\n' || c == ',' || c == ';') { // treat as delimiter ' '
+      c = ' ';
+    }
+    if(c == ' ') { // allow only one ' ' as delimiter
+      blanccount++;
+    } else {
+      blanccount = 0;
+    }
+    if(blanccount < 2) {
+      if (iss_input.good()) { // avoid end marker
+        m_solvercodes.push_back(c);
+      }
+    }
+  }
+  // eliminate leading and trailing blancs, if applicable
+  if(*(m_solvercodes.begin()) == ' ') {
+    m_solvercodes.erase(m_solvercodes.begin());
+  }
+  size_t length = m_solvercodes.length();
+  if(length > 0) {
+    char lastchar = m_solvercodes[length-1];
+    if(lastchar == ' ') {
+      m_solvercodes.erase(length-1);
+    }
+  }
+  // eliminate leading zeroes in codes
+  bool startacode = true;
+  size_t is = 0;
+  while(is < m_solvercodes.length()-1) {
+    char c0 = m_solvercodes[is];
+    char c1 = m_solvercodes[is+1];
+    if(c0 == '0' && c1 != ' ' && startacode) {
+      m_solvercodes.erase(is,1);
+    }
+    else if(c0 == ' ') {
+      startacode = true; // a new code starts in next iteration
+      is++;
+    }
+    else {
+      startacode = false; // inside character sequence of a code
+      is++;
+    }
+  }
+}
+
+void Patch::compareSolverCodes(const string& othersolvercodes,
+                               bool& allsame,
+                               bool& overruled,
+                               bool& underruled,
+                               string& concatsolvercodes)
+{
+  allsame = false;
+  underruled = false;
+  overruled = false;
+
+  // check, if strings these are fully equal
+  if(m_solvercodes.compare(othersolvercodes) == 0) {
+    allsame = true;
+    overruled = false;
+    underruled = false;
+    concatsolvercodes = othersolvercodes;
+    return;
+  }
+
+  // check overruled / underruled
+  bool totaldiff = false;
+  //.. transfer to istringstreams to facilitate
+  istringstream iss_this(m_solvercodes);
+  istringstream iss_other(othersolvercodes);
+  //.. check word by word
+  while(iss_this.good() && iss_other.good()) {
+    //.... get next code words from both streams
+    string word_this, word_other, word_concat;
+    getline (iss_this, word_this, ' ');
+    getline (iss_other, word_other, ' ');
+    bool thisgood = iss_this.good();
+    bool othergood = iss_other.good();
+    //.... check valid inputs
+    if((thisgood && !othergood) || (!thisgood && othergood)) {
+      totaldiff = true; // due to different word counts
+      break;
+    }
+    //.... check, if corresponding code words match
+    if(word_this.compare(word_other) != 0) {
+      if(word_this.compare("0") == 0) {   // check overruled
+        overruled = true;
+        word_concat = word_other;
+      }
+      else if (word_other.compare("0") == 0) { // check underruled
+        underruled = true;
+        word_concat = word_this;
+      }
+      else {                        // totally different, skip
+        totaldiff = true; // due to different code words
+        break;
+      }
+    }
+    else {
+      word_concat = word_this;
+    }
+    concatsolvercodes += ' ';
+    concatsolvercodes += word_concat;
+  }
+  if(*(concatsolvercodes.begin()) == ' ') {
+    concatsolvercodes.erase(concatsolvercodes.begin());
+  }
+  // handle totally non matching solvercodes
+  if(totaldiff) {
+    allsame = false;
+    underruled = false;
+    overruled = false;
+    concatsolvercodes = "";  // invalid anyway
+  }
+  return;
+}
+
 void Patch::setupTransformation(vec3_t xyzoref,
                                 vec3_t base_i, vec3_t base_j)
 {
@@ -192,13 +323,13 @@ void Patch::finalizeDependencies()
   //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
   m_receive_cells.resize(num_cells_w_contrib);
   if(m_InterpolateData) {
-      m_receive_cell_data_hits.resize(num_cells_w_contrib);
+    m_receive_cell_data_hits.resize(num_cells_w_contrib);
   }
   if(m_InterpolateGrad1N) {
-      m_receive_cell_grad1N_hits.resize(num_cells_w_contrib);
+    m_receive_cell_grad1N_hits.resize(num_cells_w_contrib);
   }
 
-//  Hier gehts weiter
+  //  Hier gehts weiter
 
 
   // Reduce contribution weights for receiving cells, being influenced by more than one donor patch.

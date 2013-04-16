@@ -60,7 +60,8 @@ class Patch
 
 protected: // attributes
 
-  size_t m_mytypecode;        ///< Type-code of a patch, e.g. 1001: CartesianPatch, etc...
+  size_t m_myindex;           ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
+  size_t m_mypatchtype;       ///< Type-code as defined by derived patches. Example 1001: CartesianPatch, etc...
   string m_patchcomment;      ///< Optional comment for this patch to be read/written in patchgrid files
   string m_solvercodes;       ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
 
@@ -193,17 +194,42 @@ public: // methods
 
   /**
     * Read mesh data from file
-    * @param s_mesh the stream to read from
+    * @param iss_input the stream to read from
     * @return true, if successful
     */
   virtual bool readFromFile(istringstream& iss_input);
+
+  /**
+    * Read solver codes from file
+    * @param iss_input the stream to read from
+    * @return true, if successful
+    */
+  virtual bool readSolverCodes(istringstream& iss_input);
+
+  /**
+    * @todo this function (or similar) might be put in a more general place
+    *
+    * Compare solver codes of "this" with annother solver code
+    * @param othersolvercodes annother solver code
+    * @param allsame true, if both match identically (return reference)
+    * @param overruled true, if one or more solver codes of "this" are "0",
+    *                  while corresponding in othersolvercodes arent (ret ref).
+    * @param underruled true, if one or more solver codes of othersolvercodes
+    *                   are "0", while corresponding in "this" arent (ret ref).
+    * @param concatsolvercodes concatenated solvercodes (return reference).
+    */
+  void compareSolverCodes(const string& othersolvercodes,
+                          bool& allsame,
+                          bool& overruled,
+                          bool& underruled,
+                          string& concatsolvercodes);
 
   /**
     * Write mesh data to file
     * @param s_mesh the stream to write to
     * @return true, if successful
     */
-  virtual bool writeToFile(ifstream&) {return true;};
+  virtual bool writeToFile(ofstream&) {return true;};
   //  virtual bool writeToFile(ifstream& s_mesh) {return true;};
 
   /**
@@ -226,10 +252,22 @@ public: // methods
   }
 
   /**
+    * Set
+    @param index the index of the patch in sequence of PatchGrid::m_patches
+    */
+  void setIndex(size_t patchindex) {m_myindex = patchindex;}
+
+  /**
+    * Access
+    * @return the index of the patch in sequence of PatchGrid::m_patches
+    */
+  size_t accessIndex() {return m_myindex;}
+
+  /**
     * Access
     * @return type-code
     */
-  size_t accessTypeCode() {return m_mytypecode;}
+  size_t accessPatchType() {return m_mypatchtype;}
 
   /**
     * Set

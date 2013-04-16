@@ -70,6 +70,7 @@ SOURCES += main.cpp \
     timeintegration.cpp \
     rungekutta.cpp \
     patchgrid.cpp \
+    patchgroups.cpp \
     utility/List.cc \
     utility/MError.cc \
     math/coordtransform.cpp \
@@ -100,6 +101,7 @@ HEADERS += \
     debug.h \
     examples/cpuduct.h \
     examples/cpujet.h \
+    examples/cpujet_pg_single.h \
     examples/cpujet_mb1.h \
     examples/cpujet_mb_grid1.h \
     examples/cpujet_mb_onlygrid.h \
@@ -108,6 +110,7 @@ HEADERS += \
     examples/gpujet.h \
     examples/interpolation1.h \
     examples/jet_common.h \
+    examples/jet_pg_single_common.h \
     examples/jetflux.h \
     examples/kelvinhelmholtz.h \
     examples/overexpandedjet2d.h \
@@ -149,6 +152,7 @@ HEADERS += \
     math/smallsquarematrix.h \
     patch_common.h \
     patchgrid.h \
+    patchgroups.h \
     patch.h \
     perfectgas.h \
     raster.h \

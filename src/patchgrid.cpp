@@ -3,6 +3,8 @@
 
 PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
 {
+  // patchgroups of same type and solver codes
+  m_patchgroups = new PatchGroups(true); /// @todo need a handling for this
   // parametric settings
   m_NumProtectLayers = num_protectlayers;
   m_NumOverlapLayers = num_overlaplayers;
@@ -326,11 +328,13 @@ void PatchGrid::readGrid()
       //.... Create a new CartesianPatch
       CartesianPatch* new_patch;
       new_patch = new CartesianPatch();
-      insertPatch(new_patch);
+      size_t index = insertPatch(new_patch);
+      new_patch->setIndex(index);
       new_patch->setPatchComment(patchcomment);
       new_patch->readFromFile(iss);
+      m_patchgroups->insertPatch(new_patch);
     }
-    // Unstructured Patch ??
+    // Unstructured Patch
     else if(patch_type == 1010) {
       // ...
     }
