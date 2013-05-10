@@ -1,4 +1,4 @@
 /**
- * \iterators
+ * @page iterator_concept Iterator Concept
  * The iterator concept is a smart concept.
  */
