@@ -144,6 +144,7 @@ void Patch::finalizeDependencies()
   // Eliminate pretended receiving cells, if these received no hits at all,
   // m_receive_cell_data_hits[i] == 0 && m_receive_cell_grad1N_hits[i] == 0
   // Do the following:
+  //  0) Nothing to do, if no receive cells were found
   //  1) Build a scratch list v_shift with index shifts
   //  2) Build a scratch list index_new_from_old, so that an operation of type
   //     m_receive_cells..new[ll] = m_receive_cells..old[index_new_from_old[ll]]
@@ -152,6 +153,11 @@ void Patch::finalizeDependencies()
   //  4) Apply on indirect receive indicees stored in InterCoeffWS
 
   //    ATTENTION: Actually indirect_receiveindex is needed only until InterCoeffWS::adjust2Average is done
+
+  //  0) Nothing to do, if no receive cells were found
+  if(m_receive_cells.size() == 0) {
+    return;
+  }
 
   //  1) Build a scratch list v_shift with index shifts
   size_t shift = 0;
@@ -203,8 +209,6 @@ void Patch::finalizeDependencies()
   if(m_InterpolateGrad1N) {
     m_receive_cell_grad1N_hits.resize(num_cells_w_contrib);
   }
-
-  //  Hier gehts weiter
 
 
   // Reduce contribution weights for receiving cells, being influenced by more than one donor patch.

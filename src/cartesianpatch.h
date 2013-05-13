@@ -365,6 +365,10 @@ public: // methods
   bool xyzToRefNode(real x, real y, real z,
                     size_t& in_ref, size_t& jn_ref, size_t& kn_ref);
 
+  /** Compute ...
+    * @return smallest characteristic length.
+    */
+  virtual real computeMinChLength();
 
 #ifdef WITH_VTK
   template <typename TVariables> void writeToVtk(size_t i_field, QString file_name, const TVariables& variables);

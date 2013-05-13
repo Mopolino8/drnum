@@ -84,8 +84,9 @@ void CartesianPatch::scaleRefParental(real scfactor)
 
 void CartesianPatch::setNumProtectLayers(size_t num_protectlayers)
 {
-  m_ProtectException = false;
-  m_NumProtectLayers = num_protectlayers;
+  Patch::setNumProtectLayers(num_protectlayers);
+//  m_ProtectException = false;
+//  m_NumProtectLayers = num_protectlayers;
   m_numProtXmin = num_protectlayers;
   m_numProtXmax = num_protectlayers;
   m_numProtYmin = num_protectlayers;
@@ -213,11 +214,9 @@ void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real y
 
   computeDeltas();
 
-  //=======
   Transformation t;    /// @todo keep for compatibility
   t.setVector(vec3_t(xo1, yo1, zo1));
   setTransformation(t.inverse());
-  //>>>>>>> master
 }
 
 void CartesianPatch::setupMetrics(real ilength, real jlength, real klength)
@@ -1061,6 +1060,18 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
     }
   }
   return inside;
+}
+
+
+real CartesianPatch::computeMinChLength()
+{
+  real min_ch_len = m_Dx;
+  if(min_ch_len > m_Dy) {
+    min_ch_len = m_Dy;
+  }
+  if(min_ch_len > m_Dz) {
+    min_ch_len = m_Dz;
+  }
 }
 
 

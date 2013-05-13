@@ -29,7 +29,7 @@ public:
 
   using TPatchIterator<CartesianPatch, DIM, OP>::addPatch;
 
-  CartesianIterator(PatchGrid &patch_grid, OP op);
+  CartesianIterator(OP op);
 
   size_t resIndex(size_t i_var, size_t i, size_t j, size_t k) { return m_ResLength*i_var + (i-m_I1)*m_SizeJ*m_SizeK + (j-m_J1)*m_SizeK + (k-m_K1); }
 
@@ -38,7 +38,7 @@ public:
 };
 
 template <unsigned int DIM, typename OP>
-CartesianIterator<DIM, OP>::CartesianIterator(PatchGrid &patch_grid, OP op) : TPatchIterator<CartesianPatch, DIM, OP>(patch_grid, op)
+CartesianIterator<DIM, OP>::CartesianIterator(OP op) : TPatchIterator<CartesianPatch, DIM, OP>(op)
 {
   m_Res = NULL;
   m_ResLength = 0;

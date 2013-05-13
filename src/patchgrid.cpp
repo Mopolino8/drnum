@@ -268,7 +268,7 @@ void PatchGrid::deletePatch(size_t i_patch)
 }
 
 
-void PatchGrid::readGrid()
+void PatchGrid::readGrid(string gridfilename)
 {
   // Get file path
   /** @todo Use a better file path definition. */
@@ -279,7 +279,9 @@ void PatchGrid::readGrid()
     BUG;
   };
   strcpy(grid_file, base_files_path);
-  strcat(grid_file,"/grid/patches");
+  strcat(grid_file, "/");
+  strcat(grid_file, gridfilename.c_str());
+
   // Open grid file
   ifstream s_grid;
   s_grid.open(grid_file);
@@ -287,18 +289,21 @@ void PatchGrid::readGrid()
     cout << " faild to open grid file:" << grid_file << endl;
     BUG;
   };
+
   // Say something
   cout << "Reading PatchGrid::readGrid() from file " << grid_file << " ... ";
   /** @todo Preliminary format. */
+
+  // Read file contents
   while(!s_grid.eof()) {
-    // Read int-code of patch
+    //.. Read int-code of patch
     size_t patch_type;
     s_grid >> patch_type;
     // End marker
     if(patch_type == 0) {
       break;
     }
-    // Read contents for patch between delimiting { }
+    //.. Read contents for patch between delimiting { }
     char c;
     string patchcomment;
     while(s_grid.get(c)) {
@@ -307,25 +312,24 @@ void PatchGrid::readGrid()
       }
       else {
         patchcomment.push_back(c);
-        // cout << c;
       }
     }
     string line;
     getline(s_grid, line, '}');
     istringstream iss(line);
-    // Hand over to patches as needed
-    //.. CartesianPatch
+    //.. Hand over to patches as needed
+    //.... CartesianPatch
     if(patch_type == 1001) {
-      //.... Create a new CartesianPatch
+      //...... Create a new CartesianPatch
       CartesianPatch* new_patch;
       new_patch = new CartesianPatch();
       size_t index = insertPatch(new_patch);
       new_patch->setIndex(index);
       new_patch->setPatchComment(patchcomment);
       new_patch->readFromFile(iss);
-      m_patchgroups->insertPatch(new_patch);
+      m_patchgroups->insertPatch(new_patch); /// @todo better outside of reading loop?
     }
-    // Unstructured Patch
+    //.... Unstructured Patch
     else if(patch_type == 1010) {
       // ...
     }
@@ -374,7 +378,7 @@ void PatchGrid::buildBoundingBox(const bool& force)
 
 void PatchGrid::setFieldToConst(size_t i_field, real *var)
 {
-  for (size_t i_p = 1; i_p < m_patches.size(); i_p++) {
+  for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
     m_patches[i_p]->setFieldToConst(i_field, var);
   }
 }
@@ -384,3 +388,11 @@ SinglePatchGroup* PatchGrid::getSinglePatchGroup(const size_t& ipg)
 {
     return m_patchgroups->accessSinglePatchGroup(ipg);
 }
+
+real PatchGrid::computeMinChLength()
+{
+  for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
+    m_patches[i_p]->computeMinChLength();
+  }
+}
+

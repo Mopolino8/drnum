@@ -1,8 +1,17 @@
 #ifndef GPU
+
+// original
 //#include "examples/cpujet.h"
-//#include "examples/cpujet_pg_single.h"  // next to test
+
+// single patch on a PatchGrid
+#include "examples/cpujet_pg_single.h"  // next to test
+
+// ??
 //#include "examples/cpujet_mb_grid1.h"
-#include "examples/cpujet_mb_onlygrid.h"
+
+// PatchGrid with two blocks, no computing
+//#include "examples/cpujet_mb_onlygrid.h"
+
 #endif
 
 extern "C" void GPU_main();

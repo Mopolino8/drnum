@@ -34,7 +34,8 @@ void run()
   //runge_kutta.addIterator(&iterator);
 
   PatchGrid patch_grid;
-  CartesianIterator<5, JetFlux> iterator(patch_grid, flux);
+  CartesianIterator<5, JetFlux> iterator(flux);
+
   iterator.addPatch(&patch);
   runge_kutta.addIterator(&iterator);
 

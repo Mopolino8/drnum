@@ -109,8 +109,9 @@ public: // methods
 
   /**
    * Read patch list from file.
+   * @param gridfilename filename of grid file relative to cwd.
    */
-  void readGrid();
+  void readGrid(string gridfilename = "/grid/patches");
 
   /**
    * Write patch list to file.
@@ -178,6 +179,12 @@ public: // methods
   PatchGroups* getPatchGroups() {return m_patchgroups;}
 
   SinglePatchGroup* getSinglePatchGroup(const size_t& ipg);
+
+  /**
+    * Compute ...
+    * @return smallest length in any of the patches.
+    */
+  real computeMinChLength();
 
   virtual ~PatchGrid();
 

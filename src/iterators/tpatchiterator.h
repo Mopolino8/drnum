@@ -17,7 +17,7 @@ protected:
 
 public:
 
-  TPatchIterator(PatchGrid &patch_grid, OP op);
+  TPatchIterator(OP op);
 
   void addPatch(T* patch);
 
@@ -25,9 +25,9 @@ public:
 
 
 template <typename T, unsigned int DIM, typename OP>
-TPatchIterator<T, DIM, OP>::TPatchIterator(PatchGrid &patch_grid, OP op) : PatchIterator(patch_grid)
+TPatchIterator<T, DIM, OP>::TPatchIterator(OP op) : PatchIterator()
 {
-  m_Patches.reserve(max(size_t(100), patch_grid.getNumPatches()));
+  //m_Patches.reserve(max(size_t(100), patch_grid.getNumPatches()));
   m_Op = op;
 }
 

@@ -153,6 +153,7 @@ public: // methods
     */
   virtual void setNumProtectLayers(size_t num_protectlayers)
   {
+    m_ProtectException = false;
     m_NumProtectLayers = num_protectlayers;
   }
 
@@ -410,6 +411,12 @@ public: // methods
 
   Transformation getTransformation() { return m_Transformation; }
 
+
+  /** Compute ...
+    * @return smallest characteristic length.
+    */
+  virtual real computeMinChLength() {BUG;}
+
 };
 
 inline void Patch::setFieldToZero(real *field)
@@ -494,5 +501,6 @@ inline vec3_t Patch::accessBBoxXYZoMax()
   }
   return m_bbox_xyzo_max;
 }
+
 
 #endif // PATCH_H

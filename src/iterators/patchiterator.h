@@ -4,6 +4,7 @@
 #include "patch.h"
 #include "patchgrid.h"
 #include "shapes/shape.h"
+#include "codestring.h"
 
 class PatchIterator
 {
@@ -12,12 +13,12 @@ private: // attributes
 
   vector<Patch*> m_Patches;
 
-
+  CodeString m_SolverCodes;
 
 
 public:
 
-  PatchIterator(PatchGrid& patch_grid);
+  PatchIterator();
 
   size_t numPatches() { return m_Patches.size(); }
   Patch* getPatch(size_t i) { return m_Patches[i]; }
@@ -28,11 +29,24 @@ public:
   virtual void compute(real factor, const vector<size_t>& patches) = 0;
   virtual void copyField(size_t i_src, size_t i_dst);
 
+  /**
+    * Set a CodeString as operation identifier.
+    * @param code_string the CodeString to set.
+    */
+  void setCodeString(const CodeString& code_string);
+
+  /**
+    * Get
+    * @return CodeString identifying operations.
+    */
+  CodeString getCodeString();
+
 };
 
-inline PatchIterator::PatchIterator(PatchGrid &patch_grid)
+inline PatchIterator::PatchIterator()
 {
-  m_Patches.reserve(max(size_t(100), patch_grid.getNumPatches()));
+  //m_Patches.reserve(max(size_t(100), patch_grid.getNumPatches()));
+  m_SolverCodes = string("void");
 }
 
 inline void PatchIterator::computeAll(real factor)
@@ -49,6 +63,16 @@ inline void PatchIterator::copyField(size_t i_src, size_t i_dst)
   for (int i = 0; i < numPatches(); ++i) {
     m_Patches[i]->copyField(i_src, i_dst);
   }
+}
+
+inline void PatchIterator::setCodeString(const CodeString& code_string)
+{
+  m_SolverCodes = code_string;
+}
+
+inline CodeString PatchIterator::getCodeString()
+{
+  return m_SolverCodes;
 }
 
 #endif // PATCHITERATOR_H

@@ -2,6 +2,7 @@ TEMPLATE = app
 CONFIG += console
 
 INCLUDEPATH += $(VTKINCDIR)
+INCLUDEPATH += ./utility
 
 LIBS += -L$(VTKLIBDIR)
 LIBS += -L/nopt/cuda/5.0/lib64
@@ -88,6 +89,8 @@ SOURCES += main.cpp \
     debug.cpp \
     shapes/cylindery.cpp \
     rungekuttapg1.cpp \
+    prismaticlayerpatch.cpp \
+    iteratorfeeder.cpp \
     main.cu
 
 SOURCES -= main.cu
@@ -189,6 +192,9 @@ HEADERS += \
     utility/weightedset.h \
     vectorhashraster.h \
     iterators/cartesianiterator.h \
+    prismaticlayerpatch.h \
+    prismaticlayerpatch_common.h \
+    iteratorfeeder.h \
     cudatools.h
 
 

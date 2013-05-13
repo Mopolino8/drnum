@@ -26,7 +26,7 @@
 #ifndef TInsectionList_HH
 #define TInsectionList_HH
 
-#include <namespace_mouse.hh>
+#include <utility/namespace_mouse.hh>
 
 BEGIN_MOUSE
 
