@@ -386,13 +386,20 @@ void PatchGrid::setFieldToConst(size_t i_field, real *var)
 
 SinglePatchGroup* PatchGrid::getSinglePatchGroup(const size_t& ipg)
 {
-    return m_patchgroups->accessSinglePatchGroup(ipg);
+  return m_patchgroups->accessSinglePatchGroup(ipg);
 }
 
 real PatchGrid::computeMinChLength()
 {
+  real min_ch_len_all = 0;
+  bool first = true;
   for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
-    m_patches[i_p]->computeMinChLength();
+    real min_ch_len = m_patches[i_p]->computeMinChLength();
+    if(first || min_ch_len<min_ch_len_all) {
+      min_ch_len_all = min_ch_len;
+    }
+    first = false;
   }
+  return min_ch_len_all;
 }
 

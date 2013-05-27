@@ -55,18 +55,18 @@ bool CartesianPatch::readFromFile(istringstream& iss_input)
   setupMetrics(ilength, jlength, klength);
   // continue reading solver codes from file
   Patch::readSolverCodes(iss_input);
-//  //  std::string str_rest;
-//  m_solvercodes = ""; // empty
-//  while (iss_input.good())  // loop while extraction from file is possible
-//  {
-//    char c = iss_input.get();
-//    if(c == '\n') { // get rid of newlines
-//      c = ' ';
-//    }
-//    if (iss_input.good()) { // avoid end marker
-//      m_solvercodes.push_back(c);
-//    }
-//  }
+  //  //  std::string str_rest;
+  //  m_solvercodes = ""; // empty
+  //  while (iss_input.good())  // loop while extraction from file is possible
+  //  {
+  //    char c = iss_input.get();
+  //    if(c == '\n') { // get rid of newlines
+  //      c = ' ';
+  //    }
+  //    if (iss_input.good()) { // avoid end marker
+  //      m_solvercodes.push_back(c);
+  //    }
+  //  }
 }
 
 bool CartesianPatch::writeToFile(ifstream &s_mesh)
@@ -85,8 +85,8 @@ void CartesianPatch::scaleRefParental(real scfactor)
 void CartesianPatch::setNumProtectLayers(size_t num_protectlayers)
 {
   Patch::setNumProtectLayers(num_protectlayers);
-//  m_ProtectException = false;
-//  m_NumProtectLayers = num_protectlayers;
+  //  m_ProtectException = false;
+  //  m_NumProtectLayers = num_protectlayers;
   m_numProtXmin = num_protectlayers;
   m_numProtXmax = num_protectlayers;
   m_numProtYmin = num_protectlayers;
@@ -1072,6 +1072,7 @@ real CartesianPatch::computeMinChLength()
   if(min_ch_len > m_Dz) {
     min_ch_len = m_Dz;
   }
+  return min_ch_len;
 }
 
 

@@ -24,7 +24,7 @@ public:
   Patch* getPatch(size_t i) { return m_Patches[i]; }
   void   computeAll(real factor);
 
-  void addPatch(Patch* patch) { m_Patches.push_back(patch); }
+  virtual void addPatch(Patch* patch) { m_Patches.push_back(patch); }
 
   virtual void compute(real factor, const vector<size_t>& patches) = 0;
   virtual void copyField(size_t i_src, size_t i_dst);

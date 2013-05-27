@@ -19,7 +19,8 @@ public:
 
   TPatchIterator(OP op);
 
-  void addPatch(T* patch);
+  //virtual void addPatch(T* patch);
+  virtual void addPatch(Patch* patch);
 
 };
 
@@ -32,10 +33,13 @@ TPatchIterator<T, DIM, OP>::TPatchIterator(OP op) : PatchIterator()
 }
 
 template <typename T, unsigned int DIM, typename OP>
-void TPatchIterator<T, DIM, OP>::addPatch(T *patch)
+void TPatchIterator<T, DIM, OP>::addPatch(Patch* patch)
 {
+  /// @todo currently ugly. Find concept to avoid storing m_Patches twice. See PatchIterator.h
   PatchIterator::addPatch(patch);
-  m_Patches.push_back(patch);
+
+  m_Patches.push_back(dynamic_cast<T*>(patch));
+  //m_Patches.push_back(patch);
 }
 
 

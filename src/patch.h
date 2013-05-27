@@ -433,12 +433,32 @@ inline void Patch::setFieldToZero(size_t i_field)
 
 inline void Patch::setFieldToConst(real *field, real* var)
 {
-  for (size_t i = 0; i < m_FieldSize; i=i+m_NumVariables) {
-    for(size_t i_var = 0; i_var < m_NumVariables; ++i_var) {
-      field[i+i_var] = var[i_var];
+  for (size_t i_var = 0; i_var < m_NumVariables; ++i_var) {
+    real* start_p = field + i_var*m_VariableSize;
+    for (size_t i = 0; i < m_VariableSize; ++i) {
+      start_p[i] = var[i_var];
     }
   }
+// data alignment error!!!
+// for (size_t i = 0; i < m_FieldSize; i=i+m_NumVariables) {
+//    for(size_t i_var = 0; i_var < m_NumVariables; ++i_var) {
+//      field[i+i_var] = var[i_var];
+//    }
+//  }
 }
+
+
+//see below!!!
+// inline void Patch::setFieldToConst(size_t i_field, real *var)
+//{
+//  for (size_t i_var = 0; i_var < m_NumVariables; ++i_var) {
+//    real* start_p = getVariable(i_field, i_var);
+//    for (size_t i = 0; i < m_VariableSize; ++i) {
+//      start_p[i] = var[i_var];
+//    }
+//  }
+//}
+
 
 inline void Patch::setFieldToConst(size_t i_field, real *var)
 {
