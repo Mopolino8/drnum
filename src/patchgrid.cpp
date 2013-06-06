@@ -341,6 +341,21 @@ void PatchGrid::readGrid(string gridfilename)
   cout << "done. " << endl;
 }
 
+void PatchGrid::writeData(QString base_data_filename, size_t count)
+{
+  QString str_patch_index;
+  QString str_patch_filename;
+  // loop for patches iof patch_grid
+  for (size_t i_p = 0; i_p < getNumPatches(); i_p++) {
+    str_patch_index.setNum(i_p);
+    while (str_patch_index.size() < 6) {
+      str_patch_index = "0" + str_patch_index;
+    }
+    str_patch_filename = base_data_filename + "_ip" + str_patch_index;
+    getPatch(i_p)->writeData(str_patch_filename, count);
+  }
+}
+
 
 void PatchGrid::scaleRefParental(real scfactor)
 {

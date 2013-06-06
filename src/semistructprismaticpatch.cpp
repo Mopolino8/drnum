@@ -13,7 +13,7 @@
 CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
   : Patch(num_protectlayers, num_overlaplayers)
 {
-  m_mypatchtype = 1001;
+  m_mytypecode = 1001;
 
   m_NumI = 1;
   m_NumJ = 1;
@@ -24,7 +24,38 @@ CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayer
   setNumProtectLayers(m_NumProtectLayers);
 }
 
-bool CartesianPatch::readFromFile(istringstream& iss_input)
+//bool CartesianPatch::readFromFile(ifstream &s_mesh)
+//{
+//  Patch::readFromFile(s_mesh);
+//  // number of nodes in block axis directions
+//  size_t num_i, num_j, num_k;
+//  s_mesh >> num_i;
+//  s_mesh >> num_j;
+//  s_mesh >> num_k;
+//  // protection exceptions
+//  size_t numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax;
+//  s_mesh >> numProtXmin;
+//  s_mesh >> numProtXmax;
+//  s_mesh >> numProtYmin;
+//  s_mesh >> numProtYmax;
+//  s_mesh >> numProtZmin;
+//  s_mesh >> numProtZmax;
+//  setNumProtectException(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
+//  // physical size of cartesian block
+//  real ilength, jlength, klength;
+//  s_mesh >> ilength;
+//  s_mesh >> jlength;
+//  s_mesh >> klength;
+//  // scale length according to IO-scaling factor
+//  ilength *= m_ioscale;
+//  jlength *= m_ioscale;
+//  klength *= m_ioscale;
+//  // apply patch modifiers
+//  resize(num_i, num_j, num_k);
+//  setupMetrics(ilength, jlength, klength);
+//}
+
+bool CartesianPatch::readFromFile(istringstream iss_input)
 {
   Patch::readFromFile(iss_input);
   // number of nodes in block axis directions
@@ -53,20 +84,6 @@ bool CartesianPatch::readFromFile(istringstream& iss_input)
   // apply patch modifiers
   resize(num_i, num_j, num_k);
   setupMetrics(ilength, jlength, klength);
-  // continue reading solver codes from file
-  Patch::readSolverCodes(iss_input);
-  //  //  std::string str_rest;
-  //  m_solvercodes = ""; // empty
-  //  while (iss_input.good())  // loop while extraction from file is possible
-  //  {
-  //    char c = iss_input.get();
-  //    if(c == '\n') { // get rid of newlines
-  //      c = ' ';
-  //    }
-  //    if (iss_input.good()) { // avoid end marker
-  //      m_solvercodes.push_back(c);
-  //    }
-  //  }
 }
 
 bool CartesianPatch::writeToFile(ifstream &s_mesh)
@@ -84,9 +101,8 @@ void CartesianPatch::scaleRefParental(real scfactor)
 
 void CartesianPatch::setNumProtectLayers(size_t num_protectlayers)
 {
-  Patch::setNumProtectLayers(num_protectlayers);
-  //  m_ProtectException = false;
-  //  m_NumProtectLayers = num_protectlayers;
+  m_ProtectException = false;
+  m_NumProtectLayers = num_protectlayers;
   m_numProtXmin = num_protectlayers;
   m_numProtXmax = num_protectlayers;
   m_numProtYmin = num_protectlayers;
@@ -214,9 +230,11 @@ void CartesianPatch::setupAligned(real xo1, real yo1, real zo1, real xo2, real y
 
   computeDeltas();
 
+  //=======
   Transformation t;    /// @todo keep for compatibility
   t.setVector(vec3_t(xo1, yo1, zo1));
   setTransformation(t.inverse());
+  //>>>>>>> master
 }
 
 void CartesianPatch::setupMetrics(real ilength, real jlength, real klength)
@@ -1060,44 +1078,6 @@ bool CartesianPatch::xyzToRefNode(real x, real y, real z,
     }
   }
   return inside;
-}
-
-
-real CartesianPatch::computeMinChLength()
-{
-  real min_ch_len = m_Dx;
-  if(min_ch_len > m_Dy) {
-    min_ch_len = m_Dy;
-  }
-  if(min_ch_len > m_Dz) {
-    min_ch_len = m_Dz;
-  }
-  return min_ch_len;
-}
-
-
-void CartesianPatch::writeData(QString base_data_filename, size_t count)
-{
-  QString str_filename = base_data_filename;
-  if (count >= 0) {
-    QString str_myindex;
-    QString str_num;
-    str_myindex.setNum(m_myindex);
-    str_num.setNum(count);
-    while (str_myindex.size() < 6) {
-      str_myindex = "0" + str_myindex;
-    }
-    while (str_num.size() < 6) {
-      str_num = "0" + str_num;
-    }
-    str_filename = base_data_filename += "_ip" + str_myindex + str_num;
-  }
-
-/// @todo Need better data output construction.
-//  cout << "writing to file \"" << qPrintable(str_filename) << ".vtr\"" << endl;
-//  CompressibleVariables<PerfectGas> cvars;
-//  patch.writeToVtk(0, str_filename, cvars);
-  BUG;
 }
 
 

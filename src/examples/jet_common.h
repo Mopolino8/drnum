@@ -33,6 +33,9 @@ real dt = cfl_target*patch.dx()/(max(u_jet, u_far) + sqrt(PerfectGas::gamma()*Pe
 
 cout << NI*NJ*NK << " cells" << endl;
 
+cout << " patch.dx() = " << patch.dx() << endl;
+cout << " dt  =  " << dt << endl;
+
 JetFlux flux(u_jet, u_far, p_jet, p, T_jet, T, L, 2*L, L, 2*L, false);
 
 PerfectGas::primitiveToConservative(p, T, u_far, 1e-2*u_far, 2e-2*u_far, init_var);

@@ -46,6 +46,7 @@ private:
   real m_Ly;
   real m_Lz;
 
+
 protected: // attributes
 
   size_t m_numProtXmin;
@@ -91,7 +92,7 @@ public: // methods
     * @param s_mesh the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(istringstream& iss_input);
+  virtual bool readFromFile(istringstream iss_input);
 
   /**
     * Write mesh data to file
@@ -364,20 +365,6 @@ public: // methods
    */
   bool xyzToRefNode(real x, real y, real z,
                     size_t& in_ref, size_t& jn_ref, size_t& kn_ref);
-
-  /** Compute ...
-    * @return smallest characteristic length.
-    */
-  virtual real computeMinChLength();
-
-  /**
-   * Write patch data to an individual files for this patch only.
-   * Example: Let m_myindex be 777 and write to data file with base name "calc/mydata" at counter level 55.
-   * Files to write to: calc/mydata_ip000777_000055.vtr
-   * @param base_data_filename base data filename relative to cwd.
-   * @param count discrete counter (usually time counter).
-   */
-  virtual void writeData(QString base_data_filename, size_t count);
 
 
 #ifdef WITH_VTK

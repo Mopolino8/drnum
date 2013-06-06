@@ -13,6 +13,9 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#include <QString>
+
 using namespace std;
 
 //#include "blockcfd.h"
@@ -213,8 +216,17 @@ public: // methods
     * @param s_mesh the stream to write to
     * @return true, if successful
     */
-  virtual bool writeToFile(ofstream&) {return true;};
+  virtual bool writeToFile(ofstream&) {BUG; return true;};
   //  virtual bool writeToFile(ifstream& s_mesh) {return true;};
+
+  /**
+   * Write patch data to an individual files for this patch only.
+   * Example: Let m_myindex be 777 and write to data file with base name "calc/mydata" at counter level 55.
+   * Files to write to: calc/mydata_ip000777_000055.vtr
+   * @param base_data_filename base data filename relative to cwd.
+   * @param count discrete counter (usually time counter).
+   */
+  virtual void writeData(QString base_data_filename, size_t count) {BUG;}
 
   /**
     * Build up transformation matrix.
@@ -224,6 +236,7 @@ public: // methods
     */
   void setupTransformation(vec3_t xyzoref,
                            vec3_t base_i, vec3_t base_j);
+
   /**
     * Scale patch relative to origin of parental coordsyst.
     * NOTE: Affects reference position and physical patch size.

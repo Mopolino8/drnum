@@ -27,6 +27,8 @@ public:
 
   RungeKuttaPG1();
 
+  RungeKuttaPG1(PatchGrid* patch_grid);
+
   void addAlpha(real a) { m_Alpha.push_back(a); }
 
   void setPatchGrid(PatchGrid* a_PatchGrid) { m_PatchGrid = a_PatchGrid; }

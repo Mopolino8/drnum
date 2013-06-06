@@ -119,6 +119,24 @@ public: // methods
   void writeGrid() {BUG;}
 
   /**
+   * Read patch data from individual files (one each per patch).
+   * Example: read from data files with base name "calc/mydata" of counter level i_t = 55. Files to read:
+   * calc/mydata_ip000000_000055.vtr ;  calc/mydata_ip000001_000055.vtr ; ...
+   * @param base data filename relative to cwd.
+   * @param discrete counter (usually time counter).
+   */
+  void readData(string base_data_filename, size_t count) {BUG;}
+
+  /**
+   * Write patch data to individual files (one each per patch).
+   * Example: write to data files with base name "calc/mydata" at counter level i_t = 55. Files to write:
+   * calc/mydata_ip000000_000055.vtr ;  calc/mydata_ip000001_000055.vtr ; ...
+   * @param base data filename relative to cwd.
+   * @param discrete counter (usually time counter).
+   */
+  void writeData(QString base_data_filename, size_t count);
+
+  /**
     * Scale total patchgrid relative to origin of parental coordsyst.
     * NOTE: Affects reference positions and physical patch sizes.
     * @param scfactor scaling factor.

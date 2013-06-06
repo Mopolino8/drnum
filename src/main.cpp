@@ -4,7 +4,13 @@
 //#include "examples/cpujet.h"
 
 // single patch on a PatchGrid
-#include "examples/cpujet_pg_single.h"  // next to test
+//#include "examples/cpujet_pg_single.h"
+
+// two patches on a PatchGrid
+//#include "examples/cpujet_pg_dual_1.h"
+
+// everything from grid file, assuming iterators match
+#include "examples/cpujet_pg.h"  // next to test
 
 // ??
 //#include "examples/cpujet_mb_grid1.h"

@@ -106,7 +106,9 @@ HEADERS += \
     debug.h \
     examples/cpuduct.h \
     examples/cpujet.h \
+    examples/cpujet_pg.h \
     examples/cpujet_pg_single.h \
+    examples/cpujet_pg_dual_1.h \
     examples/cpujet_mb1.h \
     examples/cpujet_mb_grid1.h \
     examples/cpujet_mb_onlygrid.h \
@@ -115,7 +117,7 @@ HEADERS += \
     examples/gpujet.h \
     examples/interpolation1.h \
     examples/jet_common.h \
-    examples/jet_pg_single_common.h \
+    examples/jet_pg_common.h \
     examples/jetflux.h \
     examples/kelvinhelmholtz.h \
     examples/overexpandedjet2d.h \

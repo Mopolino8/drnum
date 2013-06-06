@@ -5,6 +5,11 @@ RungeKuttaPG1::RungeKuttaPG1()
     m_PatchGrid = NULL;
 }
 
+RungeKuttaPG1::RungeKuttaPG1(PatchGrid* patch_grid)
+{
+    m_PatchGrid = patch_grid;
+}
+
 void RungeKuttaPG1::operator()(real dt)
 {
     /** @todo Test version only: hard coded patch interactions. */
