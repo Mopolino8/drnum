@@ -95,7 +95,10 @@ struct size3_t { size_t i, j, k; };
 #endif
 
 #ifdef __CUDACC__
-  #undef DEBUG
+  #ifdef DEBUG
+    #undef DEBUG
+    #define DEBUG_CUDA
+  #endif
 #endif
 
 
