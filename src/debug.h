@@ -22,9 +22,9 @@ extern real   z;
   {
     printf("last variables:\n");
     printf("---------------\n");
-    printf("i = %u\n", i);
-    printf("j = %u\n", j);
-    printf("k = %u\n", k);
+    printf("i = %d\n", int(i));
+    printf("j = %d\n", int(j));
+    printf("k = %d\n", int(k));
     printf("x = %f\n", x);
     printf("y = %f\n", y);
     printf("z = %f\n", z);

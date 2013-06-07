@@ -1,6 +1,6 @@
 // Original. Taken over from jet_common.h
 
-size_t N = 20;
+// size_t N = 20;  => see grid files
 real Ma_jet         = 0.30;
 real Ma_far         = 0.15;
 real p              = 1.0e5;
@@ -11,8 +11,8 @@ real u_jet          = Ma_jet*sqrt(PerfectGas::gamma()*PerfectGas::R()*T_jet);
 real u_far          = Ma_far*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
 real Re             = 1e5;
 real L              = Re*PerfectGas::mu()*PerfectGas::R()*T_jet/(p_jet*u_jet);
-real ar             = 3.0;
-real length_factor  = 2.0;
+// real ar             = 3.0;
+// real length_factor  = 2.0;
 real time           = L/u_jet;
 real cfl_target     = 0.2;
 real t_write        = 0;

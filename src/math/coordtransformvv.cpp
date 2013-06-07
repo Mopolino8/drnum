@@ -13,8 +13,9 @@ void CoordTransformVV::setMatrix(const mat3_t& A)
 
 real CoordTransformVV::setMatrixFromBaseIJ(vec3_t base_i, vec3_t base_j)
 {
-  m_transform.setMatrixFromBaseIJ(base_i, base_j);
+  real health = m_transform.setMatrixFromBaseIJ(base_i, base_j);
   computeInverse();
+  return health;
 }
 
 void CoordTransformVV::setVector(const vec3_t& b)

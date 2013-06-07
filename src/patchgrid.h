@@ -105,7 +105,13 @@ public: // methods
   /** Delete a patch
    * @param i_patch the index of the patch in m_patches
    */
-  void deletePatch(size_t i_patch);
+  //void deletePatch(size_t i_patch);
+  void deletePatch(size_t) {
+    /** @todo Other patches may be dependent. These dependencies must be cleared.
+      * Most likely this method will never be required, unless for mesh generation purposes.
+      */
+    BUG;
+  }
 
   /**
    * Read patch list from file.
@@ -125,7 +131,8 @@ public: // methods
    * @param base data filename relative to cwd.
    * @param discrete counter (usually time counter).
    */
-  void readData(string base_data_filename, size_t count) {BUG;}
+  // void readData(string base_data_filename, size_t count) {BUG;}
+  void readData(string, size_t) {BUG;}
 
   /**
    * Write patch data to individual files (one each per patch).
@@ -134,7 +141,7 @@ public: // methods
    * @param base data filename relative to cwd.
    * @param discrete counter (usually time counter).
    */
-  void writeData(QString base_data_filename, size_t count);
+  void writeData(QString base_data_filename, int count);
 
   /**
     * Scale total patchgrid relative to origin of parental coordsyst.

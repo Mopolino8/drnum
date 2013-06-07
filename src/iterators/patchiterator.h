@@ -52,7 +52,7 @@ inline PatchIterator::PatchIterator()
 inline void PatchIterator::computeAll(real factor)
 {
   vector<size_t> patches(numPatches());
-  for (int i = 0; i < numPatches(); ++i) {
+  for (size_t i = 0; i < numPatches(); ++i) {
     patches[i] = i;
   }
   compute(factor, patches);
@@ -60,7 +60,7 @@ inline void PatchIterator::computeAll(real factor)
 
 inline void PatchIterator::copyField(size_t i_src, size_t i_dst)
 {
-  for (int i = 0; i < numPatches(); ++i) {
+  for (size_t i = 0; i < numPatches(); ++i) {
     m_Patches[i]->copyField(i_src, i_dst);
   }
 }

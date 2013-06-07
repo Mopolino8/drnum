@@ -294,9 +294,9 @@ public:
    * @return the index of the new entry 
    */
   void AddUntil (const size_t address) {
-      while(NumEntries() <= address) {
-	  AddEntry();
-      };
+    while(NumEntries() <= address) {
+      AddEntry();
+    };
   }
 
   /**
@@ -340,7 +340,7 @@ public:
    * @param i the index of the entry to be deleted 
    */
   virtual void DeleteData(size_t ) {};
-    
+
   /// delete all entries.
   void DelAll ();
 
@@ -430,8 +430,8 @@ public:
    *        master of other_list (return reference).
    * @return bool indicating if "this" is anyhow linked to other_list
    */
-    bool IsLinkedTo(List *other_list,
-		    bool& is_master_of_other);
+  bool IsLinkedTo(List *other_list,
+                  bool& is_master_of_other);
 
   /**
    * copy an entry. 
@@ -472,40 +472,41 @@ public:
 
   void operator=(const List &other);
 
-    /**
+  /**
      * swap two entries.
      * This method has to be overwritten in child-classes if Swap-processes will be applied
      * The effect is, that data at address i1 and i2 are exchanged
      * @param i1 the one index
      * @param i2 the other index
      */
-    virtual void Swap(size_t i1, size_t i2){};
+  // virtual void Swap(size_t i1, size_t i2){};
+  virtual void Swap(size_t, size_t){};
 
-    /** swap two entries for all linked List
+  /** swap two entries for all linked List
      *  @param i1 the one index
      *  @param i2 the other index
      */ 
-    void SwapAll(size_t& i1, size_t& i2) {
-	if (IsMaster()) {
-	    Swap(i1, i2);
-            /// @todo why unsigned int and not size_t ?
-            for (unsigned int i = 0; i < num_clients; i++) {
-		client[i]->Swap(i1, i2);
-	    };
-	} else {
-	    Master()->SwapAll(i1, i2);
-	};
+  void SwapAll(size_t& i1, size_t& i2) {
+    if (IsMaster()) {
+      Swap(i1, i2);
+      /// @todo why unsigned int and not size_t ?
+      for (unsigned int i = 0; i < num_clients; i++) {
+        client[i]->Swap(i1, i2);
+      };
+    } else {
+      Master()->SwapAll(i1, i2);
     };
+  };
 
-// ATTENTION: virtual methods are compiled for ALL TEMPLATE ARGUMENTS
-// This causes problems due to the > operator. Use non virtual method instead
-//    /**
-//       Sorting mechanism for Lists. Virtual entry point only.
-//    */
-//    virtual void SortList() {
-//	cout << "Error: Attempt to sort a List (method unknown)" << endl;
-//	exit(EXIT_FAILURE);
-//    };
+  // ATTENTION: virtual methods are compiled for ALL TEMPLATE ARGUMENTS
+  // This causes problems due to the > operator. Use non virtual method instead
+  //    /**
+  //       Sorting mechanism for Lists. Virtual entry point only.
+  //    */
+  //    virtual void SortList() {
+  //	cout << "Error: Attempt to sort a List (method unknown)" << endl;
+  //	exit(EXIT_FAILURE);
+  //    };
 };
 
 inline size_t List::end_idx() const
@@ -525,13 +526,13 @@ inline size_t List::next_idx(size_t i) const
   do { i++; } while ((i < end_idx()) && !IsActive(i));
   return i;
 
-//     if(IsClean()) {
-// 	i++;
-// 	return i;
-//     } else {
-// 	do { i++; } while ((i < end_idx()) && !IsActive(i));
-// 	return i;
-//     };
+  //     if(IsClean()) {
+  // 	i++;
+  // 	return i;
+  //     } else {
+  // 	do { i++; } while ((i < end_idx()) && !IsActive(i));
+  // 	return i;
+  //     };
 }
 
 inline size_t List::prev_idx(size_t i) const 
