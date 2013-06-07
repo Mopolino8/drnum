@@ -30,8 +30,7 @@ void run()
   runge_kutta.addAlpha(0.5);
   runge_kutta.addAlpha(1.000);
 
-  PatchGrid patch_grid;
-  GPU_CartesianIterator<5, JetFlux> iterator(patch_grid, flux);
+  GPU_CartesianIterator<5, JetFlux> iterator(flux);
   iterator.addPatch(&patch);
   runge_kutta.addIterator(&iterator);
 

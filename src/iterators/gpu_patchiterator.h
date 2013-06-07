@@ -16,7 +16,7 @@ protected: // attributes
 
 public:
 
-  GPU_PatchIterator(PatchGrid &patch_grid, OP op);
+  GPU_PatchIterator(OP op);
 
   CUDA_HO void addPatch(T_CPU* patch);
   CUDA_HO void updateHost();
@@ -28,10 +28,10 @@ public:
 
 
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::GPU_PatchIterator(PatchGrid &patch_grid, OP op)
-  : TPatchIterator<T_CPU, DIM, OP>(patch_grid, op)
+GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::GPU_PatchIterator(OP op)
+  : TPatchIterator<T_CPU, DIM, OP>(op)
 {
-  m_GpuPatches.reserve(max(size_t(100), patch_grid.getNumPatches()));
+  //m_GpuPatches.reserve(max(size_t(100), patch_grid.getNumPatches()));
 }
 
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
