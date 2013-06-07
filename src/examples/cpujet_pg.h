@@ -47,8 +47,8 @@ void writePG(PatchGrid &patch_grid, QString file_name, int count)
 
 void run()
 {
-  string grid_file_name = "grid/jet_single.grid";
-  //string grid_file_name = "grid/jet_dual_1.grid";
+  //string grid_file_name = "grid/jet_single.grid";
+  string grid_file_name = "grid/jet_dual_1.grid";
 
 #include "jet_pg_common.h"
 
