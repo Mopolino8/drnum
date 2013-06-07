@@ -1,0 +1,46 @@
+1001
+{
+0. 0. 0.
+1. 0. 0.
+0. 1. 0.
+1.
+80 20 20
+0 0 0 0 0 0
+36. 3. 3.
+fx1 fy1 fz1
+bx1 bX1 by1 bY1 bz1 bZ1
+s1
+}
+
+1001
+{
+0. 0. 10.
+1. 0. 0.
+0. 1. 0.
+1.
+80 20 20
+0 0 0 0 0 0
+36. 3. 3.
+fx1 fy1 fz1
+bx1 bX1 by1 bY1 bz1 bZ1
+s1
+}
+
+0
+
+
+
+cartesian patch above:
+
+1001
+0. 0. 0.     // position  (patch)
+1. 0. 0.     // base_i    (patch)
+0. 1. 0.     // base_j    (patch)
+1.           // ioscale   (patch)
+80 20 20     // ni, nj, nk (cartesianpatch [structuredpatch])
+0 0 0 0 0 0  // protection exceptions imin, imax, jmin, jmax, kmin, kmax (cartesianpatch [structuredpatch])
+36. 3. 3.    // phys size in xx,yy,zz (cartesianpatch)
+fx1 fy1 fz1  // codes for field fluxes xx,yy,zz
+bx1 bX1 by1 bY1 bz1 bZ1  // codes for boundary fluxes (zeros for field neighbours)
+s1           // code for source terms
+
