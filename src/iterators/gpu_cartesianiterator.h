@@ -24,15 +24,15 @@ public:
 
   using GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>::addPatch;
 
-  CUDA_HO GPU_CartesianIterator(PatchGrid &patch_grid, OP op);
+  CUDA_HO GPU_CartesianIterator(OP op);
 
   CUDA_HO virtual void compute(real factor, const vector<size_t>& patches);
 
 };
 
 template <unsigned int DIM, typename OP>
-GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(PatchGrid &patch_grid, OP op)
-  : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>(patch_grid, op)
+GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(OP op)
+  : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>(op)
 {
   int count;
   if (cudaGetDeviceCount(&count) != cudaSuccess) {

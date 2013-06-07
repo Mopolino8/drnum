@@ -15,7 +15,7 @@ real time           = L/u_jet;
 real cfl_target     = 0.2;
 real t_write        = 0;
 real write_interval = 0.5*time;
-real total_time     = 100*time;
+real total_time     = 5*time;
 
 cout << "L = " << L << endl;
 
