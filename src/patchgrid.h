@@ -20,26 +20,26 @@ class PatchGrid
 
 protected: // attributes
 
-  vector<Patch*> m_patches;                ///< List of patches in the grid
-  PatchGroups* m_patchgroups;
+  vector<Patch*> m_Patches;                ///< List of patches in the grid
+  PatchGroups* m_PatchGroups;
 
   //VectorHashRaster<size_t> m_HashRaster;   ///< Hash raster to assist orientation
 
   // settings (same as individually defined in patch.h)
 
  /// @todo m_NumFields m_NumVariables must go ...
-  size_t  m_NumFields;       ///< number of fields (e.g. old, new, ...)
-  size_t  m_NumVariables;    ///< number of variables (e.g. rho, rhou, ...)
-  bool m_InterpolateData;    ///< Flag indicates wether to interpolate data on interpatch transfers
-  bool m_InterpolateGrad1N;  ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
-  bool m_TransferPadded;     ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
-  size_t m_NumProtectLayers; ///< number of boundary protection layers, in which no interpol access from other patches is allowed
-  size_t m_NumOverlapLayers; ///< number of boundary cell layers, for which to get data from donor neighbour patches
+  size_t  m_NumFields;         ///< number of fields (e.g. old, new, ...)
+  size_t  m_NumVariables;      ///< number of variables (e.g. rho, rhou, ...)
+  bool    m_InterpolateData;   ///< Flag indicates wether to interpolate data on interpatch transfers
+  bool    m_InterpolateGrad1N; ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
+  bool    m_TransferPadded;    ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
+  size_t  m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
+  size_t  m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
 
-  vec3_t m_bbox_xyzo_min;   ///< lowest coordinates of smallest box around grid in inertial coords.
-  vec3_t m_bbox_xyzo_max;   ///< highest coordinates of smallest box around grid in inertial coords.
-  bool m_bbox_OK;           ///< flag indicating wether the bounding box is available
-  bool m_dependencies_OK;   ///< indicate, if dependencies are updated
+  vec3_t  m_BboxXyzoMin;       ///< lowest coordinates of smallest box around grid in inertial coords.
+  vec3_t  m_BboxXyzoMax;       ///< highest coordinates of smallest box around grid in inertial coords.
+  bool    m_BboxOk;            ///< flag indicating wether the bounding box is available
+  bool    m_DependenciesOk;    ///< indicate, if dependencies are updated
 
 private: // methods
 
@@ -190,11 +190,11 @@ public: // methods
 
   // Access methods
 
-  size_t getNumPatches() {return m_patches.size();}
+  size_t getNumPatches() {return m_Patches.size();}
 
-  Patch* getPatch(const size_t& ip) {return m_patches[ip];}
+  Patch* getPatch(const size_t& ip) {return m_Patches[ip];}
 
-  PatchGroups* getPatchGroups() {return m_patchgroups;}
+  PatchGroups* getPatchGroups() {return m_PatchGroups;}
 
   SinglePatchGroup* getSinglePatchGroup(const size_t& ipg);
 

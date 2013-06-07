@@ -4,7 +4,7 @@
 PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
 {
   // patchgroups of same type and solver codes
-  m_patchgroups = new PatchGroups(true); /// @todo need a handling for this
+  m_PatchGroups = new PatchGroups(true); /// @todo need a handling for this
   // parametric settings
   m_NumProtectLayers = num_protectlayers;
   m_NumOverlapLayers = num_overlaplayers;
@@ -13,7 +13,7 @@ PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
   m_NumVariables = 0;
   m_InterpolateData = false;
   m_InterpolateGrad1N = false;
-  m_bbox_OK = false;
+  m_BboxOk = false;
   //  m_hashBox = NULL;
 }
 
@@ -96,22 +96,22 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
   // 5) Finish building up inter-patch transfer lists.
 
   vector<vector<size_t> > pot_neigh;
-  pot_neigh.resize(m_patches.size());
+  pot_neigh.resize(m_Patches.size());
 
   // 1) Build up a hash raster VectorHashRaster<size_t> as background grid, covering the whole geometric
   //    region of the mesh.
   { // start mem_block
     VectorHashRaster<size_t> m_HashRaster;
-    buildHashRaster(10*m_patches.size(), true,   // resolution chosen upon testing, may also use fixed size
+    buildHashRaster(10*m_Patches.size(), true,   // resolution chosen upon testing, may also use fixed size
                     m_HashRaster);
 
     // 2) Fill in patch indicees. Save side inclusion: mark all hash raster cells covered by the bounding box
     //    of respective patches.
-    for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
+    for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
       //.. Find cell address range in hash raster covered by bounding box of patch
       //.... min-max in inertial coords
-      vec3_t xyzo_min = m_patches[i_p]->accessBBoxXYZoMin();
-      vec3_t xyzo_max = m_patches[i_p]->accessBBoxXYZoMax();
+      vec3_t xyzo_min = m_Patches[i_p]->accessBBoxXYZoMin();
+      vec3_t xyzo_max = m_Patches[i_p]->accessBBoxXYZoMax();
       //.... min-max in m_HashRaster coords in
       vec3_t xyz_min = m_HashRaster.getTransformI2T()->transform(xyzo_min);
       vec3_t xyz_max = m_HashRaster.getTransformI2T()->transform(xyzo_max);
@@ -172,7 +172,7 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
     }
   } // end mem_block
   // unify all potential neighbour lists
-  for (size_t patch = 0; patch < m_patches.size(); patch++) {
+  for (size_t patch = 0; patch < m_Patches.size(); patch++) {
     sort(pot_neigh[patch].begin(), pot_neigh[patch].end());
     typename vector<size_t>::iterator it;
     it = unique(pot_neigh[patch].begin(), pot_neigh[patch].end());
@@ -182,31 +182,31 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
   // 4) Find real neighbour dependencies (e.g. interpolation partners) for all potentially dependend patches.
   //    - If a potential neighbour-dependency does not serve any interpol request, it will be excluded
   //      from Patch::m_neighbours.
-  for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
     for (size_t ii_pn = 0; ii_pn < pot_neigh[i_p].size(); ii_pn++) {
       size_t i_pn = pot_neigh[i_p][ii_pn];
-      m_patches[i_p]->insertNeighbour(m_patches[i_pn]);
+      m_Patches[i_p]->insertNeighbour(m_Patches[i_pn]);
     }
   }
   // 5) Finish building up inter-patch transfer lists.
   /// @todo Needs an error handling mechanism, at least a diagnose, if any receiving cell of a patch finds no donor at all.
   finalizeDependencies();
-  m_dependencies_OK = true;
+  m_DependenciesOk = true;
 }
 
 
 void PatchGrid::finalizeDependencies()
 {
-  for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
-    m_patches[i_p]->finalizeDependencies();
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    m_Patches[i_p]->finalizeDependencies();
   }
 }
 
 
 void PatchGrid::accessAllDonorData_WS(const size_t& field)
 {
-  for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
-    m_patches[i_p]->accessDonorData_WS(field);
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    m_Patches[i_p]->accessDonorData_WS(field);
   }
 }
 
@@ -218,7 +218,7 @@ void PatchGrid::buildHashRaster(size_t resolution, bool force,
   buildBoundingBox(force);
 
   // Define resolution. Aim approx. same delatas in x, y, z .
-  vec3_t delta_xyzo = m_bbox_xyzo_max - m_bbox_xyzo_min;
+  vec3_t delta_xyzo = m_BboxXyzoMax - m_BboxXyzoMin;
   real delta_resolve = pow(real(resolution) / (delta_xyzo[0] * delta_xyzo[1] * delta_xyzo[2]), (1./3.));
   real resolve_xo = delta_resolve * delta_xyzo[0];
   real resolve_yo = delta_resolve * delta_xyzo[1];
@@ -229,8 +229,8 @@ void PatchGrid::buildHashRaster(size_t resolution, bool force,
   if(i_np < 1) {i_np = 1;}
   if(j_np < 1) {j_np = 1;}
   if(k_np < 1) {k_np = 1;}
-  m_HashRaster.setUp(m_bbox_xyzo_min[0], m_bbox_xyzo_min[1], m_bbox_xyzo_min[2],
-                     m_bbox_xyzo_max[0], m_bbox_xyzo_max[1], m_bbox_xyzo_max[2],
+  m_HashRaster.setUp(m_BboxXyzoMin[0], m_BboxXyzoMin[1], m_BboxXyzoMin[2],
+                     m_BboxXyzoMax[0], m_BboxXyzoMax[1], m_BboxXyzoMax[2],
                      i_np, j_np, k_np);
 
 }
@@ -241,9 +241,9 @@ size_t PatchGrid::insertPatch(Patch* new_patch)
   // Hand over general attributes
   setGeneralAttributes(new_patch);
   // Insert in list
-  m_patches.push_back(new_patch);
-  m_dependencies_OK = false;  /// @todo global logics on dependencies?
-  return m_patches.size() - 1;
+  m_Patches.push_back(new_patch);
+  m_DependenciesOk = false;  /// @todo global logics on dependencies?
+  return m_Patches.size() - 1;
 }
 
 
@@ -329,7 +329,7 @@ void PatchGrid::readGrid(string gridfilename)
     istringstream iss(line);
     //.. Hand over to patches as needed
     //.... CartesianPatch
-    if(patch_type == 1001) {
+    if (patch_type == 1001) {
       //...... Create a new CartesianPatch
       CartesianPatch* new_patch;
       new_patch = new CartesianPatch();
@@ -337,7 +337,7 @@ void PatchGrid::readGrid(string gridfilename)
       new_patch->setIndex(index);
       new_patch->setPatchComment(patchcomment);
       new_patch->readFromFile(iss);
-      m_patchgroups->insertPatch(new_patch); /// @todo better outside of reading loop?
+      m_PatchGroups->insertPatch(new_patch); /// @todo better outside of reading loop?
     }
     //.... Unstructured Patch
     else if(patch_type == 1010) {
@@ -369,7 +369,7 @@ void PatchGrid::writeData(QString base_data_filename, size_t count)
 
 void PatchGrid::scaleRefParental(real scfactor)
 {
-  for (vector<Patch*>::iterator p = m_patches.begin(); p != m_patches.end(); p++) {
+  for (vector<Patch*>::iterator p = m_Patches.begin(); p != m_Patches.end(); p++) {
     (*p)->scaleRefParental(scfactor);
   }
 }
@@ -377,25 +377,25 @@ void PatchGrid::scaleRefParental(real scfactor)
 
 void PatchGrid::buildBoundingBox(const bool& force)
 {
-  if(!m_bbox_OK || force) {
-    if(m_patches.size() > 0) {
+  if(!m_BboxOk || force) {
+    if(m_Patches.size() > 0) {
       // Find max-min limits of all patches in this grid
-      m_bbox_xyzo_min = m_patches[0]->accessBBoxXYZoMin();
-      m_bbox_xyzo_max = m_patches[0]->accessBBoxXYZoMax();
-      for (size_t i_p = 1; i_p < m_patches.size(); i_p++) {
-        vec3_t bbmin_h = m_patches[i_p]->accessBBoxXYZoMin();
-        vec3_t bbmax_h = m_patches[i_p]->accessBBoxXYZoMax();
-        if(m_bbox_xyzo_min[0] > bbmin_h[0]) m_bbox_xyzo_min[0] = bbmin_h[0];
-        if(m_bbox_xyzo_min[1] > bbmin_h[1]) m_bbox_xyzo_min[1] = bbmin_h[1];
-        if(m_bbox_xyzo_min[2] > bbmin_h[2]) m_bbox_xyzo_min[2] = bbmin_h[2];
-        if(m_bbox_xyzo_max[0] < bbmax_h[0]) m_bbox_xyzo_max[0] = bbmax_h[0];
-        if(m_bbox_xyzo_max[1] < bbmax_h[1]) m_bbox_xyzo_max[1] = bbmax_h[1];
-        if(m_bbox_xyzo_max[2] < bbmax_h[2]) m_bbox_xyzo_max[2] = bbmax_h[2];
+      m_BboxXyzoMin = m_Patches[0]->accessBBoxXYZoMin();
+      m_BboxXyzoMax = m_Patches[0]->accessBBoxXYZoMax();
+      for (size_t i_p = 1; i_p < m_Patches.size(); i_p++) {
+        vec3_t bbmin_h = m_Patches[i_p]->accessBBoxXYZoMin();
+        vec3_t bbmax_h = m_Patches[i_p]->accessBBoxXYZoMax();
+        if(m_BboxXyzoMin[0] > bbmin_h[0]) m_BboxXyzoMin[0] = bbmin_h[0];
+        if(m_BboxXyzoMin[1] > bbmin_h[1]) m_BboxXyzoMin[1] = bbmin_h[1];
+        if(m_BboxXyzoMin[2] > bbmin_h[2]) m_BboxXyzoMin[2] = bbmin_h[2];
+        if(m_BboxXyzoMax[0] < bbmax_h[0]) m_BboxXyzoMax[0] = bbmax_h[0];
+        if(m_BboxXyzoMax[1] < bbmax_h[1]) m_BboxXyzoMax[1] = bbmax_h[1];
+        if(m_BboxXyzoMax[2] < bbmax_h[2]) m_BboxXyzoMax[2] = bbmax_h[2];
         ///< @todo A max/min function for vec3_t ?
         // m_bbox_xyzo_min.coordMin(bbmin_h);
         // m_bbox_xyzo_max.coordMin(bbmax_h);
       }
-      m_bbox_OK = true;
+      m_BboxOk = true;
     }
   }
 }
@@ -403,23 +403,23 @@ void PatchGrid::buildBoundingBox(const bool& force)
 
 void PatchGrid::setFieldToConst(size_t i_field, real *var)
 {
-  for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
-    m_patches[i_p]->setFieldToConst(i_field, var);
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    m_Patches[i_p]->setFieldToConst(i_field, var);
   }
 }
 
 
 SinglePatchGroup* PatchGrid::getSinglePatchGroup(const size_t& ipg)
 {
-  return m_patchgroups->accessSinglePatchGroup(ipg);
+  return m_PatchGroups->accessSinglePatchGroup(ipg);
 }
 
 real PatchGrid::computeMinChLength()
 {
   real min_ch_len_all = 0;
   bool first = true;
-  for (size_t i_p = 0; i_p < m_patches.size(); i_p++) {
-    real min_ch_len = m_patches[i_p]->computeMinChLength();
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    real min_ch_len = m_Patches[i_p]->computeMinChLength();
     if(first || min_ch_len<min_ch_len_all) {
       min_ch_len_all = min_ch_len;
     }
