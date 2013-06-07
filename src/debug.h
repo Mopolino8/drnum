@@ -67,4 +67,7 @@ extern real   z;
 
 }
 
+#define DBG_PRT_INT(X) printf("variable %s = %d\n", #X, X);
+#define DBG_PRT_REAL(X) printf("variable %s = %f\n", #X, X);
+
 #endif // DEBUG_H
