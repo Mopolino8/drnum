@@ -8,9 +8,21 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
+#ifdef DEBUG
+  #define CUDA_CHECK_ERROR                                     \
+  {                                                            \
+    cudaThreadSynchronize();                                   \
+    cudaError_t err = cudaGetLastError();                      \
+    if (err != cudaSuccess) {                                  \
+      cerr << "\n" << cudaGetErrorString(err) << "\n" << endl; \
+      cerr << "  file: " << __FILE__ << "\n";                  \
+      cerr << "  line: " << __LINE__ << "\n";                  \
+      abort();                                                 \
+    }                                                          \
+  }
+#else
 #define CUDA_CHECK_ERROR                                     \
 {                                                            \
-  cudaThreadSynchronize();                                   \
   cudaError_t err = cudaGetLastError();                      \
   if (err != cudaSuccess) {                                  \
     cerr << "\n" << cudaGetErrorString(err) << "\n" << endl; \
@@ -19,6 +31,7 @@
     abort();                                                 \
   }                                                          \
 }
+#endif
 
 namespace CudaTools
 {
