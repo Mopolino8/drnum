@@ -315,7 +315,17 @@ void PatchGrid::readGrid(string gridfilename)
       }
     }
     string line;
-    getline(s_grid, line, '}');
+    {
+      string read_line;
+      getline(s_grid, read_line, '}');
+      line.clear();
+      for (size_t i_read_line = 0; i_read_line < read_line.size(); ++i_read_line) {
+        char c = read_line[i_read_line];
+        if (!isspace(c) || c == ' ') {
+          line.push_back(c);
+        }
+      }
+    }
     istringstream iss(line);
     //.. Hand over to patches as needed
     //.... CartesianPatch
