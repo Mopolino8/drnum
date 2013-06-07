@@ -26,7 +26,7 @@ CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayer
 
 bool CartesianPatch::readFromFile(istringstream& iss_input)
 {
-  Patch::readFromFile(iss_input);
+  bool no_error = Patch::readFromFile(iss_input);
   // number of nodes in block axis directions
   size_t num_i, num_j, num_k;
   iss_input >> num_i;
@@ -67,11 +67,14 @@ bool CartesianPatch::readFromFile(istringstream& iss_input)
   //      m_solvercodes.push_back(c);
   //    }
   //  }
+  /// @todo check before returning "true", see also patch.cpp
+  return no_error;
 }
 
-bool CartesianPatch::writeToFile(ifstream &s_mesh)
-{
-}
+//bool CartesianPatch::writeToFile(ifstream &s_mesh)
+//{
+//  // implementation missing
+//}
 
 void CartesianPatch::scaleRefParental(real scfactor)
 {
@@ -1076,7 +1079,7 @@ real CartesianPatch::computeMinChLength()
 }
 
 
-void CartesianPatch::writeData(QString base_data_filename, size_t count)
+void CartesianPatch::writeData(QString base_data_filename, int count)
 {
   QString str_filename = base_data_filename;
   if (count >= 0) {

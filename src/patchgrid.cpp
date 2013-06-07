@@ -95,6 +95,11 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
   //
   // 5) Finish building up inter-patch transfer lists.
 
+  if(!with_intercoeff) {
+    // with_intercoeff==false is an intended option for grid gen purposes to be used later.
+    BUG;
+  }
+
   vector<vector<size_t> > pot_neigh;
   pot_neigh.resize(m_patches.size());
 
@@ -259,15 +264,6 @@ void PatchGrid::setGeneralAttributes(Patch* patch)
 }
 
 
-void PatchGrid::deletePatch(size_t i_patch)
-{
-  BUG;
-  /** @todo Other patches may be dependent. These dependencies must be cleared.
-    * Most likely this method will never be required, unless for mesh generation purposes.
-    */
-}
-
-
 void PatchGrid::readGrid(string gridfilename)
 {
   // Get file path
@@ -341,7 +337,7 @@ void PatchGrid::readGrid(string gridfilename)
   cout << "done. " << endl;
 }
 
-void PatchGrid::writeData(QString base_data_filename, size_t count)
+void PatchGrid::writeData(QString base_data_filename, int count)
 {
   QString str_patch_index;
   QString str_patch_filename;

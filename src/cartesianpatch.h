@@ -98,7 +98,8 @@ public: // methods
     * @param s_mesh the stream to write to
     * @return true, if successful
     */
-  virtual bool writeToFile(ifstream& s_mesh);
+  //virtual bool writeToFile(ifstream& s_mesh);
+  virtual bool writeToFile(ifstream&) {BUG; return false;}
 
   /**
     * Scale patch relative to origin of parental coordsyst.
@@ -377,7 +378,7 @@ public: // methods
    * @param base_data_filename base data filename relative to cwd.
    * @param count discrete counter (usually time counter).
    */
-  virtual void writeData(QString base_data_filename, size_t count);
+  virtual void writeData(QString base_data_filename, int count);
 
 
 #ifdef WITH_VTK

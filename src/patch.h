@@ -207,9 +207,8 @@ public: // methods
   /**
     * Read solver codes from file
     * @param iss_input the stream to read from
-    * @return true, if successful
     */
-  virtual bool readSolverCodes(istringstream& iss_input);
+  virtual void readSolverCodes(istringstream& iss_input);
 
   /**
     * Write mesh data to file
@@ -226,7 +225,8 @@ public: // methods
    * @param base_data_filename base data filename relative to cwd.
    * @param count discrete counter (usually time counter).
    */
-  virtual void writeData(QString base_data_filename, size_t count) {BUG;}
+  //virtual void writeData(QString base_data_filename, size_t count) {BUG;}
+  virtual void writeData(QString, size_t) {BUG;}
 
   /**
     * Build up transformation matrix.

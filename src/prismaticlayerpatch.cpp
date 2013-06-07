@@ -94,8 +94,8 @@ bool PrismaticLayerPatch::computeCCDataInterpolCoeffs(real x, real y, real z,
 }
 
 bool PrismaticLayerPatch::computeCCGrad1NInterpolCoeffs(real x, real y, real z,
-                                                   real nx, real ny, real nz,
-                                                   WeightedSet<real>& d_dn)
+                                                        real nx, real ny, real nz,
+                                                        WeightedSet<real>& d_dn)
 {
   BUG; // not implemented
 }

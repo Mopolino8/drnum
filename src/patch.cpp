@@ -41,7 +41,7 @@ bool Patch::readFromFile(istringstream& iss_input)
   return true;
 }
 
-bool Patch::readSolverCodes(istringstream& iss_input)
+void Patch::readSolverCodes(istringstream& iss_input)
 {
   m_solvercodes.buildFrom(iss_input);
 }
