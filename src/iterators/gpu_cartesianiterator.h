@@ -54,6 +54,7 @@ GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(PatchGrid &patch_grid, OP o
   //m_NumBlocks = patch_grid->variableSize()/m_NumThreads + 1;
 }
 
+#define NDEBUG
 
 template <unsigned int DIM, typename OP>
 __global__ void GPU_CartesianIterator_kernelXFieldFluxes(GPU_CartesianPatch patch, OP op, size_t offset)
@@ -219,11 +220,6 @@ __global__ void GPU_CartesianIterator_kernelAdvance(GPU_CartesianPatch patch, re
 template <unsigned int DIM, typename OP>
 void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &patches)
 {
-
-#ifdef DEBUG
-  BUG;
-#endif
-
   cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
   CudaTools::checkError();
 

@@ -5,6 +5,8 @@
 #include <cmath>
 #include <iostream>
 #include <ctime>
+#include <cassert>
+#include <cstdio>
 #include <omp.h>
 
 using namespace std;
@@ -81,10 +83,10 @@ struct size3_t { size_t i, j, k; };
  * where the error occurred.
  */
 #define BUG {                             \
-  cout << "This seems to be a bug!\n";    \
-  cout << "  file: " << __FILE__ << "\n"; \
-  cout << "  line: " << __LINE__ << "\n"; \
-  abort();                                \
+  printf("This seems to be a bug!\n");    \
+  printf("  file: %s\n", __FILE__);         \
+  printf("  line: %d\n", __LINE__);         \
+  assert(false);                          \
 }
 
 #ifdef WITH_VTK
@@ -94,34 +96,37 @@ struct size3_t { size_t i, j, k; };
   #endif
 #endif
 
+/*
 #ifdef __CUDACC__
   #ifdef DEBUG
     #undef DEBUG
     #define DEBUG_CUDA
   #endif
 #endif
-
+*/
 
 #ifdef DEBUG
-inline real checkedReal(real x, int line, const char *file_name)
-{
-  if (isnan(x)) {
-    cout << "NaN encountered in file \"" << file_name << "\" at line " << line << endl;
-    GlobalDebug::print();
-    abort();
+  inline CUDA_DH real checkedReal(real x, int line, const char *file_name)
+  {
+    if (isnan(x)) {
+      //cout << "NaN encountered in file \"" << file_name << "\" at line " << line << endl;
+      printf("NaN encountered in file \"%s\" at line %d\n", file_name, line);
+      GlobalDebug::print();
+      assert(false);
+    }
+    if (isinf(x)) {
+      //cout << "Inf encountered (division by zero?) in file \"" << file_name << "\" at line " << line << endl;
+      printf("Inf encountered (division by zero?) in file \"%s\" at line %d\n", file_name, line);
+      GlobalDebug::print();
+      assert(false);
+    }
+    return x;
   }
-  if (isinf(x)) {
-    cout << "Inf encountered (division by zero?) in file \"" << file_name << "\" at line " << line << endl;
-    GlobalDebug::print();
-    abort();
-  }
-  return x;
-}
 #else
-inline CUDA_DH real checkedReal(real x, int, const char*)
-{
-  return x;
-}
+  inline CUDA_DH real checkedReal(real x, int, const char*)
+  {
+    return x;
+  }
 #endif
 
 #define CHECKED_REAL(X) checkedReal(X, __LINE__, __FILE__)
@@ -132,43 +137,59 @@ extern unsigned long int global_flops_x86;
 extern time_t            global_start_time;
 
 #ifdef DEBUG
-inline void countFlops(int n)
-{
-  global_flops     += n;
-  global_flops_x86 += n;
-}
+  #ifndef __CUDACC__
+    inline void countFlops(int n)
+    {
+      global_flops     += n;
+      global_flops_x86 += n;
+    }
+  #else
+    inline CUDA_DH void countFlops(int) {}
+  #endif
 #else
-inline CUDA_DH void countFlops(int) {}
+  inline CUDA_DH void countFlops(int) {}
 #endif
 
 #ifdef DEBUG
-inline void countSqrts(int n)
-{
-  global_flops     += n;
-  global_flops_x86 += 15*n;
-}
+  #ifndef __CUDACC__
+    inline void countSqrts(int n)
+    {
+      global_flops     += n;
+      global_flops_x86 += 15*n;
+    }
+  #else
+    inline CUDA_DH void countSqrts(int) {}
+  #endif
 #else
-inline CUDA_DH void countSqrts(int) {}
+  inline CUDA_DH void countSqrts(int) {}
 #endif
 
 #ifdef DEBUG
-inline void countExps(int n)
-{
-  global_flops     += n;
-  global_flops_x86 += 20*n;
-}
+  #ifndef __CUDACC__
+    inline void countExps(int n)
+    {
+      global_flops     += n;
+      global_flops_x86 += 20*n;
+    }
+  #else
+    inline CUDA_DH void countExps(int) {}
+  #endif
 #else
-inline CUDA_DH void countExps(int) {}
+  inline CUDA_DH void countExps(int) {}
 #endif
 
 #ifdef DEBUG
-inline void countLogs(int n)
-{
-  global_flops     += n;
-  global_flops_x86 += 20*n;
-}
+  #ifndef __CUDACC__
+    inline void countLogs(int n)
+    {
+      global_flops     += n;
+      global_flops_x86 += 20*n;
+    }
+  #else
+    inline CUDA_DH void countLogs(int) {}
+  #endif
 #else
-inline CUDA_DH void countLogs(int) {}
+  inline CUDA_DH void countLogs(int) {}
 #endif
 
 inline CUDA_DH void fill(real* var, size_t num_vars, real value)
