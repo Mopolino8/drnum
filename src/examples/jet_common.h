@@ -1,4 +1,4 @@
-size_t N = 20;
+size_t N = 50;
 real Ma_jet         = 0.30;
 real Ma_far         = 0.15;
 real p              = 1.0e5;
