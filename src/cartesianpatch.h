@@ -392,21 +392,27 @@ public: // methods
 template <typename TVariables>
 void CartesianPatch::writeToVtk(size_t i_field, QString file_name, const TVariables& variables)
 {
+  /// @todo: must transform output for non o-aligned patches !!!
+  /// @todo: does vtk know something like a general transformation in space ???
+  // Transform: use only linear transformations at present
+  vec3_t v_zero(0., 0., 0.);
+  vec3_t xyzoref = m_transformInertial2This.transformReverse(v_zero);
+
   vtkSmartPointer<vtkRectilinearGrid> grid = vtkSmartPointer<vtkRectilinearGrid>::New();
 
   vtkSmartPointer<vtkFloatArray> xc = vtkSmartPointer<vtkFloatArray>::New();
   for (size_t i = 0; i < m_NumI + 1; ++i) {
-    xc->InsertNextValue(i*dx());
+    xc->InsertNextValue(i*dx() + xyzoref[0]);
   }
 
   vtkSmartPointer<vtkFloatArray> yc = vtkSmartPointer<vtkFloatArray>::New();
   for (size_t j = 0; j < m_NumJ + 1; ++j) {
-    yc->InsertNextValue(j*dy());
+    yc->InsertNextValue(j*dy() + xyzoref[1]);
   }
 
   vtkSmartPointer<vtkFloatArray> zc = vtkSmartPointer<vtkFloatArray>::New();
   for (size_t k = 0; k < m_NumK + 1; ++k) {
-    zc->InsertNextValue(k*dz());
+    zc->InsertNextValue(k*dz() + xyzoref[2]);
   }
 
   grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);

@@ -270,6 +270,8 @@ void Patch::accessDonorData_WS(const size_t& field)
   for(size_t i_v=0; i_v<numVariables(); i_v++) {
     this_vars.push_back(getVariable(field, i_v));
   }
+  donor_vars.resize(this_vars.size());
+
   // set all receiving data variables to 0, as donors will add their contributions onto
   for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
     /// @todo Eliminate cells from m_receive_cells that did not find any donor neighbour. Eliminates next line.
@@ -280,12 +282,13 @@ void Patch::accessDonorData_WS(const size_t& field)
       }
     }
   }
+
   // loop through neighbouring donor patches
   for(size_t i_pd=0; i_pd<m_neighbours.size(); i_pd++) {
     Patch* donor = m_neighbours[i_pd].first;
     //.. assign foreign variable pointers (same sequence as in "this_vars"
     for(size_t i_v=0; i_v<numVariables(); i_v++) {
-      donor_vars.push_back(donor->getVariable(field, i_v));
+      donor_vars[i_v] = donor->getVariable(field, i_v);
     }
     //.. execute transfer contribution
     InterCoeffWS icws = m_InterCoeffData_WS[i_pd];

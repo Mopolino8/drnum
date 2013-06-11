@@ -171,11 +171,16 @@ inline void JetFlux::zWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real
 template <typename PATCH>
 inline void JetFlux::xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
+  /// @todo Oli: modified here to allow shifted patches. Only valid, if aligned to o-coords.
+  vec3_t xyzo_ref = P->accessBBoxXYZoMin();
+  real yo = y + xyzo_ref[1];
+  real zo = z + xyzo_ref[2];
+
   real var[5];
   real p, T, u, v, w;
   P->getVar(0, i, j, k, var);
   PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
-  if (y > m_Y1 && y < m_Y2 && z > m_Z1 && z < m_Z2) {
+  if (yo > m_Y1 && yo < m_Y2 && zo > m_Z1 && zo < m_Z2) {
     u = m_Ujet;
     v = 0;
     w = 0;

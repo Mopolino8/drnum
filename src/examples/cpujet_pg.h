@@ -48,7 +48,13 @@ void writePG(PatchGrid &patch_grid, QString file_name, int count)
 void run()
 {
   //string grid_file_name = "grid/jet_single.grid";
-  string grid_file_name = "grid/jet_dual_1.grid";
+  //string grid_file_name = "grid/jet_dual_1.grid";
+  //string grid_file_name = "grid/jet_dual_2.grid";
+  //string grid_file_name = "grid/jet_dual_3.grid";
+  //string grid_file_name = "grid/jet_dual_4.grid";
+  //string grid_file_name = "grid/jet_dual_5.grid";
+  //string grid_file_name = "grid/jet_dual_6.grid";
+  string grid_file_name = "grid/jet_wild_7.grid";
 
 #include "jet_pg_common.h"
 
@@ -70,6 +76,9 @@ void run()
   // iterator.addPatch(&patch);
 
   runge_kutta.addIterator(&iterator);
+  runge_kutta.setPatchGrid(&patch_grid);
+  runge_kutta.addSyncField(0);    /** @todo New field required, "0 = new" OK? */
+
 
   int count = 0;
   int iter = 0;
