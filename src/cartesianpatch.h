@@ -423,7 +423,7 @@ void CartesianPatch::writeToVtk(size_t i_field, QString file_name, const TVariab
   real* raw_var = new real [numVariables()];
   for (int i_var = 0; i_var < variables.numScalars(); ++i_var) {
     vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-    var->SetName(qPrintable(variables.getScalarName(i_var)));
+    var->SetName(variables.getScalarName(i_var).c_str());
     var->SetNumberOfValues(variableSize());
     grid->GetCellData()->AddArray(var);
     vtkIdType id = 0;
@@ -439,7 +439,7 @@ void CartesianPatch::writeToVtk(size_t i_field, QString file_name, const TVariab
   }
   for (int i_var = 0; i_var < variables.numVectors(); ++i_var) {
     vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-    var->SetName(qPrintable(variables.getVectorName(i_var)));
+    var->SetName(variables.getVectorName(i_var).c_str());
     var->SetNumberOfComponents(3);
     var->SetNumberOfTuples(variableSize());
     grid->GetCellData()->AddArray(var);

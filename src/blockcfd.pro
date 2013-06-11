@@ -40,7 +40,7 @@ QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
 # ====
 #
 cuda {
-  USEGPU                 = -DGPU
+  #USEGPU                 = -DGPU
   LIBS                  += -lcudart
   INCLUDEPATH           += .
   INCLUDEPATH           += /usr/include/QtCore
@@ -197,8 +197,12 @@ HEADERS += \
     prismaticlayerpatch.h \
     prismaticlayerpatch_common.h \
     iteratorfeeder.h \
-    cudatools.h
+    cudatools.h \
+    postprocessingvariables.h
 
 
 CUDA_SOURCES += main.cu
+
+OTHER_FILES += \
+    doc/iterators.dox
 

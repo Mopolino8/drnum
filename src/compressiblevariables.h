@@ -2,11 +2,12 @@
 #define COMPRESSIBLEVARIABLES_H
 
 #include "blockcfd.h"
+#include "postprocessingvariables.h"
 
 #include <QString>
 
 template <typename TGas>
-class CompressibleVariables
+class CompressibleVariables : public PostProcessingVariables
 {
 
   TGas m_Gas;
@@ -17,16 +18,16 @@ public:
 
   CompressibleVariables();
 
-  int numScalars() const { return 5; }
-  int numVectors() const { return 1; }
+  virtual int numScalars() const { return 5; }
+  virtual int numVectors() const { return 1; }
 
   void setReferenceTemperature(real T) { m_RefTemperature = T; }
   void setReferencePressure(real p)    { m_RefPressure = p; }
 
-  QString getScalarName(int i) const;
-  QString getVectorName(int i) const;
-  real   getScalar(int i, real* var) const;
-  vec3_t getVector(int i, real* var) const;
+  virtual string getScalarName(int i) const;
+  virtual string getVectorName(int i) const;
+  virtual real   getScalar(int i, real* var) const;
+  virtual vec3_t getVector(int i, real* var) const;
 
 };
 
@@ -38,7 +39,7 @@ CompressibleVariables<TGas>::CompressibleVariables()
 }
 
 template <typename TGas>
-QString CompressibleVariables<TGas>::getScalarName(int i) const
+string CompressibleVariables<TGas>::getScalarName(int i) const
 {
   if (i == 0) return "Ma";
   if (i == 1) return "p";
@@ -49,7 +50,7 @@ QString CompressibleVariables<TGas>::getScalarName(int i) const
 }
 
 template <typename TGas>
-QString CompressibleVariables<TGas>::getVectorName(int i) const
+string CompressibleVariables<TGas>::getVectorName(int i) const
 {
   if (i == 0) return "U";
   BUG;
