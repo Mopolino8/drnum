@@ -15,6 +15,38 @@ namespace StringTools
 
 
 /**
+ * append a character to the left side of a string until a given length has been reached.
+ * @param s the source string
+ * @param c the character to append
+ * @param l the desired length
+ * @return the filled string
+ */
+inline string leftFill(string s, char c, size_t l)
+{
+  while (s.size() < l) {
+    s = c + s;
+  }
+  return s;
+}
+
+
+/**
+ * append a character to the right side of a string until a given length has been reached.
+ * @param s the source string
+ * @param c the character to append
+ * @param l the desired length
+ * @return the filled string
+ */
+inline string rightFill(string s, char c, size_t l)
+{
+  while (s.size() < l) {
+    s = s + c;
+  }
+  return s;
+}
+
+
+/**
  * convert a string into another type.
  * <b>Attention</b> this method only works for a type <i>T</i> for
  * which an input operator <i>operator>></i>exists.
@@ -61,8 +93,8 @@ string toString(T t, int fill = 0)
   ostringstream stream;
   stream << t;
   string s = stream.str();
-  if      (fill < 0) s = LeftFill(s,' ',-fill);
-  else if (fill > 0) s = RightFill(s,' ',fill);
+  if      (fill < 0) s = leftFill(s,' ',-fill);
+  else if (fill > 0) s = rightFill(s,' ',fill);
   return s;
 }
 
@@ -84,38 +116,6 @@ inline string replace(string s, char c_orig, char c_new)
     i++;
   }
   return s_new;
-}
-
-
-/**
- * append a character to the left side of a string until a given length has been reached.
- * @param s the source string
- * @param c the character to append
- * @param l the desired length
- * @return the filled string
- */
-inline string leftFill(string s, char c, size_t l)
-{
-  while (s.size() < l) {
-    s = c + s;
-  }
-  return s;
-}
-
-
-/**
- * append a character to the right side of a string until a given length has been reached.
- * @param s the source string
- * @param c the character to append
- * @param l the desired length
- * @return the filled string
- */
-inline string rightFill(string s, char c, size_t l)
-{
-  while (s.size() < l) {
-    s = s + c;
-  }
-  return s;
 }
 
 
@@ -149,7 +149,7 @@ inline string readLine(istream &s)
  * @param i2 index of the last character of the intended sub-string
  * @return the sub-string
  */
-inline string SubString(string s, size_t i1, size_t i2)
+inline string subString(string s, size_t i1, size_t i2)
 {
   string sub = "";
   size_t i = i1;
@@ -169,7 +169,7 @@ inline string SubString(string s, size_t i1, size_t i2)
  */
 inline string right(string s, size_t n)
 {
-  return SubString(s,s.size()-n-1,s.size()-1);
+  return subString(s,s.size()-n-1,s.size()-1);
 }
 
 
@@ -181,7 +181,7 @@ inline string right(string s, size_t n)
  */
 inline string left(string s, size_t n)
 {
-  return SubString(s,0,n-1);
+  return subString(s,0,n-1);
 }
 
 
@@ -225,10 +225,10 @@ inline int split(string s, list<string> &sub, char c = ' ')
  * @param c the dividing character
  * @return the number of sub strings
  */
-inline int Split(string s, vector<string> &sub, char c = ' ')
+inline int split(string s, vector<string> &sub, char c = ' ')
 {
   list<string> l;
-  int N = Split(s,l,c);
+  int N = split(s,l,c);
   sub.resize(N);
   copy(l.begin(),l.end(),sub.begin());
   return N;
