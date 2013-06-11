@@ -1,5 +1,10 @@
 #include <unistd.h>
+
+#include <vtkMultiBlockDataSet.h>
+#include <vtkXMLMultiBlockDataWriter.h>
+
 #include "patchgrid.h"
+#include "stringtools.h"
 
 PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
 {
@@ -425,3 +430,25 @@ real PatchGrid::computeMinChLength()
   return min_ch_len_all;
 }
 
+void PatchGrid::writeToVtk(size_t i_field, string file_name, const PostProcessingVariables &proc_vars, int count)
+{
+  using namespace StringTools;
+  vtkSmartPointer<vtkMultiBlockDataSet> multi_block = vtkMultiBlockDataSet::New();
+  multi_block->SetNumberOfBlocks(getNumPatches());
+  vector<vtkDataSet*> data_sets(getNumPatches());
+  for (size_t i_patch = 0; i_patch < getNumPatches(); ++i_patch) {
+    data_sets[i_patch] = getPatch(i_patch)->createVtkDataSet(i_field, proc_vars);
+    multi_block->SetBlock(i_patch, data_sets[i_patch]);
+  }
+  if (count >= 0) {
+    file_name += "_" + leftFill(toString(count), '0', 6);
+    file_name += ".vtm";
+  }
+  vtkSmartPointer<vtkXMLMultiBlockDataWriter> vmb = vtkXMLMultiBlockDataWriter::New();
+  vmb->SetInput(multi_block);
+  vmb->SetFileName(file_name.c_str());
+  vmb->Write();
+  for (size_t i_patch = 0; i_patch < getNumPatches(); ++i_patch) {
+    data_sets[i_patch]->Delete();
+  }
+}

@@ -198,7 +198,8 @@ HEADERS += \
     prismaticlayerpatch_common.h \
     iteratorfeeder.h \
     cudatools.h \
-    postprocessingvariables.h
+    postprocessingvariables.h \
+    stringtools.h
 
 
 CUDA_SOURCES += main.cu

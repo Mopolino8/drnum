@@ -14,6 +14,7 @@ class PatchGrid;
 #include "cartesianpatch.h"
 #include "vectorhashraster.h"
 #include "patchgroups.h"
+#include "postprocessingvariables.h"
 
 class PatchGrid
 {
@@ -142,6 +143,13 @@ public: // methods
    * @param discrete counter (usually time counter).
    */
   void writeData(QString base_data_filename, int count);
+
+  /**
+   * @brief Write all patches to a VTK multi-block file.
+   * @param file_name the file name ("*.vtm" will be added)
+   * @param proc_vars this defines which varaibles will be written for post-processing
+   */
+  void writeToVtk(size_t i_field, string file_name, const PostProcessingVariables &proc_vars, int count = -1);
 
   /**
     * Scale total patchgrid relative to origin of parental coordsyst.

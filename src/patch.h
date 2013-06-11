@@ -16,6 +16,8 @@
 
 #include <QString>
 
+#include <vtkDataSet.h>
+
 using namespace std;
 
 //#include "blockcfd.h"
@@ -28,6 +30,7 @@ class Patch;
 #include "intercoeffws.h"
 #include "math/coordtransformvv.h"
 #include "codestring.h"
+#include "postprocessingvariables.h"
 
 /** @todo
  *    proposed coord naming convention:
@@ -227,6 +230,14 @@ public: // methods
    */
   //virtual void writeData(QString base_data_filename, size_t count) {BUG;}
   virtual void writeData(QString, size_t) {BUG;}
+
+  /**
+   * @brief Create a vtkDataSet of this Patch.
+   * @return a pointer to the vtkDataSet which has been created
+   */
+#ifdef WITH_VTK
+  virtual vtkDataSet* createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars) = 0;
+#endif
 
   /**
     * Build up transformation matrix.

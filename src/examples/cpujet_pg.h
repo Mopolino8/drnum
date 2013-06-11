@@ -7,44 +7,6 @@
 #include "rungekuttapg1.h"
 
 
-/// @todo write functions should go to patch_grid and patch or derived classes
-void write(CartesianPatch &patch, QString file_name, int count)
-{
-  if (count >= 0) {
-    QString num;
-    num.setNum(count);
-    while (num.size() < 6) {
-      num = "0" + num;
-    }
-    file_name += "_" + num;
-  }
-  cout << "writing to file \"" << qPrintable(file_name) << ".vtr\"" << endl;
-  CompressibleVariables<PerfectGas> cvars;
-  patch.writeToVtk(0, file_name, cvars);
-}
-
-/// @todo write functions should go to patch_grid and patch or derived classes
-void writePG(PatchGrid &patch_grid, QString file_name, int count)
-{
-  QString str_patch_index;
-  QString str_patch_filename;
-  // loop for patches iof patch_grid
-  for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
-    str_patch_index.setNum(i_p);
-    while (str_patch_index.size() < 6) {
-      str_patch_index = "0" + str_patch_index;
-    }
-    str_patch_filename = file_name + "_ip" + str_patch_index;
-    CartesianPatch* patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_p));
-    if(patch != NULL) {
-      write(*patch, str_patch_filename, count);
-    } else {
-      cout << "Cant write data for other than CartesianPatch patches at present" << endl;
-    }
-  }
-}
-
-
 void run()
 {
   //string grid_file_name = "grid/jet_single.grid";
@@ -54,7 +16,7 @@ void run()
   //string grid_file_name = "grid/jet_dual_4.grid";
   //string grid_file_name = "grid/jet_dual_5.grid";
   //string grid_file_name = "grid/jet_dual_6.grid";
-  string grid_file_name = "grid/jet_wild_7.grid";
+  string grid_file_name = "jet_wild_7.grid";
 
 #include "jet_pg_common.h"
 
@@ -85,7 +47,7 @@ void run()
   real t = 0;
 
   //CartesianPatch& patch_0 = *(dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0)));
-  writePG(patch_grid, "testrun", count);
+  patch_grid.writeToVtk(0, "testrun", CompressibleVariables<PerfectGas>(), count);
 
   cout << "Press <ENTER> to start!";
   cin.get();
@@ -149,7 +111,7 @@ void run()
     if (t_write >= write_interval) {
       ++count;
       dt *= cfl_target/CFL_max;
-      writePG(patch_grid, "testrun", count);
+      patch_grid.writeToVtk(0, "testrun", CompressibleVariables<PerfectGas>(), count);
       t_write -= write_interval;
     }
 

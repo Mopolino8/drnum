@@ -1078,6 +1078,80 @@ real CartesianPatch::computeMinChLength()
   return min_ch_len;
 }
 
+#ifdef WITH_VTK
+vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessingVariables &proc_vars)
+{
+  /// @todo: must transform output for non o-aligned patches !!!
+  /// @todo: does vtk know something like a general transformation in space ???
+  // Transform: use only linear transformations at present
+  vec3_t v_zero(0., 0., 0.);
+  vec3_t xyzoref = m_transformInertial2This.transformReverse(v_zero);
+
+  vtkRectilinearGrid* grid = vtkRectilinearGrid::New();
+
+  vtkSmartPointer<vtkFloatArray> xc = vtkSmartPointer<vtkFloatArray>::New();
+  for (size_t i = 0; i < m_NumI + 1; ++i) {
+    xc->InsertNextValue(i*dx() + xyzoref[0]);
+  }
+
+  vtkSmartPointer<vtkFloatArray> yc = vtkSmartPointer<vtkFloatArray>::New();
+  for (size_t j = 0; j < m_NumJ + 1; ++j) {
+    yc->InsertNextValue(j*dy() + xyzoref[1]);
+  }
+
+  vtkSmartPointer<vtkFloatArray> zc = vtkSmartPointer<vtkFloatArray>::New();
+  for (size_t k = 0; k < m_NumK + 1; ++k) {
+    zc->InsertNextValue(k*dz() + xyzoref[2]);
+  }
+
+  grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
+  grid->SetXCoordinates(xc);
+  grid->SetYCoordinates(yc);
+  grid->SetZCoordinates(zc);
+
+  real* raw_var = new real [numVariables()];
+  for (int i_var = 0; i_var < proc_vars.numScalars(); ++i_var) {
+    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
+    var->SetName(proc_vars.getScalarName(i_var).c_str());
+    var->SetNumberOfValues(variableSize());
+    grid->GetCellData()->AddArray(var);
+    vtkIdType id = 0;
+    for (size_t k = 0; k < m_NumK; ++k) {
+      for (size_t j = 0; j < m_NumJ; ++j) {
+        for (size_t i = 0; i < m_NumI; ++i) {
+          getVar(i_field, i, j, k, raw_var);
+          var->SetValue(id, proc_vars.getScalar(i_var, raw_var));
+          ++id;
+        }
+      }
+    }
+  }
+  for (int i_var = 0; i_var < proc_vars.numVectors(); ++i_var) {
+    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
+    var->SetName(proc_vars.getVectorName(i_var).c_str());
+    var->SetNumberOfComponents(3);
+    var->SetNumberOfTuples(variableSize());
+    grid->GetCellData()->AddArray(var);
+    vtkIdType id = 0;
+    for (size_t k = 0; k < m_NumK; ++k) {
+      for (size_t j = 0; j < m_NumJ; ++j) {
+        for (size_t i = 0; i < m_NumI; ++i) {
+          getVar(i_field, i, j, k, raw_var);
+          vec3_t v = proc_vars.getVector(i_var, raw_var);
+          float vf[3];
+          vf[0] = v[0]; vf[1] = v[1]; vf[2] = v[2];
+          var->SetTuple(id, vf);
+          ++id;
+        }
+      }
+    }
+  }
+  delete [] raw_var;
+  return grid;
+}
+#endif
+
+
 
 void CartesianPatch::writeData(QString base_data_filename, int count)
 {
