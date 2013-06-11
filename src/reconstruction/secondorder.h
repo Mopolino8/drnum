@@ -5,7 +5,7 @@
 
 struct SecondOrder
 {
-  static CUDA_DH real lim(real delta1, real)
+  static CUDA_DH real lim(real, real)
   {
     return 1;
   }
