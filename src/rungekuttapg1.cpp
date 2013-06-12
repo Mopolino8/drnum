@@ -25,9 +25,11 @@ void RungeKuttaPG1::operator()(real dt)
   copyField(0, 1);
 
   // stage loop
+  bool first_step = true;
   for (list<real>::iterator i = m_Alpha.begin(); i != m_Alpha.end(); ++i) {
     /** @todo Test version only: hard coded patch interactions. */
-    if (m_PatchGrid) {
+    if (m_PatchGrid && !first_step) {
+      first_step = false;
       for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
         m_PatchGrid->accessAllDonorData_WS(*sf);
       }

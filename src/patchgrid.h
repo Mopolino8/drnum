@@ -16,6 +16,10 @@ class PatchGrid;
 #include "patchgroups.h"
 #include "postprocessingvariables.h"
 
+
+/// @todo uncommented Grad1N stuff. Clean up.
+
+
 class PatchGrid
 {
 
@@ -32,7 +36,7 @@ protected: // attributes
   size_t  m_NumFields;         ///< number of fields (e.g. old, new, ...)
   size_t  m_NumVariables;      ///< number of variables (e.g. rho, rhou, ...)
   bool    m_InterpolateData;   ///< Flag indicates wether to interpolate data on interpatch transfers
-  bool    m_InterpolateGrad1N; ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
+//  bool    m_InterpolateGrad1N; ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
   bool    m_TransferPadded;    ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
   size_t  m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
   size_t  m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
@@ -71,7 +75,7 @@ public: // methods
     * Set interaction with/without 1. gradient transfers
     * @param interpolate_data bool to cause gradient interpolation if true
     */
-  void setInterpolateGrad1N(bool interpolategrad1N = true);
+//  void setInterpolateGrad1N(bool interpolategrad1N = true);
 
   /**
     * Set all dependency transfers from any donors to be padded, employing data transfer

@@ -79,7 +79,7 @@ protected: // attributes
   real m_Zo;                  ///< Z-coord of reference position in parental coordinates
   // settings
   bool m_InterpolateData;     ///< Flag indicates wether to interpolate data on interpatch transfers
-  bool m_InterpolateGrad1N;   ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
+//  bool m_InterpolateGrad1N;   ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
   bool m_TransferPadded;      ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
   bool m_ProtectException ;   ///< Flag indicates a protection exception: the number of protection layers is not constant.
   size_t m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
@@ -100,14 +100,14 @@ protected: // attributes
   // lists related to receiving cells in overlap layers
   vector<size_t> m_receive_cells;           ///< cells of "this", expecting to get data (and/or grads) from any donor neighbour
   vector<size_t> m_receive_cell_data_hits;  ///< number of contributing patches for data, note indexing as receive_cells
-  vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for grad1N, note indexing as receive_cells
+//  vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for grad1N, note indexing as receive_cells
 
   // lists related to neighbouring donor patches
   vector<pair<Patch*, CoordTransformVV> > m_neighbours; ///< neighbouring donor patches and coord transformation. NOTE: receiving patches not stored.
   vector<InterCoeffPad> m_InterCoeffData;               ///< Interpolation coefficient lists for data
-  vector<InterCoeffPad> m_InterCoeffGrad1N;             ///< Interpolation coefficient lists for 1st directed gradients
+//  vector<InterCoeffPad> m_InterCoeffGrad1N;             ///< Interpolation coefficient lists for 1st directed gradients
   vector<InterCoeffWS> m_InterCoeffData_WS;             ///< same as m_InterCoeffData, but with WeightedSets (CPU only)
-  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;           ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
+//  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;           ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
   // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;    ///< Interpolation coefficient lists for 2nd directed gradients
 
 
@@ -185,10 +185,10 @@ public: // methods
     * Set interaction with/without 1. gradient transfers
     * @param interpolate_data bool to cause gradient interpolation if true
     */
-  void setInterpolateGrad1N(bool interpolategrad1N = true)
-  {
-    m_InterpolateGrad1N = interpolategrad1N;
-  }
+//  void setInterpolateGrad1N(bool interpolategrad1N = true)
+//  {
+//    m_InterpolateGrad1N = interpolategrad1N;
+//  }
 
   /**
     * Set all dependency transfers from any donors to be padded, employing data transfer

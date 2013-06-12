@@ -17,9 +17,9 @@ PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
   m_NumFields = 0;
   m_NumVariables = 0;
   m_InterpolateData = false;
-  m_InterpolateGrad1N = false;
+//  m_InterpolateGrad1N = false;
+  m_TransferPadded = false;
   m_BboxOk = false;
-  //  m_hashBox = NULL;
 }
 
 void  PatchGrid::setNumberOfFields(size_t num_fields)
@@ -38,10 +38,10 @@ void PatchGrid::setInterpolateData(bool interpolatedata)
 }
 
 
-void PatchGrid::setInterpolateGrad1N(bool interpolategrad1N)
-{
-  m_InterpolateGrad1N = interpolategrad1N;
-}
+//void PatchGrid::setInterpolateGrad1N(bool interpolategrad1N)
+//{
+//  m_InterpolateGrad1N = interpolategrad1N;
+//}
 
 
 void PatchGrid::setTransferPadded(bool trans_padded)
@@ -264,7 +264,7 @@ void PatchGrid::setGeneralAttributes(Patch* patch)
   patch->setNumOverlapLayers(m_NumOverlapLayers);
   patch->setNumProtectLayers(m_NumProtectLayers);
   patch->setInterpolateData(m_InterpolateData);
-  patch->setInterpolateGrad1N(m_InterpolateGrad1N);
+//  patch->setInterpolateGrad1N(m_InterpolateGrad1N);
   patch->setTransferPadded(m_TransferPadded);
 }
 

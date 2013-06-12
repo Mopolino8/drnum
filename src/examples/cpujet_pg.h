@@ -16,7 +16,7 @@ void run()
   //string grid_file_name = "grid/jet_dual_4.grid";
   //string grid_file_name = "grid/jet_dual_5.grid";
   //string grid_file_name = "grid/jet_dual_6.grid";
-  string grid_file_name = "jet_wild_7.grid";
+  string grid_file_name = "grid/jet_wild_7.grid";
 
 #include "jet_pg_common.h"
 

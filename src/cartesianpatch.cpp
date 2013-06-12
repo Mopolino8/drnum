@@ -359,17 +359,14 @@ bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
         m_receive_cell_data_hits[ll_rc]++;
         found_dependency = true;
       }
-      if(m_InterpolateGrad1N) {
-        int direction = boundingNVecDirection(l_rc); // note: trivial function, that ommits normal storage
-        //        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xx_rc, yy_rc, zz_rc,
-        //                                                          nxxyyzz_ijk[direction][0], nxxyyzz_ijk[direction][1], nxxyyzz_ijk[direction][2],
-        //                                                          w_set)) {
-        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xxyyzz_rc, nxxyyzz_ijk[direction],
-                                                          w_set)) {
-          m_InterCoeffGrad1N_WS[i_neighbour].push(ll_rc, l_rc, w_set);
-          m_receive_cell_grad1N_hits[ll_rc]++;
-        }
-      }
+//      if(m_InterpolateGrad1N) {
+//        int direction = boundingNVecDirection(l_rc); // note: trivial function, that ommits normal storage
+//        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xxyyzz_rc, nxxyyzz_ijk[direction],
+//                                                          w_set)) {
+//          m_InterCoeffGrad1N_WS[i_neighbour].push(ll_rc, l_rc, w_set);
+//          m_receive_cell_grad1N_hits[ll_rc]++;
+//        }
+//      }
     }
   }
   return found_dependency;

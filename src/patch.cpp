@@ -11,7 +11,7 @@ Patch::Patch(size_t num_protectlayers, size_t num_overlaplayers)
   m_NumProtectLayers = num_protectlayers;
   m_NumOverlapLayers = num_overlaplayers;
   m_InterpolateData = false;
-  m_InterpolateGrad1N = false;
+  //  m_InterpolateGrad1N = false;
   m_receiveCells_OK = false;
   m_bbox_OK = false;
 }
@@ -65,33 +65,7 @@ void Patch::setupTransformation(vec3_t xyzoref,
   t.setVector(xyzoref);
   setTransformation(t.inverse());
 }
-//void Patch::insertNeighbour(Patch* neighbour_patch) {
-//  // Check, if boundary cells are yet extracted. If not, do so.
-//  if(!m_receiveCells_OK) {
-//    m_receive_cells.clear();
-//    extractReceiveCells();
-//    compactReceiveCellLists();
-//    m_receiveCells_OK = true;
-//  }
-//  pair<Patch*, CoordTransformVV> dependency_h;
-//  dependency_h.first = neighbour_patch;
-//  dependency_h.second.setTransFromTo(m_transformInertial2This, neighbour_patch->m_transformInertial2This);
-//  m_neighbours.push_back(dependency_h);
-//  //  if(m_InterpolateData) {
-//  //    InterCoeffWS icws_h;
-//  //    m_InterCoeffData_WS.push_back(icws_h);   /// @todo would be nice to have a link_vector<T>
-//  //  }
-//  //  if(m_InterpolateGrad1N) {
-//  //    InterCoeffWS icws_h;
-//  //    m_InterCoeffGrad1N_WS.push_back(icws_h);
-//  //  }
-//  if(m_InterpolateData) {m_InterCoeffData_WS.resize(m_neighbours.size());}   /// @todo would be nice to have a link_vector<T>
-//  if(m_InterpolateGrad1N) {m_InterCoeffGrad1N_WS.resize(m_neighbours.size());}
-//  size_t i_neighbour = m_neighbours.size() - 1;  /// @todo any better idea to get direct pos index?
-//  computeDependencies(i_neighbour);
-//}
 
-// changed 2012_08_10: ommit m_neighbours and store in
 void Patch::insertNeighbour(Patch* neighbour_patch) {
   // Check, if boundary cells are yet extracted. If not, do so.
   if(!m_receiveCells_OK) {
@@ -116,20 +90,20 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
     m_InterCoeffData_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
   }   /// @todo would be nice to have a link_vector<T>
 
-  if (m_InterpolateGrad1N) {
-    m_InterCoeffGrad1N_WS.resize(i_neighbour + 1);
-    //CHANGE_DONOR! m_InterCoeffGrad1N_WS[i_neighbour].setDonorPatch(neighbour_patch);
-    m_InterCoeffGrad1N_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
-  }
+  //  if (m_InterpolateGrad1N) {
+  //    m_InterCoeffGrad1N_WS.resize(i_neighbour + 1);
+  //    //CHANGE_DONOR! m_InterCoeffGrad1N_WS[i_neighbour].setDonorPatch(neighbour_patch);
+  //    m_InterCoeffGrad1N_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
+  //  }
 
   bool found_dependency = computeDependencies(i_neighbour);
 
   // discard donor neighbourship relation, if not any was found
   if (!found_dependency) {
     m_neighbours.pop_back();
-    if (m_InterpolateGrad1N) {
-      m_InterCoeffGrad1N_WS.pop_back();
-    }
+    //    if (m_InterpolateGrad1N) {
+    //      m_InterCoeffGrad1N_WS.pop_back();
+    //    }
     if (m_InterpolateData) {
       m_InterCoeffData_WS.pop_back();
     }
@@ -141,8 +115,11 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
 
 void Patch::finalizeDependencies()
 {
+  // NOTE: All grad1N stuff ommited 2013_06_12
+  //
   // Eliminate pretended receiving cells, if these received no hits at all,
   // m_receive_cell_data_hits[i] == 0 && m_receive_cell_grad1N_hits[i] == 0
+  //
   // Do the following:
   //  0) Nothing to do, if no receive cells were found
   //  1) Build a scratch list v_shift with index shifts
@@ -150,7 +127,9 @@ void Patch::finalizeDependencies()
   //     m_receive_cells..new[ll] = m_receive_cells..old[index_new_from_old[ll]]
   //     eliminates all zeros
   //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
-  //  4) Apply on indirect receive indicees stored in InterCoeffWS
+  //  4) Eliminate non-hit cells by re-indexing in InterCoeffWS and reduce donor weights for
+  //     receiving cells, being influenced by more than one donor patch. (More than one hit for
+  //     same cell).
 
   //    ATTENTION: Actually indirect_receiveindex is needed only until InterCoeffWS::adjust2Average is done
 
@@ -160,24 +139,24 @@ void Patch::finalizeDependencies()
   }
 
   //  1) Build a scratch list v_shift with index shifts
-  size_t shift = 0;
+  size_t cumulated_shift = 0;
   vector<size_t> v_shift;
   v_shift.resize(m_receive_cells.size(), 0);
   for(size_t i_rec = 0; i_rec < m_receive_cells.size(); i_rec++) {
-    v_shift[i_rec] = shift;
+    v_shift[i_rec] = cumulated_shift;
     bool any_hit = false;
     if(m_InterpolateData) {
       if(m_receive_cell_data_hits[i_rec] > 0) {
         any_hit = true;
       }
     }
-    if(m_InterpolateGrad1N) {
-      if(m_receive_cell_grad1N_hits[i_rec] > 0) {
-        any_hit = true;
-      }
-    }
+    //    if(m_InterpolateGrad1N) {
+    //      if(m_receive_cell_grad1N_hits[i_rec] > 0) {
+    //        any_hit = true;
+    //      }
+    //    }
     if(!any_hit) { // not any donor contribution found
-      shift++;
+      cumulated_shift++;
     }
   }
   //  2) Build a scratch list index_new_from_old, so that an operation of type
@@ -189,7 +168,7 @@ void Patch::finalizeDependencies()
     index_new_from_old[i_rec] = i_rec - v_shift[i_rec];
   }
   //.. Total number of cells with neighbour contribs
-  size_t num_cells_w_contrib = m_receive_cells.size() - v_shift[m_receive_cells.size() - 1];
+  size_t num_cells_w_contrib = m_receive_cells.size() - cumulated_shift;
 
   //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
   for(size_t i_rec = 0; i_rec < m_receive_cells.size(); i_rec++) {
@@ -197,30 +176,31 @@ void Patch::finalizeDependencies()
     if(m_InterpolateData) {
       m_receive_cell_data_hits[index_new_from_old[i_rec]] = m_receive_cell_data_hits[i_rec];
     }
-    if(m_InterpolateGrad1N) {
-      m_receive_cell_grad1N_hits[index_new_from_old[i_rec]] = m_receive_cell_grad1N_hits[i_rec];
-    }
+    //    if(m_InterpolateGrad1N) {
+    //      m_receive_cell_grad1N_hits[index_new_from_old[i_rec]] = m_receive_cell_grad1N_hits[i_rec];
+    //    }
   }
   //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
   m_receive_cells.resize(num_cells_w_contrib);
   if(m_InterpolateData) {
     m_receive_cell_data_hits.resize(num_cells_w_contrib);
   }
-  if(m_InterpolateGrad1N) {
-    m_receive_cell_grad1N_hits.resize(num_cells_w_contrib);
-  }
+  //  if(m_InterpolateGrad1N) {
+  //    m_receive_cell_grad1N_hits.resize(num_cells_w_contrib);
+  //  }
 
-
-  // Reduce contribution weights for receiving cells, being influenced by more than one donor patch.
+  //  4) Eliminate non-hit cells by re-indexing in InterCoeffWS and reduce donor weights for
+  //     receiving cells, being influenced by more than one donor patch. (More than one hit for
+  //     same cell).
   for (size_t i_donor = 0; i_donor < m_neighbours.size(); i_donor++) {
     if(m_InterpolateData) {
       m_InterCoeffData_WS[i_donor].reindexIndReceive(index_new_from_old);
       m_InterCoeffData_WS[i_donor].adjust2Average(m_receive_cell_data_hits);
     }
-    if(m_InterpolateGrad1N) {
-      m_InterCoeffGrad1N_WS[i_donor].reindexIndReceive(index_new_from_old);
-      m_InterCoeffGrad1N_WS[i_donor].adjust2Average(m_receive_cell_grad1N_hits);
-    }
+    //    if(m_InterpolateGrad1N) {
+    //      m_InterCoeffGrad1N_WS[i_donor].reindexIndReceive(index_new_from_old);
+    //      m_InterCoeffGrad1N_WS[i_donor].adjust2Average(m_receive_cell_grad1N_hits);
+    //    }
   }
   // Transfer data to padded data sets, if required.
   if(m_TransferPadded) {    /// @todo I dislike the if-trees. Too many options. Get experience and discard options.
@@ -231,13 +211,13 @@ void Patch::finalizeDependencies()
         // postponed delete m_InterCoeffData_WS[i_donor];  // erase previous WS-version to save some memory on CPU.
       }
     }
-    if(m_InterpolateGrad1N) {
-      m_InterCoeffGrad1N.resize(m_InterCoeffGrad1N_WS.size());
-      for (size_t i_donor = 0; i_donor < m_neighbours.size(); i_donor++) {
-        m_InterCoeffGrad1N[i_donor].build(m_InterCoeffGrad1N_WS[i_donor]);
-        // postponed delete m_InterCoeffGrad1N_WS[i_donor];  // erase previous WS-version to save some memory on CPU.
-      }
-    }
+    //    if(m_InterpolateGrad1N) {
+    //      m_InterCoeffGrad1N.resize(m_InterCoeffGrad1N_WS.size());
+    //      for (size_t i_donor = 0; i_donor < m_neighbours.size(); i_donor++) {
+    //        m_InterCoeffGrad1N[i_donor].build(m_InterCoeffGrad1N_WS[i_donor]);
+    //        // postponed delete m_InterCoeffGrad1N_WS[i_donor];  // erase previous WS-version to save some memory on CPU.
+    //      }
+    //    }
   }
 }
 
@@ -256,9 +236,9 @@ void Patch::compactReceiveCellLists()
   if(m_InterpolateData) {
     m_receive_cell_data_hits.resize(m_receive_cells.size(), 0);
   }
-  if(m_InterpolateGrad1N) {
-    m_receive_cell_grad1N_hits.resize(m_receive_cells.size(), 0);
-  }
+  //  if(m_InterpolateGrad1N) {
+  //    m_receive_cell_grad1N_hits.resize(m_receive_cells.size(), 0);
+  //  }
 }
 
 /// @todo new mem-structure: must change access to borrowed pointers
@@ -274,12 +254,26 @@ void Patch::accessDonorData_WS(const size_t& field)
 
   // set all receiving data variables to 0, as donors will add their contributions onto
   for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
-    /// @todo Eliminate cells from m_receive_cells that did not find any donor neighbour. Eliminates next line.
-    if(m_receive_cell_data_hits[ll_rc] != 0) { // only if at least one donor was found. Else do not alter variables.
-      size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
-      for(size_t i_v=0; i_v<numVariables(); i_v++) {
-        this_vars[i_v][l_rc] = 0.;
-      }
+    //
+    // NOTE: Following if-cond. is no longer needed to set variables to zero.
+    // Reason: ommitting grad1n stuff ensures that m_receive_cells is a list of
+    //         receiving nodes that refers only to data (not grad1n!!!) transfers.
+    //
+    //    if(m_receive_cell_data_hits[ll_rc] != 0) {
+    //      size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
+    //      for(size_t i_v=0; i_v<numVariables(); i_v++) {
+    //        this_vars[i_v][l_rc] = 0.;
+    //      }
+    //    }
+    // REPLACED BY BLOCK BELOW
+    #ifdef DEBUG
+    if(m_receive_cell_data_hits[ll_rc] == 0) {
+      BUG; // since 2013_06_12 (ommitting grad1n stuff) zero hits are no longer possible.
+    }
+    #endif
+    size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
+    for(size_t i_v=0; i_v<numVariables(); i_v++) {
+      this_vars[i_v][l_rc] = 0.;
     }
   }
 
