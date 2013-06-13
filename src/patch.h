@@ -404,6 +404,16 @@ public: // methods
     */
   void accessDonorData_WS(const size_t& field);
 
+  /// @todo replace accessDonorData... and write to commoon transfer method in PatchGrid
+
+  /**
+    * Data access from all donor patches via m_InterCoeffData_WS
+    * NOTE: Non padded version employing WeightedSet pattern.
+    * ATTENTION: DOES NOT TURN ANY VECTORIAL VARIABLES !!
+    * @param field the field, for which all variables are transfered
+    */
+  void accessDonorDataPadded(const size_t& field);
+
   /**
     * Data access from all donor patches via m_InterCoeffData_WS
     * Includes turning of one vectorial variable (example: speed vector) given by indicees (i_vx, i_vy, i_vz) in var type sequence

@@ -17,7 +17,8 @@ void RungeKuttaPG1::operator()(real dt)
   // Prime transfer before copying new->old
   if (m_PatchGrid) {
     for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
-      m_PatchGrid->accessAllDonorData_WS(*sf);
+      // m_PatchGrid->accessAllDonorData_WS(*sf);
+      m_PatchGrid->accessAllDonorDataPadded(*sf);
     }
   }
 
@@ -31,7 +32,8 @@ void RungeKuttaPG1::operator()(real dt)
     if (m_PatchGrid && !first_step) {
       first_step = false;
       for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
-        m_PatchGrid->accessAllDonorData_WS(*sf);
+        //m_PatchGrid->accessAllDonorData_WS(*sf);
+        m_PatchGrid->accessAllDonorDataPadded(*sf);
       }
     }
     computeIterators((*i)*dt);

@@ -221,6 +221,13 @@ void PatchGrid::accessAllDonorData_WS(const size_t& field)
 }
 
 
+void PatchGrid::accessAllDonorDataPadded(const size_t& field)
+{
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    m_Patches[i_p]->accessDonorDataPadded(field);
+  }
+}
+
 void PatchGrid::buildHashRaster(size_t resolution, bool force,
                                 VectorHashRaster<size_t>& m_HashRaster)
 {
