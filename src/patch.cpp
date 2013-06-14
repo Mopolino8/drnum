@@ -14,6 +14,12 @@ Patch::Patch(size_t num_protectlayers, size_t num_overlaplayers)
   //  m_InterpolateGrad1N = false;
   m_receiveCells_OK = false;
   m_bbox_OK = false;
+
+  m_NumDonorPatches = 0;
+  m_NumReceivingCellsConcat = 0;
+  m_NumReceivingCellsUnique = 0;
+  m_NumDonorWIConcat = 0;
+
 }
 
 Patch::~Patch()
@@ -55,12 +61,12 @@ void Patch::buildDonorTransferData()
   }
 
   // Build m_ReceivingCellIndiceesConcat
-  m_ReceivingCellIndiceesConcat = new size_t[m_NumReceivingCellsConcat];
+  m_ReceivingCellIndicesConcat = new size_t[m_NumReceivingCellsConcat];
   size_t count = 0;
   for (size_t i_donor = 0; i_donor < m_NumDonorPatches; i_donor++) {
     InterCoeffPad* icd = &(m_InterCoeffData[i_donor]);
     for (size_t i_rec=0; i_rec < icd->m_NumRecCells; i_rec++) {
-      m_ReceivingCellIndiceesConcat[count] = icd->m_RecCells[i_rec];
+      m_ReceivingCellIndicesConcat[count] = icd->m_RecCells[i_rec];
       count++;
     }
   }
@@ -73,9 +79,10 @@ void Patch::buildDonorTransferData()
   // Build unique index field m_ReceivingCellIndexUnique
   // Note: use data array stored in m_receive_cells at present.
   //       May also unify m_ReceivingCellIndexConcat .
-  m_ReceivingCellIndiceesUnique = new size_t[m_receive_cells.size()];
+  m_NumReceivingCellsUnique = m_receive_cells.size();
+  m_ReceivingCellIndicesUnique = new size_t[m_NumReceivingCellsUnique];
   for (size_t i_rec_all = 0; i_rec_all < m_receive_cells.size(); i_rec_all++) {
-    m_ReceivingCellIndiceesUnique[i_rec_all] = m_receive_cells[i_rec_all];
+    m_ReceivingCellIndicesUnique[i_rec_all] = m_receive_cells[i_rec_all];
   }
 
   // Build m_Donors
@@ -83,9 +90,10 @@ void Patch::buildDonorTransferData()
   size_t count_rec_concat = 0;
   size_t count_donor_concat = 0;
   for (size_t i_donor = 0; i_donor < m_NumDonorPatches; i_donor++) {
+    Patch* donor_patch = m_neighbours[i_donor].first;
     InterCoeffPad* icd = &(m_InterCoeffData[i_donor]);
-    m_Donors[i_donor].variable_size = icd->m_DonorPatch->m_VariableSize;
-    m_Donors[i_donor].data = icd->m_DonorPatch->m_Data;
+    m_Donors[i_donor].variable_size = donor_patch->m_VariableSize;
+    m_Donors[i_donor].data = donor_patch->m_Data;
     m_Donors[i_donor].num_receiver_cells = icd->m_NumRecCells;
     m_Donors[i_donor].stride = icd->m_StrideGivePerRec;
     m_Donors[i_donor].receiver_index_field_start = count_rec_concat;
@@ -293,6 +301,14 @@ void Patch::finalizeDependencies()
         m_InterCoeffData[i_donor].build(m_InterCoeffData_WS[i_donor]);
         // postponed delete m_InterCoeffData_WS[i_donor];  // erase previous WS-version to save some memory on CPU.
       }
+
+      // Transfer to direct lists
+      /** @todo test for direct lists. Improve list build up and delete obsolete instances.
+        *  Currently build up in sequence:
+        *  m_InterCoeffData_WS -> m_InterCoeffData -> direct lists
+        */
+      buildDonorTransferData();
+
     }
     //    if(m_InterpolateGrad1N) {
     //      m_InterCoeffGrad1N.resize(m_InterCoeffGrad1N_WS.size());
@@ -408,6 +424,57 @@ void Patch::accessDonorDataPadded(const size_t& field)
     icp.transFromTo(donor_vars, this_vars);    // NOTE: NO turning of vectorial variables
   }
 }
+
+void Patch::accessDonorDataDirect(const size_t &field) {
+
+  // assign variable pointers to work on
+  /// @todo no need to set this_data all times, if fields are allways the same. Do at start up.
+  vector<real*> this_vars;
+  vector<real*> donor_vars;
+  //.. assign this_vars
+  for(size_t i_v=0; i_v<numVariables(); i_v++) {
+    this_vars.push_back(getVariable(field, i_v));
+  }
+  //.. set size of donor_vars
+  donor_vars.resize(this_vars.size());
+
+  // Set all receiving data variables to 0, as donors will add their contributions onto
+  for(size_t ll_rc=0; ll_rc < m_NumReceivingCellsUnique; ll_rc++) {
+    size_t l_rc = m_ReceivingCellIndicesUnique[ll_rc];
+    for (size_t i_v=0; i_v<numVariables(); i_v++) {
+      this_vars[i_v][l_rc] = 0.;
+    }
+  }
+
+  // Get all donor contributions
+  // Loop through neighbouring donor patches
+  for (size_t i_pd=0; i_pd<m_NumDonorPatches; i_pd++) {
+    donor_t& donor = m_Donors[i_pd];
+    //.. assign foreign variable pointers (same sequence as in "this_vars")
+    for(size_t i_v=0; i_v<numVariables(); i_v++) {
+      donor_vars[i_v] = donor.data + i_v * donor.variable_size;
+    }
+    //.. loop for indirect receiving cells
+    for (size_t ll_rec = 0; ll_rec < donor.num_receiver_cells; ll_rec++) {
+      //.... receiving cells index
+      size_t i_rec = m_ReceivingCellIndicesConcat[donor.receiver_index_field_start + ll_rec];
+      //.... start address in m_DonorCells/m_DonorWeights pattern
+      size_t l_doner_cells_start = donor.donor_wi_field_start + ll_rec * donor.stride;
+      //.... loop for contributing cells
+      for(size_t i_contrib = 0; i_contrib < donor.stride; i_contrib++) {
+        size_t l_wi = l_doner_cells_start + i_contrib;      // index of donor cell in concatenated lists
+        size_t donor_cell_index = m_DonorIndexConcat[l_wi];
+        real donor_cell_weight = m_DonorWeightConcat[l_wi];
+        //...... loop for variables
+        for(size_t i_v = 0; i_v < m_NumVariables; i_v++) {
+          *(this_vars[i_v]+i_rec) += donor_vars[i_v][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
+        }
+      }
+    }
+  }
+
+}
+
 
 void Patch::accessTurnDonorData_WS(const size_t& field,
                                    const size_t& i_vx, const size_t& i_vy, const size_t& i_vz)

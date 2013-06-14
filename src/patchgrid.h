@@ -192,8 +192,9 @@ public: // methods
     * NOTE: Non padded version employing WeightedSet pattern.
     * ATTENTION: DOES NOT TURN ANY VECTORIAL VARIABLES !!
     * @param field the field, for which all variables are transfered
+    * @param direct bool, indicating wether to use direct transfer lists
     */
-  void accessAllDonorDataPadded(const size_t& field);
+  void accessAllDonorDataPadded(const size_t& field, const bool& direct);
 
 
   /** @todo Let patch grid know, if any vectorial variables must be turned (default:yes) and which variables are affected

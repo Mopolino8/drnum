@@ -17,7 +17,7 @@ PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
   m_NumFields = 0;
   m_NumVariables = 0;
   m_InterpolateData = false;
-//  m_InterpolateGrad1N = false;
+  //  m_InterpolateGrad1N = false;
   m_TransferPadded = false;
   m_BboxOk = false;
 }
@@ -221,10 +221,17 @@ void PatchGrid::accessAllDonorData_WS(const size_t& field)
 }
 
 
-void PatchGrid::accessAllDonorDataPadded(const size_t& field)
+void PatchGrid::accessAllDonorDataPadded(const size_t& field, const bool& direct)
 {
-  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
-    m_Patches[i_p]->accessDonorDataPadded(field);
+  if (direct) { // use direct lists
+    for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+      m_Patches[i_p]->accessDonorDataDirect(field);
+    }
+  }
+  else { // use m_InterCoeffData
+    for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+      m_Patches[i_p]->accessDonorDataPadded(field);
+    }
   }
 }
 
@@ -271,7 +278,7 @@ void PatchGrid::setGeneralAttributes(Patch* patch)
   patch->setNumOverlapLayers(m_NumOverlapLayers);
   patch->setNumProtectLayers(m_NumProtectLayers);
   patch->setInterpolateData(m_InterpolateData);
-//  patch->setInterpolateGrad1N(m_InterpolateGrad1N);
+  //  patch->setInterpolateGrad1N(m_InterpolateGrad1N);
   patch->setTransferPadded(m_TransferPadded);
 }
 

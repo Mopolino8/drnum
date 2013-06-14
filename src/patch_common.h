@@ -34,15 +34,15 @@ size_t m_NumReceivingCellsConcat; ///< Number of concatenated cells receiving da
 size_t m_NumReceivingCellsUnique; ///< Number of cells receiving data from any of all donors (unique indexing)
 size_t m_NumDonorWIConcat;        ///< Number of concatenated donor cell contributions (all donor patches, all receiving cells times stride)
 
-size_t* m_ReceivingCellIndiceesConcat; ///< Concatenated index field of receiving cells in sequence for all donor patches [m_NumReceivingCellsFull]
-size_t* m_ReceivingCellIndiceesUnique; ///< Index field of receiving cells in unique sequence [m_NumReceivingCellsUnique]
+size_t* m_ReceivingCellIndicesConcat; ///< Concatenated index field of receiving cells in sequence for all donor patches [m_NumReceivingCellsFull]
+size_t* m_ReceivingCellIndicesUnique; ///< Index field of receiving cells in unique sequence [m_NumReceivingCellsUnique]
 /// @todo m_ReceivingCellIndexUnique equivalent to m_receive_cells. Clean up!!!
 
 donor_t* m_Donors;         ///< All donor data structs for this (receiver) patch
 
-size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_DonorFieldLength_XX]
-real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_DonorFieldLength_XX]
-// that would be nicer: pair<size_t, real>*  m_DonorWS;
+size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_NumDonorWIConcat]
+real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_NumDonorWIConcat]
+// that would be nicer: pair<size_t, real>*  m_DonorWI;
 
 
 public:
