@@ -17,9 +17,9 @@ void RungeKuttaPG1::operator()(real dt)
   // Prime transfer before copying new->old
   if (m_PatchGrid) {
     for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
-      m_PatchGrid->accessAllDonorData_WS(*sf);
+      //m_PatchGrid->accessAllDonorData_WS(*sf);
       //m_PatchGrid->accessAllDonorDataPadded(*sf, false);
-      //m_PatchGrid->accessAllDonorDataPadded(*sf, true);
+      m_PatchGrid->accessAllDonorDataPadded(*sf, true);
     }
   }
 
@@ -34,9 +34,9 @@ void RungeKuttaPG1::operator()(real dt)
     //if (m_PatchGrid && !first_step) {
       first_step = false;
       for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
-        m_PatchGrid->accessAllDonorData_WS(*sf);
+        //m_PatchGrid->accessAllDonorData_WS(*sf);
         //m_PatchGrid->accessAllDonorDataPadded(*sf, false);
-        //m_PatchGrid->accessAllDonorDataPadded(*sf, true);
+        m_PatchGrid->accessAllDonorDataPadded(*sf, true);
       }
     }
     computeIterators((*i)*dt);
@@ -47,9 +47,9 @@ void RungeKuttaPG1::operator()(real dt)
   // debug only !!!
   if (m_PatchGrid) {
     for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
-      m_PatchGrid->accessAllDonorData_WS(*sf);
+      //m_PatchGrid->accessAllDonorData_WS(*sf);
       //m_PatchGrid->accessAllDonorDataPadded(*sf, false);
-      //m_PatchGrid->accessAllDonorDataPadded(*sf, true);
+      m_PatchGrid->accessAllDonorDataPadded(*sf, true);
     }
   }
 
