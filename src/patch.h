@@ -24,6 +24,7 @@ using namespace std;
 
 #include "utility/weightedset.h"
 
+struct donor_t;
 class Patch;
 
 #include "intercoeffpad.h"
@@ -58,6 +59,26 @@ class Patch;
 #include "transformation.h"    /// @todo merge: kept for compatibility
 //>>>>>>> master
 
+/**
+  * Struct holding data for one donor->receiver relation.
+  * To be owned by receiving patch.
+*/
+struct donor_t
+{
+  size_t variable_size;              ///< number of reals per variable in donor patch
+
+  real* data;                        ///< pointer to m_Data of donor patch (on device being!)
+
+  size_t num_receiver_cells;         ///< Number of cells, receiving data from donor patch
+
+  size_t stride;                     ///< Fixed number of donor cells for each receiving cell
+
+  size_t receiver_index_field_start; ///< Starting index in concatenated receiving cell indicees field of receiving patch
+
+  size_t donor_wi_field_start;       ///< Starting index in concatenated index and weight field for all donor patches
+};
+
+
 class Patch
 {
 
@@ -79,7 +100,7 @@ protected: // attributes
   real m_Zo;                  ///< Z-coord of reference position in parental coordinates
   // settings
   bool m_InterpolateData;     ///< Flag indicates wether to interpolate data on interpatch transfers
-//  bool m_InterpolateGrad1N;   ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
+  //  bool m_InterpolateGrad1N;   ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
   bool m_TransferPadded;      ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
   bool m_ProtectException ;   ///< Flag indicates a protection exception: the number of protection layers is not constant.
   size_t m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
@@ -98,18 +119,37 @@ protected: // attributes
   bool m_receiveCells_OK; ///< Flag indicating that receive_cells have been extracted yet. Might be set false on mesh changes.
 
   // lists related to receiving cells in overlap layers
-  vector<size_t> m_receive_cells;           ///< cells of "this", expecting to get data (and/or grads) from any donor neighbour
+  vector<size_t> m_receive_cells;           ///< cells of "this", expecting to get data from any donor neighbour
   vector<size_t> m_receive_cell_data_hits;  ///< number of contributing patches for data, note indexing as receive_cells
-//  vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for grad1N, note indexing as receive_cells
+  //  vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for grad1N, note indexing as receive_cells
 
   // lists related to neighbouring donor patches
   vector<pair<Patch*, CoordTransformVV> > m_neighbours; ///< neighbouring donor patches and coord transformation. NOTE: receiving patches not stored.
   vector<InterCoeffPad> m_InterCoeffData;               ///< Interpolation coefficient lists for data
-//  vector<InterCoeffPad> m_InterCoeffGrad1N;             ///< Interpolation coefficient lists for 1st directed gradients
+  //  vector<InterCoeffPad> m_InterCoeffGrad1N;             ///< Interpolation coefficient lists for 1st directed gradients
   vector<InterCoeffWS> m_InterCoeffData_WS;             ///< same as m_InterCoeffData, but with WeightedSets (CPU only)
-//  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;           ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
+  //  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;           ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
   // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;    ///< Interpolation coefficient lists for 2nd directed gradients
 
+  //=========================================================================================
+  // Direct transfer lists, omitting InterCoeff classes
+
+  size_t m_NumDonorPatches;         ///< Number of donor patches influencing this (receiver) patch
+  size_t m_NumReceivingCellsConcat; ///< Number of concatenated cells receiving data from any of all donors (multiple indexing)
+  size_t m_NumReceivingCellsUnique; ///< Number of cells receiving data from any of all donors (unique indexing)
+  size_t m_NumDonorWIConcat;        ///< Number of concatenated donor cell contributions (all donor patches, all receiving cells times stride)
+
+  size_t* m_ReceivingCellIndiceesConcat; ///< Concatenated index field of receiving cells in sequence for all donor patches [m_NumReceivingCellsFull]
+  size_t* m_ReceivingCellIndiceesUnique; ///< Index field of receiving cells in unique sequence [m_NumReceivingCellsUnique]
+  /// @todo m_ReceivingCellIndexUnique equivalent to m_receive_cells. Clean up!!!
+
+  donor_t* m_Donors;         ///< All donor data structs for this (receiver) patch
+
+  size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_DonorFieldLength_XX]
+  real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_DonorFieldLength_XX]
+  // that would be nicer: pair<size_t, real>*  m_DonorWS;
+
+  //=========================================================================================
 
 protected: // methods
 
@@ -136,6 +176,22 @@ public: // methods
    * @param num_overlaplayers number of overlap layers, for which to get data from donor neighbour patches
    */
   Patch(size_t num_protectlayers=1, size_t num_overlaplayers=1);
+
+
+  /**
+    * Build direct transfer lists for donor->this relation upon previously build
+    * vector<InterCoeffPad> m_InterCoeffData
+    */
+  void buildDonorTransferData();
+
+
+  /**
+    * Data access from all donor patches from direct data lists
+    * ATTENTION: DOES NOT TURN ANY VECTORIAL VARIABLES !!
+    * @param field the field, for which all variables are transfered
+    */
+  void accessDonorDataDirect(const size_t &field);
+
 
   virtual ~Patch();
 
@@ -185,10 +241,10 @@ public: // methods
     * Set interaction with/without 1. gradient transfers
     * @param interpolate_data bool to cause gradient interpolation if true
     */
-//  void setInterpolateGrad1N(bool interpolategrad1N = true)
-//  {
-//    m_InterpolateGrad1N = interpolategrad1N;
-//  }
+  //  void setInterpolateGrad1N(bool interpolategrad1N = true)
+  //  {
+  //    m_InterpolateGrad1N = interpolategrad1N;
+  //  }
 
   /**
     * Set all dependency transfers from any donors to be padded, employing data transfer
@@ -473,12 +529,12 @@ inline void Patch::setFieldToConst(real *field, real* var)
       start_p[i] = var[i_var];
     }
   }
-// data alignment error!!!
-// for (size_t i = 0; i < m_FieldSize; i=i+m_NumVariables) {
-//    for(size_t i_var = 0; i_var < m_NumVariables; ++i_var) {
-//      field[i+i_var] = var[i_var];
-//    }
-//  }
+  // data alignment error!!!
+  // for (size_t i = 0; i < m_FieldSize; i=i+m_NumVariables) {
+  //    for(size_t i_var = 0; i_var < m_NumVariables; ++i_var) {
+  //      field[i+i_var] = var[i_var];
+  //    }
+  //  }
 }
 
 

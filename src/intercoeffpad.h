@@ -27,6 +27,8 @@ class InterCoeffPad;
 class InterCoeffPad
 {
 
+friend class Patch;
+
 protected: // attributes
 
   /// @todo new mem-structure: m_DonorPatch probably obsolete due to borrowed pointers anyway

@@ -41,6 +41,89 @@ bool Patch::readFromFile(istringstream& iss_input)
   return true;
 }
 
+
+void Patch::buildDonorTransferData()
+{
+  // Number of donor patches influencing this (receiver) patch
+  m_NumDonorPatches = m_InterCoeffData.size();
+
+  // Number of concatenated cells receiving data from any of all donors (multiple indexing)
+  m_NumReceivingCellsConcat = 0;
+  for (size_t i_donor = 0; i_donor < m_NumDonorPatches; i_donor++) {
+    InterCoeffPad* icd = &(m_InterCoeffData[i_donor]);
+    m_NumReceivingCellsConcat += icd->m_NumRecCells;
+  }
+
+  // Build m_ReceivingCellIndiceesConcat
+  m_ReceivingCellIndiceesConcat = new size_t[m_NumReceivingCellsConcat];
+  size_t count = 0;
+  for (size_t i_donor = 0; i_donor < m_NumDonorPatches; i_donor++) {
+    InterCoeffPad* icd = &(m_InterCoeffData[i_donor]);
+    for (size_t i_rec=0; i_rec < icd->m_NumRecCells; i_rec++) {
+      m_ReceivingCellIndiceesConcat[count] = icd->m_RecCells[i_rec];
+      count++;
+    }
+  }
+#ifdef DEBUG
+  if (count != m_NumReceivingCellsConcat) {
+    BUG;
+  }
+#endif
+
+  // Build unique index field m_ReceivingCellIndexUnique
+  // Note: use data array stored in m_receive_cells at present.
+  //       May also unify m_ReceivingCellIndexConcat .
+  m_ReceivingCellIndiceesUnique = new size_t[m_receive_cells.size()];
+  for (size_t i_rec_all = 0; i_rec_all < m_receive_cells.size(); i_rec_all++) {
+    m_ReceivingCellIndiceesUnique[i_rec_all] = m_receive_cells[i_rec_all];
+  }
+
+  // Build m_Donors
+  m_Donors = new donor_t[m_NumDonorPatches];
+  size_t count_rec_concat = 0;
+  size_t count_donor_concat = 0;
+  for (size_t i_donor = 0; i_donor < m_NumDonorPatches; i_donor++) {
+    InterCoeffPad* icd = &(m_InterCoeffData[i_donor]);
+    m_Donors[i_donor].variable_size = icd->m_DonorPatch->m_VariableSize;
+    m_Donors[i_donor].data = icd->m_DonorPatch->m_Data;
+    m_Donors[i_donor].num_receiver_cells = icd->m_NumRecCells;
+    m_Donors[i_donor].stride = icd->m_StrideGivePerRec;
+    m_Donors[i_donor].receiver_index_field_start = count_rec_concat;
+    m_Donors[i_donor].donor_wi_field_start = count_donor_concat;
+    count_rec_concat += icd->m_NumRecCells;
+    count_donor_concat += icd->m_NumRecCells * icd->m_StrideGivePerRec;
+  }
+
+  m_NumDonorWIConcat = count_donor_concat;
+#ifdef DEBUG
+  if (count_rec_concat != m_NumReceivingCellsConcat) {
+    BUG;
+  }
+#endif
+  // Build concatenated donor index and weight fields
+  m_DonorIndexConcat = new size_t[m_NumDonorWIConcat];
+  m_DonorWeightConcat = new real[m_NumDonorWIConcat];
+  size_t count_concat = 0;
+  for (size_t i_donor = 0; i_donor < m_NumDonorPatches; i_donor++) {
+    InterCoeffPad* icd = &(m_InterCoeffData[i_donor]);
+    size_t count_in_donor = 0;
+    for (size_t i_rec = 0; i_rec < icd->m_NumRecCells; i_rec++) {
+      for (size_t i_s = 0; i_s < icd->m_StrideGivePerRec; i_s++) {
+        m_DonorIndexConcat[count_concat] = icd->m_DonorCells[count_in_donor];
+        m_DonorWeightConcat[count_concat] = icd->m_DonorWeights[count_in_donor];
+        count_concat++;
+        count_in_donor++;
+      }
+    }
+  }
+#ifdef DEBUG
+  if (count_concat != m_NumDonorWIConcat) {
+    BUG;
+  }
+#endif
+};
+
+
 void Patch::readSolverCodes(istringstream& iss_input)
 {
   m_solvercodes.buildFrom(iss_input);
@@ -266,11 +349,11 @@ void Patch::accessDonorData_WS(const size_t& field)
     //      }
     //    }
     // REPLACED BY BLOCK BELOW
-    #ifdef DEBUG
+#ifdef DEBUG
     if(m_receive_cell_data_hits[ll_rc] == 0) {
       BUG; // since 2013_06_12 (ommitting grad1n stuff) zero hits are no longer possible.
     }
-    #endif
+#endif
     size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
     for(size_t i_v=0; i_v<numVariables(); i_v++) {
       this_vars[i_v][l_rc] = 0.;
@@ -302,11 +385,11 @@ void Patch::accessDonorDataPadded(const size_t& field)
 
   // set all receiving data variables to 0, as donors will add their contributions onto
   for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
-    #ifdef DEBUG
+#ifdef DEBUG
     if(m_receive_cell_data_hits[ll_rc] == 0) {
       BUG; // since 2013_06_12 (ommitting grad1n stuff) zero hits are no longer possible.
     }
-    #endif
+#endif
     size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
     for(size_t i_v=0; i_v<numVariables(); i_v++) {
       this_vars[i_v][l_rc] = 0.;
