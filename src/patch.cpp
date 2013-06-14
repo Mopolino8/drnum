@@ -55,12 +55,12 @@ void Patch::buildDonorTransferData()
   }
 
   // Build m_ReceivingCellIndiceesConcat
-  m_ReceivingCellIndiceesConcat = new size_t[m_NumReceivingCellsConcat];
+  m_ReceivingCellIndicesConcat = new size_t[m_NumReceivingCellsConcat];
   size_t count = 0;
   for (size_t i_donor = 0; i_donor < m_NumDonorPatches; i_donor++) {
     InterCoeffPad* icd = &(m_InterCoeffData[i_donor]);
     for (size_t i_rec=0; i_rec < icd->m_NumRecCells; i_rec++) {
-      m_ReceivingCellIndiceesConcat[count] = icd->m_RecCells[i_rec];
+      m_ReceivingCellIndicesConcat[count] = icd->m_RecCells[i_rec];
       count++;
     }
   }
@@ -73,9 +73,9 @@ void Patch::buildDonorTransferData()
   // Build unique index field m_ReceivingCellIndexUnique
   // Note: use data array stored in m_receive_cells at present.
   //       May also unify m_ReceivingCellIndexConcat .
-  m_ReceivingCellIndiceesUnique = new size_t[m_receive_cells.size()];
+  m_ReceivingCellIndicesUnique = new size_t[m_receive_cells.size()];
   for (size_t i_rec_all = 0; i_rec_all < m_receive_cells.size(); i_rec_all++) {
-    m_ReceivingCellIndiceesUnique[i_rec_all] = m_receive_cells[i_rec_all];
+    m_ReceivingCellIndicesUnique[i_rec_all] = m_receive_cells[i_rec_all];
   }
 
   // Build m_Donors
