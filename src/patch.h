@@ -59,26 +59,6 @@ class Patch;
 #include "transformation.h"    /// @todo merge: kept for compatibility
 //>>>>>>> master
 
-/**
-  * Struct holding data for one donor->receiver relation.
-  * To be owned by receiving patch.
-*/
-struct donor_t
-{
-  size_t variable_size;              ///< number of reals per variable in donor patch
-
-  real* data;                        ///< pointer to m_Data of donor patch (on device being!)
-
-  size_t num_receiver_cells;         ///< Number of cells, receiving data from donor patch
-
-  size_t stride;                     ///< Fixed number of donor cells for each receiving cell
-
-  size_t receiver_index_field_start; ///< Starting index in concatenated receiving cell indicees field of receiving patch
-
-  size_t donor_wi_field_start;       ///< Starting index in concatenated index and weight field for all donor patches
-};
-
-
 class Patch
 {
 
@@ -131,25 +111,6 @@ protected: // attributes
   //  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;           ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
   // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;    ///< Interpolation coefficient lists for 2nd directed gradients
 
-  //=========================================================================================
-  // Direct transfer lists, omitting InterCoeff classes
-
-  size_t m_NumDonorPatches;         ///< Number of donor patches influencing this (receiver) patch
-  size_t m_NumReceivingCellsConcat; ///< Number of concatenated cells receiving data from any of all donors (multiple indexing)
-  size_t m_NumReceivingCellsUnique; ///< Number of cells receiving data from any of all donors (unique indexing)
-  size_t m_NumDonorWIConcat;        ///< Number of concatenated donor cell contributions (all donor patches, all receiving cells times stride)
-
-  size_t* m_ReceivingCellIndiceesConcat; ///< Concatenated index field of receiving cells in sequence for all donor patches [m_NumReceivingCellsFull]
-  size_t* m_ReceivingCellIndiceesUnique; ///< Index field of receiving cells in unique sequence [m_NumReceivingCellsUnique]
-  /// @todo m_ReceivingCellIndexUnique equivalent to m_receive_cells. Clean up!!!
-
-  donor_t* m_Donors;         ///< All donor data structs for this (receiver) patch
-
-  size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_DonorFieldLength_XX]
-  real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_DonorFieldLength_XX]
-  // that would be nicer: pair<size_t, real>*  m_DonorWS;
-
-  //=========================================================================================
 
 protected: // methods
 
