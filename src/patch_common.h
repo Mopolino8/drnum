@@ -42,7 +42,6 @@ donor_t* m_Donors;         ///< All donor data structs for this (receiver) patch
 
 size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_NumDonorWIConcat]
 real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_NumDonorWIConcat]
-// that would be nicer: pair<size_t, real>*  m_DonorWS;
 
 
 public:

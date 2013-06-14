@@ -33,7 +33,7 @@ protected: // attributes
 
   /// @todo new mem-structure: m_DonorPatch probably obsolete due to borrowed pointers anyway
   /// Patch from which data will be received.
-  Patch* m_DonorPatch;
+  //Patch* m_DonorPatch;
 
   /// Coordinate transformation from m_DonorPatch to receiving Patch.
   CoordTransform m_ct;
