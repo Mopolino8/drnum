@@ -38,6 +38,7 @@ protected: // attributes
   bool    m_InterpolateData;   ///< Flag indicates wether to interpolate data on interpatch transfers
 //  bool    m_InterpolateGrad1N; ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
   bool    m_TransferPadded;    ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
+  string  m_TransferType;      ///< Keyword indicating transfer type ("ws", "padded", "padded_direct")
   size_t  m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
   size_t  m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
 
@@ -77,12 +78,20 @@ public: // methods
     */
 //  void setInterpolateGrad1N(bool interpolategrad1N = true);
 
+//  /**
+//    * Set all dependency transfers from any donors to be padded, employing data transfer
+//    * classes of type "InterCoeffPad".
+//    * @param trans_padded bool to cause padded data transfers
+//    */
+//  void setTransferPadded(bool trans_padded = true);
+
   /**
-    * Set all dependency transfers from any donors to be padded, employing data transfer
-    * classes of type "InterCoeffPad".
-    * @param trans_padded bool to cause padded data transfers
+    * Set all dependency transfers to a type.
+    * Known types are "ws" (weightedset), "padded" (InterCoeffPad) and
+    * "padded_direct" (use direct padded lists
+    * @param trans_type string indicating transfer mode
     */
-  void setTransferPadded(bool trans_padded = true);
+  void setTransferType(string trans_type = "padded_direct");
 
   /**
     * Set number of protection layers
@@ -175,6 +184,17 @@ public: // methods
      */
   void finalizeDependencies();
 
+
+  /// @todo Change to virtual function or type sorted data transfers.
+
+  /**
+    * Envoque data access to neighbour patches for all patches in the grid.
+    * Does own transfer type selection upon m_TransferType .
+    * ATTENTION: DOES NOT TURN ANY VECTORIAL VARIABLES !!
+    * @param field the field, for which all variables are transfered
+    */
+  void accessAllDonorData(const size_t& field);
+
   /**
     * Envoque data access to neighbour patches for all patches in the grid.
     * Version using m_InterCoeffData_WS data
@@ -183,8 +203,6 @@ public: // methods
     * @param field the field, for which all variables are transfered
     */
   void accessAllDonorData_WS(const size_t& field);
-
-  /// @todo Change to virtual function or type sorted data transfers.
 
   /**
     * Envoque data access to neighbour patches for all patches in the grid.

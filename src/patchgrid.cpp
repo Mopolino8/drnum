@@ -18,7 +18,8 @@ PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
   m_NumVariables = 0;
   m_InterpolateData = false;
   //  m_InterpolateGrad1N = false;
-  m_TransferPadded = false;
+  //m_TransferPadded = false;
+  m_TransferType = "error";
   m_BboxOk = false;
 }
 
@@ -44,11 +45,25 @@ void PatchGrid::setInterpolateData(bool interpolatedata)
 //}
 
 
-void PatchGrid::setTransferPadded(bool trans_padded)
-{
-  m_TransferPadded = trans_padded;
-}
+//void PatchGrid::setTransferPadded(bool trans_padded)
+//{
+//  m_TransferPadded = trans_padded;
+//}
 
+void PatchGrid::setTransferType(string trans_type)
+{
+  if (trans_type != "ws" &&
+      trans_type != "padded" &&
+      trans_type != "padded_direct") {
+    BUG;
+  }
+
+  m_TransferType = trans_type;
+
+  if (m_TransferType == "padded" || m_TransferType == "padded_direct") {
+    m_TransferPadded = true;
+  }
+}
 
 void PatchGrid::setNumProtectLayers(size_t num_protectlayers)
 {
@@ -209,6 +224,20 @@ void PatchGrid::finalizeDependencies()
 {
   for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
     m_Patches[i_p]->finalizeDependencies();
+  }
+}
+
+
+void PatchGrid::accessAllDonorData(const size_t& field)
+{
+  if(m_TransferType == "ws") {
+    accessAllDonorData_WS(field);
+  }
+  else if (m_TransferType == "padded") {
+    accessAllDonorDataPadded(field, false);
+  }
+  else if (m_TransferType == "padded_direct") {
+    accessAllDonorDataPadded(field, true);
   }
 }
 
@@ -446,6 +475,10 @@ real PatchGrid::computeMinChLength()
 
 void PatchGrid::writeToVtk(size_t i_field, string file_name, const PostProcessingVariables &proc_vars, int count)
 {
+  // Synchronise blocks before saving to ensure correct values in overlap
+  /// @todo field handling needed. New field required, "0 = new" OK?
+  accessAllDonorData(0);
+
   using namespace StringTools;
   vtkSmartPointer<vtkMultiBlockDataSet> multi_block = vtkMultiBlockDataSet::New();
   multi_block->SetNumberOfBlocks(getNumPatches());

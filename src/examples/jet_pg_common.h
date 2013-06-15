@@ -30,7 +30,9 @@ patch_grid.setNumberOfFields(3);
 patch_grid.setNumberOfVariables(5);
 patch_grid.setInterpolateData();
 patch_grid.setNumOverlapLayers(2);
-patch_grid.setTransferPadded(true);
+//patch_grid.setTransferPadded(true);
+patch_grid.setTransferType("padded_direct");
+
 //.. read patch grid from file
 patch_grid.readGrid(grid_file_name);
 //.. re-scale grid to suit Re number needs

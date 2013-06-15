@@ -11,12 +11,12 @@ void run()
 {
   //string grid_file_name = "grid/jet_single.grid";
   //string grid_file_name = "grid/jet_dual_1.grid";
-  string grid_file_name = "grid/jet_dual_2.grid";
+  //string grid_file_name = "grid/jet_dual_2.grid";
   //string grid_file_name = "grid/jet_dual_3.grid";
   //string grid_file_name = "grid/jet_dual_4.grid";
   //string grid_file_name = "grid/jet_dual_5.grid";
   //string grid_file_name = "grid/jet_dual_6.grid";
-  //string grid_file_name = "grid/jet_wild_7.grid";
+  string grid_file_name = "grid/jet_wild_7.grid";
 
 #include "jet_pg_common.h"
 
