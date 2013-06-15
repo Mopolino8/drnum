@@ -23,6 +23,23 @@ public:
     }
     cout << "GPU_Patch::GPU_Patch: m_Data = " << m_Data << endl;
     copyToDevice(patch);
+
+    if (cudaMalloc(&m_ReceivingCellIndicesConcat, sizeof(size_t)*m_NumReceivingCellsConcat) != cudaSuccess) {
+      BUG;
+    }
+    if (cudaMalloc(&m_ReceivingCellIndicesUnique, sizeof(size_t)*m_NumReceivingCellsUnique) != cudaSuccess) {
+      BUG;
+    }
+    if (cudaMalloc(&m_DonorIndexConcat, sizeof(size_t)*m_NumDonorWIConcat) != cudaSuccess) {
+      BUG;
+    }
+    if (cudaMalloc(&m_DonorWeightConcat, sizeof(real)*m_NumDonorWIConcat) != cudaSuccess) {
+      BUG;
+    }
+    if (cudaMalloc(&m_Donors, sizeof(donor_t)*m_NumDonorPatches) != cudaSuccess) {
+      BUG;
+    }
+
   }
 
   CUDA_HO void copyToDevice(Patch* patch)

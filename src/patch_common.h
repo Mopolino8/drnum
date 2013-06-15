@@ -9,7 +9,7 @@ private: // data types
 struct donor_t
 {
   size_t variable_size;              ///< number of reals per variable in donor patch
-  real* data;                        ///< pointer to m_Data of donor patch (on device being!)
+  real*  data;                       ///< pointer to m_Data of donor patch (on device being!)
   size_t num_receiver_cells;         ///< Number of cells, receiving data from donor patch
   size_t stride;                     ///< Fixed number of donor cells for each receiving cell
   size_t receiver_index_field_start; ///< Starting index in concatenated receiving cell indicees field of receiving patch
@@ -42,7 +42,6 @@ donor_t* m_Donors;         ///< All donor data structs for this (receiver) patch
 
 size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_NumDonorWIConcat]
 real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_NumDonorWIConcat]
-// that would be nicer: pair<size_t, real>*  m_DonorWI;
 
 
 public:
@@ -102,6 +101,26 @@ CUDA_DH real* getData()
   return m_Data;
 }
 
+CUDA_DH size_t getNumDonorPatches()
+{
+  return m_NumDonorPatches;
+}
+
+CUDA_DH size_t getNumReceivingCellsConcat()
+{
+  return m_NumReceivingCellsConcat;
+}
+
+CUDA_DH size_t getNumReceivingCellsUnique()
+{
+  return m_NumReceivingCellsUnique;
+}
+
+CUDA_DH size_t getNumDonorWIConcat()
+{
+  return m_NumDonorWIConcat;
+}
+
 /**
  * Copy simple data attributes from another object.
  * The other object can have a different type as long as the required attributes are present.
@@ -110,10 +129,14 @@ CUDA_DH real* getData()
 template <typename T>
 CUDA_HO void copyAttributes(T* obj)
 {
-  m_NumFields    = obj->numFields();
-  m_NumVariables = obj->numVariables();
-  m_FieldSize    = obj->fieldSize();
-  m_VariableSize = obj->variableSize();
+  m_NumFields               = obj->numFields();
+  m_NumVariables            = obj->numVariables();
+  m_FieldSize               = obj->fieldSize();
+  m_VariableSize            = obj->variableSize();
+  m_NumDonorPatches         = obj->getNumDonorPatches();
+  m_NumReceivingCellsConcat = obj->getNumReceivingCellsConcat();
+  m_NumReceivingCellsUnique = obj->getNumReceivingCellsUnique();
+  m_NumDonorWIConcat        = obj->getNumDonorWIConcat();
 }
 
 
