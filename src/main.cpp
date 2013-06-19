@@ -30,7 +30,11 @@ int main()
 #ifdef GPU
   GPU_main();
 #else
-  omp_set_num_threads(4);
+  int num_threads = 2;
+  omp_set_num_threads(num_threads);
+  cout << endl;
+  cout << "*** NUMBER THREADS: " << num_threads << endl;
+  cout << endl;
   run();
 #endif
 }

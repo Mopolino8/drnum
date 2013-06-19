@@ -18,7 +18,7 @@ real cfl_target     = 0.2;
 real t_write        = 0;
 real write_interval = 0.5*time;
 //real write_interval = 0.2*time;
-real total_time     = 50*time;
+real total_time     = 20*time;
 
 cout << "L = " << L << endl;
 
@@ -29,7 +29,7 @@ PatchGrid patch_grid;
 patch_grid.setNumberOfFields(3);
 patch_grid.setNumberOfVariables(5);
 patch_grid.setInterpolateData();
-patch_grid.setNumOverlapLayers(2);
+patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
 //patch_grid.setTransferPadded(true);
 patch_grid.setTransferType("padded_direct");
 

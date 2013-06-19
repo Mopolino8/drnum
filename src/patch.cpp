@@ -1,15 +1,15 @@
 #include "patch.h"
 
-Patch::Patch(size_t num_protectlayers, size_t num_overlaplayers)
+Patch::Patch(size_t num_seeklayers, size_t num_addprotectlayers)
 {
   m_Data = NULL;
   m_NumFields = 0;
   m_NumVariables = 0;
   m_VariableSize = 0;
   m_FieldSize = 0;
-  m_ProtectException = false;
-  m_NumProtectLayers = num_protectlayers;
-  m_NumOverlapLayers = num_overlaplayers;
+  m_SeekExceptions = false;
+  m_NumAddProtectLayers = num_addprotectlayers;
+  m_NumSeekLayers = num_seeklayers;
   m_InterpolateData = false;
   //  m_InterpolateGrad1N = false;
   m_receiveCells_OK = false;
@@ -19,7 +19,6 @@ Patch::Patch(size_t num_protectlayers, size_t num_overlaplayers)
   m_NumReceivingCellsConcat = 0;
   m_NumReceivingCellsUnique = 0;
   m_NumDonorWIConcat = 0;
-
 }
 
 Patch::~Patch()
@@ -161,7 +160,9 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   // Check, if boundary cells are yet extracted. If not, do so.
   if(!m_receiveCells_OK) {
     m_receive_cells.clear();
-    extractReceiveCells();
+    //NEW_SEEK_EXCEPTION extractReceiveCells();
+    buildRegions();  /// @todo need better methiod call handling, when to do what
+    extractSeekCells();
     compactReceiveCellLists();
     m_receiveCells_OK = true;
   }
@@ -439,6 +440,9 @@ void Patch::accessDonorDataDirect(const size_t &field) {
   donor_vars.resize(this_vars.size());
 
   // Set all receiving data variables to 0, as donors will add their contributions onto
+  #ifndef DEBUG
+  #pragma omp parallel for
+  #endif
   for(size_t ll_rc=0; ll_rc < m_NumReceivingCellsUnique; ll_rc++) {
     size_t l_rc = m_ReceivingCellIndicesUnique[ll_rc];
     for (size_t i_v=0; i_v<numVariables(); i_v++) {
@@ -455,6 +459,9 @@ void Patch::accessDonorDataDirect(const size_t &field) {
       donor_vars[i_v] = donor.data + i_v * donor.variable_size;
     }
     //.. loop for indirect receiving cells
+    #ifndef DEBUG
+    #pragma omp parallel for
+    #endif
     for (size_t ll_rec = 0; ll_rec < donor.num_receiver_cells; ll_rec++) {
       //.... receiving cells index
       size_t i_rec = m_ReceivingCellIndicesConcat[donor.receiver_index_field_start + ll_rec];
@@ -472,7 +479,6 @@ void Patch::accessDonorDataDirect(const size_t &field) {
       }
     }
   }
-
 }
 
 

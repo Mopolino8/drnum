@@ -82,9 +82,9 @@ protected: // attributes
   bool m_InterpolateData;     ///< Flag indicates wether to interpolate data on interpatch transfers
   //  bool m_InterpolateGrad1N;   ///< Flag indicates wether to interpolate directed gradients on interpatch transfers
   bool m_TransferPadded;      ///< Flag indicates wether to transfer donor data in padded versions with "InterCoeffPad".
-  bool m_ProtectException ;   ///< Flag indicates a protection exception: the number of protection layers is not constant.
-  size_t m_NumProtectLayers;  ///< number of boundary protection layers, in which no interpol access from other patches is allowed
-  size_t m_NumOverlapLayers;  ///< number of boundary cell layers, for which to get data from donor neighbour patches
+  bool m_SeekExceptions ;     ///< Flag indicates a seek exception: the number of seek layers is not constant.
+  size_t m_NumSeekLayers;     ///< number of boundary cell layers, for which to get data from donor neighbour patches
+  size_t m_NumAddProtectLayers; ///< additional number of boundary protected layers, in which no interpol access from other patches is allowed
 
   // IO-scaling, position, orientation
   real m_ioscale;                            ///< general scale factor of mesh related to io-values
@@ -124,19 +124,37 @@ protected: // methods
   virtual void buildBoundingBox()=0;
 
   // external data handling
-  virtual void extractReceiveCells() { BUG; } ///< Extract cells in overlap layers (m_receive_cells)
-  void compactReceiveCellLists();             ///< Clean up m_receive_cells and hit counter lists
+  //virtual void extractReceiveCells() { BUG; } ///< Extract cells in overlap layers (m_receive_cells)
+  // NEW_SEEK_EXCEPTION
+  //virtual void extractSeekCells() { BUG; } ///< Extract seeking cells in overlap layers (m_receive_cells)
+
+  /**
+    * Build up regions (seek, protection and core)
+    */
+  virtual void buildRegions() {BUG;}
+
+
+  /**
+    * Extract set of data seeking cells on the boundary faces of the patch.
+    */
+  virtual void extractSeekCells() {BUG;}
+
+
+  /**
+    * Clean up m_receive_cells and hit counter lists
+    */
+  void compactReceiveCellLists();
 
 
 public: // methods
 
+
   /**
    * Constructor
-   * NOTE: The default number of protection as well as overplap layers is 1
-   * @param num_protectlayers number of protection layers, in which no foreign data access is allowed
-   * @param num_overlaplayers number of overlap layers, for which to get data from donor neighbour patches
+   * @param num_seeklayers default number of seeking element layers
+   * @param num_addprotectlayers default number of additional protection layers
    */
-  Patch(size_t num_protectlayers=1, size_t num_overlaplayers=1);
+  Patch(size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
 
 
   /**
@@ -154,10 +172,9 @@ public: // methods
   void accessDonorDataDirect(const size_t &field);
 
 
-  virtual ~Patch();
-
   void  setNumberOfFields(size_t num_fields) { m_NumFields = num_fields; }
   void  setNumberOfVariables(size_t num_variables) { m_NumVariables = num_variables; }
+
 
   /**
    * Compute the difference between two variables. This is intended to be used for convergence monitoring.
@@ -170,24 +187,28 @@ public: // methods
    */
   void computeVariableDifference(size_t i_field1, size_t i_var1, size_t i_field2, size_t i_var2, real &max_norm, real &l2_norm);
 
+
+  /// @todo The following 2 methods might perhaps go, as default is set construcion time (?)
   /**
-    * Set number of protection layers
-    * @param num_protectlayers number of protection layers
+    * Set default number of additional protection layers between seek and core region
+    * @param num_addprotectlayers number of additional protection layers
     */
-  virtual void setNumProtectLayers(size_t num_protectlayers)
+  void setNumAddProtectLayers(size_t num_addprotectlayers)
   {
-    m_ProtectException = false;
-    m_NumProtectLayers = num_protectlayers;
+    m_NumAddProtectLayers = num_addprotectlayers;
   }
 
+
   /**
-    * Set number of protection layers
-    * @param num_overlaplayers number of overlap layers
+    * Set default number of element layers, seeking data from other patches.
+    * @param num_seeklayers default number of seeking element layers
     */
-  void setNumOverlapLayers(size_t num_overlaplayers)
+  void setNumSeekLayers(size_t num_seeklayers)
   {
-    m_NumOverlapLayers = num_overlaplayers;
+    m_SeekExceptions = false;
+    m_NumSeekLayers = num_seeklayers;
   }
+
 
   /**
     * Set interaction with/without data transfers
@@ -198,14 +219,6 @@ public: // methods
     m_InterpolateData = interpolatedata;
   }
 
-  /**
-    * Set interaction with/without 1. gradient transfers
-    * @param interpolate_data bool to cause gradient interpolation if true
-    */
-  //  void setInterpolateGrad1N(bool interpolategrad1N = true)
-  //  {
-  //    m_InterpolateGrad1N = interpolategrad1N;
-  //  }
 
   /**
     * Set all dependency transfers from any donors to be padded, employing data transfer
@@ -217,6 +230,7 @@ public: // methods
     m_TransferPadded = trans_padded;
   }
 
+
   /**
     * Read mesh data from file
     * @param iss_input the stream to read from
@@ -224,11 +238,13 @@ public: // methods
     */
   virtual bool readFromFile(istringstream& iss_input);
 
+
   /**
     * Read solver codes from file
     * @param iss_input the stream to read from
     */
   virtual void readSolverCodes(istringstream& iss_input);
+
 
   /**
     * Write mesh data to file
@@ -237,6 +253,7 @@ public: // methods
     */
   virtual bool writeToFile(ofstream&) {BUG; return true;};
   //  virtual bool writeToFile(ifstream& s_mesh) {return true;};
+
 
   /**
    * Write patch data to an individual files for this patch only.
@@ -248,6 +265,7 @@ public: // methods
   //virtual void writeData(QString base_data_filename, size_t count) {BUG;}
   virtual void writeData(QString, size_t) {BUG;}
 
+
   /**
    * @brief Create a vtkDataSet of this Patch.
    * @return a pointer to the vtkDataSet which has been created
@@ -255,6 +273,7 @@ public: // methods
 #ifdef WITH_VTK
   virtual vtkDataSet* createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars) = 0;
 #endif
+
 
   /**
     * Build up transformation matrix.
@@ -264,6 +283,7 @@ public: // methods
     */
   void setupTransformation(vec3_t xyzoref,
                            vec3_t base_i, vec3_t base_j);
+
 
   /**
     * Scale patch relative to origin of parental coordsyst.
@@ -276,11 +296,13 @@ public: // methods
     m_transformInertial2This.scaleVector(scfactor);
   }
 
+
   /**
     * Set
     @param index the index of the patch in sequence of PatchGrid::m_patches
     */
   void setIndex(size_t patchindex) {m_myindex = patchindex;}
+
 
   /**
     * Access
@@ -288,11 +310,13 @@ public: // methods
     */
   size_t accessIndex() {return m_myindex;}
 
+
   /**
     * Access
     * @return type-code
     */
   size_t accessPatchType() {return m_mypatchtype;}
+
 
   /**
     * Set
@@ -302,11 +326,13 @@ public: // methods
     m_patchcomment = patchcomment;
   }
 
+
   /**
     * Access
     * @return patch-comment
     */
   string accessPatchComment() {return m_patchcomment;}
+
 
   /**
     * Access
@@ -314,17 +340,20 @@ public: // methods
     */
   string accessSolverCodes() {return m_solvercodes;}
 
+
   /**
     * Access
     * @return lower coordinates of bounding box
     */
   vec3_t accessBBoxXYZoMin();
 
+
   /**
     * Access
     * @return upper coordinates of bounding box
     */
   vec3_t accessBBoxXYZoMax();
+
 
   /**
    * Check receiving of any data from a neighbouring donor patch
@@ -335,6 +364,7 @@ public: // methods
    */
   void insertNeighbour(Patch* neighbour_patch);
 
+
   /**
      * Compute dependencies "from" a neighbour.
      * receiving patch: "this"
@@ -344,6 +374,7 @@ public: // methods
      */
   virtual bool computeDependencies(const size_t& i_neighbour)=0;
 
+
   /**
      * Finalize the computation of dependencies from neighbouring patches.
      * - Reduce contribution weights for receiving cells, being influenced by more than one donor patch.
@@ -351,11 +382,13 @@ public: // methods
      */
   void finalizeDependencies();
 
+
   /**
    * Set up interpolation methods for giving data to foreign patches.
    * Example: Build up Split- or Octrees for search operations, etc ... depending on patch type.
    */
   virtual void setupInterpolators()=0;
+
 
   /**
    * Get data interpolation coeff-sets.
@@ -369,6 +402,7 @@ public: // methods
                                        w_set);
   }
 
+
   /**
    * Get data interpolation coeff-sets.
    * @param x the x-value in the coords of the present patch
@@ -379,6 +413,7 @@ public: // methods
    */
   virtual bool computeCCDataInterpolCoeffs(real x, real y, real z,
                                            WeightedSet<real>& w_set)=0;
+
 
   /**
    * Get directional derivative (grad*n) interpolation coeff-sets.
@@ -398,6 +433,7 @@ public: // methods
                                          w_set);
   }
 
+
   /**
    * Get directional derivative (grad*n) interpolation coeff-sets.
    * @param x the x-value in the coords of the present patch
@@ -413,6 +449,7 @@ public: // methods
                                              real nx, real ny, real nz,
                                              WeightedSet<real>& w_set)=0;
 
+
   /**
     * Data access from all donor patches via m_InterCoeffData_WS
     * NOTE: Non padded version employing WeightedSet pattern.
@@ -421,7 +458,7 @@ public: // methods
     */
   void accessDonorData_WS(const size_t& field);
 
-  /// @todo replace accessDonorData... and write to commoon transfer method in PatchGrid
+  /// @todo replace accessDonorData... and write to common transfer method in PatchGrid
 
   /**
     * Data access from all donor patches via m_InterCoeffData_WS
@@ -430,6 +467,7 @@ public: // methods
     * @param field the field, for which all variables are transfered
     */
   void accessDonorDataPadded(const size_t& field);
+
 
   /**
     * Data access from all donor patches via m_InterCoeffData_WS
@@ -468,6 +506,10 @@ public: // methods
     */
   virtual real computeMinChLength() {BUG;}
 
+
+  /// @todo destructor
+  virtual ~Patch();
+
 };
 
 inline void Patch::setFieldToZero(real *field)
@@ -499,18 +541,6 @@ inline void Patch::setFieldToConst(real *field, real* var)
 }
 
 
-//see below!!!
-// inline void Patch::setFieldToConst(size_t i_field, real *var)
-//{
-//  for (size_t i_var = 0; i_var < m_NumVariables; ++i_var) {
-//    real* start_p = getVariable(i_field, i_var);
-//    for (size_t i = 0; i < m_VariableSize; ++i) {
-//      start_p[i] = var[i_var];
-//    }
-//  }
-//}
-
-
 inline void Patch::setFieldToConst(size_t i_field, real *var)
 {
   setFieldToConst(getField(i_field), var);
@@ -524,10 +554,12 @@ inline void Patch::copyField(real *src, real *dst)
   }
 }
 
+
 inline void Patch::copyField(size_t i_src, size_t i_dst)
 {
   copyField(getField(i_src), getField(i_dst));
 }
+
 
 inline void Patch::addField(real *src, real factor, real *dst)
 {
@@ -536,6 +568,7 @@ inline void Patch::addField(real *src, real factor, real *dst)
   }
 }
 
+
 inline void Patch::addField(real *op1, real factor, real *op2, real *dst)
 {
   for (size_t i = 0; i < m_FieldSize; ++i) {
@@ -543,15 +576,18 @@ inline void Patch::addField(real *op1, real factor, real *op2, real *dst)
   }
 }
 
+
 inline void Patch::addField(size_t i_src, real factor, size_t i_dst)
 {
   addField(getField(i_src), factor, getField(i_dst));
 }
 
+
 inline void Patch::addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst)
 {
   addField(getField(i_op1), factor, getField(i_op2), getField(i_dst));
 }
+
 
 inline vec3_t Patch::accessBBoxXYZoMin()
 {
@@ -560,6 +596,7 @@ inline vec3_t Patch::accessBBoxXYZoMin()
   }
   return m_bbox_xyzo_min;
 }
+
 
 /**
   * Access

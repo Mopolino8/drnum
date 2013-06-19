@@ -6,32 +6,35 @@
 #include "patchgrid.h"
 #include "stringtools.h"
 
-PatchGrid::PatchGrid(size_t num_protectlayers, size_t num_overlaplayers)
+PatchGrid::PatchGrid(size_t num_seeklayers, size_t num_addprotectlayers)
 {
   // patchgroups of same type and solver codes
-  m_PatchGroups = new PatchGroups(true); /// @todo need a handling for this
-  // parametric settings
-  m_NumProtectLayers = num_protectlayers;
-  m_NumOverlapLayers = num_overlaplayers;
-  // default settings
+  m_PatchGroups = new PatchGroups(true); /// @todo need a handling for true or false
+
+  // default overlap settings
+  m_NumSeekLayers = num_seeklayers;
+  m_NumAddProtectLayers = num_addprotectlayers;
+
+  // initializations
   m_NumFields = 0;
   m_NumVariables = 0;
   m_InterpolateData = false;
-  //  m_InterpolateGrad1N = false;
-  //m_TransferPadded = false;
   m_TransferType = "error";
   m_BboxOk = false;
 }
+
 
 void  PatchGrid::setNumberOfFields(size_t num_fields)
 {
   m_NumFields = num_fields;
 }
 
+
 void  PatchGrid::setNumberOfVariables(size_t num_variables)
 {
   m_NumVariables = num_variables;
 }
+
 
 void PatchGrid::setInterpolateData(bool interpolatedata)
 {
@@ -39,16 +42,17 @@ void PatchGrid::setInterpolateData(bool interpolatedata)
 }
 
 
-//void PatchGrid::setInterpolateGrad1N(bool interpolategrad1N)
-//{
-//  m_InterpolateGrad1N = interpolategrad1N;
-//}
+void PatchGrid::setNumSeekLayers(size_t num_seeklayers)
+{
+  m_NumSeekLayers = num_seeklayers;
+}
 
 
-//void PatchGrid::setTransferPadded(bool trans_padded)
-//{
-//  m_TransferPadded = trans_padded;
-//}
+void PatchGrid::setNumAddProtectLayers(size_t num_addprotectlayers)
+{
+  m_NumAddProtectLayers = num_addprotectlayers;
+}
+
 
 void PatchGrid::setTransferType(string trans_type)
 {
@@ -65,16 +69,6 @@ void PatchGrid::setTransferType(string trans_type)
   }
 }
 
-void PatchGrid::setNumProtectLayers(size_t num_protectlayers)
-{
-  m_NumProtectLayers = num_protectlayers;
-}
-
-
-void PatchGrid::setNumOverlapLayers(size_t num_overlaplayers)
-{
-  m_NumOverlapLayers = num_overlaplayers;
-}
 
 
 PatchGrid::~PatchGrid()
@@ -252,6 +246,10 @@ void PatchGrid::accessAllDonorData_WS(const size_t& field)
 
 void PatchGrid::accessAllDonorDataPadded(const size_t& field, const bool& direct)
 {
+  /** @todo There is a slight erraneous recursion in the case of protection
+    * exceptions, allowing a vice-versa interpolation access. Due to this, it is
+    * not possible to do sh-mem parallelisation on the loop for patches.
+    */
   if (direct) { // use direct lists
     for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
       m_Patches[i_p]->accessDonorDataDirect(field);
@@ -304,10 +302,9 @@ void PatchGrid::setGeneralAttributes(Patch* patch)
 {
   patch->setNumberOfFields(m_NumFields);
   patch->setNumberOfVariables(m_NumVariables);
-  patch->setNumOverlapLayers(m_NumOverlapLayers);
-  patch->setNumProtectLayers(m_NumProtectLayers);
+  patch->setNumSeekLayers(m_NumSeekLayers);
+  patch->setNumAddProtectLayers(m_NumAddProtectLayers);
   patch->setInterpolateData(m_InterpolateData);
-  //  patch->setInterpolateGrad1N(m_InterpolateGrad1N);
   patch->setTransferPadded(m_TransferPadded);
 }
 

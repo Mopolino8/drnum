@@ -17,10 +17,13 @@ void RungeKuttaPG1::operator()(real dt)
   // Prime transfer before copying new->old
   if (m_PatchGrid) {
     for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
-      //m_PatchGrid->accessAllDonorData_WS(*sf);
-      //m_PatchGrid->accessAllDonorDataPadded(*sf, false);
-      //m_PatchGrid->accessAllDonorDataPadded(*sf, true);
       m_PatchGrid->accessAllDonorData(*sf);
+
+//      // test performance
+//      size_t dummi_iter = 1000;
+//      for (size_t ii=0; ii < dummi_iter; ii++) {
+//        m_PatchGrid->accessAllDonorData(*sf);
+//      }
     }
   }
 
@@ -31,13 +34,10 @@ void RungeKuttaPG1::operator()(real dt)
   bool first_step = true;
   for (list<real>::iterator i = m_Alpha.begin(); i != m_Alpha.end(); ++i) {
     /** @todo Test version only: hard coded patch interactions. */
-    if (m_PatchGrid) {
-    //if (m_PatchGrid && !first_step) {
+    //if (m_PatchGrid) {
+    if (m_PatchGrid && !first_step) {
       first_step = false;
       for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
-        //m_PatchGrid->accessAllDonorData_WS(*sf);
-        //m_PatchGrid->accessAllDonorDataPadded(*sf, false);
-        //m_PatchGrid->accessAllDonorDataPadded(*sf, true);
         m_PatchGrid->accessAllDonorData(*sf);
       }
     }

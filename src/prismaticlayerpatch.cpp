@@ -10,8 +10,8 @@
 //#endif
 
 
-PrismaticLayerPatch::PrismaticLayerPatch(size_t num_protectlayers, size_t num_overlaplayers)
-  : Patch(num_protectlayers, num_overlaplayers)
+PrismaticLayerPatch::PrismaticLayerPatch(size_t num_seeklayers, size_t num_addprotectlayers)
+  : Patch(num_seeklayers, num_addprotectlayers)
 {
   m_mypatchtype = 1101;
   m_Eps = 1.e-5; /// @todo need a better eps-handling.
@@ -52,10 +52,10 @@ void PrismaticLayerPatch::scaleRefParental(real scfactor)
 }
 
 
-void PrismaticLayerPatch::setNumProtectException(const size_t& i_bc,
-                                                 const size_t& num_protect)
+void PrismaticLayerPatch::setSeekException(const size_t& i_bc,
+                                           const size_t& num_seeklayers)
 {
-  m_ProtectException = true;
+  m_SeekExceptions = true;
   // set the individual protection exception for i_bc
   BUG; // not implemented
 }

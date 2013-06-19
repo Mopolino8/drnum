@@ -13,7 +13,6 @@ class PrismaticLayerPatch;
 //#include <fstream>
 //#include <sstream>
 #include "patch.h"
-#include "TInsectionList.hh"
 
 #ifdef WITH_VTK
 #include <QString>
@@ -27,7 +26,7 @@ class PrismaticLayerPatch;
 
 
 /** Coordinate triple for nodes.
-  * @todo may be replaced by a vec_3t, if more useful.
+  * @todo may be replaced by a vec3_t, if more useful.
 */
 struct Node
 {
@@ -91,7 +90,7 @@ public:
     return m_Start[i];
   }
 
-  /** Sequantial feed of a data set. Feeds data at next free position in
+  /** Sequential feed of a data set. Feeds data at next free position in
     * first dimension.
     *  @param num_j number of items in second dimension to feed.
     *  @param feed_set set of data items to feed.
@@ -164,7 +163,7 @@ struct BoundaryCode
   */
 class PrismaticLayerPatch : public Patch
 {
-//postponed #include "prismaticlayerpatch_common.h"
+  //postponed #include "prismaticlayerpatch_common.h"
 
 private:
 
@@ -196,20 +195,13 @@ protected: // methods
 
 public: // methods
 
+
   /**
    * Constructor
-   * NOTE: The default number of protection as well as overplap layers is 1
-   * @param num_protectlayers number of protection layers, in which no foreign data access is allowed
-   * @param num_overlaplayers number of overlap layers, for which to get data from donor neighbour patches
+   * @param num_seeklayers default number of seeking element layers
+   * @param num_addprotectlayers default number of additional protection layers
    */
-  PrismaticLayerPatch(size_t num_protectlayers=1, size_t num_overlaplayers=1);
-
-//  /**
-//    * Set number of protection layers on all boundaries of the PrismaticLayerPatch.
-//    * NOTE: method setNumProtectException(...) allows individual settings for all six boundaries of PrismaticLayerPatch.
-//    * @param num_protectlayers number of protection layers
-//    */
-//  // not needed, take from Patch    virtual void setNumProtectLayers(size_t num_protectlayers);
+  PrismaticLayerPatch(size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
 
 
   /**
@@ -244,12 +236,12 @@ public: // methods
 
 
   /**
-    * Set individual number of protection layers on individual boundaries of the PrismaticLayerPatch. This setting is
-    * intended to allow exceptions, like interpolations along boundaries or reduced (1D, 2D) computations.
-    * @param i_bc the
-    * @param num_protect number of protection layers for cells adjacent to boundaries with i_bc
+    * Set a single seek exception on a boundary identified by a bcode
+    * @param i_bc the boundary code for which to set the exception
+    * @param num_seeklayers number of seek layer to set for i_bc
     */
-  void setNumProtectException(const size_t& i_bc, const size_t& num_protect);
+  void setSeekException(const size_t& i_bc,
+                        const size_t& num_seeklayers);
 
 
   /**

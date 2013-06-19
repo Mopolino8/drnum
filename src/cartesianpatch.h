@@ -28,32 +28,35 @@ class CartesianPatch : public Patch
 
 private:
 
-  /** @todo ommit the following, if no longer needed (setupAligned) */
-  real m_Uxo;
-  real m_Uyo;
-  real m_Uzo;
-
-  real m_Vxo;
-  real m_Vyo;
-  real m_Vzo;
-
-  real m_Wxo;
-  real m_Wyo;
-  real m_Wzo;
-  /// until here
-
   real m_Lx;
   real m_Ly;
   real m_Lz;
 
 protected: // attributes
 
-  size_t m_numProtXmin;
-  size_t m_numProtXmax;
-  size_t m_numProtYmin;
-  size_t m_numProtYmax;
-  size_t m_numProtZmin;
-  size_t m_numProtZmax;
+  size_t m_NumProtImin;
+  size_t m_NumProtImax;
+  size_t m_NumProtJmin;
+  size_t m_NumProtJmax;
+  size_t m_NumProtKmin;
+  size_t m_NumProtKmax;
+
+  // NEW_SEEK_EXCEPTION
+  size_t m_NumSeekImin;
+  size_t m_NumSeekImax;
+  size_t m_NumSeekJmin;
+  size_t m_NumSeekJmax;
+  size_t m_NumSeekKmin;
+  size_t m_NumSeekKmax;
+
+  size_t m_ICoreFirst;
+  size_t m_ICoreAfterlast;
+  size_t m_JCoreFirst;
+  size_t m_JCoreAfterlast;
+  size_t m_KCoreFirst;
+  size_t m_KCoreAfterlast;
+
+  // END NEW_SEEK_EXCEPTION
 
   real m_LimiterEpsilon;
 
@@ -66,25 +69,27 @@ protected: // attributes
 protected: // methods
 
   void computeDeltas();
-  virtual void extractReceiveCells();
+
   virtual void buildBoundingBox();
 
 public: // methods
 
   /**
    * Constructor
-   * NOTE: The default number of protection as well as overplap layers is 1
    * @param num_protectlayers number of protection layers, in which no foreign data access is allowed
    * @param num_overlaplayers number of overlap layers, for which to get data from donor neighbour patches
    */
-  CartesianPatch(size_t num_protectlayers=1, size_t num_overlaplayers=1);
+  CartesianPatch(size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
 
-  /**
-    * Set number of protection layers on all boundaries of the CartesianPatch.
-    * NOTE: method setNumProtectException(...) allows individual settings for all six boundaries of CartesianPatch.
-    * @param num_protectlayers number of protection layers
-    */
-  virtual void setNumProtectLayers(size_t num_protectlayers);
+
+// NEW_SEEK_EXCEPTION
+//  /**
+//    * Set number of protection layers on all boundaries of the CartesianPatch.
+//    * NOTE: method setNumProtectException(...) allows individual settings for all six boundaries of CartesianPatch.
+//    * @param num_protectlayers number of protection layers
+//    */
+//  virtual void setNumProtectLayers(size_t num_protectlayers);
+
 
   /**
     * Read mesh data from file
@@ -92,6 +97,7 @@ public: // methods
     * @return true, if successful
     */
   virtual bool readFromFile(istringstream& iss_input);
+
 
   /**
     * Write mesh data to file
@@ -101,6 +107,7 @@ public: // methods
   //virtual bool writeToFile(ifstream& s_mesh);
   virtual bool writeToFile(ifstream&) {BUG; return false;}
 
+
   /**
     * Scale patch relative to origin of parental coordsyst.
     * NOTE: Affects reference position and physical patch size.
@@ -109,22 +116,36 @@ public: // methods
     */
   virtual void scaleRefParental(real scfactor);
 
-  /**
-    * Set individual number of protection layers on all six boundaries of the CartesianPatch. This setting is
-    * intended to allow exceptions, like interpolations along boundaries or reduced (1D, 2D) computations.
-    * @param numProtXmin number of protection layers on Xmin-side
-    * @param numProtXmax number of protection layers on Xmax-side
-    * @param numProtYmin number of protection layers on Ymin-side
-    * @param numProtYmax number of protection layers on Ymax-side
-    * @param numProtZmin number of protection layers on Zmin-side
-    * @param numProtZmax number of protection layers on Zmax-side
-    */
-  void setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
-                              const size_t& numProtYmin, const size_t& numProtYmax,
-                              const size_t& numProtZmin, const size_t& numProtZmax);
+  // NEW_SEEK_EXCEPTION
+//  /**
+//    * Set individual number of protection layers on all six boundaries of the CartesianPatch. This setting is
+//    * intended to allow exceptions, like interpolations along boundaries or reduced (1D, 2D) computations.
+//    * @param numProtXmin number of protection layers on Xmin-side
+//    * @param numProtXmax number of protection layers on Xmax-side
+//    * @param numProtYmin number of protection layers on Ymin-side
+//    * @param numProtYmax number of protection layers on Ymax-side
+//    * @param numProtZmin number of protection layers on Zmin-side
+//    * @param numProtZmax number of protection layers on Zmax-side
+//    */
+//  void setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
+//                              const size_t& numProtYmin, const size_t& numProtYmax,
+//                              const size_t& numProtZmin, const size_t& numProtZmax);
 
-  /** @TODO: Eliminate this method and use setupMetrics instead, if working correctly. */
-  void setupAligned(real xo1, real yo1, real zo1, real xo2, real yo2, real zo2);
+
+  /**
+    * Set individual number of seek layers on all six boundaries of the CartesianPatch. This setting is
+    * intended to allow exceptions, like interpolations along boundaries or reduced (1D, 2D) computations.
+    * @param num_seekImin number of seek layers on I-min side
+    * @param num_seekImax number of seek layers on I-max side
+    * @param num_seekJmin number of seek layers on J-min side
+    * @param num_seekJmax number of seek layers on J-max side
+    * @param num_seekKmin number of seek layers on K-min side
+    * @param num_seekKmax number of seek layers on K-max side
+    */
+  void setSeekExceptions(const size_t& num_seekImin, const size_t& num_seekImax,
+                         const size_t& num_seekJmin, const size_t& num_seekJmax,
+                         const size_t& num_seekKmin, const size_t& num_seekKmax);
+
 
   /**
     * Set up the metrics of the block.
@@ -133,18 +154,42 @@ public: // methods
     * @param klength physical size of block in k direction
     */
   void setupMetrics(real ilength, real jlength, real klength);
-  //  void setupMetrics(real xo1, real yo1, real zo1,
-  //                    real ilength, real jlength, real klength,
-  //                    real base_ix, base_iy, base_ik,
-  //                    real base_jx, base_jy, base_jk);
 
+
+  /**
+    * Set number of cells in i,j,k
+    * @param num_i number of cells in i direction
+    * @param num_j number of cells in j direction
+    * @param num_k number of cells in k direction
+    */
   void resize(size_t num_i, size_t num_j, size_t num_k);
+
+
+  /**
+    * Build up regions (seek, protection and core)
+    */
+  virtual void buildRegions();
+
+
+  /**
+    * Extract set of data seeking cells on the boundary faces of the patch.
+    */
+  virtual void extractSeekCells();
+
+
+  /**
+     * Compute dependencies "from" a neighbour.
+     * receiving patch: "this"
+     * donor patch:     neighbour_patch
+     * @param i_neighbour index of neighbour patch from which to receive data
+     * @return bool indicating any dependency was found
+     */
   virtual bool computeDependencies(const size_t& i_neighbour);
 
 
 
   /// @todo shift all addressing stuff into StructuredPatch and inherite CartesianPatch from it
-  /// @todo I'm not sure, if the int - size_t conversion might cause performance issues
+  /// @todo check, if the int - size_t conversion may cause performance issues
 
   /**
    * @brief Get the indicees (i, j, k) from field index/
