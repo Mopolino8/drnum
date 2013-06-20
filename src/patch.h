@@ -313,6 +313,34 @@ public: // methods
 
   /**
     * Access
+    * @return the number of donor neighbours
+    */
+  size_t accessNumNeighbours() {return m_neighbours.size();}
+
+
+  /**
+    * Access index of neighbour in sequence of patchgrid::m_Patches
+    * @param ii_n the internal counter index of the neighbour in this->m_neighbours
+    * @return the pointer to the donor neighbour
+    */
+  Patch* accessNeighbour(size_t ii_n) {
+    return m_neighbours[ii_n].first;
+  }
+
+
+  /**
+    * Access index of neighbour in sequence of patchgrid::m_Patches
+    * @param ii_n the internal counter index of the neighbour in this->m_neighbours
+    * @return the index of the donor neighbour
+    */
+  size_t accessNeighbourIndex(size_t ii_n) {
+    Patch* neighbour = m_neighbours[ii_n].first;
+    return neighbour->accessIndex();
+  }
+
+
+  /**
+    * Access
     * @return type-code
     */
   size_t accessPatchType() {return m_mypatchtype;}
