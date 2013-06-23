@@ -36,11 +36,11 @@ void RungeKuttaPG1::operator()(real dt)
     /** @todo Test version only: hard coded patch interactions. */
     //if (m_PatchGrid) {
     if (m_PatchGrid && !first_step) {
-      first_step = false;
       for (vector<size_t>::iterator sf = m_SyncField.begin(); sf != m_SyncField.end(); sf++) {
         m_PatchGrid->accessAllDonorData(*sf);
       }
     }
+    first_step = false;
     computeIterators((*i)*dt);
     runPostOperations();
     countFlops(1);
