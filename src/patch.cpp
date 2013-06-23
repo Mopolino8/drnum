@@ -161,7 +161,7 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   if(!m_receiveCells_OK) {
     m_receive_cells.clear();
     //NEW_SEEK_EXCEPTION extractReceiveCells();
-    buildRegions();  /// @todo need better methiod call handling, when to do what
+    buildRegions();  /// @todo need better method call handling, when to do what
     extractSeekCells();
     compactReceiveCellLists();
     m_receiveCells_OK = true;
