@@ -29,18 +29,27 @@ public:
     if (cudaMalloc(&m_ReceivingCellIndicesConcat, sizeof(size_t)*m_NumReceivingCellsConcat) != cudaSuccess) {
       BUG;
     }
+    cudaMemcpy(m_ReceivingCellIndicesConcat, patch->getReceivingCellIndicesConcat(), m_NumReceivingCellsConcat*sizeof(size_t), cudaMemcpyHostToDevice);
+
     if (cudaMalloc(&m_ReceivingCellIndicesUnique, sizeof(size_t)*m_NumReceivingCellsUnique) != cudaSuccess) {
       BUG;
     }
+    cudaMemcpy(m_ReceivingCellIndicesUnique, patch->getReceivingCellIndicesUnique(), m_NumReceivingCellsUnique*sizeof(size_t), cudaMemcpyHostToDevice);
+
     if (cudaMalloc(&m_DonorIndexConcat, sizeof(size_t)*m_NumDonorWIConcat) != cudaSuccess) {
       BUG;
     }
+    cudaMemcpy(m_DonorIndexConcat, patch->getDonorIndexConcat(), m_NumDonorWIConcat*sizeof(size_t), cudaMemcpyHostToDevice);
+
     if (cudaMalloc(&m_DonorWeightConcat, sizeof(real)*m_NumDonorWIConcat) != cudaSuccess) {
       BUG;
     }
+    cudaMemcpy(m_DonorWeightConcat, patch->getDonorWeightConcat(), m_NumDonorWIConcat*sizeof(real), cudaMemcpyHostToDevice);
+
     if (cudaMalloc(&m_Donors, sizeof(donor_t)*m_NumDonorPatches) != cudaSuccess) {
       BUG;
     }
+    cudaMemcpy(m_Donors, patch->getDonors(), m_NumDonors*sizeof(donor_t), cudaMemcpyHostToDevice);
 
   }
 
