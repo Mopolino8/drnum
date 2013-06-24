@@ -199,7 +199,8 @@ HEADERS += \
     iteratorfeeder.h \
     cudatools.h \
     postprocessingvariables.h \
-    stringtools.h
+    stringtools.h \
+    donor_t.h
 
 
 CUDA_SOURCES += main.cu
