@@ -75,6 +75,7 @@ void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()
     for (size_t i = 0; i < m_GpuPatches.size(); ++i) {
       m_GpuPatches[i].updateDonorPointers();
     }
+    m_GpuPointersSet = true;
   }
   for (size_t i = 0; i < this->m_Patches.size(); ++i) {
     m_GpuPatches[i].copyToDevice(this->m_Patches[i]);
