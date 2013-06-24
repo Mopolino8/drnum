@@ -5,9 +5,17 @@
 #include "gpu_patch.h"
 #include "cudatools.h"
 
+#include <unordered_map>
+
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
 class GPU_PatchIterator : public TPatchIterator<T_CPU, DIM, OP>
 {
+
+private: // attributes
+
+  std::unordered_map<real*,real*> m_CpuToGpu;
+  bool                            m_GpuPointersSet;
+
 
 protected: // attributes
 
@@ -31,6 +39,7 @@ template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
 GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::GPU_PatchIterator(OP op)
   : TPatchIterator<T_CPU, DIM, OP>(op)
 {
+  m_GpuPointersSet = false;
   //m_GpuPatches.reserve(max(size_t(100), patch_grid.getNumPatches()));
 }
 
@@ -38,7 +47,9 @@ template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
 void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::addPatch(T_CPU *patch)
 {
   TPatchIterator<T_CPU, DIM, OP>::addPatch(patch);
-  m_GpuPatches.push_back(T_GPU(patch));
+  T_GPU gpu_patch(patch);
+  m_GpuPatches.push_back(gpu_patch);
+  m_CpuToGpu[patch->getData()] = gpu_patch.getData();
 }
 
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
@@ -60,6 +71,11 @@ void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateHost()
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
 void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()
 {
+  if (!m_GpuPointersSet) {
+    for (size_t i = 0; i < m_GpuPatches.size(); ++i) {
+      m_GpuPatches[i].updateDonorPointers();
+    }
+  }
   for (size_t i = 0; i < this->m_Patches.size(); ++i) {
     m_GpuPatches[i].copyToDevice(this->m_Patches[i]);
   }

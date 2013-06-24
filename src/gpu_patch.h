@@ -6,6 +6,8 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
+#include <unordered_map>
+
 class GPU_Patch
 {
 
@@ -50,6 +52,13 @@ public:
   CUDA_HO void copyFromDevice(Patch* patch)
   {
     cudaMemcpy(patch->getData(), m_Data, dataSize()*sizeof(real), cudaMemcpyDeviceToHost);
+  }
+
+  CUDA_HO void updateDonorPointers(std::unordered_map<real*,real*> cpu2gpu)
+  {
+    for (size_t i = 0; i < m_NumDonorPatches; ++i) {
+      m_Donors[i].data = (*cpu2gpu)[m_Donors[i].data];
+    }
   }
 
 };
