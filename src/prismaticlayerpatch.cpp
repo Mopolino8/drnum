@@ -10,8 +10,8 @@
 //#endif
 
 
-PrismaticLayerPatch::PrismaticLayerPatch(size_t num_seeklayers, size_t num_addprotectlayers)
-  : Patch(num_seeklayers, num_addprotectlayers)
+PrismaticLayerPatch::PrismaticLayerPatch(PatchGrid* patch_grid, size_t num_seeklayers, size_t num_addprotectlayers)
+  : Patch(patch_grid, num_seeklayers, num_addprotectlayers)
 {
   m_mypatchtype = 1101;
   m_Eps = 1.e-5; /// @todo need a better eps-handling.

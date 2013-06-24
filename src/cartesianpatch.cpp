@@ -10,8 +10,8 @@
 //#endif
 
 
-CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
-  : Patch(num_protectlayers, num_overlaplayers)
+CartesianPatch::CartesianPatch(PatchGrid* patch_grid, size_t num_protectlayers, size_t num_overlaplayers)
+  : Patch(patch_grid, num_protectlayers, num_overlaplayers)
 {
   m_mypatchtype = 1001;
 

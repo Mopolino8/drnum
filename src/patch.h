@@ -26,12 +26,14 @@ using namespace std;
 
 struct donor_t;
 class Patch;
+class PatchGrid;
 
 #include "intercoeffpad.h"
 #include "intercoeffws.h"
 #include "math/coordtransformvv.h"
 #include "codestring.h"
 #include "postprocessingvariables.h"
+#include "donor_t.h"
 
 /** @todo
  *    proposed coord naming convention:
@@ -151,10 +153,11 @@ public: // methods
 
   /**
    * Constructor
+   * @param patch_grid the grid this patch belonges to
    * @param num_seeklayers default number of seeking element layers
    * @param num_addprotectlayers default number of additional protection layers
    */
-  Patch(size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
+  Patch(PatchGrid* patch_grid, size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
 
 
   /**
@@ -251,7 +254,7 @@ public: // methods
     * @param s_mesh the stream to write to
     * @return true, if successful
     */
-  virtual bool writeToFile(ofstream&) {BUG; return true;};
+  virtual bool writeToFile(ofstream&) { BUG; return true; }
   //  virtual bool writeToFile(ifstream& s_mesh) {return true;};
 
 

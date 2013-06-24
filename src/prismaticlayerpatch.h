@@ -201,7 +201,7 @@ public: // methods
    * @param num_seeklayers default number of seeking element layers
    * @param num_addprotectlayers default number of additional protection layers
    */
-  PrismaticLayerPatch(size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
+  PrismaticLayerPatch(PatchGrid *patch_grid, size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
 
 
   /**

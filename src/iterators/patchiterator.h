@@ -41,6 +41,7 @@ public:
     */
   CodeString getCodeString();
 
+
 };
 
 inline PatchIterator::PatchIterator()

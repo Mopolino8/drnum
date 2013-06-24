@@ -1,7 +1,8 @@
 #include "patch.h"
 
-Patch::Patch(size_t num_seeklayers, size_t num_addprotectlayers)
+Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotectlayers)
 {
+  m_PatchGrid = patch_grid;
   m_Data = NULL;
   m_NumFields = 0;
   m_NumVariables = 0;
