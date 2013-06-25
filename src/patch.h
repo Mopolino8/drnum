@@ -27,6 +27,7 @@ using namespace std;
 struct donor_t;
 class Patch;
 class PatchGrid;
+class GPU_Patch;
 
 #include "intercoeffpad.h"
 #include "intercoeffws.h"
@@ -68,6 +69,12 @@ class Patch
 
   void  allocateData();
 
+
+private: // attributes
+
+  GPU_Patch* m_GpuPatch;
+
+
 protected: // attributes
 
   size_t m_myindex;           ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
@@ -93,9 +100,9 @@ protected: // attributes
   CoordTransformVV m_transformInertial2This; ///< transformation matrix to transform intertial coords into system of "this"
 
   // bounding box
-  vec3_t m_bbox_xyzo_min;                    ///< lowest coordinates of smallest box around patch in inertial coords.
-  vec3_t m_bbox_xyzo_max;                    ///< highest coordinates of smallest box around patch in inertial coords.
-  bool m_bbox_OK;                            ///< flag indicating wether the bounding box is available
+  vec3_t m_BBoxXYZoMin;   ///< lowest coordinates of smallest box around patch in inertial coords.
+  vec3_t m_BBoxXYZoMax;   ///< highest coordinates of smallest box around patch in inertial coords.
+  bool   m_BBoxOk;        ///< flag indicating wether the bounding box is available
 
   // intermediate variables
   bool m_receiveCells_OK; ///< Flag indicating that receive_cells have been extracted yet. Might be set false on mesh changes.
@@ -535,7 +542,19 @@ public: // methods
   /** Compute ...
     * @return smallest characteristic length.
     */
-  virtual real computeMinChLength() {BUG;}
+  virtual real computeMinChLength() { BUG; return 0; }
+
+  /**
+   * @brief set the corresponding GPU patch
+   * @param data the pointer to the corresponding GPU patch
+   */
+  void setGpuPatch(GPU_Patch* gpu_patch) { m_GpuPatch = gpu_patch; }
+
+  /**
+   * @brief get the GPU data pointer for pointer translation
+   * @return the pointer to the data block on the GPU
+   */
+  GPU_Patch* getGpuPatch() { return m_GpuPatch; }
 
 
   /// @todo destructor
@@ -622,10 +641,10 @@ inline void Patch::addField(size_t i_op1, real factor, size_t i_op2, size_t i_ds
 
 inline vec3_t Patch::accessBBoxXYZoMin()
 {
-  if(!m_bbox_OK) {
+  if(!m_BBoxOk) {
     buildBoundingBox();
   }
-  return m_bbox_xyzo_min;
+  return m_BBoxXYZoMin;
 }
 
 
@@ -635,10 +654,10 @@ inline vec3_t Patch::accessBBoxXYZoMin()
   */
 inline vec3_t Patch::accessBBoxXYZoMax()
 {
-  if(!m_bbox_OK) {
+  if(!m_BBoxOk) {
     buildBoundingBox();
   }
-  return m_bbox_xyzo_max;
+  return m_BBoxXYZoMax;
 }
 
 
