@@ -205,8 +205,8 @@ void CartesianPatch::buildBoundingBox()
 {
   vec3_t bbox_xyz_min(0., 0., 0.);
   vec3_t bbox_xyz_max(m_Lx, m_Ly, m_Lz);
-  m_bbox_xyzo_min = m_transformInertial2This.transformReverse(bbox_xyz_min);
-  m_bbox_xyzo_max = m_transformInertial2This.transformReverse(bbox_xyz_max);
+  m_BBoxXYZoMin = m_transformInertial2This.transformReverse(bbox_xyz_min);
+  m_BBoxXYZoMax = m_transformInertial2This.transformReverse(bbox_xyz_max);
 }
 
 // NEW_SEEK_EXCEPTION
