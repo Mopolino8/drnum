@@ -84,9 +84,11 @@ void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateHost()
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
 void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()
 {
+  cout << "void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()" << endl;
   if (!m_GpuPointersSet) {
     for (size_t i = 0; i < m_GpuPatches.size(); ++i) {
-      m_GpuPatches[i].updateDonorPointers();
+      cout << "translating " << i << endl;
+      m_GpuPatches[i].updateDonorPointers(PatchIterator::getPatch(i));
     }
     m_GpuPointersSet = true;
   }
@@ -111,17 +113,18 @@ template <typename T_GPU>
 __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_field, size_t i_donor)
 {
   size_t i = blockDim.x*blockIdx.x + threadIdx.x;
-  if (i < patch.getDonors()[i_donor].num_receiver_cells) {
+  donor_t donor = patch.getDonors()[i_donor];
+  if (i < donor.num_receiver_cells) {
     //.... receiving cells index
     //size_t i_rec = m_ReceivingCellIndicesConcat[donor.receiver_index_field_start + ll_rec];
-    size_t i_rec = patch.getReceivingCellIndicesConcat()[patch.getDonors()[i_donor].receiver_index_field_start + i];
+    size_t i_rec = patch.getReceivingCellIndicesConcat()[donor.receiver_index_field_start + i];
 
     //.... start address in m_DonorCells/m_DonorWeights pattern
     //size_t l_doner_cells_start = donor.donor_wi_field_start + ll_rec * donor.stride;
-    size_t i_donor_cells_start = patch.getDonors()[i_donor].donor_wi_field_start + i*patch.getDonors()[i_donor].stride;
+    size_t i_donor_cells_start = donor.donor_wi_field_start + i*donor.stride;
 
     //.... loop for contributing cells
-    for (size_t i_contrib = 0; i_contrib < patch.getDonors()[i_donor].stride; ++i_contrib) {
+    for (size_t i_contrib = 0; i_contrib < donor.stride; ++i_contrib) {
 
       size_t i_wi              = i_donor_cells_start + i_contrib;      // index of donor cell in concatenated lists
       size_t donor_cell_index  = patch.getDonorIndexConcat()[i_wi];
@@ -130,7 +133,7 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
       //...... loop for variables
       for (size_t i_var = 0; i_var < patch.numVariables(); ++i_var) {
         //*(this_vars[i_var]+i_rec) += donor_vars[i_var][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
-        real* dvar = patch.getDonors()[i_donor].data + i_var*patch.getDonors()[i_donor].variable_size;
+        real* dvar = donor.data + i_var*donor.variable_size;
         patch.getVariable(i_field, i_var)[i_rec] += dvar[donor_cell_index]*donor_cell_weight;
       }
     }

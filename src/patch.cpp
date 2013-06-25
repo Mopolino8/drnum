@@ -20,7 +20,8 @@ Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotect
   m_NumReceivingCellsConcat = 0;
   m_NumReceivingCellsUnique = 0;
   m_NumDonorWIConcat = 0;
-  m_GpuPatch = NULL;
+  m_GpuData = NULL;
+  m_GpuDataSet = false;
 }
 
 Patch::~Patch()
@@ -563,3 +564,18 @@ void Patch::computeVariableDifference(size_t i_field1, size_t i_var1, size_t i_f
   max_norm = sqrt(max_norm);
   l2_norm  = sqrt(l2_norm);
 }
+
+void Patch::setGpuData(real* gpu_data)
+{
+  m_GpuData = gpu_data;
+  m_GpuDataSet = true;
+}
+
+real* Patch::getGpuData()
+{
+  if (!m_GpuDataSet) {
+    BUG;
+  }
+  return m_GpuData;
+}
+

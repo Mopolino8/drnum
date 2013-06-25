@@ -18,7 +18,7 @@ real cfl_target     = 0.2;
 real t_write        = 0;
 real write_interval = 0.5*time;
 //real write_interval = 0.2*time;
-real total_time     = 20*time;
+real total_time     = 100*time;
 
 cout << "L = " << L << endl;
 

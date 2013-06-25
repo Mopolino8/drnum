@@ -24,7 +24,7 @@ void write(CartesianPatch &patch, QString file_name, int count)
 void run()
 {
 
-  string grid_file_name = "grid/jet_dual_2.grid";
+  string grid_file_name = "grid/jet_dual_2_mJ12_mK12.grid";
 
   #include "jet_pg_common.h"
 
@@ -46,6 +46,7 @@ void run()
   int iter = 0;
   real t = 0;
   patch_grid.writeToVtk(0, "testrun", CompressibleVariables<PerfectGas>(), write_counter);
+  iterator.updateDevice();
 
   //cout << "Press <ENTER> to start!";
   //cin.get();

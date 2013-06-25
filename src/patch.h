@@ -72,7 +72,8 @@ class Patch
 
 private: // attributes
 
-  GPU_Patch* m_GpuPatch;
+  real* m_GpuData;
+  bool  m_GpuDataSet;
 
 
 protected: // attributes
@@ -545,16 +546,16 @@ public: // methods
   virtual real computeMinChLength() { BUG; return 0; }
 
   /**
-   * @brief set the corresponding GPU patch
-   * @param data the pointer to the corresponding GPU patch
+   * @brief set the corresponding GPU patch data pointer
+   * @param data the pointer to the corresponding GPU patch adat
    */
-  void setGpuPatch(GPU_Patch* gpu_patch) { m_GpuPatch = gpu_patch; }
+  void setGpuData(real* gpu_data);
 
   /**
    * @brief get the GPU data pointer for pointer translation
    * @return the pointer to the data block on the GPU
    */
-  GPU_Patch* getGpuPatch() { return m_GpuPatch; }
+  real* getGpuData();
 
 
   /// @todo destructor
