@@ -105,7 +105,7 @@ public: // methods
     * @return true, if successful
     */
   //virtual bool writeToFile(ifstream& s_mesh);
-  virtual bool writeToFile(ifstream&) {BUG; return false;}
+  virtual bool writeToFile(ofstream&) {BUG; return false;}
 
 
   /**
