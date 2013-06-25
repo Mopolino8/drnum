@@ -28,6 +28,7 @@ public:
 
   virtual void compute(real factor, const vector<size_t>& patches) = 0;
   virtual void copyField(size_t i_src, size_t i_dst);
+  virtual void copyDonorData(size_t i_field);
 
   /**
     * Set a CodeString as operation identifier.
@@ -74,6 +75,13 @@ inline void PatchIterator::setCodeString(const CodeString& code_string)
 inline CodeString PatchIterator::getCodeString()
 {
   return m_SolverCodes;
+}
+
+inline void PatchIterator::copyDonorData(size_t i_field)
+{
+  for (size_t i_patch = 0; i_patch < m_Patches.size(); ++i_patch) {
+    m_Patches[i_patch]->accessDonorDataDirect(i_field);
+  }
 }
 
 #endif // PATCHITERATOR_H
