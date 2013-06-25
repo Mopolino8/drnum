@@ -5,20 +5,14 @@
 #include "gpu_patch.h"
 #include "cudatools.h"
 
-#include <unordered_map>
 
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
 class GPU_PatchIterator : public TPatchIterator<T_CPU, DIM, OP>
 {
 
-private: // attributes
-
-  std::unordered_map<real*,real*> m_CpuToGpu;
-  bool                            m_GpuPointersSet;
-
-
 protected: // attributes
 
+  bool          m_GpuPointersSet;
   vector<T_GPU> m_GpuPatches;
 
 
@@ -26,11 +20,12 @@ public:
 
   GPU_PatchIterator(OP op);
 
-  CUDA_HO void addPatch(T_CPU* patch);
   CUDA_HO void updateHost();
   CUDA_HO void updateDevice();
 
+  virtual void addPatch(Patch *patch);
   virtual void copyField(size_t i_src, size_t i_dst);
+  virtual void copyDonorData(size_t i_field);
 
 };
 
@@ -44,12 +39,15 @@ GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::GPU_PatchIterator(OP op)
 }
 
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::addPatch(T_CPU *patch)
+void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::addPatch(Patch *patch)
 {
-  TPatchIterator<T_CPU, DIM, OP>::addPatch(patch);
-  T_GPU gpu_patch(patch);
+  T_CPU* cpu_patch = dynamic_cast<T_CPU*>(patch);
+  if (cpu_patch == NULL) {
+    BUG;
+  }
+  TPatchIterator<T_CPU, DIM, OP>::addPatch(cpu_patch);
+  T_GPU gpu_patch(cpu_patch);
   m_GpuPatches.push_back(gpu_patch);
-  m_CpuToGpu[patch->getData()] = gpu_patch.getData();
 }
 
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
@@ -81,6 +79,20 @@ void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()
     m_GpuPatches[i].copyToDevice(this->m_Patches[i]);
   }
 }
+
+template <typename T_GPU>
+__global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_field)
+{
+}
+
+template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::copyDonorData(size_t i_field)
+{
+  for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
+    //GPU_PatchIterator_kernelCopyDonorData<<<1,1>>>(this->m_GpuPatches[i_patch], i_field);
+  }
+}
+
 
 
 
