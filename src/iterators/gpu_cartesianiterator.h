@@ -10,16 +10,6 @@ template <unsigned int DIM, typename OP>
 class GPU_CartesianIterator : public GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>
 {
 
-private: // attributes
-
-  size_t m_MaxNumThreads;
-  //size_t m_NumBlocks;
-  //size_t m_NumThreads;
-
-
-protected: // attributes
-
-
 public:
 
   using GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>::addPatch;
@@ -34,24 +24,6 @@ template <unsigned int DIM, typename OP>
 GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(OP op)
   : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>(op)
 {
-  int count;
-  if (cudaGetDeviceCount(&count) != cudaSuccess) {
-    cerr << "error detecting CUDA devices" << endl;
-    exit(EXIT_FAILURE);
-  }
-  if (count == 0) {
-    cerr << "no CUDA devices found" << endl;
-    exit(EXIT_FAILURE);
-  }
-  cudaDeviceProp prop;
-  if (cudaGetDeviceProperties(&prop, 0) != cudaSuccess) {
-    cerr << "error fetching device properties" << endl;
-    exit(EXIT_FAILURE);
-  }
-  m_MaxNumThreads = min(10000,min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]));
-
-  //m_NumThreads = patch_grid->sizeK();//128;
-  //m_NumBlocks = patch_grid->variableSize()/m_NumThreads + 1;
 }
 
 #define NDEBUG
