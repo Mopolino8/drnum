@@ -14,12 +14,13 @@ Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotect
   m_InterpolateData = false;
   //  m_InterpolateGrad1N = false;
   m_receiveCells_OK = false;
-  m_bbox_OK = false;
+  m_BBoxOk = false;
 
   m_NumDonorPatches = 0;
   m_NumReceivingCellsConcat = 0;
   m_NumReceivingCellsUnique = 0;
   m_NumDonorWIConcat = 0;
+  m_GpuPatch = NULL;
 }
 
 Patch::~Patch()
