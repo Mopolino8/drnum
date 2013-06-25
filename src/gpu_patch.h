@@ -6,8 +6,6 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
-#include <unordered_map>
-
 class GPU_Patch
 {
 
@@ -25,6 +23,7 @@ public:
     }
     cout << "GPU_Patch::GPU_Patch: m_Data = " << m_Data << endl;
     copyToDevice(patch);
+    patch->setGpuPatch(this);
 
     if (cudaMalloc(&m_ReceivingCellIndicesConcat, sizeof(size_t)*m_NumReceivingCellsConcat) != cudaSuccess) {
       BUG;
@@ -49,7 +48,7 @@ public:
     if (cudaMalloc(&m_Donors, sizeof(donor_t)*m_NumDonorPatches) != cudaSuccess) {
       BUG;
     }
-    cudaMemcpy(m_Donors, patch->getDonors(), m_NumDonors*sizeof(donor_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(m_Donors, patch->getDonors(), m_NumDonorPatches*sizeof(donor_t), cudaMemcpyHostToDevice);
 
   }
 
@@ -63,10 +62,27 @@ public:
     cudaMemcpy(patch->getData(), m_Data, dataSize()*sizeof(real), cudaMemcpyDeviceToHost);
   }
 
-  CUDA_HO void updateDonorPointers(std::unordered_map<real*,real*> cpu2gpu)
-  {
+  CUDA_HO void updateDonorPointers(Patch* patch)
+  {    
+    size_t N = patch->accessNumNeighbours();
+    real** cpu = new real* [N];
+    real** gpu = new real* [N];
+    for (size_t i = 0; i < N; ++i) {
+      cpu[i] = patch->accessNeighbour(i)->getData();
+      gpu[i] = patch->accessNeighbour(i)->getGpuPatch()->getData();
+    }
     for (size_t i = 0; i < m_NumDonorPatches; ++i) {
-      m_Donors[i].data = (*cpu2gpu)[m_Donors[i].data];
+      bool found = false;
+      for (size_t j = 0; j < N; ++j) {
+        if (cpu[j] == m_Donors[i].data) {
+          found = true;
+          m_Donors[i].data = gpu[j];
+          break;
+        }
+        if (!found) {
+          BUG;
+        }
+      }
     }
   }
 
