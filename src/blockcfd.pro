@@ -221,7 +221,8 @@ HEADERS += \
     cudatools.h \
     postprocessingvariables.h \
     stringtools.h \
-    donor_t.h
+    donor_t.h \
+    external_aero.h
 
 
 CUDA_SOURCES += main.cu
