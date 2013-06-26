@@ -6,18 +6,25 @@
 #include "iteratorfeeder.h"
 #include "rungekuttapg1.h"
 
+extern "C" void computeDiagnose(PatchGrid& patch_grid, const real& dt,
+                                real& CFL_max,
+                                real& rho_min, real& rho_max,
+                                real& max_norm_allpatches, real& l2_norm_allpatches);
 
 void run()
 {
   //string grid_file_name = "grid/jet_single.grid";
   //??? string grid_file_name = "grid/jet_dual_1.grid";
-  string grid_file_name = "grid/jet_dual_2.grid";
+  //string grid_file_name = "grid/jet_dual_2.grid";
   //string grid_file_name = "grid/jet_dual_2_3overlap.grid";
   //string grid_file_name = "grid/jet_dual_3.grid";
   //string grid_file_name = "grid/jet_dual_4.grid";
   //string grid_file_name = "grid/jet_dual_5.grid";
   //string grid_file_name = "grid/jet_dual_6.grid";
   //string grid_file_name = "grid/jet_wild_7.grid";
+
+  // general input at the directory being
+  string grid_file_name = "patches.grid";
 
 #include "jet_pg_common.h"
 
@@ -64,54 +71,74 @@ void run()
     t_write += dt;
 
     // Do some diagnose on patches
-    real CFL_max = 0;
-    real rho_min = 1000;
-    real rho_max = 0;
-    real max_norm_allpatches = 0.;
+    //    real CFL_max = 0;
+    //    real rho_min = 1000;
+    //    real rho_max = 0;
+    //    real max_norm_allpatches = 0.;
+    //    real l2_norm_allpatches;
+    //    real ql2_norm_allpatches = 0.;
+
+    real CFL_max;
+    real rho_min;
+    real rho_max;
+    real max_norm_allpatches;
     real l2_norm_allpatches;
-    real ql2_norm_allpatches = 0.;
+    real ql2_norm_allpatches;
 
-    for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
-      // Patch* patch = patch_grid.getPatch(i_p);
-      CartesianPatch& patch = *(dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_p)));
-      size_t NI = patch.sizeI();
-      size_t NJ = patch.sizeJ();
-      size_t NK = patch.sizeK();
+    CFL_max = 0;
+    rho_min = 1000;
+    rho_max = 0;
+    max_norm_allpatches = 0.;
+    ql2_norm_allpatches = 0.;
 
-      for (size_t i = 0; i < NI; ++i) {
-        for (size_t j = 0; j < NJ; ++j) {
-          for (size_t k = 0; k < NK; ++k) {
-            real p, u, v, w, T, var[5];
-            patch.getVar(0, i, j, k, var);
-            rho_min = min(var[0], rho_min);
-            rho_max = max(var[0], rho_max);
-            PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
-            real a = sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-            CFL_max = max(CFL_max, fabs(u)*dt/patch.dx());
-            CFL_max = max(CFL_max, fabs(u+a)*dt/patch.dx());
-            CFL_max = max(CFL_max, fabs(u-a)*dt/patch.dx());
-            countSqrts(1);
-            countFlops(10);
-          }
-        }
-      }
-      real max_norm, l2_norm;
-      patch.computeVariableDifference(0, 0, 1, 0, max_norm, l2_norm);
-      if (max_norm > max_norm_allpatches) {
-        max_norm_allpatches = max_norm;
-      }
-      ql2_norm_allpatches += l2_norm * l2_norm;
+    computeDiagnose(patch_grid, dt,
+                    CFL_max,
+                    rho_min, rho_max,
+                    max_norm_allpatches, l2_norm_allpatches);
+
+    {
+      //    for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
+      //      CartesianPatch& patch = *(dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_p)));
+      //      size_t NI = patch.sizeI();
+      //      size_t NJ = patch.sizeJ();
+      //      size_t NK = patch.sizeK();
+
+      //      for (size_t i = 0; i < NI; ++i) {
+      //        for (size_t j = 0; j < NJ; ++j) {
+      //          for (size_t k = 0; k < NK; ++k) {
+      //            real p, u, v, w, T, var[5];
+      //            patch.getVar(0, i, j, k, var);
+      //            rho_min = min(var[0], rho_min);
+      //            rho_max = max(var[0], rho_max);
+      //            PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+      //            real a = sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+      //            CFL_max = max(CFL_max, fabs(u)*dt/patch.dx());
+      //            CFL_max = max(CFL_max, fabs(u+a)*dt/patch.dx());
+      //            CFL_max = max(CFL_max, fabs(u-a)*dt/patch.dx());
+      //            countSqrts(1);
+      //            countFlops(10);
+      //          }
+      //        }
+      //      }
+      //      real max_norm, l2_norm;
+      //      patch.computeVariableDifference(0, 0, 1, 0, max_norm, l2_norm);
+      //      if (max_norm > max_norm_allpatches) {
+      //        max_norm_allpatches = max_norm;
+      //      }
+      //      ql2_norm_allpatches += l2_norm * l2_norm;
+      //    }
+      //    ql2_norm_allpatches /= patch_grid.getNumPatches();
+      //    l2_norm_allpatches = sqrt(ql2_norm_allpatches);
     }
-    ql2_norm_allpatches /= patch_grid.getNumPatches();
-    l2_norm_allpatches = sqrt(ql2_norm_allpatches);
+
     cout << t/time << "  dt: " << dt << "  CFL: " << CFL_max;
     cout << "  max: " << max_norm_allpatches << "  L2: " << l2_norm_allpatches;
     cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
 
-    // Write to output, if given time
+    // Write to output, if given time. also adjust time step.
     if (t_write >= write_interval) {
       ++count;
-      dt *= cfl_target/CFL_max;
+      dt *= cfl_target/CFL_max;  // adjust timestep
       patch_grid.writeToVtk(0, "testrun", CompressibleVariables<PerfectGas>(), count);
       t_write -= write_interval;
     }
@@ -122,6 +149,61 @@ void run()
 
   stopTiming();
   cout << iter << " iterations" << endl;
+}
+
+
+void computeDiagnose(PatchGrid& patch_grid, const real& dt,
+                     real& CFL_max,
+                     real& rho_min, real& rho_max,
+                     real& max_norm_allpatches, real& l2_norm_allpatches)
+{
+  CFL_max = 0;
+  rho_min = 1000;
+  rho_max = 0;
+  max_norm_allpatches = 0.;
+  real ql2_norm_allpatches = 0.;
+
+  for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
+    CartesianPatch& patch = *(dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_p)));
+    size_t NI = patch.sizeI();
+    size_t NJ = patch.sizeJ();
+    size_t NK = patch.sizeK();
+    real ch_length = patch.computeMinChLength();
+
+    for (size_t i = 0; i < NI; ++i) {
+      for (size_t j = 0; j < NJ; ++j) {
+        for (size_t k = 0; k < NK; ++k) {
+          real p, u, v, w, T, var[5];
+          patch.getVar(0, i, j, k, var);
+          rho_min = min(var[0], rho_min);
+          rho_max = max(var[0], rho_max);
+          PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+          real speed = sqrt(u*u + v*v + w*w);
+          real a = sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+          real ch_speed = speed + a;
+          real CFL_local = ch_speed*dt/ch_length;
+          if(CFL_local > CFL_max) {
+            CFL_max = CFL_local;
+          }
+          //CFL_max = max(CFL_max, ch_speed*dt/ch_length);
+          //          CFL_max = max(CFL_max, fabs(u)*dt/patch.dx());
+          //          CFL_max = max(CFL_max, fabs(u+a)*dt/patch.dx());
+          //          CFL_max = max(CFL_max, fabs(u-a)*dt/patch.dx());
+          countSqrts(2);
+          countFlops(10);
+        }
+      }
+    }
+
+    real max_norm, l2_norm;
+    patch.computeVariableDifference(0, 0, 1, 0, max_norm, l2_norm);
+    if (max_norm > max_norm_allpatches) {
+      max_norm_allpatches = max_norm;
+    }
+    ql2_norm_allpatches += l2_norm * l2_norm;
+  }
+  ql2_norm_allpatches /= patch_grid.getNumPatches();
+  l2_norm_allpatches = sqrt(ql2_norm_allpatches);
 }
 
 #endif // CPUJET_PG_H

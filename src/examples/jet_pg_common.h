@@ -14,11 +14,15 @@ real L              = Re*PerfectGas::mu()*PerfectGas::R()*T_jet/(p_jet*u_jet);
 // real ar             = 3.0;
 // real length_factor  = 2.0;
 real time           = L/u_jet;
-real cfl_target     = 0.2;
+
+//real cfl_target     = 0.2;
+//real cfl_target     = 0.1;
+real cfl_target     = 0.5;  // new def. since computeDiagnose(...)
+
 real t_write        = 0;
 real write_interval = 0.5*time;
-//real write_interval = 0.2*time;
-real total_time     = 20*time;
+real total_time     = 50*time;
+//real total_time     = 5*time;
 
 cout << "L = " << L << endl;
 
