@@ -150,10 +150,10 @@ void run()
   real u              = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real L              = 1.0;
   real time           = L/u;
-  real cfl_target     = 0.01;
+  real cfl_target     = 0.1;
   real t_write        = 0;
-  real write_interval = 1e-3*time;
-  real total_time     = 1e-2*time;
+  real write_interval = 0.1*time;
+  real total_time     = 1.0*time;
 
   // Patch grid
   PatchGrid patch_grid;
