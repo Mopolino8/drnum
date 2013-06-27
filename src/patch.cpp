@@ -483,15 +483,42 @@ void Patch::accessDonorDataDirect(const size_t &field)
       //.... start address in m_DonorCells/m_DonorWeights pattern
       size_t l_doner_cells_start = donor.donor_wi_field_start + ll_rec * donor.stride;
       //.... loop for contributing cells
+      //     store on intermediate vars inter_vars to allow turning of vector variables
+      vector<real> inter_vars(m_NumVariables, 0.);
       for (size_t i_contrib = 0; i_contrib < donor.stride; ++i_contrib) {
         size_t l_wi = l_doner_cells_start + i_contrib;      // index of donor cell in concatenated lists
         size_t donor_cell_index = m_DonorIndexConcat[l_wi];
         real donor_cell_weight = m_DonorWeightConcat[l_wi];
         //...... loop for variables
         for (size_t i_v = 0; i_v < m_NumVariables; ++i_v) {
-          *(this_vars[i_v]+i_rec) += donor_vars[i_v][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
+          inter_vars[i_v] += donor_vars[i_v][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
         }
       }
+      //...... turn vector variables
+      for (size_t i_vec = 0; i_vec < m_VectorVarIndices.size(); ++i_vec) {
+        size_t i_var = m_VectorVarIndices[i_vec];
+        real u =   donor.axx * inter_vars[i_var + 0]
+                 + donor.axy * inter_vars[i_var + 1]
+                 + donor.axz * inter_vars[i_var + 2];
+        real v =   donor.ayx * inter_vars[i_var + 0]
+                 + donor.ayy * inter_vars[i_var + 1]
+                 + donor.ayz * inter_vars[i_var + 2];
+        real w =   donor.azx * inter_vars[i_var + 0]
+                 + donor.azy * inter_vars[i_var + 1]
+                 + donor.azz * inter_vars[i_var + 2];
+        inter_vars[i_var + 0] = u;
+        inter_vars[i_var + 1] = v;
+        inter_vars[i_var + 2] = w;
+      }
+      //...... contribute to varibles in "this" patch
+      for (size_t i_v = 0; i_v < m_NumVariables; ++i_v) {
+        *(this_vars[i_v]+i_rec) += inter_vars[i_v];  // contribute to receiving cell
+      }
+
+//        //...... loop for variables
+//        for (size_t i_v = 0; i_v < m_NumVariables; ++i_v) {
+//          *(this_vars[i_v]+i_rec) += donor_vars[i_v][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
+//        }
     }
   }
 }
