@@ -187,6 +187,16 @@ public: // methods
   virtual bool computeDependencies(const size_t& i_neighbour);
 
 
+  /**
+    * Check overlap with a box defined in xyzo.
+    * @param box_xyzo_min lower coords of box
+    * @param box_xyzo_min upper coords of box
+    * @param only_core indicates to analise only core region of patch
+    * @return true, if overlap exists
+    */
+  virtual bool checkBoxOverlap(const vec3_t& box_xyzo_min, const vec3_t& box_xyzo_max,
+                               const bool& only_core = true);
+
 
   /// @todo shift all addressing stuff into StructuredPatch and inherite CartesianPatch from it
   /// @todo check, if the int - size_t conversion may cause performance issues

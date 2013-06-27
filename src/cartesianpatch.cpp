@@ -203,10 +203,37 @@ void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
 
 void CartesianPatch::buildBoundingBox()
 {
-  vec3_t bbox_xyz_min(0., 0., 0.);
-  vec3_t bbox_xyz_max(m_Lx, m_Ly, m_Lz);
-  m_BBoxXYZoMin = m_transformInertial2This.transformReverse(bbox_xyz_min);
-  m_BBoxXYZoMax = m_transformInertial2This.transformReverse(bbox_xyz_max);
+  // Test all 8 corners to find max coods in o-system
+  //.. prime
+  vec3_t v_corner(0, 0, 0);
+  vec3_t vo_corner = m_transformInertial2This.transformReverse(v_corner);
+  m_BBoxXYZoMin = vo_corner;
+  m_BBoxXYZoMax = vo_corner;
+
+  //.. loop corners
+  real xc[2];
+  real yc[2];
+  real zc[2];
+  xc[0] = 0.;
+  xc[1] = m_Lx;
+  yc[0] = 0.;
+  yc[1] = m_Ly;
+  zc[0] = 0.;
+  zc[1] = m_Lz;
+
+  for (size_t ii=0; ii<2; ii++) {
+    v_corner[0] = xc[ii];
+    for (size_t jj=0; jj<2; jj++) {
+      v_corner[1] = yc[jj];
+      for (size_t kk=0; kk<2; kk++) {
+        v_corner[2] = zc[kk];
+        vo_corner = m_transformInertial2This.transformReverse(v_corner);
+        m_BBoxXYZoMin.minimisePerCoord(vo_corner);
+        m_BBoxXYZoMax.maximisePerCoord(vo_corner);
+      }
+    }
+  }
+  m_BBoxOk = true;
 }
 
 // NEW_SEEK_EXCEPTION
@@ -226,9 +253,9 @@ void CartesianPatch::buildRegions()
   //   S S P C C C C C C C C C C C C C
   //   S S P C C C C C C C C C C C C C
   //   S S P C C C C C C C C C C C C C -- m_JCoreFirst
-  //      |                          |
-  //      |                          |
-  //      m_ICoreFirst                m_ICoreAfterlast
+  //       |                         |
+  //       |                         |
+  //       m_ICoreFirst              m_ICoreAfterlast
   //
 
   // Seek zone: zone in overlap, seeking data from foreign patches
@@ -463,6 +490,50 @@ bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
     }
   }
   return found_dependency;
+}
+
+
+bool CartesianPatch::checkBoxOverlap(const vec3_t& box_xyzo_min, const vec3_t& box_xyzo_max,
+                                     const bool& only_core)
+{
+  bool inside = false;
+
+  // save-side: loop through all cells at a boundary and check inside box
+  size_t i_min, i_after_max;
+  size_t j_min, j_after_max;
+  size_t k_min, k_after_max;
+
+  if (only_core) {
+    i_min = m_ICoreFirst;
+    j_min = m_JCoreFirst;
+    k_min = m_KCoreFirst;
+    i_after_max = m_ICoreAfterlast;
+    j_after_max = m_JCoreAfterlast;
+    k_after_max = m_KCoreAfterlast;
+  }
+
+  // loop all cells
+  // note: if transformation is too expensive, might also transform box into local
+  //       xyz-system and find xyz-coord-limits (all 8 nodes of box!!!)
+  for (size_t i_cell = i_min; i_cell < i_after_max; i_cell++) {
+    for (size_t j_cell = j_min; j_cell < j_after_max; j_cell++) {
+      for (size_t k_cell = k_min; k_cell < k_after_max; k_cell++) {
+        vec3_t xyz_cell = xyzCell(i_cell, j_cell, k_cell);
+        vec3_t xyzo_cell = m_transformInertial2This.transformReverse(xyz_cell);
+        if (box_xyzo_min[0] <= xyzo_cell[0] &&
+            box_xyzo_min[1] <= xyzo_cell[1] &&
+            box_xyzo_min[2] <= xyzo_cell[2] &&
+            box_xyzo_max[0] >= xyzo_cell[0] &&
+            box_xyzo_max[1] >= xyzo_cell[1] &&
+            box_xyzo_max[2] >= xyzo_cell[2] ) {
+          inside = true;
+          return inside;
+        }
+      }
+    }
+  }
+
+  return inside;
 }
 
 
