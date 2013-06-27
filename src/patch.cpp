@@ -1,4 +1,5 @@
 #include "patch.h"
+#include "patchgrid.h"
 
 Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotectlayers)
 {
