@@ -115,44 +115,47 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
   size_t i = blockDim.x*blockIdx.x + threadIdx.x;
   donor_t donor = patch.getDonors()[i_donor];
   if (i < donor.num_receiver_cells) {
-    //.... receiving cells index
-    //size_t i_rec = m_ReceivingCellIndicesConcat[donor.receiver_index_field_start + ll_rec];
+
+    // receiving cells index
     size_t i_rec = patch.getReceivingCellIndicesConcat()[donor.receiver_index_field_start + i];
 
-    //.... start address in m_DonorCells/m_DonorWeights pattern
+    // start address in m_DonorCells/m_DonorWeights pattern
     //size_t l_doner_cells_start = donor.donor_wi_field_start + ll_rec * donor.stride;
+
     size_t i_donor_cells_start = donor.donor_wi_field_start + i*donor.stride;
 
-    //.... loop for contributing cells
+    // loop for contributing cells
     for (size_t i_contrib = 0; i_contrib < donor.stride; ++i_contrib) {
 
       size_t i_wi              = i_donor_cells_start + i_contrib;      // index of donor cell in concatenated lists
       size_t donor_cell_index  = patch.getDonorIndexConcat()[i_wi];
       real   donor_cell_weight = patch.getDonorWeightConcat()[i_wi];
 
-      //...... loop for variables
+      real* donated_var = new real [patch.numVariables()];
       for (size_t i_var = 0; i_var < patch.numVariables(); ++i_var) {
         //*(this_vars[i_var]+i_rec) += donor_vars[i_var][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
+
         real* dvar = donor.data + i_var*donor.variable_size;
-        patch.getVariable(i_field, i_var)[i_rec] += dvar[donor_cell_index]*donor_cell_weight;
+        donated_var[i_var] = dvar[donor_cell_index];
       }
 
-      // transform vectorial variables
+      // transform vector variables
       for (size_t i_vec = 0; i_vec < patch.getNumVectorVars(); ++i_vec) {
         size_t i_var = patch.getVectorVarIndices()[i_vec];
-        real u =   donor.axx*patch.getVariable(i_field, i_var + 0)[i_rec]
-                 + donor.axy*patch.getVariable(i_field, i_var + 1)[i_rec]
-                 + donor.axy*patch.getVariable(i_field, i_var + 2)[i_rec];
-        real v =   donor.ayx*patch.getVariable(i_field, i_var + 0)[i_rec]
-                 + donor.ayy*patch.getVariable(i_field, i_var + 1)[i_rec]
-                 + donor.ayy*patch.getVariable(i_field, i_var + 2)[i_rec];
-        real w =   donor.azx*patch.getVariable(i_field, i_var + 0)[i_rec]
-                 + donor.azy*patch.getVariable(i_field, i_var + 1)[i_rec]
-                 + donor.azy*patch.getVariable(i_field, i_var + 2)[i_rec];
-        patch.getVariable(i_field, i_var + 0)[i_rec] = u;
-        patch.getVariable(i_field, i_var + 1)[i_rec] = u;
-        patch.getVariable(i_field, i_var + 2)[i_rec] = u;
+        real u = donor.axx*donated_var[i_var + 0] + donor.axy*donated_var[i_var + 1] + donor.axz*donated_var[i_var + 2];
+        real v = donor.ayx*donated_var[i_var + 0] + donor.ayy*donated_var[i_var + 1] + donor.ayz*donated_var[i_var + 2];
+        real w = donor.azx*donated_var[i_var + 0] + donor.azy*donated_var[i_var + 1] + donor.azz*donated_var[i_var + 2];
+        donated_var[i_var + 0] = u;
+        donated_var[i_var + 1] = v;
+        donated_var[i_var + 2] = w;
       }
+
+      // contribute to receiving cell
+      for (size_t i_var = 0; i_var < patch.numVariables(); ++i_var) {
+        patch.getVariable(i_field, i_var)[i_rec] += donor_cell_weight*donated_var[i_var];
+      }
+
+      delete [] donated_var;
     }
   }
 }
