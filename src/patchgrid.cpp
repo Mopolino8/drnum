@@ -42,6 +42,19 @@ void PatchGrid::setInterpolateData(bool interpolatedata)
 }
 
 
+void PatchGrid::defineVectorVar(const size_t& index_x)
+{
+  /// @todo No bounds or mem overlay checking !!!
+  m_VectorVarIndices.push_back(index_x);
+}
+
+
+vector<size_t> PatchGrid::getVectorVarIndices()
+{
+  return m_VectorVarIndices;
+}
+
+
 void PatchGrid::setNumSeekLayers(size_t num_seeklayers)
 {
   m_NumSeekLayers = num_seeklayers;

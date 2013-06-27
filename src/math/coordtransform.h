@@ -61,6 +61,16 @@ public:
     transfree(u, v, w, u, v, w);}
   vec3_t transfree(const vec3_t& uvw) const;
 
+  real getAxx() {return axx;}
+  real getAxy() {return axy;}
+  real getAxz() {return axz;}
+  real getAyx() {return ayx;}
+  real getAyy() {return ayy;}
+  real getAyz() {return ayz;}
+  real getAzx() {return azx;}
+  real getAzy() {return azy;}
+  real getAzz() {return azz;}
+
 };
 
 

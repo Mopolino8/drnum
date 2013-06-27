@@ -42,6 +42,8 @@ protected: // attributes
   bool   m_BboxOk;              ///< flag indicating wether the bounding box is available
   bool   m_DependenciesOk;      ///< indicate, if dependencies are updated
 
+  vector<size_t> m_VectorVarIndices;  ///< definition of vectorial variables by index corresponding x-direction. Subsequent two: y and z
+
 private: // methods
 
 protected: // methods
@@ -78,9 +80,12 @@ public: // methods
 
 
   /**
-    * Set interaction with/without 1. gradient transfers
-    * @param interpolate_data bool to cause gradient interpolation if true
+    * Define a variable triple as vectorial variable.
+    * This is done by setting the first index (direction: local x) of the vectorial variable.
+    * Subsequent two variables correspond to local y and z direcions.
+    * @param index_x the index of x-coord of vectorial variable
     */
+  void defineVectorVar(const size_t& index_x);
 
 
   /**
@@ -286,7 +291,7 @@ public: // methods
     */
   real computeMinChLength();
 
-  vector<size_t> getVectorVarIndices() { return vector<size_t>(); }
+  vector<size_t> getVectorVarIndices();
 
   virtual ~PatchGrid();
 

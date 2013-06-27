@@ -100,6 +100,15 @@ void Patch::buildDonorTransferData()
     m_Donors[i_donor].stride = icd->m_StrideGivePerRec;
     m_Donors[i_donor].receiver_index_field_start = count_rec_concat;
     m_Donors[i_donor].donor_wi_field_start = count_donor_concat;
+    m_Donors[i_donor].axx = icd->m_ct.getAxx();
+    m_Donors[i_donor].axy = icd->m_ct.getAxy();
+    m_Donors[i_donor].axz = icd->m_ct.getAxz();
+    m_Donors[i_donor].ayx = icd->m_ct.getAyx();
+    m_Donors[i_donor].ayy = icd->m_ct.getAyy();
+    m_Donors[i_donor].ayz = icd->m_ct.getAyz();
+    m_Donors[i_donor].azx = icd->m_ct.getAzx();
+    m_Donors[i_donor].azy = icd->m_ct.getAzy();
+    m_Donors[i_donor].azz = icd->m_ct.getAzz();
     count_rec_concat += icd->m_NumRecCells;
     count_donor_concat += icd->m_NumRecCells * icd->m_StrideGivePerRec;
   }
@@ -531,6 +540,7 @@ void Patch::accessTurnDonorData_WS(const size_t& field,
     icws.transTurnFromTo(donor_vars, this_vars);
   }
 }
+
 
 void Patch::allocateData()
 {

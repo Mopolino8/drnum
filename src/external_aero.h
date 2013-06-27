@@ -165,6 +165,7 @@ void run()
   //.. general settings (apply to all subsequent patches)
   patch_grid.setNumberOfFields(3);
   patch_grid.setNumberOfVariables(5);
+  patch_grid.defineVectorVar(1);
   patch_grid.setInterpolateData();
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
   patch_grid.setTransferType("padded_direct");
