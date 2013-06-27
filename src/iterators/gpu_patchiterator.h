@@ -150,8 +150,8 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
                  + donor.azy*patch.getVariable(i_field, i_var + 1)[i_rec]
                  + donor.azy*patch.getVariable(i_field, i_var + 2)[i_rec];
         patch.getVariable(i_field, i_var + 0)[i_rec] = u;
-        patch.getVariable(i_field, i_var + 1)[i_rec] = u;
-        patch.getVariable(i_field, i_var + 2)[i_rec] = u;
+        patch.getVariable(i_field, i_var + 1)[i_rec] = v;
+        patch.getVariable(i_field, i_var + 2)[i_rec] = w;
       }
     }
   }

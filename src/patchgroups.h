@@ -68,7 +68,7 @@ public: // methods
   /**
     * Empty constructor.
     */
-  PatchGroups(bool allow_solver_exceptions = false);
+  PatchGroups(bool allow_solver_exceptions = true);
 
   /** Insert a patch. Will look for a matching SinglePatchGroup, previously available and
     * insert there. If none is found a new SinglePatchGroup is created.
