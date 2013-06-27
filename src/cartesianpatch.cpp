@@ -1294,6 +1294,19 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
           vec3_t xyzo_c;
           xyz_c = xyzCell(i, j, k);
           xyzo_c = m_transformInertial2This.transformReverse(xyz_c);
+
+          for (size_t i_vec = 0; i_vec < m_VectorVarIndices.size(); ++i_vec) {
+            size_t i_var = m_VectorVarIndices[i_vec];
+            vec3_t vec_var, vec_var_o;
+            vec_var[0] = raw_var[i_var];
+            vec_var[1] = raw_var[i_var + 1];
+            vec_var[2] = raw_var[i_var + 2];
+            vec_var_o = m_transformInertial2This.transfreeReverse(vec_var);
+            raw_var[i_var + 0] = vec_var[0];
+            raw_var[i_var + 1] = vec_var[1];
+            raw_var[i_var + 2] = vec_var[2];
+          }
+
           // Oliver, trafos to xyz_o
 
           getVar(i_field, i, j, k, raw_var);
