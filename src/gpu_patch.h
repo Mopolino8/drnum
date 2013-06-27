@@ -110,6 +110,16 @@ public:
     delete [] donors;
   }
 
+  CUDA_DH size_t getNumVectorVars()
+  {
+    return m_NumVectorVars;
+  }
+
+  CUDA_DO size_t* getVectorVarIndices()
+  {
+    return m_VectorVarIndices;
+  }
+
 };
 
 #endif // GPU_PATCH_H
