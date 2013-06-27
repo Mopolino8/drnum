@@ -131,14 +131,17 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
       size_t donor_cell_index  = patch.getDonorIndexConcat()[i_wi];
       real   donor_cell_weight = patch.getDonorWeightConcat()[i_wi];
 
-      real* donated_var = new real [patch.numVariables()];
+      //real* donated_var = new real [patch.numVariables()];
+
       for (size_t i_var = 0; i_var < patch.numVariables(); ++i_var) {
         //*(this_vars[i_var]+i_rec) += donor_vars[i_var][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
 
         real* dvar = donor.data + i_var*donor.variable_size;
-        donated_var[i_var] = dvar[donor_cell_index];
+        //donated_var[i_var] = dvar[donor_cell_index];
+        patch.getVariable(i_field, i_var)[i_rec] += donor_cell_weight*dvar[donor_cell_index];
       }
 
+      /*
       // transform vector variables
       for (size_t i_vec = 0; i_vec < patch.getNumVectorVars(); ++i_vec) {
         size_t i_var = patch.getVectorVarIndices()[i_vec];
@@ -156,6 +159,7 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
       }
 
       delete [] donated_var;
+      */
     }
   }
 }
