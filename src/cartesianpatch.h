@@ -436,7 +436,6 @@ public: // methods
 
 
 #ifdef WITH_VTK
-  template <typename TVariables> void writeToVtk(size_t i_field, QString file_name, const TVariables& variables);
   virtual vtkDataSet* createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);
 #endif
 
