@@ -286,6 +286,8 @@ public: // methods
     */
   real computeMinChLength();
 
+  vector<size_t> getVectorVarIndices() { return vector<size_t>(); }
+
   virtual ~PatchGrid();
 
 };
