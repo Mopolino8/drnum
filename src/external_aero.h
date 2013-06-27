@@ -164,8 +164,8 @@ void run()
   patch_grid.setInterpolateData();
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
   patch_grid.setTransferType("padded_direct");
-  //patch_grid.readGrid("patches/from_enGrid");
-  patch_grid.readGrid("patches/V1");
+  patch_grid.readGrid("patches/from_enGrid");
+  //patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
 
   // Time step
