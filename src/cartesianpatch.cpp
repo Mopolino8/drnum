@@ -10,8 +10,8 @@
 //#endif
 
 
-CartesianPatch::CartesianPatch(size_t num_protectlayers, size_t num_overlaplayers)
-  : Patch(num_protectlayers, num_overlaplayers)
+CartesianPatch::CartesianPatch(PatchGrid* patch_grid, size_t num_protectlayers, size_t num_overlaplayers)
+  : Patch(patch_grid, num_protectlayers, num_overlaplayers)
 {
   m_mypatchtype = 1001;
 
@@ -205,8 +205,8 @@ void CartesianPatch::buildBoundingBox()
 {
   vec3_t bbox_xyz_min(0., 0., 0.);
   vec3_t bbox_xyz_max(m_Lx, m_Ly, m_Lz);
-  m_bbox_xyzo_min = m_transformInertial2This.transformReverse(bbox_xyz_min);
-  m_bbox_xyzo_max = m_transformInertial2This.transformReverse(bbox_xyz_max);
+  m_BBoxXYZoMin = m_transformInertial2This.transformReverse(bbox_xyz_min);
+  m_BBoxXYZoMax = m_transformInertial2This.transformReverse(bbox_xyz_max);
 }
 
 // NEW_SEEK_EXCEPTION

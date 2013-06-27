@@ -47,6 +47,7 @@ string CompressibleVariables<TGas>::getScalarName(int i) const
   if (i == 3) return "rho";
   if (i == 4) return "S";
   BUG;
+  return "N/A";
 }
 
 template <typename TGas>
@@ -54,6 +55,7 @@ string CompressibleVariables<TGas>::getVectorName(int i) const
 {
   if (i == 0) return "U";
   BUG;
+  return "N/A";
 }
 
 template <typename TGas>
@@ -68,6 +70,7 @@ real CompressibleVariables<TGas>::getScalar(int i, real *var) const
   if (i == 3) return var[0];
   if (i == 4) return TGas::cp(var)*log(T/m_RefTemperature) - TGas::R(var)*log(p/m_RefPressure);
   BUG;
+  return 0;
 }
 
 template <typename TGas>
@@ -78,6 +81,7 @@ vec3_t CompressibleVariables<TGas>::getVector(int i, real *var) const
 
   if (i == 0) return vec3_t(u, v, w);
   BUG;
+  return vec3_t(0,0,0);
 }
 
 #endif // COMPRESSIBLEVARIABLES_H

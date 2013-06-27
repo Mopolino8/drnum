@@ -96,14 +96,11 @@ struct size3_t { size_t i, j, k; };
   #endif
 #endif
 
-/*
 #ifdef __CUDACC__
   #ifdef DEBUG
     #undef DEBUG
-    #define DEBUG_CUDA
   #endif
 #endif
-*/
 
 #ifdef DEBUG
   inline CUDA_DH real checkedReal(real x, int line, const char *file_name)

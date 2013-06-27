@@ -1,7 +1,8 @@
 #include "patch.h"
 
-Patch::Patch(size_t num_seeklayers, size_t num_addprotectlayers)
+Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotectlayers)
 {
+  m_PatchGrid = patch_grid;
   m_Data = NULL;
   m_NumFields = 0;
   m_NumVariables = 0;
@@ -13,12 +14,14 @@ Patch::Patch(size_t num_seeklayers, size_t num_addprotectlayers)
   m_InterpolateData = false;
   //  m_InterpolateGrad1N = false;
   m_receiveCells_OK = false;
-  m_bbox_OK = false;
+  m_BBoxOk = false;
 
   m_NumDonorPatches = 0;
   m_NumReceivingCellsConcat = 0;
   m_NumReceivingCellsUnique = 0;
   m_NumDonorWIConcat = 0;
+  m_GpuData = NULL;
+  m_GpuDataSet = false;
 }
 
 Patch::~Patch()
@@ -426,14 +429,14 @@ void Patch::accessDonorDataPadded(const size_t& field)
   }
 }
 
-void Patch::accessDonorDataDirect(const size_t &field) {
-
+void Patch::accessDonorDataDirect(const size_t &field)
+{
   // assign variable pointers to work on
   /// @todo no need to set this_data all times, if fields are allways the same. Do at start up.
   vector<real*> this_vars;
   vector<real*> donor_vars;
   //.. assign this_vars
-  for(size_t i_v=0; i_v<numVariables(); i_v++) {
+  for (size_t i_v = 0; i_v < numVariables(); ++i_v) {
     this_vars.push_back(getVariable(field, i_v));
   }
   //.. set size of donor_vars
@@ -443,37 +446,37 @@ void Patch::accessDonorDataDirect(const size_t &field) {
   #ifndef DEBUG
   #pragma omp parallel for
   #endif
-  for(size_t ll_rc=0; ll_rc < m_NumReceivingCellsUnique; ll_rc++) {
+  for(size_t ll_rc = 0; ll_rc < m_NumReceivingCellsUnique; ++ll_rc) {
     size_t l_rc = m_ReceivingCellIndicesUnique[ll_rc];
-    for (size_t i_v=0; i_v<numVariables(); i_v++) {
-      this_vars[i_v][l_rc] = 0.;
+    for (size_t i_v = 0; i_v < numVariables(); ++i_v) {
+      this_vars[i_v][l_rc] = 0;
     }
   }
 
   // Get all donor contributions
   // Loop through neighbouring donor patches
-  for (size_t i_pd=0; i_pd<m_NumDonorPatches; i_pd++) {
+  for (size_t i_pd = 0; i_pd < m_NumDonorPatches; ++i_pd) {
     donor_t& donor = m_Donors[i_pd];
     //.. assign foreign variable pointers (same sequence as in "this_vars")
-    for(size_t i_v=0; i_v<numVariables(); i_v++) {
+    for (size_t i_v = 0; i_v < numVariables(); ++i_v) {
       donor_vars[i_v] = donor.data + i_v * donor.variable_size;
     }
     //.. loop for indirect receiving cells
     #ifndef DEBUG
     #pragma omp parallel for
     #endif
-    for (size_t ll_rec = 0; ll_rec < donor.num_receiver_cells; ll_rec++) {
+    for (size_t ll_rec = 0; ll_rec < donor.num_receiver_cells; ++ll_rec) {
       //.... receiving cells index
       size_t i_rec = m_ReceivingCellIndicesConcat[donor.receiver_index_field_start + ll_rec];
       //.... start address in m_DonorCells/m_DonorWeights pattern
       size_t l_doner_cells_start = donor.donor_wi_field_start + ll_rec * donor.stride;
       //.... loop for contributing cells
-      for(size_t i_contrib = 0; i_contrib < donor.stride; i_contrib++) {
+      for (size_t i_contrib = 0; i_contrib < donor.stride; ++i_contrib) {
         size_t l_wi = l_doner_cells_start + i_contrib;      // index of donor cell in concatenated lists
         size_t donor_cell_index = m_DonorIndexConcat[l_wi];
         real donor_cell_weight = m_DonorWeightConcat[l_wi];
         //...... loop for variables
-        for(size_t i_v = 0; i_v < m_NumVariables; i_v++) {
+        for (size_t i_v = 0; i_v < m_NumVariables; ++i_v) {
           *(this_vars[i_v]+i_rec) += donor_vars[i_v][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
         }
       }
@@ -561,3 +564,18 @@ void Patch::computeVariableDifference(size_t i_field1, size_t i_var1, size_t i_f
   max_norm = sqrt(max_norm);
   l2_norm  = sqrt(l2_norm);
 }
+
+void Patch::setGpuData(real* gpu_data)
+{
+  m_GpuData = gpu_data;
+  m_GpuDataSet = true;
+}
+
+real* Patch::getGpuData()
+{
+  if (!m_GpuDataSet) {
+    BUG;
+  }
+  return m_GpuData;
+}
+

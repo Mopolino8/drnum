@@ -10,16 +10,6 @@ template <unsigned int DIM, typename OP>
 class GPU_CartesianIterator : public GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>
 {
 
-private: // attributes
-
-  size_t m_MaxNumThreads;
-  //size_t m_NumBlocks;
-  //size_t m_NumThreads;
-
-
-protected: // attributes
-
-
 public:
 
   using GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>::addPatch;
@@ -34,24 +24,6 @@ template <unsigned int DIM, typename OP>
 GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(OP op)
   : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>(op)
 {
-  int count;
-  if (cudaGetDeviceCount(&count) != cudaSuccess) {
-    cerr << "error detecting CUDA devices" << endl;
-    exit(EXIT_FAILURE);
-  }
-  if (count == 0) {
-    cerr << "no CUDA devices found" << endl;
-    exit(EXIT_FAILURE);
-  }
-  cudaDeviceProp prop;
-  if (cudaGetDeviceProperties(&prop, 0) != cudaSuccess) {
-    cerr << "error fetching device properties" << endl;
-    exit(EXIT_FAILURE);
-  }
-  m_MaxNumThreads = min(10000,min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]));
-
-  //m_NumThreads = patch_grid->sizeK();//128;
-  //m_NumBlocks = patch_grid->variableSize()/m_NumThreads + 1;
 }
 
 #define NDEBUG
@@ -235,8 +207,10 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
       dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
       GPU_CartesianIterator_kernelXFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
       GPU_CartesianIterator_kernelXFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
     }
 
     {
@@ -244,8 +218,10 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
       dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
       GPU_CartesianIterator_kernelYFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
       GPU_CartesianIterator_kernelYFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
     }
 
     {
@@ -253,8 +229,10 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
       dim3 threads(this->m_Patches[i_patch]->sizeK()/2+1, k_lines, 1);
       GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
       GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
     }
 
 
@@ -263,6 +241,7 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
       dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
       GPU_CartesianIterator_kernelXBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
     }
 
     {
@@ -270,6 +249,7 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
       dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
       GPU_CartesianIterator_kernelYBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
     }
 
     {
@@ -277,6 +257,7 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
       dim3 threads(this->m_Patches[i_patch]->sizeJ(), 1, 1);
       GPU_CartesianIterator_kernelZBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
     }
 
 
@@ -285,6 +266,7 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
       dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
       GPU_CartesianIterator_kernelAdvance<DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], factor);
       CUDA_CHECK_ERROR;
+      cudaThreadSynchronize();
     }
 
   }

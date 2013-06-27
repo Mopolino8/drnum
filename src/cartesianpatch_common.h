@@ -102,19 +102,22 @@ CUDA_DH real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k)
 CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
   real var[10]; /// @todo possibly better done with a template parameter
-  real D = 1.0/dx();
-  if (i > 0 && i < sizeI()-1) {
-    getVar(i_field, i+1, j, k, grad);
-    getVar(i_field, i-1, j, k, var);
-    D *= 0.5;
+  real D = 0.5/dx();
+  countFlops(1);
+  size_t i1 = i - 1;
+  size_t i2 = i + 1;
+  if (i1 >= sizeI()) {
+    i1 = i;
+    D *= 2;
     countFlops(1);
-  } else if (i > 0) {
-    getVar(i_field, i, j, k, grad);
-    getVar(i_field, i-1, j, k, var);
-  } else {
-    getVar(i_field, i+1, j, k, grad);
-    getVar(i_field, i, j, k, var);
   }
+  if (i2 >= sizeI()) {
+    i2 = i;
+    D *= 2;
+    countFlops(1);
+  }
+  getVar(i_field, i2, j, k, grad);
+  getVar(i_field, i1, j, k, var);
   for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
     grad[i_var] -= var[i_var];
     grad[i_var] *= D;
@@ -135,20 +138,22 @@ CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
   if (sizeJ() > 2) {
     real var[10]; /// @todo possibly better done with a template parameter
-    real D = 1.0/dy();
+    real D = 0.5/dy();
     countFlops(1);
-    if (j > 0 && j < sizeJ()-1) {
-      getVar(i_field, i, j+1, k, grad);
-      getVar(i_field, i, j-1, k, var);
-      D *= 0.5;
+    size_t j1 = j - 1;
+    size_t j2 = j + 1;
+    if (j1 >= sizeJ()) {
+      j1 = j;
+      D *= 2;
       countFlops(1);
-    } else if (j > 0) {
-      getVar(i_field, i, j, k, grad);
-      getVar(i_field, i, j-1, k, var);
-    } else {
-      getVar(i_field, i, j+1, k, grad);
-      getVar(i_field, i, j, k, var);
     }
+    if (j2 >= sizeJ()) {
+      j2 = j;
+      D *= 2;
+      countFlops(1);
+    }
+    getVar(i_field, i, j2, k, grad);
+    getVar(i_field, i, j1, k, var);
     for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
       grad[i_var] -= var[i_var];
       grad[i_var] *= D;
@@ -173,20 +178,22 @@ CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 CUDA_DH void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
   real var[10]; /// @todo possibly better done with a template parameter
-  real D = 1.0/dz();
+  real D = 0.5/dz();
   countFlops(1);
-  if (k > 0 && k < sizeK()-1) {
-    getVar(i_field, i, j, k+1, grad);
-    getVar(i_field, i, j, k-1, var);
-    D *= 0.5;
+  size_t k1 = k - 1;
+  size_t k2 = k + 1;
+  if (k1 >= sizeK()) {
+    k1 = k;
+    D *= 2;
     countFlops(1);
-  } else if (k > 0) {
-    getVar(i_field, i, j, k, grad);
-    getVar(i_field, i, j, k-1, var);
-  } else {
-    getVar(i_field, i, j, k+1, grad);
-    getVar(i_field, i, j, k, var);
   }
+  if (k2 >= sizeK()) {
+    k2 = k;
+    D *= 2;
+    countFlops(1);
+  }
+  getVar(i_field, i, j, k2, grad);
+  getVar(i_field, i, j, k1, var);
   for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
     grad[i_var] -= var[i_var];
     grad[i_var] *= D;
@@ -204,7 +211,7 @@ CUDA_DH void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
  */
 CUDA_DH bool checkRange(size_t i, size_t j, size_t k)
 {
-  GlobalDebug::ijk(i, j, k);
+  //GlobalDebug::ijk(i, j, k);
   if (i >= sizeI() || j >= sizeJ() || k >= sizeK()) {
     return false;
   }

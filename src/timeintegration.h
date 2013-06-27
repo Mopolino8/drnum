@@ -16,6 +16,7 @@ protected:
   virtual void copyField(size_t i_src, size_t i_dst);
 
   void computeIterators(real factor);
+  void copyDonorData(size_t i_field);
   void runPostOperations();
 
 

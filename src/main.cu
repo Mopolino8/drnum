@@ -1,5 +1,5 @@
 #ifdef GPU
-  #include "examples/gpujet.h"
+  #include "external_aero.h"
 #endif
 
 extern "C"

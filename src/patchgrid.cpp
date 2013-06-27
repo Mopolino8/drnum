@@ -374,7 +374,7 @@ void PatchGrid::readGrid(string gridfilename)
     if (patch_type == 1001) {
       //...... Create a new CartesianPatch
       CartesianPatch* new_patch;
-      new_patch = new CartesianPatch();
+      new_patch = new CartesianPatch(this);
       size_t index = insertPatch(new_patch);
       new_patch->setIndex(index);
       new_patch->setPatchComment(patchcomment);

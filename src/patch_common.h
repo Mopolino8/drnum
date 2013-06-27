@@ -1,22 +1,5 @@
 #include "blockcfd.h"
 
-private: // data types
-
-/**
-  * Struct holding data for one donor->receiver relation.
-  * To be owned by receiving patch.
-  */
-struct donor_t
-{
-  size_t variable_size;              ///< number of reals per variable in donor patch
-  real*  data;                       ///< pointer to m_Data of donor patch (on device being!)
-  size_t num_receiver_cells;         ///< Number of cells, receiving data from donor patch
-  size_t stride;                     ///< Fixed number of donor cells for each receiving cell
-  size_t receiver_index_field_start; ///< Starting index in concatenated receiving cell indicees field of receiving patch
-  size_t donor_wi_field_start;       ///< Starting index in concatenated index and weight field for all donor patches
-};
-
-
 private: // attributes
 
 real*   m_Data;         ///< the main data block of this patch
@@ -24,6 +7,8 @@ size_t  m_NumFields;    ///< number of fields (e.g. old, new, ...)
 size_t  m_NumVariables; ///< number of variables (e.g. rho, rhou, ...)
 size_t  m_FieldSize;    ///< length of each field
 size_t  m_VariableSize; ///< length of each variable
+
+PatchGrid* m_PatchGrid; ///< the patch grid this patch belongs to
 
 Transformation m_Transformation; /// @todo merge: kept for compatibility
 
@@ -121,6 +106,37 @@ CUDA_DH size_t getNumDonorWIConcat()
   return m_NumDonorWIConcat;
 }
 
+CUDA_DH size_t* getReceivingCellIndicesConcat()
+{
+  return m_ReceivingCellIndicesConcat;
+}
+
+CUDA_DH size_t* getReceivingCellIndicesUnique()
+{
+  return m_ReceivingCellIndicesUnique;
+}
+
+CUDA_DH donor_t* getDonors()
+{
+  return m_Donors;
+}
+
+CUDA_DH size_t* getDonorIndexConcat()
+{
+  return m_DonorIndexConcat;
+}
+
+CUDA_DH real* getDonorWeightConcat()
+{
+  return m_DonorWeightConcat;
+}
+
+CUDA_HO PatchGrid* getPatchGrid()
+{
+  return m_PatchGrid;
+}
+
+
 /**
  * Copy simple data attributes from another object.
  * The other object can have a different type as long as the required attributes are present.
@@ -137,6 +153,7 @@ CUDA_HO void copyAttributes(T* obj)
   m_NumReceivingCellsConcat = obj->getNumReceivingCellsConcat();
   m_NumReceivingCellsUnique = obj->getNumReceivingCellsUnique();
   m_NumDonorWIConcat        = obj->getNumDonorWIConcat();
+  m_PatchGrid               = obj->getPatchGrid();
 }
 
 

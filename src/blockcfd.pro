@@ -26,6 +26,7 @@ LIBS += -lgomp
 
 QMAKE_CXXFLAGS += -Wno-deprecated
 QMAKE_CXXFLAGS += -fopenmp
+#QMAKE_CXXFLAGS += -std=c++0x
 #QMAKE_CXXFLAGS_RELEASE += -g
 QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_CXXFLAGS_RELEASE += -finline-limit=100000
@@ -40,16 +41,36 @@ QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
 # ====
 #
 cuda {
-  #USEGPU                 = -DGPU
+  USEGPU                 = -DGPU
   LIBS                  += -lcudart
   INCLUDEPATH           += .
   INCLUDEPATH           += /usr/include/QtCore
   NVCCFLAGS             += -Xcompiler -fopenmp
   NVCCFLAGS             += -O3
-  #NVCCFLAGS             += -g -G
   NVCCFLAGS             += -m64
   NVCCFLAGS             += -arch=sm_20
-  #NVCCFLAGS             += -keep
+  NVCCFLAGS             += -Xcompiler -Wno-deprecated
+  NVCCFLAGS             += -Xcompiler $$USEGPU -DCUDA
+  CUDA_INC               = $$join(INCLUDEPATH,' -I','-I',' ')
+  cuda.input             = CUDA_SOURCES
+  cuda.output            = ${OBJECTS_DIR}${QMAKE_FILE_BASE}_cuda.o
+  cuda.commands          = nvcc -c $$NVCCFLAGS $$CUDA_INC ${QMAKE_FILE_NAME} -o ${QMAKE_FILE_OUT}
+  cuda.dependency_type   = TYPE_C
+  cuda.depend_command    = nvcc -M $$CUDA_INC $$NVCCFLAGS   ${QMAKE_FILE_NAME}
+  QMAKE_EXTRA_COMPILERS += cuda
+  QMAKE_CXXFLAGS        += $$USEGPU -DCUDA
+  INCLUDEPATH           += $(CUDAINCDIR)
+}
+
+cuda_debug {
+  USEGPU                 = -DGPU
+  LIBS                  += -lcudart
+  INCLUDEPATH           += .
+  INCLUDEPATH           += /usr/include/QtCore
+  NVCCFLAGS             += -Xcompiler -fopenmp
+  NVCCFLAGS             += -g -G
+  NVCCFLAGS             += -m64
+  NVCCFLAGS             += -arch=sm_20
   NVCCFLAGS             += -Xcompiler -Wno-deprecated
   NVCCFLAGS             += -Xcompiler $$USEGPU -DCUDA
   CUDA_INC               = $$join(INCLUDEPATH,' -I','-I',' ')
@@ -199,7 +220,9 @@ HEADERS += \
     iteratorfeeder.h \
     cudatools.h \
     postprocessingvariables.h \
-    stringtools.h
+    stringtools.h \
+    donor_t.h \
+    external_aero.h
 
 
 CUDA_SOURCES += main.cu

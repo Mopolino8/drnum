@@ -28,7 +28,7 @@ void run()
 
 #include "jet_pg_common.h"
 
-  RungeKuttaPG1 runge_kutta;
+  RungeKutta runge_kutta;
   runge_kutta.addAlpha(0.25);
   runge_kutta.addAlpha(0.5);
   runge_kutta.addAlpha(1.000);
@@ -46,8 +46,8 @@ void run()
   // iterator.addPatch(&patch);
 
   runge_kutta.addIterator(&iterator);
-  runge_kutta.setPatchGrid(&patch_grid);
-  runge_kutta.addSyncField(0);    /** @todo New field required, "0 = new" OK? */
+  //runge_kutta.setPatchGrid(&patch_grid);
+  //runge_kutta.addSyncField(0);    /** @todo New field required, "0 = new" OK? */
 
 
   int count = 0;

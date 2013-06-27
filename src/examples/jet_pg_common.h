@@ -21,8 +21,12 @@ real cfl_target     = 0.5;  // new def. since computeDiagnose(...)
 
 real t_write        = 0;
 real write_interval = 0.5*time;
-real total_time     = 50*time;
+
+//real total_time     = 50*time;
 //real total_time     = 5*time;
+
+//real write_interval = 0.2*time;
+real total_time     = 100*time;
 
 cout << "L = " << L << endl;
 
@@ -47,14 +51,20 @@ patch_grid.scaleRefParental(L);
 //.. compute dependencies
 patch_grid.computeDependencies(true);
 
-//CartesianPatch patch;
-//patch.setNumberOfFields(3);
-//patch.setNumberOfVariables(5);
-//patch.setupAligned(0, 0, 0, length_factor*18*L, 3*L, 3*L);
-//size_t NI = 2*length_factor*3.0/ar*N;
-//size_t NJ = N;
-//size_t NK = N;
-//patch.resize(NI, NJ, NK);
+
+// Debug test
+vec3_t b_min;
+vec3_t b_max;
+b_min[0] = 0;
+b_min[1] = 0;
+b_min[2] = 0;
+b_max[0] = 0;
+b_max[1] = 0;
+b_max[2] = 0;
+vector<size_t> overlap_patches;
+patch_grid.findBoxOverlappingPatches(b_min, b_max,
+                                     true,
+                                     overlap_patches);
 
 // Time step
 real ch_speed = (max(u_jet, u_far) + sqrt(PerfectGas::gamma()*PerfectGas::R()*max(T_jet,T)));

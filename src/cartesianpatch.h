@@ -79,7 +79,7 @@ public: // methods
    * @param num_protectlayers number of protection layers, in which no foreign data access is allowed
    * @param num_overlaplayers number of overlap layers, for which to get data from donor neighbour patches
    */
-  CartesianPatch(size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
+  CartesianPatch(PatchGrid *patch_grid, size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
 
 
 // NEW_SEEK_EXCEPTION
@@ -105,7 +105,7 @@ public: // methods
     * @return true, if successful
     */
   //virtual bool writeToFile(ifstream& s_mesh);
-  virtual bool writeToFile(ifstream&) {BUG; return false;}
+  virtual bool writeToFile(ofstream&) {BUG; return false;}
 
 
   /**
