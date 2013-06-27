@@ -324,6 +324,7 @@ void Patch::finalizeDependencies()
   }
 }
 
+
 void Patch::compactReceiveCellLists()
 {
   // Clean up m_receive_cells and hit counter lists

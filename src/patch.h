@@ -423,6 +423,17 @@ public: // methods
 
 
   /**
+    * Check overlap with a box defined in xyzo.
+    * @param box_xyzo_min lower coords of box
+    * @param box_xyzo_min upper coords of box
+    * @param only_core indicates to analise only core region of patch
+    * @return true, if overlap exists
+    */
+  virtual bool checkBoxOverlap(const vec3_t& box_xyzo_min, const vec3_t& box_xyzo_max,
+                               const bool& only_core = true)=0;
+
+
+  /**
    * Set up interpolation methods for giving data to foreign patches.
    * Example: Build up Split- or Octrees for search operations, etc ... depending on patch type.
    */

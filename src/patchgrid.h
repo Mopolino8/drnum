@@ -197,6 +197,18 @@ public: // methods
   void finalizeDependencies();
 
 
+  /**
+    * Find list of patches, that overlap a given cartesian box in
+    * xyzo-system.
+    * @param cbox_min lower coords of box
+    * @param cbox_min upper coords of box
+    * @param only_core indicates to analise only core region of patch
+    * @param overlap_patches vector of patch indices overlapping box (ret. ref.)
+    */
+  void findBoxOverlappingPatches(const vec3_t& cbox_min, const vec3_t& cbox_max,
+                                 const bool& only_core,
+                                 vector<size_t>& overlap_patches);
+
   /// @todo Change to virtual function or type sorted data transfers.
 
   /**

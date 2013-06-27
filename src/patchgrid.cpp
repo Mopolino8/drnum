@@ -222,6 +222,19 @@ void PatchGrid::finalizeDependencies()
 }
 
 
+void PatchGrid::findBoxOverlappingPatches(const vec3_t& cbox_min, const vec3_t& cbox_max,
+                                          const bool& only_core,
+                                          vector<size_t>& overlap_patches)
+{
+  overlap_patches.resize(0);
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    if (m_Patches[i_p]->checkBoxOverlap(cbox_min, cbox_max, only_core)) {
+      overlap_patches.push_back(i_p);
+    }
+  }
+}
+
+
 void PatchGrid::accessAllDonorData(const size_t& field)
 {
   if(m_TransferType == "ws") {
@@ -427,15 +440,14 @@ void PatchGrid::buildBoundingBox(const bool& force)
       for (size_t i_p = 1; i_p < m_Patches.size(); i_p++) {
         vec3_t bbmin_h = m_Patches[i_p]->accessBBoxXYZoMin();
         vec3_t bbmax_h = m_Patches[i_p]->accessBBoxXYZoMax();
-        if(m_BboxXyzoMin[0] > bbmin_h[0]) m_BboxXyzoMin[0] = bbmin_h[0];
-        if(m_BboxXyzoMin[1] > bbmin_h[1]) m_BboxXyzoMin[1] = bbmin_h[1];
-        if(m_BboxXyzoMin[2] > bbmin_h[2]) m_BboxXyzoMin[2] = bbmin_h[2];
-        if(m_BboxXyzoMax[0] < bbmax_h[0]) m_BboxXyzoMax[0] = bbmax_h[0];
-        if(m_BboxXyzoMax[1] < bbmax_h[1]) m_BboxXyzoMax[1] = bbmax_h[1];
-        if(m_BboxXyzoMax[2] < bbmax_h[2]) m_BboxXyzoMax[2] = bbmax_h[2];
-        ///< @todo A max/min function for vec3_t ?
-        // m_bbox_xyzo_min.coordMin(bbmin_h);
-        // m_bbox_xyzo_max.coordMin(bbmax_h);
+        m_BboxXyzoMin.minimisePerCoord(bbmin_h);
+        m_BboxXyzoMax.maximisePerCoord(bbmax_h);
+//        if(m_BboxXyzoMin[0] > bbmin_h[0]) m_BboxXyzoMin[0] = bbmin_h[0];
+//        if(m_BboxXyzoMin[1] > bbmin_h[1]) m_BboxXyzoMin[1] = bbmin_h[1];
+//        if(m_BboxXyzoMin[2] > bbmin_h[2]) m_BboxXyzoMin[2] = bbmin_h[2];
+//        if(m_BboxXyzoMax[0] < bbmax_h[0]) m_BboxXyzoMax[0] = bbmax_h[0];
+//        if(m_BboxXyzoMax[1] < bbmax_h[1]) m_BboxXyzoMax[1] = bbmax_h[1];
+//        if(m_BboxXyzoMax[2] < bbmax_h[2]) m_BboxXyzoMax[2] = bbmax_h[2];
       }
       m_BboxOk = true;
     }
