@@ -98,9 +98,9 @@ public:
           donors[i].data = gpu[j];
           break;
         }
-        if (!found) {
-          BUG;
-        }
+      }
+      if (!found) {
+        BUG;
       }
     }
 
