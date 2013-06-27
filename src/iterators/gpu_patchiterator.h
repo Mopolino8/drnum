@@ -136,6 +136,23 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
         real* dvar = donor.data + i_var*donor.variable_size;
         patch.getVariable(i_field, i_var)[i_rec] += dvar[donor_cell_index]*donor_cell_weight;
       }
+
+      // transform vectorial variables
+      for (size_t i_vec = 0; i_vec < patch.getNumVectorVars(); ++i_vec) {
+        size_t i_var = patch.getVectorVarIndices()[i_vec];
+        real u =   donor.axx*patch.getVariable(i_field, i_var + 0)[i_rec]
+                 + donor.axy*patch.getVariable(i_field, i_var + 1)[i_rec]
+                 + donor.axy*patch.getVariable(i_field, i_var + 2)[i_rec];
+        real v =   donor.ayx*patch.getVariable(i_field, i_var + 0)[i_rec]
+                 + donor.ayy*patch.getVariable(i_field, i_var + 1)[i_rec]
+                 + donor.ayy*patch.getVariable(i_field, i_var + 2)[i_rec];
+        real w =   donor.azx*patch.getVariable(i_field, i_var + 0)[i_rec]
+                 + donor.azy*patch.getVariable(i_field, i_var + 1)[i_rec]
+                 + donor.azy*patch.getVariable(i_field, i_var + 2)[i_rec];
+        patch.getVariable(i_field, i_var + 0)[i_rec] = u;
+        patch.getVariable(i_field, i_var + 1)[i_rec] = u;
+        patch.getVariable(i_field, i_var + 2)[i_rec] = u;
+      }
     }
   }
 }

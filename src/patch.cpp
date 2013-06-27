@@ -1,4 +1,5 @@
 #include "patch.h"
+#include "patchgrid.h"
 
 Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotectlayers)
 {
@@ -22,6 +23,7 @@ Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotect
   m_NumDonorWIConcat = 0;
   m_GpuData = NULL;
   m_GpuDataSet = false;
+  m_VectorVarIndices = patch_grid->getVectorVarIndices();
 }
 
 Patch::~Patch()
