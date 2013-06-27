@@ -14,8 +14,7 @@ class CartesianPatch;
 #include <QString>
 #include <QVector>
 #include <vtkSmartPointer.h>
-#include <vtkRectilinearGrid.h>
-#include <vtkXMLRectilinearGridWriter.h>
+#include <vtkStructuredGrid.h>
 #include <vtkFloatArray.h>
 #include <vtkCellData.h>
 #endif
@@ -442,84 +441,5 @@ public: // methods
 #endif
 
 };
-
-
-#ifdef WITH_VTK
-template <typename TVariables>
-void CartesianPatch::writeToVtk(size_t i_field, QString file_name, const TVariables& variables)
-{
-  /// @todo: must transform output for non o-aligned patches !!!
-  /// @todo: does vtk know something like a general transformation in space ???
-  // Transform: use only linear transformations at present
-  vec3_t v_zero(0., 0., 0.);
-  vec3_t xyzoref = m_transformInertial2This.transformReverse(v_zero);
-
-  vtkSmartPointer<vtkRectilinearGrid> grid = vtkSmartPointer<vtkRectilinearGrid>::New();
-
-  vtkSmartPointer<vtkFloatArray> xc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t i = 0; i < m_NumI + 1; ++i) {
-    xc->InsertNextValue(i*dx() + xyzoref[0]);
-  }
-
-  vtkSmartPointer<vtkFloatArray> yc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t j = 0; j < m_NumJ + 1; ++j) {
-    yc->InsertNextValue(j*dy() + xyzoref[1]);
-  }
-
-  vtkSmartPointer<vtkFloatArray> zc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t k = 0; k < m_NumK + 1; ++k) {
-    zc->InsertNextValue(k*dz() + xyzoref[2]);
-  }
-
-  grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
-  grid->SetXCoordinates(xc);
-  grid->SetYCoordinates(yc);
-  grid->SetZCoordinates(zc);
-
-  real* raw_var = new real [numVariables()];
-  for (int i_var = 0; i_var < variables.numScalars(); ++i_var) {
-    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-    var->SetName(variables.getScalarName(i_var).c_str());
-    var->SetNumberOfValues(variableSize());
-    grid->GetCellData()->AddArray(var);
-    vtkIdType id = 0;
-    for (size_t k = 0; k < m_NumK; ++k) {
-      for (size_t j = 0; j < m_NumJ; ++j) {
-        for (size_t i = 0; i < m_NumI; ++i) {
-          getVar(i_field, i, j, k, raw_var);
-          var->SetValue(id, variables.getScalar(i_var, raw_var));
-          ++id;
-        }
-      }
-    }
-  }
-  for (int i_var = 0; i_var < variables.numVectors(); ++i_var) {
-    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-    var->SetName(variables.getVectorName(i_var).c_str());
-    var->SetNumberOfComponents(3);
-    var->SetNumberOfTuples(variableSize());
-    grid->GetCellData()->AddArray(var);
-    vtkIdType id = 0;
-    for (size_t k = 0; k < m_NumK; ++k) {
-      for (size_t j = 0; j < m_NumJ; ++j) {
-        for (size_t i = 0; i < m_NumI; ++i) {
-          getVar(i_field, i, j, k, raw_var);
-          vec3_t v = variables.getVector(i_var, raw_var);
-          float vf[3];
-          vf[0] = v[0]; vf[1] = v[1]; vf[2] = v[2];
-          var->SetTuple(id, vf);
-          ++id;
-        }
-      }
-    }
-  }
-  delete [] raw_var;
-
-  vtkSmartPointer<vtkXMLRectilinearGridWriter> vtr = vtkSmartPointer<vtkXMLRectilinearGridWriter>::New();
-  vtr->SetFileName(qPrintable(file_name + ".vtr"));
-  vtr->SetInput(grid);
-  vtr->Write();
-}
-#endif
 
 #endif // CARTESIANPATCH_H

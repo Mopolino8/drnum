@@ -163,7 +163,7 @@ void Patch::setupTransformation(vec3_t xyzoref,
   this2inertial.setVector(xyzoref);
   this2inertial.setMatrixFromBaseIJ(base_i, base_j);
   //.. build transformation matrix inertial --> this
-  m_transformInertial2This.setAll(this2inertial.inverse());
+  m_TransformInertial2This.setAll(this2inertial.inverse());
 
   Transformation t;    /// @todo for compatibility only. Get rid if no longer needed
   t.setVector(xyzoref);
@@ -184,7 +184,7 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   pair<Patch*, CoordTransformVV> dependency_h;
   dependency_h.first = neighbour_patch;
   CoordTransformVV ctvv_relative;
-  ctvv_relative.setTransFromTo(m_transformInertial2This, neighbour_patch->m_transformInertial2This);
+  ctvv_relative.setTransFromTo(m_TransformInertial2This, neighbour_patch->m_TransformInertial2This);
   dependency_h.second = ctvv_relative;
   m_neighbours.push_back(dependency_h);
   size_t i_neighbour = m_neighbours.size() - 1;  // checked: OK, since size() >= 1
