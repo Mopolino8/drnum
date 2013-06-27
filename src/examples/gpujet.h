@@ -6,25 +6,12 @@
 #include "rungekutta.h"
 #include "iteratorfeeder.h"
 
-void write(CartesianPatch &patch, QString file_name, int count)
-{
-  if (count >= 0) {
-    QString num;
-    num.setNum(count);
-    while (num.size() < 6) {
-      num = "0" + num;
-    }
-    file_name += "_" + num;
-  }
-  cout << "writing to file \"" << qPrintable(file_name) << ".vtr\"" << endl;
-  CompressibleVariables<PerfectGas> cvars;
-  patch.writeToVtk(0, file_name, cvars);
-}
-
 void run()
 {
 
-  string grid_file_name = "grid/jet_dual_2_mJ12_mK12.grid";
+  //string grid_file_name = "grid/jet_dual_2_mJ12_mK12.grid";
+  //string grid_file_name = "grid/jet_dual_2.grid";
+  string grid_file_name = "grid/bla.grid";
 
   #include "jet_pg_common.h"
 
