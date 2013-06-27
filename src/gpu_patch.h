@@ -12,6 +12,12 @@ class GPU_Patch
 
 #include "patch_common.h"
 
+protected:
+
+  size_t  m_NumVectorVars;     ///< number of vectorial variables
+  size_t* m_VectorVarIndices;  ///< array containing the starting indices of all vectorial variables (e.g. velocity, momentum, ...)
+
+
 public:
 
   CUDA_HO GPU_Patch(Patch* patch)
@@ -48,6 +54,14 @@ public:
     cudaMalloc(&m_Donors, sizeof(donor_t)*m_NumDonorPatches);
     CUDA_CHECK_ERROR;
     cudaMemcpy(m_Donors, patch->getDonors(), m_NumDonorPatches*sizeof(donor_t), cudaMemcpyHostToDevice);
+    CUDA_CHECK_ERROR;
+
+    // copy data for vectorial variables
+    vector<size_t> vector_indices = patch->getVectorVarIndices();
+    m_NumVectorVars = vector_indices.size();
+    cudaMalloc(&m_VectorVarIndices, sizeof(size_t)*m_NumVectorVars);
+    CUDA_CHECK_ERROR;
+    cudaMemcpy(m_VectorVarIndices, &vector_indices[0], m_NumVectorVars*sizeof(size_t), cudaMemcpyHostToDevice);
     CUDA_CHECK_ERROR;
 
     patch->setGpuData(m_Data);

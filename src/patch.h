@@ -121,6 +121,8 @@ protected: // attributes
   //  vector<InterCoeffWS> m_InterCoeffGrad1N_WS;           ///< same as m_InterCoeffGrad1N, but with WeightedSets (CPU only)
   // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;    ///< Interpolation coefficient lists for 2nd directed gradients
 
+  vector<size_t> m_VectorVarIndices; ///< array containing the starting indices of all vectorial variables (e.g. velocity, momentum, ...)
+
 
 protected: // methods
 
@@ -567,6 +569,12 @@ public: // methods
    * @return the pointer to the data block on the GPU
    */
   real* getGpuData();
+
+  /**
+   * @brief ///< get indices of vectorial variables (e.g. veclovity, momentum, ...)
+   * @return a vector with all starting indices
+   */
+  vector<size_t> getVectorVarIndices() { return m_VectorVarIndices; }
 
 
   /// @todo destructor
