@@ -40,7 +40,6 @@ public: // methods
 
   EaFlux(real u, real p, real T);
   EaFlux();
-  EaFlux(const EaFlux& F);
 
   template <typename PATCH> CUDA_DH void xField(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   template <typename PATCH> CUDA_DH void yField(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
@@ -62,10 +61,6 @@ EaFlux::EaFlux(real u, real p, real T)
 }
 
 EaFlux::EaFlux()
-{
-}
-
-EaFlux::EaFlux(const EaFlux& F)
 {
 }
 
@@ -155,10 +150,10 @@ void run()
   real u              = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real L              = 1.0;
   real time           = L/u;
-  real cfl_target     = 0.2;
+  real cfl_target     = 0.01;
   real t_write        = 0;
-  real write_interval = 2.0*time;
-  real total_time     = 100*time;
+  real write_interval = 1e-3*time;
+  real total_time     = 1e-2*time;
 
   // Patch grid
   PatchGrid patch_grid;
@@ -169,7 +164,8 @@ void run()
   patch_grid.setInterpolateData();
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
   patch_grid.setTransferType("padded_direct");
-  patch_grid.readGrid("patches/from_enGrid");
+  //patch_grid.readGrid("patches/from_enGrid");
+  patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
 
   // Time step
@@ -192,7 +188,7 @@ void run()
   runge_kutta.addAlpha(1.000);
 
   GPU_CartesianIterator<5, EaFlux> iterator(flux);
-  iterator.setCodeString(CodeString("fx1 fy1 fz1 bx1 bX1 by1 bY1 bz1 bZ1 s1")); //???
+  iterator.setCodeString(CodeString("fx fy fz farfield farfield farfield farfield farfield farfield 0")); //???
 
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator);
