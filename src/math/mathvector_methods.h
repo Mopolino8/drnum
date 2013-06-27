@@ -94,6 +94,30 @@ inline MathVector<V> MathVector<V>::cross(const MathVector<V> &vec) const
   return new_vec;
 };
 
+// maximise per coordinate
+// -----------------------
+template <class V>
+inline void MathVector<V>::maximisePerCoord(const MathVector<V>& vec)
+{
+  for (uint_t i = 0; i < this->size(); ++i) {
+    if( (*this)[i] < vec[i] ) {
+      (*this)[i] = vec[i];
+    }
+  }
+}
+
+// minimise per coordinate
+// -----------------------
+template <class V>
+inline void MathVector<V>::minimisePerCoord(const MathVector<V>& vec)
+{
+  for (uint_t i = 0; i < this->size(); ++i) {
+    if( (*this)[i] > vec[i] ) {
+      (*this)[i] = vec[i];
+    }
+  }
+}
+
 // absolute value (||v||_2 in this case)
 // -------------------------------------
 template <class V>

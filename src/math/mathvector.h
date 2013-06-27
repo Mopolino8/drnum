@@ -80,6 +80,8 @@ struct MathVector : public V
   // other things
   // ------------
   MathVector<V> cross(const MathVector<V> &vec) const;
+  void minimisePerCoord(const MathVector<V>& vec);
+  void maximisePerCoord(const MathVector<V>& vec);
   scalar_t abs() const;
   scalar_t abs2() const;
   MathVector<V> normalise();
