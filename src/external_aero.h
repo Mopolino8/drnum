@@ -200,6 +200,9 @@ void run()
   int iter = 0;
   real t = 0;
   patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+
+  //exit(-1); /// meshing!!!
+
   iterator.updateDevice();
 
   startTiming();
@@ -221,6 +224,7 @@ void run()
       real ql2_norm_allpatches = 0.;
 
       iterator.updateHost();
+      runge_kutta.copyDonorData(0);
 
       for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
         // Patch* patch = patch_grid.getPatch(i_p);
@@ -272,6 +276,7 @@ void run()
   stopTiming();
   cout << iter << " iterations" << endl;
 
+  runge_kutta.copyDonorData(0);
   iterator.updateHost();
   patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
   //gpu_iterator.gpuInfo();
