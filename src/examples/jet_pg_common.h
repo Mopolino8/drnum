@@ -20,7 +20,7 @@ real time           = L/u_jet;
 real cfl_target     = 0.5;  // new def. since computeDiagnose(...)
 
 real t_write        = 0;
-real write_interval = 0.5*time;
+real write_interval = 10.0*time;
 
 //real total_time     = 50*time;
 //real total_time     = 5*time;

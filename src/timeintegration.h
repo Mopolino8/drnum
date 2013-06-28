@@ -16,7 +16,6 @@ protected:
   virtual void copyField(size_t i_src, size_t i_dst);
 
   void computeIterators(real factor);
-  void copyDonorData(size_t i_field);
   void runPostOperations();
 
 
@@ -26,6 +25,7 @@ public:
 
   void addIterator(PatchIterator *patch_iterator) { m_Iterators.push_back(patch_iterator); }
   void addPostOperation(GenericOperation *operation) { m_PostOperations.push_back(operation); }
+  void copyDonorData(size_t i_field);
 
   virtual void operator()(real dt) = 0;
 

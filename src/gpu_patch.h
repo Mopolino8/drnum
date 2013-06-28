@@ -26,9 +26,9 @@ public:
     if (cudaMalloc(&m_Data, sizeof(real)*patch->dataSize()) != cudaSuccess) {
       BUG;
     } else {
-      cout << real(sizeof(real)*patch->dataSize())/1024/1024 << " Mbytes allocated on the GPU"<< endl;
+      //cout << real(sizeof(real)*patch->dataSize())/1024/1024 << " Mbytes allocated on the GPU"<< endl;
     }
-    cout << "GPU_Patch::GPU_Patch: m_Data = " << m_Data << endl;
+    //cout << "GPU_Patch::GPU_Patch: m_Data = " << m_Data << endl;
     copyToDevice(patch);
 
     cudaMalloc(&m_ReceivingCellIndicesConcat, sizeof(size_t)*m_NumReceivingCellsConcat);
@@ -98,9 +98,9 @@ public:
           donors[i].data = gpu[j];
           break;
         }
-        if (!found) {
-          BUG;
-        }
+      }
+      if (!found) {
+        BUG;
       }
     }
 

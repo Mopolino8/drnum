@@ -98,7 +98,7 @@ protected: // attributes
 
   // IO-scaling, position, orientation
   real m_ioscale;                            ///< general scale factor of mesh related to io-values
-  CoordTransformVV m_transformInertial2This; ///< transformation matrix to transform intertial coords into system of "this"
+  CoordTransformVV m_TransformInertial2This; ///< transformation matrix to transform intertial coords into system of "this"
 
   // bounding box
   vec3_t m_BBoxXYZoMin;   ///< lowest coordinates of smallest box around patch in inertial coords.
@@ -306,7 +306,7 @@ public: // methods
     */
   virtual void scaleRefParental(real scfactor)
   {
-    m_transformInertial2This.scaleVector(scfactor);
+    m_TransformInertial2This.scaleVector(scfactor);
   }
 
 

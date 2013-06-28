@@ -63,6 +63,13 @@ public:
     TGas::primitiveToConservative(p, T, u, v, w, m_Var);
   }
 
+  void setFarfield(real* var)
+  {
+    for (size_t i = 0; i < 5; ++i) {
+      m_Var[i] = var[i];
+    }
+  }
+
   template <typename PATCH> CUDA_DH void xWallP(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
     real var1[5];
