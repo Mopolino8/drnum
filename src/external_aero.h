@@ -164,7 +164,7 @@ void run()
   patch_grid.setInterpolateData();
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
   patch_grid.setTransferType("padded_direct");
-  patch_grid.readGrid("patches/from_enGrid");
+  patch_grid.readGrid("patches/standard.grid");
   //patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
 
@@ -188,7 +188,7 @@ void run()
   runge_kutta.addAlpha(1.000);
 
   GPU_CartesianIterator<5, EaFlux> iterator(flux);
-  iterator.setCodeString(CodeString("fx fy fz farfield farfield farfield farfield farfield farfield 0")); //???
+  iterator.setCodeString(CodeString("fx fy fz far far far far far far 0")); //???
 
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator);
