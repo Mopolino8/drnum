@@ -30,59 +30,68 @@ class Patch:
     self.neighK2 = set([])
     self.overlap = 2
     
-  def setNeighI1(self, neigh):
+  def Li(self):
+    return self.x2 - self.x1
+    
+  def Lj(self):
+    return self.y2 - self.y1
+    
+  def Lk(self):
+    return self.z2 - self.z1
+    
+  def addNeighI1(self, neigh):
     self.neighI1.add(neigh.index)
     self.SeekLayersI1 = self.overlap
     neigh.neighI2.add(self.index)
     neigh.SeekLayersI2 = neigh.overlap
 
-  def setNeighI2(self, neigh):
+  def addNeighI2(self, neigh):
     self.neighI2.add(neigh.index)
     self.SeekLayersI2 = self.overlap
     neigh.neighI1.add(self.index)
     neigh.SeekLayersI1 = neigh.overlap
     
-  def setNeighJ1(self, neigh):
+  def addNeighJ1(self, neigh):
     self.neighJ1.add(neigh.index)
     self.SeekLayersJ1 = self.overlap
     neigh.neighJ2.add(self.index)
     neigh.SeekLayersJ2 = neigh.overlap
 
-  def setNeighJ2(self, neigh):
+  def addNeighJ2(self, neigh):
     self.neighJ2.add(neigh.index)
     self.SeekLayersJ2 = self.overlap
     neigh.neighJ1.add(self.index)
     neigh.SeekLayersJ1 = neigh.overlap
 
-  def setNeighK1(self, neigh):
+  def addNeighK1(self, neigh):
     self.neighK1.add(neigh.index)
     self.SeekLayersK1 = self.overlap
     neigh.neighK2.add(self.index)
     neigh.SeekLayersK2 = neigh.overlap
 
-  def setNeighK2(self, neigh):
+  def addNeighK2(self, neigh):
     self.neighK2.add(neigh.index)
     self.SeekLayersK2 = self.overlap
     neigh.neighK1.add(self.index)
     neigh.SeekLayersK1 = neigh.overlap
     
-  def setTopNeigh(self, neigh):
-    self.setNeighK2(neigh)
+  def addTopNeigh(self, neigh):
+    self.addNeighK2(neigh)
     
-  def setBottomNeigh(self, neigh):
-    self.setNeighK1(neigh)
+  def addBottomNeigh(self, neigh):
+    self.addNeighK1(neigh)
     
-  def setLeftNeigh(self, neigh):
-    self.setNeighI1(neigh)
+  def addLeftNeigh(self, neigh):
+    self.addNeighI1(neigh)
       
-  def setRightNeigh(self, neigh):
-    self.setNeighI2(neigh)
+  def addRightNeigh(self, neigh):
+    self.addNeighI2(neigh)
     
-  def setFrontNeigh(self, neigh):
-    self.setNeighJ1(neigh)
+  def addFrontNeigh(self, neigh):
+    self.addNeighJ1(neigh)
     
-  def setBackNeigh(self, neigh):
-    self.setNeighJ2(neigh)
+  def addBackNeigh(self, neigh):
+    self.addNeighJ2(neigh)
     
   def setRes(self, h):
     self.hi = h
@@ -278,6 +287,12 @@ class Mesh:
       
   def numCells(self):
     return self.numCoreCells() + self.numOverlapCells()
+    
+  def setMinDim(self, N_min):
+    for i in range(0, len(self.patches)):
+      self.patches[i].hi = min(self.patches[i].hi, self.patches[i].Li()/N_min)
+      self.patches[i].hj = min(self.patches[i].hj, self.patches[i].Lj()/N_min)
+      self.patches[i].hk = min(self.patches[i].hk, self.patches[i].Lk()/N_min)
     
   def printInfo(self):
     print "\n"
