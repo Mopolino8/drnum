@@ -15,7 +15,13 @@
 #include "perfectgas.h"
 #include "compressiblevariables.h"
 #include "rungekutta.h"
+
+#ifdef GPU
 #include "iterators/gpu_cartesianiterator.h"
+#else
+#include "iterators/cartesianiterator.h"
+#endif
+
 #include "rungekutta.h"
 #include "iteratorfeeder.h"
 
@@ -152,8 +158,8 @@ void run()
   real time           = L/u;
   real cfl_target     = 0.1;
   real t_write        = 0;
-  real write_interval = 0.1*time;
-  real total_time     = 1.0*time;
+  real write_interval = 0.0001*time;
+  real total_time     = 0.0001*time;
 
   // Patch grid
   PatchGrid patch_grid;
@@ -187,7 +193,11 @@ void run()
   runge_kutta.addAlpha(0.5);
   runge_kutta.addAlpha(1.000);
 
+#ifdef GPU
   GPU_CartesianIterator<5, EaFlux> iterator(flux);
+#else
+  CartesianIterator<5, EaFlux> iterator(flux);
+#endif
   iterator.setCodeString(CodeString("fx fy fz far far far far far far 0")); //???
 
   IteratorFeeder iterator_feeder;
@@ -199,11 +209,15 @@ void run()
   int write_counter = 0;
   int iter = 0;
   real t = 0;
-  patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
 
   //exit(-1); /// meshing!!!
 
+#ifdef GPU
   iterator.updateDevice();
+  runge_kutta.copyDonorData(0);
+  iterator.updateHost();
+#endif
+  patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
 
   startTiming();
 
@@ -223,11 +237,12 @@ void run()
       real l2_norm_allpatches;
       real ql2_norm_allpatches = 0.;
 
-      iterator.updateHost();
+      #ifdef GPU
       runge_kutta.copyDonorData(0);
+      iterator.updateHost();
+      #endif
 
       for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
-        // Patch* patch = patch_grid.getPatch(i_p);
         CartesianPatch& patch = *(dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_p)));
         size_t NI = patch.sizeI();
         size_t NJ = patch.sizeJ();
@@ -276,10 +291,12 @@ void run()
   stopTiming();
   cout << iter << " iterations" << endl;
 
+#ifdef GPU
   runge_kutta.copyDonorData(0);
   iterator.updateHost();
+#endif
+
   patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
-  //gpu_iterator.gpuInfo();
 }
 
 #endif // EXTERNAL_AERO_H
