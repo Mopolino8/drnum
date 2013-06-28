@@ -181,6 +181,19 @@ class Patch:
     txt += "  0\n"
     txt += "}\n"
     return txt
+    
+  def numCells(self):
+    return self.Ni*self.Nj*self.Nk
+    
+  def numOverlapCells(self):
+    N = 0
+    N += self.SeekLayersI1*self.Nj*self.Nk
+    N += self.SeekLayersI2*self.Nj*self.Nk
+    N += self.SeekLayersJ1*self.Ni*self.Nk
+    N += self.SeekLayersJ2*self.Ni*self.Nk
+    N += self.SeekLayersK1*self.Ni*self.Nj
+    N += self.SeekLayersK2*self.Ni*self.Nj
+    return N
 
     
 class Mesh:
@@ -222,21 +235,57 @@ class Mesh:
         for neigh in self.patches[i].neighI1:
           hn = max(hn, self.patches[neigh].hi)
         self.patches[i].inflateI1(hn)
-          
-        #self.patches[i].inflateI1(self.patches[self.patches[i].neighI1])
-        
-      #if self.patches[i].neighI2 != -1:
-        #self.patches[i].inflateI2(self.patches[self.patches[i].neighI2])
-      #if self.patches[i].neighJ1 != -1:
-        #self.patches[i].inflateJ1(self.patches[self.patches[i].neighJ1])
-      #if self.patches[i].neighJ2 != -1:
-        #self.patches[i].inflateJ2(self.patches[self.patches[i].neighJ2])
-      #if self.patches[i].neighK1 != -1:
-        #self.patches[i].inflateK1(self.patches[self.patches[i].neighK1])
-      #if self.patches[i].neighK2 != -1:
-        #self.patches[i].inflateK2(self.patches[self.patches[i].neighK2])
+      if len(self.patches[i].neighI2) > 0:
+        hn = 0.0
+        for neigh in self.patches[i].neighI2:
+          hn = max(hn, self.patches[neigh].hi)
+        self.patches[i].inflateI2(hn)
+      if len(self.patches[i].neighJ1) > 0:
+        hn = 0.0
+        for neigh in self.patches[i].neighJ1:
+          hn = max(hn, self.patches[neigh].hi)
+        self.patches[i].inflateJ1(hn)
+      if len(self.patches[i].neighJ2) > 0:
+        hn = 0.0
+        for neigh in self.patches[i].neighJ2:
+          hn = max(hn, self.patches[neigh].hi)
+        self.patches[i].inflateJ2(hn)
+      if len(self.patches[i].neighK1) > 0:
+        hn = 0.0
+        for neigh in self.patches[i].neighK1:
+          hn = max(hn, self.patches[neigh].hi)
+        self.patches[i].inflateK1(hn)
+      if len(self.patches[i].neighK2) > 0:
+        hn = 0.0
+        for neigh in self.patches[i].neighK2:
+          hn = max(hn, self.patches[neigh].hi)
+        self.patches[i].inflateK2(hn)
 
     for i in range(0, len(self.patches)):
       self.patches[i].updateResolution()
+      
+  def numCoreCells(self):
+    N = 0
+    for patch in self.patches:
+      N += patch.numCells() - patch.numOverlapCells()
+    return N
+      
+  def numOverlapCells(self):
+    N = 0
+    for patch in self.patches:
+      N += patch.numOverlapCells()
+    return N
+      
+  def numCells(self):
+    return self.numCoreCells() + self.numOverlapCells()
+    
+  def printInfo(self):
+    print "\n"
+    print "number of patches       : %d" % len(self.patches)
+    print "total number of cells   : %d" % self.numCells()
+    print "number of core cells    : %d" % self.numCoreCells()
+    print "number of overlap cells : %d" % self.numOverlapCells()
+    print "overlap ratio in %%      : %.2f" % (100*float(self.numOverlapCells())/float(self.numCoreCells()))
+
 
 
