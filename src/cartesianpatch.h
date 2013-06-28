@@ -240,6 +240,15 @@ public: // methods
     return xyz;
   }
 
+  inline vec3_t xyzoCell(const size_t& i, const size_t& j, const size_t& k) const
+  {
+    vec3_t xyz, xyzo;
+    xyzCell(i, j, k,
+            xyz[0], xyz[1], xyz[2]);
+    xyzo = m_transformInertial2This.transformReverse(xyz);
+    return xyzo;
+  }
+
   inline void xyzCell(const size_t& i, const size_t& j, const size_t& k,
                       real& x, real& y, real& z) const
   {

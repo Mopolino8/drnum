@@ -114,6 +114,7 @@ SOURCES += main.cpp \
     iteratorfeeder.cpp \
     main.cu
 
+
 SOURCES -= main.cu
 
 HEADERS += \
@@ -229,4 +230,3 @@ CUDA_SOURCES += main.cu
 
 OTHER_FILES += \
     doc/iterators.dox
-

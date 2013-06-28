@@ -20,6 +20,7 @@ public:
 CUDA_DH size_t sizeI() const { return m_NumI; }
 CUDA_DH size_t sizeJ() const { return m_NumJ; }
 CUDA_DH size_t sizeK() const { return m_NumK; }
+CUDA_DH size_t sizeL() const { return m_NumI * m_NumJ * m_NumK; }
 
 CUDA_DH real dx()  const { return m_Dx; }
 CUDA_DH real dy()  const { return m_Dy; }
