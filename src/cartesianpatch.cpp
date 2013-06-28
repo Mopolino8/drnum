@@ -297,7 +297,7 @@ void CartesianPatch::buildRegions()
   m_JCoreFirst = m_NumProtJmin;
   m_JCoreAfterlast = m_NumJ - m_NumProtJmax;
   m_KCoreFirst = m_NumProtKmin;
-  m_KCoreAfterlast = m_NumJ - m_NumProtKmax;
+  m_KCoreAfterlast = m_NumK - m_NumProtKmax;
 }
 // END NEW_SEEK_EXCEPTION
 
