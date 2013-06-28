@@ -28,7 +28,12 @@ class Patch:
     self.neighJ2 = set([])
     self.neighK1 = set([])
     self.neighK2 = set([])
+    self.overlap_factor = 1.0;
     self.overlap = 2
+    self.name = "N/A"
+    
+  def setName(self, name):
+    self.name = name
     
   def Li(self):
     return self.x2 - self.x1
@@ -127,25 +132,25 @@ class Patch:
       self.Nk += 1
     
   def inflateI1(self, hn):
-    self.x1 -= 0.5*hn + 2*self.hi
+    self.x1 -= self.overlap_factor*(0.5*hn + 2*self.hi)
     
   def inflateI2(self, hn):
-    self.x2 += 0.5*hn + 2*self.hi
+    self.x2 += self.overlap_factor*(0.5*hn + 2*self.hi)
     
   def inflateJ1(self, hn):
-    self.y1 -= 0.5*hn + 2*self.hj
+    self.y1 -= self.overlap_factor*(0.5*hn + 2*self.hj)
     
   def inflateJ2(self, hn):
-    self.y2 += 0.5*hn + 2*self.hj
+    self.y2 += self.overlap_factor*(0.5*hn + 2*self.hj)
     
   def inflateK1(self, hn):
-    self.z1 -= 0.5*hn + 2*self.hk
+    self.z1 -= self.overlap_factor*(0.5*hn + 2*self.hk)
     
   def inflateK2(self, hn):
-    self.z2 += 0.5*hn + 2*self.hk
+    self.z2 += self.overlap_factor*(0.5*hn + 2*self.hk)
     
   def toString(self):
-    txt = "1001\n{\n"
+    txt = "1001 // index=%d name='%s'\n{\n" % (self.index, self.name)
     txt += "  " + str(self.x1) + " " + str(self.y1) + " " + str(self.z1) + "\n"
     txt += "  1 0 0\n"
     txt += "  0 1 0\n"
@@ -293,6 +298,10 @@ class Mesh:
       self.patches[i].hi = min(self.patches[i].hi, self.patches[i].Li()/N_min)
       self.patches[i].hj = min(self.patches[i].hj, self.patches[i].Lj()/N_min)
       self.patches[i].hk = min(self.patches[i].hk, self.patches[i].Lk()/N_min)
+    
+  def setOverlapFactor(self, of):
+    for i in range(0, len(self.patches)):
+      self.patches[i].overlap_factor = of
     
   def printInfo(self):
     print "\n"
