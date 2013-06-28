@@ -87,7 +87,6 @@ void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()
   cout << "void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()" << endl;
   if (!m_GpuPointersSet) {
     for (size_t i = 0; i < m_GpuPatches.size(); ++i) {
-      cout << "translating " << i << endl;
       m_GpuPatches[i].updateDonorPointers(PatchIterator::getPatch(i));
     }
     m_GpuPointersSet = true;
