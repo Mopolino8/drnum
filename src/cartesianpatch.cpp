@@ -40,7 +40,6 @@ bool CartesianPatch::readFromFile(istringstream& iss_input)
   iss_input >> numProtYmax;
   iss_input >> numProtZmin;
   iss_input >> numProtZmax;
-  setSeekExceptions(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
   // physical size of cartesian block
   real ilength, jlength, klength;
   iss_input >> ilength;
@@ -51,7 +50,9 @@ bool CartesianPatch::readFromFile(istringstream& iss_input)
   jlength *= m_ioscale;
   klength *= m_ioscale;
   // apply patch modifiers
+  setSeekExceptions(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
   resize(num_i, num_j, num_k);
+  buildRegions();  // also in resize
   setupMetrics(ilength, jlength, klength);
   // continue reading solver codes from file
   Patch::readSolverCodes(iss_input);
@@ -75,35 +76,6 @@ void CartesianPatch::scaleRefParental(real scfactor)
 }
 
 
-// NEW_SEEK_EXCEPTION
-//void CartesianPatch::setNumProtectLayers(size_t num_protectlayers)
-//{
-//  Patch::setNumProtectLayers(num_protectlayers);
-//  //  m_ProtectException = false;
-//  //  m_NumProtectLayers = num_protectlayers;
-//  m_NumProtImin = num_protectlayers;
-//  m_NumProtImax = num_protectlayers;
-//  m_NumProtJmin = num_protectlayers;
-//  m_NumProtJmax = num_protectlayers;
-//  m_NumProtKmin = num_protectlayers;
-//  m_NumProtKmax = num_protectlayers;
-//}
-
-// NEW_SEEK_EXCEPTION
-//void CartesianPatch::setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
-//                                            const size_t& numProtYmin, const size_t& numProtYmax,
-//                                            const size_t& numProtZmin, const size_t& numProtZmax)
-//{
-//  m_ProtectException = true;
-//  m_NumProtImin = numProtXmin;
-//  m_NumProtImax = numProtXmax;
-//  m_NumProtJmin = numProtYmin;
-//  m_NumProtJmax = numProtYmax;
-//  m_NumProtKmin = numProtZmin;
-//  m_NumProtKmax = numProtZmax;
-//}
-
-
 void CartesianPatch::setSeekExceptions(const size_t& num_seekImin, const size_t& num_seekImax,
                                        const size_t& num_seekJmin, const size_t& num_seekJmax,
                                        const size_t& num_seekKmin, const size_t& num_seekKmax)
@@ -120,12 +92,6 @@ void CartesianPatch::setSeekExceptions(const size_t& num_seekImin, const size_t&
 
 void CartesianPatch::computeDeltas()
 {
-  /// @todo delete this block
-  //  m_Lx = sqrt(sqr(m_Uxo) + sqr(m_Uyo) + sqr(m_Uzo));
-  //  m_Ly = sqrt(sqr(m_Vxo) + sqr(m_Vyo) + sqr(m_Vzo));
-  //  m_Lz = sqrt(sqr(m_Wxo) + sqr(m_Wyo) + sqr(m_Wzo));
-  //  countFlops(15);
-  //  countSqrts(3);
 
   m_Dx = m_Lx/m_NumI;
   m_Dy = m_Ly/m_NumJ;
@@ -155,20 +121,7 @@ void CartesianPatch::computeDeltas()
   m_xCCInterMax = m_Lx - (m_NumProtImax + 0.) * m_Dx;
   m_yCCInterMax = m_Ly - (m_NumProtJmax + 0.) * m_Dy;
   m_zCCInterMax = m_Lz - (m_NumProtKmax + 0.) * m_Dz;
-  //
-  //  m_xCCInterMin = (m_NumProtImin + 0.5) * m_Dx;
-  //  m_yCCInterMin = (m_NumProtJmin + 0.5) * m_Dy;
-  //  m_zCCInterMin = (m_NumProtKmin + 0.5) * m_Dz;
-  //  m_xCCInterMax = m_Lx - (m_NumProtImax + 0.5) * m_Dx;
-  //  m_yCCInterMax = m_Ly - (m_NumProtJmax + 0.5) * m_Dy;
-  //  m_zCCInterMax = m_Lz - (m_NumProtKmax + 0.5) * m_Dz;
-  //
-  //  m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
-  //  m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
-  //  m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
-  //  m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
-  //  m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
-  //  m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
+
   countFlops(6);
 
   m_EpsDX = m_Dx * m_Eps;
@@ -197,8 +150,8 @@ void CartesianPatch::resize(size_t num_i, size_t num_j, size_t num_k)
   m_NumJK = num_j*num_k;
   deleteData();
   Patch::resize(m_NumI*m_NumJ*m_NumK);
-  computeDeltas();
   buildRegions();
+  computeDeltas();
 }
 
 void CartesianPatch::buildBoundingBox()
@@ -397,56 +350,6 @@ void CartesianPatch::extractSeekCells()
 }
 // END NEW_SEEK_EXCEPTION
 
-// NEW_SEEK_EXCEPTION
-//void CartesianPatch::extractReceiveCells()
-//{
-//  bool any_error = false;
-//  bool error;
-//  size_t cell_h;
-//  /** @todo check!! very prone to cut&paste errors.
-//    * Can do better than below looping: inserts many duplicates, that will be eliminated later.
-//    */
-//  for(size_t layer=0; layer<m_NumOverlapLayers; layer++) {
-//    for(size_t j_cell=0; j_cell<m_NumJ; j_cell++) {
-//      for(size_t k_cell=0; k_cell<m_NumK; k_cell++) {
-//        cell_h = save_index(layer, j_cell, k_cell,
-//                            error);
-//        any_error = any_error || error;
-//        if(!error) m_receive_cells.push_back(cell_h);
-//        cell_h = save_index(m_NumI-1-layer, j_cell, k_cell,
-//                            error);
-//        any_error = any_error || error;
-//        if(!error) m_receive_cells.push_back(cell_h);
-//      }
-//    }
-//    // j_cell=[0, m_NumOverlapLayers-1] and j_cell=[m_NumJ-1, m_NumJ-1-m_NumOverlapLayers-1]
-//    for(size_t k_cell=0; k_cell<m_NumK; k_cell++) {
-//      for(size_t i_cell=0; i_cell<m_NumI; i_cell++) {
-//        cell_h = save_index(i_cell, layer, k_cell,
-//                            error);
-//        any_error = any_error || error;
-//        if(!error) m_receive_cells.push_back(cell_h);
-//        cell_h = save_index(i_cell, m_NumJ-1-layer, k_cell,
-//                            error);
-//        any_error = any_error || error;
-//        if(!error) m_receive_cells.push_back(cell_h);
-//      }
-//    }
-//    // k_cell=[0, m_NumOverlapLayers-1] and k_cell=[m_NumK-1, m_NumK-1-m_NumOverlapLayers-1]
-//    for(size_t i_cell=0; i_cell<m_NumI; i_cell++) {
-//      for(size_t j_cell=0; j_cell<m_NumJ; j_cell++) {
-//        cell_h = save_index(i_cell, j_cell, layer,
-//                            error);
-//        any_error = any_error || error;
-//        if(!error) m_receive_cells.push_back(cell_h);
-//        cell_h = save_index(i_cell, j_cell, m_NumK-1-layer,
-//                            error);
-//        any_error = any_error || error;
-//        if(!error) m_receive_cells.push_back(cell_h);
-//      }
-//    }
-//  }
-//}
 
 bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
 {
