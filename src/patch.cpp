@@ -290,7 +290,7 @@ void Patch::finalizeDependencies()
     cout << cumulated_shift << " seeking cells, that did not find donors" << endl;
 #ifdef WITH_VTK
     cout << "affected cells have been written to: \"" << file_name << "\"" << endl;
-        #endif
+#endif
     cout << "**********************************************************************************************" << endl;
 
   }
