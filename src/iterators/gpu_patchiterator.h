@@ -137,8 +137,8 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
 
         real* dvar = donor.data + i_var*donor.variable_size;
         //donated_var[i_var] = dvar[donor_cell_index];
-        //patch.getVariable(i_field, i_var)[i_rec] += donor_cell_weight*dvar[donor_cell_index];
-        patch.getVariable(i_field, i_var)[i_rec] += donor_cell_weight;
+        patch.getVariable(i_field, i_var)[i_rec] += donor_cell_weight*dvar[donor_cell_index];
+        //patch.getVariable(i_field, i_var)[i_rec] += 1.0;//donor_cell_weight;
       }
 
       /*
