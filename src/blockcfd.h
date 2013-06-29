@@ -68,8 +68,6 @@ inline int posReal2Int(real v)
 using namespace std;
 
 
-struct real3_t { real x, y, z; };
-struct size3_t { size_t i, j, k; };
 
 #define RESTRICT __restrict__
 #define REGREAL real
@@ -221,6 +219,15 @@ inline CUDA_DH real nonZero(const real x, const real eps)
   }
 }
 
+struct real3_t { real x, y, z; };
+
+struct size3_t
+{
+  size_t i, j, k;
+  CUDA_DH size3_t()                             { i = 0; j = 0; k = 0; }
+  CUDA_DH size3_t(size_t i, size_t j, size_t k) { this->i = i; this->j = j; this->k = k; }
+  CUDA_DH bool operator==(const size3_t& s)     { return i == s.i && j == s.j && k == s.k; }
+};
 
 
 #endif // BLOCKCFD_H
