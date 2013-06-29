@@ -174,7 +174,6 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
   // Check, if boundary cells are yet extracted. If not, do so.
   if(!m_receiveCells_OK) {
     m_receive_cells.clear();
-    // do before buildRegions();  /// @todo need better method call handling, when to do what
     extractSeekCells();
     compactReceiveCellLists();
     m_receiveCells_OK = true;
@@ -195,15 +194,9 @@ void Patch::insertNeighbour(Patch* neighbour_patch) {
     m_InterCoeffData_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
   }   /// @todo would be nice to have a link_vector<T>
 
-  //  if (m_InterpolateGrad1N) {
-  //    m_InterCoeffGrad1N_WS.resize(i_neighbour + 1);
-  //    //CHANGE_DONOR! m_InterCoeffGrad1N_WS[i_neighbour].setDonorPatch(neighbour_patch);
-  //    m_InterCoeffGrad1N_WS[i_neighbour].setCoordTransform(ctvv_relative.extractReverse());
-  //  }
-
   bool found_dependency = computeDependencies(i_neighbour);
 
-  // discard donor neighbourship relation, if not any was found
+  // discard donor neighbourship relation, if not any dependency was found
   if (!found_dependency) {
     m_neighbours.pop_back();
     //    if (m_InterpolateGrad1N) {
@@ -263,6 +256,14 @@ void Patch::finalizeDependencies()
     if(!any_hit) { // not any donor contribution found
       cumulated_shift++;
     }
+  }
+  // Issue a warning, if this patch has seeking cells, that did not find any donor.
+  if(cumulated_shift > 0) {
+    cout << "***********************************************" << endl;
+    cout << "WARNING: Patch::finalizeDependencies()" << endl;
+    cout << " patch id: " << m_myindex  << endl;
+    cout << cumulated_shift << " seeking cells, that did not find donors" << endl;
+    cout << "***********************************************" << endl;
   }
   //  2) Build a scratch list index_new_from_old, so that an operation of type
   //     m_receive_cells..new[ll] = m_receive_cells..old[index_new_from_old[ll]]

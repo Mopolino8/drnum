@@ -227,6 +227,14 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
 }
 
 
+//void PatchGrid::checkSeekSuccess()
+//{
+//  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+//    m_Patches[i_p]->checkSeekSuccess();
+//  }
+//}
+
+
 void PatchGrid::finalizeDependencies()
 {
   for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {

@@ -115,12 +115,24 @@ void CartesianPatch::computeDeltas()
   // Attention: Allow interpolation in total region of cells
   //            in responibility domain (+ 0.) instead of (+0.5).
   //            Reason: Adaptivity. Precision actually handled via epsing.
-  m_xCCInterMin = (m_NumProtImin + 0.) * m_Dx;
-  m_yCCInterMin = (m_NumProtJmin + 0.) * m_Dy;
-  m_zCCInterMin = (m_NumProtKmin + 0.) * m_Dz;
-  m_xCCInterMax = m_Lx - (m_NumProtImax + 0.) * m_Dx;
-  m_yCCInterMax = m_Ly - (m_NumProtJmax + 0.) * m_Dy;
-  m_zCCInterMax = m_Lz - (m_NumProtKmax + 0.) * m_Dz;
+  // Correction: 2013_06_28: use 0.5 element layer protection for CC-interpolates
+  //             to avoid any invalid access causing recursion.
+  m_xCCInterMin = m_xCCMin + m_NumProtImin * m_Dx;
+  m_yCCInterMin = m_yCCMin + m_NumProtJmin * m_Dy;
+  m_zCCInterMin = m_zCCMin + m_NumProtKmin * m_Dz;
+  m_xCCInterMax = m_xCCMax - m_NumProtImax * m_Dx;
+  m_yCCInterMax = m_yCCMax - m_NumProtJmax * m_Dy;
+  m_zCCInterMax = m_zCCMax - m_NumProtKmax * m_Dz;
+
+  cout << "DEBUG HERE" << endl;
+
+  // DEBUG: erase below, if above is correct
+  m_xCCInterMin = (m_NumProtImin + 0.5) * m_Dx;
+  m_yCCInterMin = (m_NumProtJmin + 0.5) * m_Dy;
+  m_zCCInterMin = (m_NumProtKmin + 0.5) * m_Dz;
+  m_xCCInterMax = m_Lx - (m_NumProtImax + 0.5) * m_Dx;
+  m_yCCInterMax = m_Ly - (m_NumProtJmax + 0.5) * m_Dy;
+  m_zCCInterMax = m_Lz - (m_NumProtKmax + 0.5) * m_Dz;
 
   countFlops(6);
 
@@ -189,26 +201,29 @@ void CartesianPatch::buildBoundingBox()
   m_BBoxOk = true;
 }
 
-// NEW_SEEK_EXCEPTION
+
 void CartesianPatch::buildRegions()
 {
   // Example: a 16x8 patch with 2 seek layers and 1 protection layer
-  //          with seek exception m_NumSeekImax = m_NumSeekJmin would
-  //          have the following regions below: S: seek, S and P: protected,
-  //          C: core .
+  //          with seek exception m_NumSeekImax = m_NumSeekJmin = 0 would
+  //          have the following regions below:
+  //            S:     seeking zone
+  //            S & P: protected (no other patches are allowed to seek here)
+  //            D:     donor zone
+  //            P & D: core
   //
   //   S S S S S S S S S S S S S S S S
-  //   S S S S S S S S S S S S S S S S
-  //   S S P P P P P P P P P P P P P P -- m_JCoreAfterlast
-  //   S S P C C C C C C C C C C C C C
-  //   S S P C C C C C C C C C C C C C
-  //   S S P C C C C C C C C C C C C C
-  //   S S P C C C C C C C C C C C C C
-  //   S S P C C C C C C C C C C C C C
-  //   S S P C C C C C C C C C C C C C -- m_JCoreFirst
-  //       |                         |
-  //       |                         |
-  //       m_ICoreFirst              m_ICoreAfterlast
+  //   S S S S S S S S S S S S S S S S -- m_JCoreAfterlast
+  //   S S P P P P P P P P P P P P P P -- m_DonorZoneAfterlast
+  //   S S P D D D D D D D D D D D D D
+  //   S S P D D D D D D D D D D D D D
+  //   S S P D D D D D D D D D D D D D
+  //   S S P D D D D D D D D D D D D D
+  //   S S P D D D D D D D D D D D D D
+  //   S S P D D D D D D D D D D D D D -- m_JCoreFirst = m_JDonorZoneFirst
+  //       | |                         |
+  //       | m_IDonorZoneFirst         m_IDonorZoneAfterlast
+  //       m_ICoreFirst                m_ICoreAfterlast
   //
 
   // Seek zone: zone in overlap, seeking data from foreign patches
@@ -241,18 +256,30 @@ void CartesianPatch::buildRegions()
   if (m_NumSeekKmin == 0) {m_NumProtKmin = 0;}
   if (m_NumSeekKmax == 0) {m_NumProtKmax = 0;}
 
+  // Define Donor region of patch
+  // [m_IDonorZoneFirst, m_IDonorZoneAfterlast - 1]
+  // [m_JDonorZoneFirst, m_JDonorZoneAfterlast - 1]
+  // [m_KDonorZoneFirst, m_KDonorZoneAfterlast - 1]
+  m_IDonorZoneFirst = m_NumProtImin;
+  m_IDonorZoneAfterlast = m_NumI - m_NumProtImax;
+  m_JDonorZoneFirst = m_NumProtJmin;
+  m_JDonorZoneAfterlast = m_NumJ - m_NumProtJmax;
+  m_KDonorZoneFirst = m_NumProtKmin;
+  m_KDonorZoneAfterlast = m_NumK - m_NumProtKmax;
+
   // Define Core region of patch
   // [m_ICoreFirst, m_ICoreAfterlast - 1]
   // [m_JCoreFirst, m_JCoreAfterlast - 1]
   // [m_KCoreFirst, m_KCoreAfterlast - 1]
-  m_ICoreFirst = m_NumProtImin;
-  m_ICoreAfterlast = m_NumI - m_NumProtImax;
-  m_JCoreFirst = m_NumProtJmin;
-  m_JCoreAfterlast = m_NumJ - m_NumProtJmax;
-  m_KCoreFirst = m_NumProtKmin;
-  m_KCoreAfterlast = m_NumK - m_NumProtKmax;
+  m_ICoreFirst = m_NumSeekImin;
+  m_ICoreAfterlast = m_NumI - m_NumSeekImax;
+  m_JCoreFirst = m_NumSeekJmin;
+  m_JCoreAfterlast = m_NumJ - m_NumSeekJmax;
+  m_KCoreFirst = m_NumSeekKmin;
+  m_KCoreAfterlast = m_NumK - m_NumSeekKmax;
+
 }
-// END NEW_SEEK_EXCEPTION
+
 
 // NEW_SEEK_EXCEPTION
 void CartesianPatch::extractSeekCells()
@@ -368,10 +395,6 @@ bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
   //  - interpolate there if receiving cell hits neighbours core region
   for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
     size_t l_rc = m_receive_cells[ll_rc];
-    //    real x_rc = cellX(l_rc);
-    //    real y_rc = cellY(l_rc);
-    //    real z_rc = cellZ(l_rc);
-    //    real xx_rc, yy_rc, zz_rc;
     vec3_t xyz_rc = xyzCell(l_rc);
     vec3_t xxyyzz_rc = trans.transform(xyz_rc);
     WeightedSet<real> w_set;
@@ -382,14 +405,6 @@ bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
         m_receive_cell_data_hits[ll_rc]++;
         found_dependency = true;
       }
-      //      if(m_InterpolateGrad1N) {
-      //        int direction = boundingNVecDirection(l_rc); // note: trivial function, that ommits normal storage
-      //        if(neighbour_patch->computeCCGrad1NInterpolCoeffs(xxyyzz_rc, nxxyyzz_ijk[direction],
-      //                                                          w_set)) {
-      //          m_InterCoeffGrad1N_WS[i_neighbour].push(ll_rc, l_rc, w_set);
-      //          m_receive_cell_grad1N_hits[ll_rc]++;
-      //        }
-      //      }
     }
   }
   return found_dependency;
@@ -448,30 +463,6 @@ void CartesianPatch::setupInterpolators()
       */
 }
 
-// void CartesianPatch::setupInterpolators(size_t num_protectlayers)
-// {
-
-//   m_NumProtectLayers = num_protectlayers;
-
-//   // Cell center coords of lowest address cell (i,j,k) = (0,0,0)
-//   //  m_xCCMin = 0.5 * m_Dx;
-//   //  m_yCCMin = 0.5 * m_Dy;
-//   //  m_zCCMin = 0.5 * m_Dz;
-
-//   // CC-coordinates limits to access data from foreign patches
-//   m_xCCInterMin = (m_NumProtectLayers + 0.5) * m_Dx;
-//   m_yCCInterMin = (m_NumProtectLayers + 0.5) * m_Dy;
-//   m_zCCInterMin = (m_NumProtectLayers + 0.5) * m_Dz;
-//   m_xCCInterMax = m_Lx - (m_NumProtectLayers + 0.5) * m_Dx;
-//   m_yCCInterMax = m_Ly - (m_NumProtectLayers + 0.5) * m_Dy;
-//   m_zCCInterMax = m_Lz - (m_NumProtectLayers + 0.5) * m_Dz;
-
-//   m_EpsDX = m_Eps * m_Dx;
-//   m_EpsDY = m_Eps * m_Dy;
-//   m_EpsDZ = m_Eps * m_Dz;
-
-//   //  m_Interpol_Initialized = true;
-// }
 
 bool CartesianPatch::computeCCDataInterpolCoeffs(real x, real y, real z,
                                                  WeightedSet<real>& w_set)
@@ -479,11 +470,6 @@ bool CartesianPatch::computeCCDataInterpolCoeffs(real x, real y, real z,
   size_t ic_ref, jc_ref, kc_ref;
   bool inside;
   real w_octet[8];
-
-  //  // May not request a value, if m_NumProtectLayers<1
-  //  if(m_NumProtectLayers < 1) {
-  //    cout << "CartesianPatch::computeCCDataInterpolCoeffs, m_NumProtectLayers = " << m_NumProtectLayers << endl;
-  //  }
 
   // Check inside and get reference cell
   inside = xyzToRefInterCell(x, y, z,
@@ -692,7 +678,7 @@ void CartesianPatch::computeCCInterpolWeights(real& x, real& y, real& z,
   //   6:         ( ic_ref+1, jc_ref+1, kc_ref   )
   //   7:         ( ic_ref+1, jc_ref+1, kc_ref+1 )
 
-  // cartesian distances to bounding element sides
+  // coordinates (local system of this) of reference cell center
   real x_ref = 0.5*m_Dx + ic_ref*m_Dx;
   real y_ref = 0.5*m_Dy + jc_ref*m_Dy;
   real z_ref = 0.5*m_Dz + kc_ref*m_Dz;
@@ -718,7 +704,7 @@ void CartesianPatch::computeNCInterpolWeights(real& x, real& y, real& z,
   //   6:         ( in_ref+1, jn_ref+1, kn_ref   )
   //   7:         ( in_ref+1, jn_ref+1, kn_ref+1 )
 
-  // cartesian distances to bounding element sides
+  // coordinates (local system of this) of reference node
   real x_ref = in_ref*m_Dx;
   real y_ref = jn_ref*m_Dy;
   real z_ref = kn_ref*m_Dz;
@@ -978,33 +964,32 @@ bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
     ic_ref = size_t(ric_ref);
     jc_ref = size_t(rjc_ref);
     kc_ref = size_t(rkc_ref);
-    //.. Correct to upper bounds index limits
-    //   Robustness: Must check, if mesh sizes i,j,k are sufficient.
-    if(ic_ref > m_NumI-1) {ic_ref = m_NumI-1;}
-    if(jc_ref > m_NumJ-1) {jc_ref = m_NumJ-1;}
-    if(kc_ref > m_NumK-1) {kc_ref = m_NumK-1;}
-
-    //    //.... i-coord (x)
-    //    if(m_NumI > 1) { // not flat in I
-    //        if(ic_ref > m_NumI-1) {ic_ref = m_NumI-1;}
-    //    } else {
-    //        ic_ref = 0;
-    //    }
-    //    //.... j-coord (y)
-    //    if(m_NumJ > 1) { // not flat in J
-    //        if(jc_ref > m_NumJ-1) {jc_ref = m_NumJ-1;}
-    //    } else {
-    //        jc_ref = 0;
-    //    }
-    //    //.... k-coord (z)
-    //    if(m_NumK > 1) { // not flat in K
-    //        if(kc_ref > m_NumK-1) {kc_ref = m_NumK-1;}
-    //    } else {
-    //        kc_ref = 0;
-    //    }
+    //
+    //.. Correct reference cell indices to ensure inside donor region
+    //   NOTE: Later interpolation will be between
+    //          [ic_ref , (ic_ref + 1)]
+    //          [jc_ref , (jc_ref + 1)]
+    //          [kc_ref , (kc_ref + 1)]
+    //   => ic_ref, jc_ref, kc_ref restricted to
+    //          [m_IDonorZoneFirst , m_IDonorZoneAfterlast-2]
+    //          [m_JDonorZoneFirst , m_JDonorZoneAfterlast-2]
+    //          [m_KDonorZoneFirst , m_KDonorZoneAfterlast-2]
+    if(ic_ref < m_IDonorZoneFirst) {
+      ic_ref = m_IDonorZoneFirst;}
+    if(jc_ref < m_JDonorZoneFirst) {
+      jc_ref = m_JDonorZoneFirst;}
+    if(kc_ref < m_KDonorZoneFirst) {
+      kc_ref = m_KDonorZoneFirst;}
+    if(ic_ref > m_IDonorZoneAfterlast-2) {
+      ic_ref = m_IDonorZoneAfterlast-2;}
+    if(jc_ref > m_JDonorZoneAfterlast-2) {
+      jc_ref = m_JDonorZoneAfterlast-2;}
+    if(kc_ref > m_KDonorZoneAfterlast-2) {
+      kc_ref = m_KDonorZoneAfterlast-2;}
   }
   return inside;
 }
+
 
 bool CartesianPatch::xyzToRefCell(real x, real y, real z,
                                   size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)

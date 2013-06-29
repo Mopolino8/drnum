@@ -33,14 +33,6 @@ private:
 
 protected: // attributes
 
-  size_t m_NumProtImin;
-  size_t m_NumProtImax;
-  size_t m_NumProtJmin;
-  size_t m_NumProtJmax;
-  size_t m_NumProtKmin;
-  size_t m_NumProtKmax;
-
-  // NEW_SEEK_EXCEPTION
   size_t m_NumSeekImin;
   size_t m_NumSeekImax;
   size_t m_NumSeekJmin;
@@ -48,14 +40,26 @@ protected: // attributes
   size_t m_NumSeekKmin;
   size_t m_NumSeekKmax;
 
+  size_t m_NumProtImin;
+  size_t m_NumProtImax;
+  size_t m_NumProtJmin;
+  size_t m_NumProtJmax;
+  size_t m_NumProtKmin;
+  size_t m_NumProtKmax;
+
+  size_t m_IDonorZoneFirst;
+  size_t m_IDonorZoneAfterlast;
+  size_t m_JDonorZoneFirst;
+  size_t m_JDonorZoneAfterlast;
+  size_t m_KDonorZoneFirst;
+  size_t m_KDonorZoneAfterlast;
+
   size_t m_ICoreFirst;
   size_t m_ICoreAfterlast;
   size_t m_JCoreFirst;
   size_t m_JCoreAfterlast;
   size_t m_KCoreFirst;
   size_t m_KCoreAfterlast;
-
-  // END NEW_SEEK_EXCEPTION
 
   real m_LimiterEpsilon;
 
