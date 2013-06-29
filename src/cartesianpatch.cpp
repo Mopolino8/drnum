@@ -1,13 +1,8 @@
 #include "cartesianpatch.h"
 
-//#ifdef WITH_VTK
-//#include <vtkSmartPointer.h>
-//#include <vtkRectilinearGrid.h>
-//#include <vtkXMLRectilinearGridWriter.h>
-//#include <vtkFloatArray.h>
-//#include <vtkCellData.h>
-//#include <QVector>
-//#endif
+#ifdef WITH_VTK
+#include <vtkCellType.h>
+#endif
 
 
 CartesianPatch::CartesianPatch(PatchGrid* patch_grid, size_t num_protectlayers, size_t num_overlaplayers)
@@ -300,7 +295,7 @@ void CartesianPatch::extractSeekCells()
                             error);
         any_error = any_error || error;
         if (!error) {
-          m_receive_cells.push_back(cell_h);
+          m_ReceiveCells.push_back(cell_h);
         }
       }
     }
@@ -314,7 +309,7 @@ void CartesianPatch::extractSeekCells()
                             error);
         any_error = any_error || error;
         if (!error) {
-          m_receive_cells.push_back(cell_h);
+          m_ReceiveCells.push_back(cell_h);
         }
       }
     }
@@ -328,7 +323,7 @@ void CartesianPatch::extractSeekCells()
                             error);
         any_error = any_error || error;
         if (!error) {
-          m_receive_cells.push_back(cell_h);
+          m_ReceiveCells.push_back(cell_h);
         }
       }
     }
@@ -342,7 +337,7 @@ void CartesianPatch::extractSeekCells()
                             error);
         any_error = any_error || error;
         if (!error) {
-          m_receive_cells.push_back(cell_h);
+          m_ReceiveCells.push_back(cell_h);
         }
       }
     }
@@ -356,7 +351,7 @@ void CartesianPatch::extractSeekCells()
                             error);
         any_error = any_error || error;
         if (!error) {
-          m_receive_cells.push_back(cell_h);
+          m_ReceiveCells.push_back(cell_h);
         }
       }
     }
@@ -369,7 +364,7 @@ void CartesianPatch::extractSeekCells()
                             error);
         any_error = any_error || error;
         if (!error) {
-          m_receive_cells.push_back(cell_h);
+          m_ReceiveCells.push_back(cell_h);
         }
       }
     }
@@ -393,8 +388,8 @@ bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
   //  - get own coeffs
   //  - transform into system of neighbour patch
   //  - interpolate there if receiving cell hits neighbours core region
-  for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
-    size_t l_rc = m_receive_cells[ll_rc];
+  for(size_t ll_rc=0; ll_rc < m_ReceiveCells.size(); ll_rc++) {
+    size_t l_rc = m_ReceiveCells[ll_rc];
     vec3_t xyz_rc = xyzCell(l_rc);
     vec3_t xxyyzz_rc = trans.transform(xyz_rc);
     WeightedSet<real> w_set;
@@ -1133,8 +1128,6 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
   /// @todo: must transform output for non o-aligned patches !!!
   /// @todo: does vtk know something like a general transformation in space ???
   // Transform: use only linear transformations at present
-  vec3_t v_zero(0., 0., 0.);
-  vec3_t xyzoref = m_TransformInertial2This.transformReverse(v_zero);
 
   vtkStructuredGrid* grid = vtkStructuredGrid::New();
   grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
@@ -1212,6 +1205,65 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
   delete [] raw_var;
   return grid;
 }
+
+vtkUnstructuredGrid* CartesianPatch::createVtkGridForCells(const list<size_t> &cells)
+{
+  vtkSmartPointer<vtkPoints> points = vtkPoints::New();
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::New();
+
+  size_t num_nodes = 0;
+  vector<int> c2c(sizeI()*sizeJ()*sizeK(), -1);
+  vector<int> n2n((sizeI() + 1)*(sizeJ() + 1)*(sizeK() + 1), -1);
+  vector<vec3_t> x_node((sizeI() + 1)*(sizeJ() + 1)*(sizeK() + 1));
+  for (list<size_t>::const_iterator i_cells = cells.begin(); i_cells != cells.end(); ++i_cells) {
+    size_t i, j, k;
+    ijk(*i_cells, i, j, k);
+    vector<size3_t> N(8);
+    N[0] = size3_t(i,   j,   k  );
+    N[1] = size3_t(i+1, j,   k  );
+    N[2] = size3_t(i+1, j+1, k  );
+    N[3] = size3_t(i,   j+1, k  );
+    N[4] = size3_t(i,   j,   k+1);
+    N[5] = size3_t(i+1, j,   k+1);
+    N[6] = size3_t(i+1, j+1, k+1);
+    N[7] = size3_t(i,   j+1, k+1);
+    for (size_t i_node = 0; i_node < 8; ++i_node) {
+      size_t id_node = nodeIndex(N[i_node]);
+      if (n2n[id_node] == -1) {
+        n2n[id_node] = num_nodes;
+        x_node[id_node][0] = N[i_node].i * m_Dx;
+        x_node[id_node][1] = N[i_node].j * m_Dy;
+        x_node[id_node][2] = N[i_node].k * m_Dz;
+        x_node[id_node] = m_TransformInertial2This.transformReverse(x_node[id_node]);
+        ++num_nodes;
+      }
+    }
+  }
+  points->SetNumberOfPoints(num_nodes);
+  grid->SetPoints(points);
+  grid->Allocate(cells.size());
+  for (list<size_t>::const_iterator i_cells = cells.begin(); i_cells != cells.end(); ++i_cells) {
+    size_t i, j, k;
+    ijk(*i_cells, i, j, k);
+    vector<size_t> id_node(8);
+    id_node[0] = nodeIndex(i,   j,   k  );
+    id_node[1] = nodeIndex(i+1, j,   k  );
+    id_node[2] = nodeIndex(i+1, j+1, k  );
+    id_node[3] = nodeIndex(i,   j+1, k  );
+    id_node[4] = nodeIndex(i,   j,   k+1);
+    id_node[5] = nodeIndex(i+1, j,   k+1);
+    id_node[6] = nodeIndex(i+1, j+1, k+1);
+    id_node[7] = nodeIndex(i,   j+1, k+1);
+    vtkIdType num_pts = 8, pts[8];
+    for (size_t i_node = 0; i_node < 8; ++i_node) {
+      grid->GetPoints()->SetPoint(n2n[id_node[i_node]], x_node[id_node[i_node]].data());
+      pts[i_node] = n2n[id_node[i_node]];
+    }
+    grid->InsertNextCell(VTK_HEXAHEDRON, num_pts, pts);
+  }
+  return grid;
+}
+
 #endif
 
 
@@ -1222,7 +1274,7 @@ void CartesianPatch::writeData(QString base_data_filename, int count)
   if (count >= 0) {
     QString str_myindex;
     QString str_num;
-    str_myindex.setNum(m_myindex);
+    str_myindex.setNum(m_MyIndex);
     str_num.setNum(count);
     while (str_myindex.size() < 6) {
       str_myindex = "0" + str_myindex;

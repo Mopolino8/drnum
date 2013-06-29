@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <list>
 
 #include <QString>
 
@@ -35,6 +36,10 @@ class GPU_Patch;
 #include "codestring.h"
 #include "postprocessingvariables.h"
 #include "donor_t.h"
+
+#ifdef WITH_VTK
+#include <vtkUnstructuredGrid.h>
+#endif
 
 /** @todo
  *    proposed coord naming convention:
@@ -78,7 +83,7 @@ private: // attributes
 
 protected: // attributes
 
-  size_t m_myindex;           ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
+  size_t m_MyIndex;           ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
   size_t m_mypatchtype;       ///< Type-code as defined by derived patches. Example 1001: CartesianPatch, etc...
   string m_patchcomment;      ///< Optional comment for this patch to be read/written in patchgrid files
   CodeString m_solvercodes;   ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
@@ -109,7 +114,7 @@ protected: // attributes
   bool m_receiveCells_OK; ///< Flag indicating that receive_cells have been extracted yet. Might be set false on mesh changes.
 
   // lists related to receiving cells in overlap layers
-  vector<size_t> m_receive_cells;           ///< cells of "this", expecting to get data from any donor neighbour
+  vector<size_t> m_ReceiveCells;           ///< cells of "this", expecting to get data from any donor neighbour
   vector<size_t> m_receive_cell_data_hits;  ///< number of contributing patches for data, note indexing as receive_cells
   //  vector<size_t> m_receive_cell_grad1N_hits;///< number of contributing patches for grad1N, note indexing as receive_cells
 
@@ -314,14 +319,14 @@ public: // methods
     * Set
     @param index the index of the patch in sequence of PatchGrid::m_patches
     */
-  void setIndex(size_t patchindex) {m_myindex = patchindex;}
+  void setIndex(size_t patchindex) {m_MyIndex = patchindex;}
 
 
   /**
     * Access
     * @return the index of the patch in sequence of PatchGrid::m_patches
     */
-  size_t accessIndex() {return m_myindex;}
+  size_t accessIndex() {return m_MyIndex;}
 
 
   /**
@@ -575,6 +580,14 @@ public: // methods
    * @return a vector with all starting indices
    */
   vector<size_t> getVectorVarIndices() { return m_VectorVarIndices; }
+
+  /**
+   * @brief create a vtkUnstructuredGrid which represents a subset of the whole patch.
+   * This method assumes that the concept of cells exists for any kind of patch.
+   * @param cells the cells to put into the unstructured grid output
+   * @return a pointer to the newly create vtkUnstructuredGrid
+   */
+  virtual vtkUnstructuredGrid* createVtkGridForCells(const list<size_t>& cells) = 0;
 
 
   /// @todo destructor

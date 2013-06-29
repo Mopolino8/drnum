@@ -15,6 +15,7 @@ class CartesianPatch;
 #include <QVector>
 #include <vtkSmartPointer.h>
 #include <vtkStructuredGrid.h>
+#include <vtkUnstructuredGrid.h>
 #include <vtkFloatArray.h>
 #include <vtkCellData.h>
 #endif
@@ -450,6 +451,7 @@ public: // methods
 
 #ifdef WITH_VTK
   virtual vtkDataSet* createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);
+  virtual vtkUnstructuredGrid* createVtkGridForCells(const list<size_t> &cells);
 #endif
 
 };

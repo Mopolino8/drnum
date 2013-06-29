@@ -40,6 +40,28 @@ CUDA_DH real idz() const { return m_InvDz; }
 CUDA_DH size_t index(int i, int j, int k) { return i*m_NumJ*m_NumK + j*m_NumK + k; }
 
 /**
+ * @brief Get the node index of an (i, j, k) triple.
+ * Such an index can be used as a unique identifier for a node in a Cartesian patch.
+ * This index does not correspond to a "real" index within some data field!
+ * @param i first Cartesian index
+ * @param j second Cartesian index
+ * @param k third Cartesian index
+ * @return a ondimensional index
+ */
+CUDA_DH size_t nodeIndex(int i, int j, int k) { return i*(m_NumJ + 1)*(m_NumK + 1) + j*(m_NumK + 1) + k; }
+
+/**
+ * @brief Get the node index of an (i, j, k) triple.
+ * Such an index can be used as a unique identifier for a node in a Cartesian patch.
+ * This index does not correspond to a "real" index within some data field!
+ * @param i first Cartesian index
+ * @param j second Cartesian index
+ * @param k third Cartesian index
+ * @return a ondimensional index
+ */
+CUDA_DH size_t nodeIndex(size3_t ijk) { return ijk.i*(m_NumJ + 1)*(m_NumK + 1) + ijk.j*(m_NumK + 1) + ijk.k; }
+
+/**
  * @brief Get a variable set at a specified (i,j,k) position.
  * @param i_field the field index
  * @param i first Cartesian index

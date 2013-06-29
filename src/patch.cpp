@@ -1,5 +1,10 @@
 #include "patch.h"
 #include "patchgrid.h"
+#include "stringtools.h"
+
+#ifdef WITH_VTK
+#include <vtkXMLUnstructuredGridWriter.h>
+#endif
 
 Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotectlayers)
 {
@@ -83,10 +88,10 @@ void Patch::buildDonorTransferData()
   // Build unique index field m_ReceivingCellIndexUnique
   // Note: use data array stored in m_receive_cells at present.
   //       May also unify m_ReceivingCellIndexConcat .
-  m_NumReceivingCellsUnique = m_receive_cells.size();
+  m_NumReceivingCellsUnique = m_ReceiveCells.size();
   m_ReceivingCellIndicesUnique = new size_t[m_NumReceivingCellsUnique];
-  for (size_t i_rec_all = 0; i_rec_all < m_receive_cells.size(); i_rec_all++) {
-    m_ReceivingCellIndicesUnique[i_rec_all] = m_receive_cells[i_rec_all];
+  for (size_t i_rec_all = 0; i_rec_all < m_ReceiveCells.size(); i_rec_all++) {
+    m_ReceivingCellIndicesUnique[i_rec_all] = m_ReceiveCells[i_rec_all];
   }
 
   // Build m_Donors
@@ -173,7 +178,7 @@ void Patch::setupTransformation(vec3_t xyzoref,
 void Patch::insertNeighbour(Patch* neighbour_patch) {
   // Check, if boundary cells are yet extracted. If not, do so.
   if(!m_receiveCells_OK) {
-    m_receive_cells.clear();
+    m_ReceiveCells.clear();
     extractSeekCells();
     compactReceiveCellLists();
     m_receiveCells_OK = true;
@@ -232,15 +237,19 @@ void Patch::finalizeDependencies()
   //    ATTENTION: Actually indirect_receiveindex is needed only until InterCoeffWS::adjust2Average is done
 
   //  0) Nothing to do, if no receive cells were found
-  if(m_receive_cells.size() == 0) {
+  if(m_ReceiveCells.size() == 0) {
     return;
   }
 
   //  1) Build a scratch list v_shift with index shifts
   size_t cumulated_shift = 0;
   vector<size_t> v_shift;
-  v_shift.resize(m_receive_cells.size(), 0);
-  for(size_t i_rec = 0; i_rec < m_receive_cells.size(); i_rec++) {
+  v_shift.resize(m_ReceiveCells.size(), 0);
+
+  // collect problematic cells in this array
+  list<size_t> cells_without_donor;
+
+  for(size_t i_rec = 0; i_rec < m_ReceiveCells.size(); i_rec++) {
     v_shift[i_rec] = cumulated_shift;
     bool any_hit = false;
     if(m_InterpolateData) {
@@ -253,32 +262,52 @@ void Patch::finalizeDependencies()
     //        any_hit = true;
     //      }
     //    }
-    if(!any_hit) { // not any donor contribution found
+    if (!any_hit) { // not any donor contribution found
       cumulated_shift++;
+      cells_without_donor.push_back(m_ReceiveCells[i_rec]);
     }
   }
   // Issue a warning, if this patch has seeking cells, that did not find any donor.
   if(cumulated_shift > 0) {
-    cout << "***********************************************" << endl;
+
+#ifdef WITH_VTK
+    using namespace StringTools;
+
+    vtkSmartPointer<vtkUnstructuredGrid> grid = createVtkGridForCells(cells_without_donor);
+    vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtu = vtkXMLUnstructuredGridWriter::New();
+    vtu->SetInput(grid);
+    string file_name = "VTK/";
+    file_name += "no_donor_cells_patchID_";
+    file_name += leftFill(toString(m_MyIndex), '0', 3);
+    file_name += ".vtu";
+    vtu->SetFileName(file_name.c_str());
+    vtu->Write();
+#endif
+
+    cout << "**********************************************************************************************" << endl;
     cout << "WARNING: Patch::finalizeDependencies()" << endl;
-    cout << " patch id: " << m_myindex  << endl;
+    cout << " patch id: " << m_MyIndex  << endl;
     cout << cumulated_shift << " seeking cells, that did not find donors" << endl;
-    cout << "***********************************************" << endl;
+#ifdef WITH_VTK
+    cout << "affected cells have been written to: \"" << file_name << "\"" << endl;
+        #endif
+    cout << "**********************************************************************************************" << endl;
+
   }
   //  2) Build a scratch list index_new_from_old, so that an operation of type
   //     m_receive_cells..new[ll] = m_receive_cells..old[index_new_from_old[ll]]
   //     eliminates all zeros
   vector<size_t> index_new_from_old;
-  index_new_from_old.resize(m_receive_cells.size(), 0);
-  for(size_t i_rec = 0; i_rec < m_receive_cells.size(); i_rec++) {
+  index_new_from_old.resize(m_ReceiveCells.size(), 0);
+  for(size_t i_rec = 0; i_rec < m_ReceiveCells.size(); i_rec++) {
     index_new_from_old[i_rec] = i_rec - v_shift[i_rec];
   }
   //.. Total number of cells with neighbour contribs
-  size_t num_cells_w_contrib = m_receive_cells.size() - cumulated_shift;
+  size_t num_cells_w_contrib = m_ReceiveCells.size() - cumulated_shift;
 
   //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
-  for(size_t i_rec = 0; i_rec < m_receive_cells.size(); i_rec++) {
-    m_receive_cells[index_new_from_old[i_rec]] = m_receive_cells[i_rec];
+  for(size_t i_rec = 0; i_rec < m_ReceiveCells.size(); i_rec++) {
+    m_ReceiveCells[index_new_from_old[i_rec]] = m_ReceiveCells[i_rec];
     if(m_InterpolateData) {
       m_receive_cell_data_hits[index_new_from_old[i_rec]] = m_receive_cell_data_hits[i_rec];
     }
@@ -287,7 +316,7 @@ void Patch::finalizeDependencies()
     //    }
   }
   //  3) Apply on m_receive_cell_data_hits and m_receive_cell_grad1N_hits
-  m_receive_cells.resize(num_cells_w_contrib);
+  m_ReceiveCells.resize(num_cells_w_contrib);
   if(m_InterpolateData) {
     m_receive_cell_data_hits.resize(num_cells_w_contrib);
   }
@@ -342,14 +371,14 @@ void Patch::compactReceiveCellLists()
   // Sort cell indicees
   // Note: indirect indexing, but piecewise constant strides depending on patch type
   //       example structured: strides with (m_NumI*m_NumJ or m_NumJ*m_NumK or m_NumK*m_NumI)
-  sort(m_receive_cells.begin(), m_receive_cells.end());
+  sort(m_ReceiveCells.begin(), m_ReceiveCells.end());
   // Remove duplicates
   vector<size_t>::iterator it;
-  it = unique(m_receive_cells.begin(), m_receive_cells.end());
-  m_receive_cells.resize(it - m_receive_cells.begin());
+  it = unique(m_ReceiveCells.begin(), m_ReceiveCells.end());
+  m_ReceiveCells.resize(it - m_ReceiveCells.begin());
   // Create hit counter lists with same size
   if(m_InterpolateData) {
-    m_receive_cell_data_hits.resize(m_receive_cells.size(), 0);
+    m_receive_cell_data_hits.resize(m_ReceiveCells.size(), 0);
   }
   //  if(m_InterpolateGrad1N) {
   //    m_receive_cell_grad1N_hits.resize(m_receive_cells.size(), 0);
@@ -368,7 +397,7 @@ void Patch::accessDonorData_WS(const size_t& field)
   donor_vars.resize(this_vars.size());
 
   // set all receiving data variables to 0, as donors will add their contributions onto
-  for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
+  for(size_t ll_rc=0; ll_rc < m_ReceiveCells.size(); ll_rc++) {
     //
     // NOTE: Following if-cond. is no longer needed to set variables to zero.
     // Reason: ommitting grad1n stuff ensures that m_receive_cells is a list of
@@ -386,7 +415,7 @@ void Patch::accessDonorData_WS(const size_t& field)
       BUG; // since 2013_06_12 (ommitting grad1n stuff) zero hits are no longer possible.
     }
 #endif
-    size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
+    size_t l_rc = m_ReceiveCells[ll_rc];  /// @todo indirect operation!!!
     for(size_t i_v=0; i_v<numVariables(); i_v++) {
       this_vars[i_v][l_rc] = 0.;
     }
@@ -416,13 +445,13 @@ void Patch::accessDonorDataPadded(const size_t& field)
   donor_vars.resize(this_vars.size());
 
   // set all receiving data variables to 0, as donors will add their contributions onto
-  for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
+  for(size_t ll_rc=0; ll_rc < m_ReceiveCells.size(); ll_rc++) {
 #ifdef DEBUG
     if(m_receive_cell_data_hits[ll_rc] == 0) {
       BUG; // since 2013_06_12 (ommitting grad1n stuff) zero hits are no longer possible.
     }
 #endif
-    size_t l_rc = m_receive_cells[ll_rc];  /// @todo indirect operation!!!
+    size_t l_rc = m_ReceiveCells[ll_rc];  /// @todo indirect operation!!!
     for(size_t i_v=0; i_v<numVariables(); i_v++) {
       this_vars[i_v][l_rc] = 0.;
     }
@@ -550,8 +579,8 @@ void Patch::accessTurnDonorData_WS(const size_t& field,
     this_vars.push_back(getVariable(field, i_v));
   }
   // set all receiving data variables to 0, as donors will add their contributions onto
-  for(size_t ll_rc=0; ll_rc < m_receive_cells.size(); ll_rc++) {
-    size_t l_rc = m_receive_cells[ll_rc];
+  for(size_t ll_rc=0; ll_rc < m_ReceiveCells.size(); ll_rc++) {
+    size_t l_rc = m_ReceiveCells[ll_rc];
     for(size_t i_v=0; i_v<numVariables(); i_v++) {
       this_vars[i_v][l_rc] = 0.;
     }
