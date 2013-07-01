@@ -119,8 +119,6 @@ void CartesianPatch::computeDeltas()
   m_yCCInterMax = m_yCCMax - m_NumProtJmax * m_Dy;
   m_zCCInterMax = m_zCCMax - m_NumProtKmax * m_Dz;
 
-  cout << "DEBUG HERE" << endl;
-
   // DEBUG: erase below, if above is correct
   m_xCCInterMin = (m_NumProtImin + 0.5) * m_Dx;
   m_yCCInterMin = (m_NumProtJmin + 0.5) * m_Dy;
@@ -1594,13 +1592,31 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
   /// @todo: does vtk know something like a general transformation in space ???
   // Transform: use only linear transformations at present
 
-  vtkStructuredGrid* grid = vtkStructuredGrid::New();
-  grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
+  /*
+  m_NumSeekImin = num_seekImin;
+  m_NumSeekImax = num_seekImax;
+  m_NumSeekJmin = num_seekJmin;
+  m_NumSeekJmax = num_seekJmax;
+  m_NumSeekKmin = num_seekKmin;
+  m_NumSeekKmax = num_seekKmax;
+  */
 
-  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-  for (size_t k = 0; k < m_NumK + 1; ++k) {
-    for (size_t j = 0; j < m_NumJ + 1; ++j) {
-      for (size_t i = 0; i < m_NumI + 1; ++i) {
+  vtkStructuredGrid* grid = vtkStructuredGrid::New();
+
+  size_t i_start = m_NumSeekImin;
+  size_t i_stop  = m_NumI - m_NumSeekImax;
+  size_t j_start = m_NumSeekJmin;
+  size_t j_stop  = m_NumJ - m_NumSeekJmax;
+  size_t k_start = m_NumSeekKmin;
+  size_t k_stop  = m_NumK - m_NumSeekKmax;
+
+  grid->SetDimensions(i_stop - i_start + 1, j_stop - j_start + 1, k_stop - k_start + 1);
+  size_t num_tuples = (i_stop - i_start)*(j_stop - j_start)*(k_stop - k_start);
+
+  vtkPoints* points = vtkPoints::New();
+  for (size_t k = k_start; k <= k_stop; ++k) {
+    for (size_t j = j_start; j <= j_stop; ++j) {
+      for (size_t i = i_start; i <= i_stop; ++i) {
         vec3_t xyz_p;
         vec3_t xyzo_p;
         xyz_p[0] = i * m_Dx;
@@ -1616,14 +1632,14 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
 
   real* raw_var = new real [numVariables()];
   for (int i_var = 0; i_var < proc_vars.numScalars(); ++i_var) {
-    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
+    vtkFloatArray* var = vtkFloatArray::New();
     var->SetName(proc_vars.getScalarName(i_var).c_str());
-    var->SetNumberOfValues(variableSize());
+    var->SetNumberOfValues(num_tuples);
     grid->GetCellData()->AddArray(var);
     vtkIdType id = 0;
-    for (size_t k = 0; k < m_NumK; ++k) {
-      for (size_t j = 0; j < m_NumJ; ++j) {
-        for (size_t i = 0; i < m_NumI; ++i) {
+    for (size_t k = k_start; k < k_stop; ++k) {
+      for (size_t j = j_start; j < j_stop; ++j) {
+        for (size_t i = i_start; i < i_stop; ++i) {
           getVar(i_field, i, j, k, raw_var);
           var->SetValue(id, proc_vars.getScalar(i_var, raw_var));
           ++id;
@@ -1632,15 +1648,15 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
     }
   }
   for (int i_var = 0; i_var < proc_vars.numVectors(); ++i_var) {
-    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
+    vtkFloatArray* var = vtkFloatArray::New();
     var->SetName(proc_vars.getVectorName(i_var).c_str());
     var->SetNumberOfComponents(3);
-    var->SetNumberOfTuples(variableSize());
+    var->SetNumberOfTuples(num_tuples);
     grid->GetCellData()->AddArray(var);
     vtkIdType id = 0;
-    for (size_t k = 0; k < m_NumK; ++k) {
-      for (size_t j = 0; j < m_NumJ; ++j) {
-        for (size_t i = 0; i < m_NumI; ++i) {
+    for (size_t k = k_start; k < k_stop; ++k) {
+      for (size_t j = j_start; j < j_stop; ++j) {
+        for (size_t i = i_start; i < i_stop; ++i) {
           getVar(i_field, i, j, k, raw_var);
           vec3_t v = proc_vars.getVector(i_var, raw_var);
           v = m_TransformInertial2This.transfreeReverse(v);
