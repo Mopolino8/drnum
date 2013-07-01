@@ -394,8 +394,8 @@ bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
     vec3_t xxyyzz_rc = trans.transform(xyz_rc);
     WeightedSet<real> w_set;
     if(m_InterpolateData) {
-//      if(neighbour_patch->computeCCDataInterpolCoeffs(xxyyzz_rc,
-//                                                      w_set)) {
+      //      if(neighbour_patch->computeCCDataInterpolCoeffs(xxyyzz_rc,
+      //                                                      w_set)) {
       if(neighbour_patch->computeCCDataInterpolCoeffs_V1(xxyyzz_rc[0], xxyyzz_rc[1], xxyyzz_rc[2],
                                                          w_set)) {
         m_InterCoeffData_WS[i_neighbour].push(ll_rc, l_rc, w_set);  // note: since l_rc are unique, no "add" is required
@@ -1026,18 +1026,18 @@ bool CartesianPatch::linearCCInterpolCoeffs (const real& s_test,
   }
 
   // Check result to be sure:
- if (index_cell_ref < ijk_donor_first) {
-   BUG;
- }
- if (index_cell_ref > (ijk_donor_afterlast - 2)) {
-   BUG;
- }
- if (rs_coeff < (-m_Eps)) {
-   BUG;
- }
- if (rs_coeff > (1.+ m_Eps)) {
-   BUG;
- }
+  if (index_cell_ref < ijk_donor_first) {
+    BUG;
+  }
+  if (index_cell_ref > (ijk_donor_afterlast - 2)) {
+    BUG;
+  }
+  if (rs_coeff < (-m_Eps)) {
+    BUG;
+  }
+  if (rs_coeff > (1.+ m_Eps)) {
+    BUG;
+  }
 
 
   return true;
@@ -1103,51 +1103,51 @@ bool CartesianPatch::computeCCDataInterpolCoeffs_V1(real x, real y, real z,
   w_octet[7] =    x_coeff      *     y_coeff      *     z_coeff;
 
 
-//  //.. Init weights
-//  w_octet[0] = 1.;
-//  w_octet[1] = 1.;
-//  w_octet[2] = 1.;
-//  w_octet[3] = 1.;
-//  w_octet[4] = 1.;
-//  w_octet[5] = 1.;
-//  w_octet[6] = 1.;
-//  w_octet[7] = 1.;
+  //  //.. Init weights
+  //  w_octet[0] = 1.;
+  //  w_octet[1] = 1.;
+  //  w_octet[2] = 1.;
+  //  w_octet[3] = 1.;
+  //  w_octet[4] = 1.;
+  //  w_octet[5] = 1.;
+  //  w_octet[6] = 1.;
+  //  w_octet[7] = 1.;
 
-//  //.. lower x-side, box corners: 0,1,2,3
-//  w_octet[0] *= (1. - x_coeff);
-//  w_octet[1] *= (1. - x_coeff);
-//  w_octet[2] *= (1. - x_coeff);
-//  w_octet[3] *= (1. - x_coeff);
+  //  //.. lower x-side, box corners: 0,1,2,3
+  //  w_octet[0] *= (1. - x_coeff);
+  //  w_octet[1] *= (1. - x_coeff);
+  //  w_octet[2] *= (1. - x_coeff);
+  //  w_octet[3] *= (1. - x_coeff);
 
-//  //.. upper x-side, box corners: 4,5,6,7
-//  w_octet[4] *= x_coeff;
-//  w_octet[5] *= x_coeff;
-//  w_octet[6] *= x_coeff;
-//  w_octet[7] *= x_coeff;
+  //  //.. upper x-side, box corners: 4,5,6,7
+  //  w_octet[4] *= x_coeff;
+  //  w_octet[5] *= x_coeff;
+  //  w_octet[6] *= x_coeff;
+  //  w_octet[7] *= x_coeff;
 
-//  //.. lower y-side, box corners: 0,1,4,5
-//  w_octet[0] *= (1. - y_coeff);
-//  w_octet[1] *= (1. - y_coeff);
-//  w_octet[4] *= (1. - y_coeff);
-//  w_octet[5] *= (1. - y_coeff);
+  //  //.. lower y-side, box corners: 0,1,4,5
+  //  w_octet[0] *= (1. - y_coeff);
+  //  w_octet[1] *= (1. - y_coeff);
+  //  w_octet[4] *= (1. - y_coeff);
+  //  w_octet[5] *= (1. - y_coeff);
 
-//  //.. upper y-side, box corners: 2,3,6,7
-//  w_octet[2] *= y_coeff;
-//  w_octet[3] *= y_coeff;
-//  w_octet[6] *= y_coeff;
-//  w_octet[7] *= y_coeff;
+  //  //.. upper y-side, box corners: 2,3,6,7
+  //  w_octet[2] *= y_coeff;
+  //  w_octet[3] *= y_coeff;
+  //  w_octet[6] *= y_coeff;
+  //  w_octet[7] *= y_coeff;
 
-//  //.. lower z-side, box corners: 0,2,4,6
-//  w_octet[0] *= (1. - z_coeff);
-//  w_octet[2] *= (1. - z_coeff);
-//  w_octet[4] *= (1. - z_coeff);
-//  w_octet[6] *= (1. - z_coeff);
+  //  //.. lower z-side, box corners: 0,2,4,6
+  //  w_octet[0] *= (1. - z_coeff);
+  //  w_octet[2] *= (1. - z_coeff);
+  //  w_octet[4] *= (1. - z_coeff);
+  //  w_octet[6] *= (1. - z_coeff);
 
-//  //.. upper z-side, box corners: 1,3,5,7
-//  w_octet[1] *= z_coeff;
-//  w_octet[3] *= z_coeff;
-//  w_octet[5] *= z_coeff;
-//  w_octet[7] *= z_coeff;
+  //  //.. upper z-side, box corners: 1,3,5,7
+  //  w_octet[1] *= z_coeff;
+  //  w_octet[3] *= z_coeff;
+  //  w_octet[5] *= z_coeff;
+  //  w_octet[7] *= z_coeff;
 
   // Fill into w_set
   //.. Set upper cell addresses
@@ -1391,435 +1391,355 @@ bool CartesianPatch::computeCCDataInterpolCoeffs_V1(real x, real y, real z,
 //    return inside;
 //  }
 
-  bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
-                                         size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
-  {
-    bool inside = true;
-    //
-    // Check limits. Allow x,y,z in eps-bounds of interpolation range as well.
-    // NOTE: if protective layers m_numProt.... == 0 (possible as boundary exception),
-    // locations of (x,y,z) outside the box bounding CCs are possible.
-    //
-    if(x < m_xCCInterMin-m_EpsDX) {ic_ref = 0; inside = false;};
-    if(y < m_yCCInterMin-m_EpsDY) {jc_ref = 0; inside = false;};
-    if(z < m_zCCInterMin-m_EpsDZ) {kc_ref = 0; inside = false;};
-    if(x > m_xCCInterMax+m_EpsDX) {ic_ref = m_NumI-1; inside = false;};
-    if(y > m_yCCInterMax+m_EpsDY) {jc_ref = m_NumJ-1; inside = false;};
-    if(z > m_zCCInterMax+m_EpsDZ) {kc_ref = m_NumK-1; inside = false;};
-    //
-    // Indicees pick, if inside
-    if(inside) {
-      //..Position relative to lowest CC-coords (indicees hashing)
-      real ric_ref = (x - m_xCCMin) / m_Dx;
-      real rjc_ref = (y - m_yCCMin) / m_Dy;
-      real rkc_ref = (z - m_zCCMin) / m_Dz;
-      //.. Correct relative position to ensure indicees are in range
-      //   (lower bounds correction: ensure non-negative)
-      if(ric_ref < m_Eps) {ric_ref = m_Eps;}
-      if(rjc_ref < m_Eps) {rjc_ref = m_Eps;}
-      if(rkc_ref < m_Eps) {rkc_ref = m_Eps;}
-      //.. Convert to size_t
-      ic_ref = size_t(ric_ref);
-      jc_ref = size_t(rjc_ref);
-      kc_ref = size_t(rkc_ref);
-      //
-      //.. Correct reference cell indices to ensure inside donor region
-      //   NOTE: Later interpolation will be between
-      //          [ic_ref , (ic_ref + 1)]
-      //          [jc_ref , (jc_ref + 1)]
-      //          [kc_ref , (kc_ref + 1)]
-      //   => ic_ref, jc_ref, kc_ref restricted to
-      //          [m_IDonorZoneFirst , m_IDonorZoneAfterlast-2]
-      //          [m_JDonorZoneFirst , m_JDonorZoneAfterlast-2]
-      //          [m_KDonorZoneFirst , m_KDonorZoneAfterlast-2]
-      if(ic_ref < m_IDonorZoneFirst) {
-        ic_ref = m_IDonorZoneFirst;}
-      if(jc_ref < m_JDonorZoneFirst) {
-        jc_ref = m_JDonorZoneFirst;}
-      if(kc_ref < m_KDonorZoneFirst) {
-        kc_ref = m_KDonorZoneFirst;}
-      if(ic_ref > m_IDonorZoneAfterlast-2) {
-        ic_ref = m_IDonorZoneAfterlast-2;}
-      if(jc_ref > m_JDonorZoneAfterlast-2) {
-        jc_ref = m_JDonorZoneAfterlast-2;}
-      if(kc_ref > m_KDonorZoneAfterlast-2) {
-        kc_ref = m_KDonorZoneAfterlast-2;}
-    }
-
-
-    return inside;
-  }
-
-
-  bool CartesianPatch::xyzToRefCell(real x, real y, real z,
-                                    size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
-  {
-    bool inside = true;
-
-    /// @todo Eps-stuff is quite ugly down here
-
-    // Check inside limits. Allow x,y,z in eps-bounds as well.
-    if(x < m_xCCMin-m_EpsDX) {ic_ref = 0; inside = false;};
-    if(y < m_yCCMin-m_EpsDY) {jc_ref = 0; inside = false;};
-    if(z < m_zCCMin-m_EpsDZ) {kc_ref = 0; inside = false;};
-    if(x > m_xCCMax+m_EpsDX) {ic_ref = m_NumI-1; inside = false;};
-    if(y > m_yCCMax+m_EpsDY) {jc_ref = m_NumJ-1; inside = false;};
-    if(z > m_zCCMax+m_EpsDZ) {kc_ref = m_NumK-1; inside = false;};
-    // get reference cell, if inside
-    if(inside) {
-      //.. Manipulate x,y,z if these coords depass the borders
-      //   NOTE: inside==true means that x,y,z is in eps-bounds anyway
-      //         if close, shift x,y,z to inside to ensure correct address pick
-      if(x < m_xCCMin+m_EpsDX) {x = m_xCCMin+m_EpsDX;}
-      if(y < m_yCCMin+m_EpsDY) {y = m_yCCMin+m_EpsDY;}
-      if(z < m_zCCMin+m_EpsDZ) {z = m_zCCMin+m_EpsDZ;}
-      if(x > m_xCCMax-m_EpsDX) {x = m_xCCMax-m_EpsDX;}
-      if(y > m_yCCMax-m_EpsDY) {y = m_yCCMax-m_EpsDY;}
-      if(z > m_zCCMax-m_EpsDZ) {z = m_zCCMax-m_EpsDZ;}
-      //.. Indicees pick
-      //   NOTE: Getting here, means "inside" anyway.
-      //.... Position relative to lowest CC-coords (indicees hashing)
-      real ric_ref = (x - m_xCCMin) / m_Dx;
-      real rjc_ref = (y - m_yCCMin) / m_Dy;
-      real rkc_ref = (z - m_zCCMin) / m_Dz;
-      //.... Correct relative position to ensure indicees are in range
-      //     (lower bounds correction: ensure non-negative)
-      if(ric_ref < m_Eps) {ric_ref = m_Eps;}
-      if(rjc_ref < m_Eps) {rjc_ref = m_Eps;}
-      if(rkc_ref < m_Eps) {rkc_ref = m_Eps;}
-      //.... Convert to size_t
-      ic_ref = size_t(ric_ref);
-      jc_ref = size_t(rjc_ref);
-      kc_ref = size_t(rkc_ref);
-      //.... Correct to upper bounds index limits
-      if(ic_ref > m_NumI-2) {ic_ref = m_NumI-2;}
-      if(jc_ref > m_NumJ-2) {jc_ref = m_NumJ-2;}
-      if(kc_ref > m_NumK-2) {kc_ref = m_NumK-2;}
-    }
-    return inside;
-  }
-
-  bool CartesianPatch::xyzToRefNode(real x, real y, real z,
-                                    size_t& in_ref, size_t& jn_ref, size_t& kn_ref)
-  {
-    bool inside = true;
-
-    /// @todo Eps-stuff is quite ugly down here
-
-    // check limits
-    if(x < -m_EpsDX) {in_ref = 0; inside = false;};
-    if(y < -m_EpsDY) {jn_ref = 0; inside = false;};
-    if(z < -m_EpsDZ) {kn_ref = 0; inside = false;};
-    if(x > m_Lx+m_EpsDX) {in_ref = m_NumI-1; inside = false;};
-    if(y > m_Ly+m_EpsDY) {jn_ref = m_NumJ-1; inside = false;};
-    if(z > m_Lz+m_EpsDZ) {kn_ref = m_NumK-1; inside = false;};
-
-    // get reference cell, if inside
-    if(inside) {
-      //.. Manipulate x,y,z if these coords depass the borders
-      //   NOTE: inside==true means that x,y,z is in eps-bounds anyway
-      //         if close, shift x,y,z to inside to ensure correct address pick
-      if(x < m_EpsDX) {x = m_EpsDX;}
-      if(y < m_EpsDY) {y = m_EpsDY;}
-      if(z < m_EpsDZ) {z = m_EpsDZ;}
-      if(x > m_Lx-m_EpsDX) {x = m_Lx-m_EpsDX;}
-      if(y > m_Ly-m_EpsDY) {y = m_Ly-m_EpsDY;}
-      if(z > m_Lz-m_EpsDZ) {z = m_Lz-m_EpsDZ;}
-      //.. Position relative to lowest CC-coords.
-      real rin_ref = (x - m_xCCMin) / m_Dx;
-      real rjn_ref = (y - m_yCCMin) / m_Dy;
-      real rkn_ref = (z - m_zCCMin) / m_Dz;
-      //    iin_ref = lrint(floor(rin_ref));
-      //    jjn_ref = lrint(floor(rjn_ref));
-      //    kkn_ref = lrint(floor(rkn_ref));
-      //.. Compute reference address. Ensure positive.
-      ///@todo: Check, if this is aceptable from robustnes
-      //   NOTE: Due to Eps-errors, negative values for rin_ref, rjn_ref, rkn_ref are possible
-      //         if Eps_DXYZ==0.
-      in_ref = size_t(rin_ref);
-      jn_ref = size_t(rjn_ref);
-      kn_ref = size_t(rkn_ref);
-      //.. Error checking, actually impossible: Be sure to be in addressing range
-      bool error = false;
-      if(rin_ref < 0.) {
-        cout << "CartesianPatch::xyzToRefNode, i_min"; error = true;
-        in_ref = 0;
-      }
-      if(rjn_ref < 0.) {
-        cout << "CartesianPatch::xyzToRefNode, j_min"; error = true;
-        jn_ref = 0;
-      }
-      if(rkn_ref < 0.) {
-        cout << "CartesianPatch::xyzToRefNode, k_min"; error = true;
-        kn_ref = 0;
-      }
-      if(in_ref > m_NumI-2) {
-        cout << "CartesianPatch::xyzToRefNode, i_max"; error = true;
-      }
-      if(jn_ref > m_NumJ-2) {
-        cout << "CartesianPatch::xyzToRefNode, j_max"; error = true;
-      }
-      if(kn_ref > m_NumK-2) {
-        cout << "CartesianPatch::xyzToRefNode, k_max"; error = true;
-      }
-      if(error) {
-        /// @todo may put this in debug condition
-        cout << endl;
-        cout << " m_xyzCCMin = " << m_xCCMin << ", " << m_yCCMin << ", " << m_zCCMin << endl;
-        cout << " m_xyzCCMax = " << m_xCCMax << ", " << m_yCCMax << ", " << m_zCCMax << endl;
-        cout << " (x,y,z)    = " << x        << ", " << y        << ", " << z             << endl;
-        exit(EXIT_FAILURE);
-      }
-    }
-    return inside;
-  }
-
-
-  real CartesianPatch::computeMinChLength()
-  {
-    real min_ch_len = m_Dx;
-    if(min_ch_len > m_Dy) {
-      min_ch_len = m_Dy;
-    }
-    if(min_ch_len > m_Dz) {
-      min_ch_len = m_Dz;
-    }
-    return min_ch_len;
-  }
-
-#ifdef WITH_VTK
-  vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessingVariables &proc_vars)
-  {
-    /// @todo: must transform output for non o-aligned patches !!!
-    /// @todo: does vtk know something like a general transformation in space ???
-    // Transform: use only linear transformations at present
-
-    vtkStructuredGrid* grid = vtkStructuredGrid::New();
-    grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
-
-    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-    for (size_t k = 0; k < m_NumK + 1; ++k) {
-      for (size_t j = 0; j < m_NumJ + 1; ++j) {
-        for (size_t i = 0; i < m_NumI + 1; ++i) {
-          vec3_t xyz_p;
-          vec3_t xyzo_p;
-          xyz_p[0] = i * m_Dx;
-          xyz_p[1] = j * m_Dy;
-          xyz_p[2] = k * m_Dz;
-          xyzo_p = m_TransformInertial2This.transformReverse(xyz_p);
-          points->InsertNextPoint(xyzo_p.data());
-        }
-      }
-    }
-
-    grid->SetPoints(points);
-
-    real* raw_var = new real [numVariables()];
-    for (int i_var = 0; i_var < proc_vars.numScalars(); ++i_var) {
-      vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-      var->SetName(proc_vars.getScalarName(i_var).c_str());
-      var->SetNumberOfValues(variableSize());
-      grid->GetCellData()->AddArray(var);
-      vtkIdType id = 0;
-      for (size_t k = 0; k < m_NumK; ++k) {
-        for (size_t j = 0; j < m_NumJ; ++j) {
-          for (size_t i = 0; i < m_NumI; ++i) {
-
-            for (size_t i_vec = 0; i_vec < m_VectorVarIndices.size(); ++i_vec) {
-              size_t i_var = m_VectorVarIndices[i_vec];
-              vec3_t vec_var, vec_var_o;
-              vec_var[0] = raw_var[i_var];
-              vec_var[1] = raw_var[i_var + 1];
-              vec_var[2] = raw_var[i_var + 2];
-              vec_var_o = m_TransformInertial2This.transfreeReverse(vec_var);
-              raw_var[i_var + 0] = vec_var[0];
-              raw_var[i_var + 1] = vec_var[1];
-              raw_var[i_var + 2] = vec_var[2];
-            }
-
-            // Oliver, trafos to xyz_o
-
-            getVar(i_field, i, j, k, raw_var);
-            var->SetValue(id, proc_vars.getScalar(i_var, raw_var));
-            ++id;
-          }
-        }
-      }
-    }
-    for (int i_var = 0; i_var < proc_vars.numVectors(); ++i_var) {
-      vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-      var->SetName(proc_vars.getVectorName(i_var).c_str());
-      var->SetNumberOfComponents(3);
-      var->SetNumberOfTuples(variableSize());
-      grid->GetCellData()->AddArray(var);
-      vtkIdType id = 0;
-      for (size_t k = 0; k < m_NumK; ++k) {
-        for (size_t j = 0; j < m_NumJ; ++j) {
-          for (size_t i = 0; i < m_NumI; ++i) {
-            getVar(i_field, i, j, k, raw_var);
-            vec3_t v = proc_vars.getVector(i_var, raw_var);
-            v = m_TransformInertial2This.transfreeReverse(v);
-            float vf[3];
-            vf[0] = v[0]; vf[1] = v[1]; vf[2] = v[2];
-            var->SetTuple(id, vf);
-            ++id;
-          }
-        }
-      }
-    }
-    delete [] raw_var;
-    return grid;
-  }
-
-  vtkUnstructuredGrid* CartesianPatch::createVtkGridForCells(const list<size_t> &cells)
-  {
-    vtkSmartPointer<vtkPoints> points = vtkPoints::New();
-    vtkUnstructuredGrid* grid = vtkUnstructuredGrid::New();
-
-    size_t num_nodes = 0;
-    vector<int> c2c(sizeI()*sizeJ()*sizeK(), -1);
-    vector<int> n2n((sizeI() + 1)*(sizeJ() + 1)*(sizeK() + 1), -1);
-    vector<vec3_t> x_node((sizeI() + 1)*(sizeJ() + 1)*(sizeK() + 1));
-    for (list<size_t>::const_iterator i_cells = cells.begin(); i_cells != cells.end(); ++i_cells) {
-      size_t i, j, k;
-      ijk(*i_cells, i, j, k);
-      vector<size3_t> N(8);
-      N[0] = size3_t(i,   j,   k  );
-      N[1] = size3_t(i+1, j,   k  );
-      N[2] = size3_t(i+1, j+1, k  );
-      N[3] = size3_t(i,   j+1, k  );
-      N[4] = size3_t(i,   j,   k+1);
-      N[5] = size3_t(i+1, j,   k+1);
-      N[6] = size3_t(i+1, j+1, k+1);
-      N[7] = size3_t(i,   j+1, k+1);
-      for (size_t i_node = 0; i_node < 8; ++i_node) {
-        size_t id_node = nodeIndex(N[i_node]);
-        if (n2n[id_node] == -1) {
-          n2n[id_node] = num_nodes;
-          x_node[id_node][0] = N[i_node].i * m_Dx;
-          x_node[id_node][1] = N[i_node].j * m_Dy;
-          x_node[id_node][2] = N[i_node].k * m_Dz;
-          x_node[id_node] = m_TransformInertial2This.transformReverse(x_node[id_node]);
-          ++num_nodes;
-        }
-      }
-    }
-    points->SetNumberOfPoints(num_nodes);
-    grid->SetPoints(points);
-    grid->Allocate(cells.size());
-    for (list<size_t>::const_iterator i_cells = cells.begin(); i_cells != cells.end(); ++i_cells) {
-      size_t i, j, k;
-      ijk(*i_cells, i, j, k);
-      vector<size_t> id_node(8);
-      id_node[0] = nodeIndex(i,   j,   k  );
-      id_node[1] = nodeIndex(i+1, j,   k  );
-      id_node[2] = nodeIndex(i+1, j+1, k  );
-      id_node[3] = nodeIndex(i,   j+1, k  );
-      id_node[4] = nodeIndex(i,   j,   k+1);
-      id_node[5] = nodeIndex(i+1, j,   k+1);
-      id_node[6] = nodeIndex(i+1, j+1, k+1);
-      id_node[7] = nodeIndex(i,   j+1, k+1);
-      vtkIdType num_pts = 8, pts[8];
-      for (size_t i_node = 0; i_node < 8; ++i_node) {
-        grid->GetPoints()->SetPoint(n2n[id_node[i_node]], x_node[id_node[i_node]].data());
-        pts[i_node] = n2n[id_node[i_node]];
-      }
-      grid->InsertNextCell(VTK_HEXAHEDRON, num_pts, pts);
-    }
-    return grid;
-  }
-
-#endif
-
-
-
-  void CartesianPatch::writeData(QString base_data_filename, int count)
-  {
-    QString str_filename = base_data_filename;
-    if (count >= 0) {
-      QString str_myindex;
-      QString str_num;
-      str_myindex.setNum(m_MyIndex);
-      str_num.setNum(count);
-      while (str_myindex.size() < 6) {
-        str_myindex = "0" + str_myindex;
-      }
-      while (str_num.size() < 6) {
-        str_num = "0" + str_num;
-      }
-      str_filename = base_data_filename += "_ip" + str_myindex + str_num;
-    }
-
-    /// @todo Need better data output construction.
-    //  cout << "writing to file \"" << qPrintable(str_filename) << ".vtr\"" << endl;
-    //  CompressibleVariables<PerfectGas> cvars;
-    //  patch.writeToVtk(0, str_filename, cvars);
-    BUG;
-  }
-
-
-  /*
-#ifdef WITH_VTK
-
-void CartesianPatch::writeToVtk(QString file_name)
+bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
+                                       size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
 {
-  vtkSmartPointer<vtkRectilinearGrid> grid = vtkSmartPointer<vtkRectilinearGrid>::New();
-
-  vtkSmartPointer<vtkFloatArray> xc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t i = 0; i < m_NumI + 1; ++i) {
-    xc->InsertNextValue(i*dx());
+  bool inside = true;
+  //
+  // Check limits. Allow x,y,z in eps-bounds of interpolation range as well.
+  // NOTE: if protective layers m_numProt.... == 0 (possible as boundary exception),
+  // locations of (x,y,z) outside the box bounding CCs are possible.
+  //
+  if(x < m_xCCInterMin-m_EpsDX) {ic_ref = 0; inside = false;};
+  if(y < m_yCCInterMin-m_EpsDY) {jc_ref = 0; inside = false;};
+  if(z < m_zCCInterMin-m_EpsDZ) {kc_ref = 0; inside = false;};
+  if(x > m_xCCInterMax+m_EpsDX) {ic_ref = m_NumI-1; inside = false;};
+  if(y > m_yCCInterMax+m_EpsDY) {jc_ref = m_NumJ-1; inside = false;};
+  if(z > m_zCCInterMax+m_EpsDZ) {kc_ref = m_NumK-1; inside = false;};
+  //
+  // Indicees pick, if inside
+  if(inside) {
+    //..Position relative to lowest CC-coords (indicees hashing)
+    real ric_ref = (x - m_xCCMin) / m_Dx;
+    real rjc_ref = (y - m_yCCMin) / m_Dy;
+    real rkc_ref = (z - m_zCCMin) / m_Dz;
+    //.. Correct relative position to ensure indicees are in range
+    //   (lower bounds correction: ensure non-negative)
+    if(ric_ref < m_Eps) {ric_ref = m_Eps;}
+    if(rjc_ref < m_Eps) {rjc_ref = m_Eps;}
+    if(rkc_ref < m_Eps) {rkc_ref = m_Eps;}
+    //.. Convert to size_t
+    ic_ref = size_t(ric_ref);
+    jc_ref = size_t(rjc_ref);
+    kc_ref = size_t(rkc_ref);
+    //
+    //.. Correct reference cell indices to ensure inside donor region
+    //   NOTE: Later interpolation will be between
+    //          [ic_ref , (ic_ref + 1)]
+    //          [jc_ref , (jc_ref + 1)]
+    //          [kc_ref , (kc_ref + 1)]
+    //   => ic_ref, jc_ref, kc_ref restricted to
+    //          [m_IDonorZoneFirst , m_IDonorZoneAfterlast-2]
+    //          [m_JDonorZoneFirst , m_JDonorZoneAfterlast-2]
+    //          [m_KDonorZoneFirst , m_KDonorZoneAfterlast-2]
+    if(ic_ref < m_IDonorZoneFirst) {
+      ic_ref = m_IDonorZoneFirst;}
+    if(jc_ref < m_JDonorZoneFirst) {
+      jc_ref = m_JDonorZoneFirst;}
+    if(kc_ref < m_KDonorZoneFirst) {
+      kc_ref = m_KDonorZoneFirst;}
+    if(ic_ref > m_IDonorZoneAfterlast-2) {
+      ic_ref = m_IDonorZoneAfterlast-2;}
+    if(jc_ref > m_JDonorZoneAfterlast-2) {
+      jc_ref = m_JDonorZoneAfterlast-2;}
+    if(kc_ref > m_KDonorZoneAfterlast-2) {
+      kc_ref = m_KDonorZoneAfterlast-2;}
   }
 
-  vtkSmartPointer<vtkFloatArray> yc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t j = 0; j < m_NumJ + 1; ++j) {
-    yc->InsertNextValue(j*dy());
+
+  return inside;
+}
+
+
+bool CartesianPatch::xyzToRefCell(real x, real y, real z,
+                                  size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
+{
+  bool inside = true;
+
+  /// @todo Eps-stuff is quite ugly down here
+
+  // Check inside limits. Allow x,y,z in eps-bounds as well.
+  if(x < m_xCCMin-m_EpsDX) {ic_ref = 0; inside = false;};
+  if(y < m_yCCMin-m_EpsDY) {jc_ref = 0; inside = false;};
+  if(z < m_zCCMin-m_EpsDZ) {kc_ref = 0; inside = false;};
+  if(x > m_xCCMax+m_EpsDX) {ic_ref = m_NumI-1; inside = false;};
+  if(y > m_yCCMax+m_EpsDY) {jc_ref = m_NumJ-1; inside = false;};
+  if(z > m_zCCMax+m_EpsDZ) {kc_ref = m_NumK-1; inside = false;};
+  // get reference cell, if inside
+  if(inside) {
+    //.. Manipulate x,y,z if these coords depass the borders
+    //   NOTE: inside==true means that x,y,z is in eps-bounds anyway
+    //         if close, shift x,y,z to inside to ensure correct address pick
+    if(x < m_xCCMin+m_EpsDX) {x = m_xCCMin+m_EpsDX;}
+    if(y < m_yCCMin+m_EpsDY) {y = m_yCCMin+m_EpsDY;}
+    if(z < m_zCCMin+m_EpsDZ) {z = m_zCCMin+m_EpsDZ;}
+    if(x > m_xCCMax-m_EpsDX) {x = m_xCCMax-m_EpsDX;}
+    if(y > m_yCCMax-m_EpsDY) {y = m_yCCMax-m_EpsDY;}
+    if(z > m_zCCMax-m_EpsDZ) {z = m_zCCMax-m_EpsDZ;}
+    //.. Indicees pick
+    //   NOTE: Getting here, means "inside" anyway.
+    //.... Position relative to lowest CC-coords (indicees hashing)
+    real ric_ref = (x - m_xCCMin) / m_Dx;
+    real rjc_ref = (y - m_yCCMin) / m_Dy;
+    real rkc_ref = (z - m_zCCMin) / m_Dz;
+    //.... Correct relative position to ensure indicees are in range
+    //     (lower bounds correction: ensure non-negative)
+    if(ric_ref < m_Eps) {ric_ref = m_Eps;}
+    if(rjc_ref < m_Eps) {rjc_ref = m_Eps;}
+    if(rkc_ref < m_Eps) {rkc_ref = m_Eps;}
+    //.... Convert to size_t
+    ic_ref = size_t(ric_ref);
+    jc_ref = size_t(rjc_ref);
+    kc_ref = size_t(rkc_ref);
+    //.... Correct to upper bounds index limits
+    if(ic_ref > m_NumI-2) {ic_ref = m_NumI-2;}
+    if(jc_ref > m_NumJ-2) {jc_ref = m_NumJ-2;}
+    if(kc_ref > m_NumK-2) {kc_ref = m_NumK-2;}
   }
+  return inside;
+}
 
-  vtkSmartPointer<vtkFloatArray> zc = vtkSmartPointer<vtkFloatArray>::New();
-  for (size_t k = 0; k < m_NumK + 1; ++k) {
-    zc->InsertNextValue(k*dz());
-  }
+bool CartesianPatch::xyzToRefNode(real x, real y, real z,
+                                  size_t& in_ref, size_t& jn_ref, size_t& kn_ref)
+{
+  bool inside = true;
 
-  grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
-  grid->SetXCoordinates(xc);
-  grid->SetYCoordinates(yc);
-  grid->SetZCoordinates(zc);
+  /// @todo Eps-stuff is quite ugly down here
 
-  for (size_t i_field = 0; i_field < numFields(); ++i_field) {
-    QString field_name;
-    field_name.setNum(i_field + 1);
-    if (field_name.size() < 2) {
-      field_name = "0" + field_name;
+  // check limits
+  if(x < -m_EpsDX) {in_ref = 0; inside = false;};
+  if(y < -m_EpsDY) {jn_ref = 0; inside = false;};
+  if(z < -m_EpsDZ) {kn_ref = 0; inside = false;};
+  if(x > m_Lx+m_EpsDX) {in_ref = m_NumI-1; inside = false;};
+  if(y > m_Ly+m_EpsDY) {jn_ref = m_NumJ-1; inside = false;};
+  if(z > m_Lz+m_EpsDZ) {kn_ref = m_NumK-1; inside = false;};
+
+  // get reference cell, if inside
+  if(inside) {
+    //.. Manipulate x,y,z if these coords depass the borders
+    //   NOTE: inside==true means that x,y,z is in eps-bounds anyway
+    //         if close, shift x,y,z to inside to ensure correct address pick
+    if(x < m_EpsDX) {x = m_EpsDX;}
+    if(y < m_EpsDY) {y = m_EpsDY;}
+    if(z < m_EpsDZ) {z = m_EpsDZ;}
+    if(x > m_Lx-m_EpsDX) {x = m_Lx-m_EpsDX;}
+    if(y > m_Ly-m_EpsDY) {y = m_Ly-m_EpsDY;}
+    if(z > m_Lz-m_EpsDZ) {z = m_Lz-m_EpsDZ;}
+    //.. Position relative to lowest CC-coords.
+    real rin_ref = (x - m_xCCMin) / m_Dx;
+    real rjn_ref = (y - m_yCCMin) / m_Dy;
+    real rkn_ref = (z - m_zCCMin) / m_Dz;
+    //    iin_ref = lrint(floor(rin_ref));
+    //    jjn_ref = lrint(floor(rjn_ref));
+    //    kkn_ref = lrint(floor(rkn_ref));
+    //.. Compute reference address. Ensure positive.
+    ///@todo: Check, if this is aceptable from robustnes
+    //   NOTE: Due to Eps-errors, negative values for rin_ref, rjn_ref, rkn_ref are possible
+    //         if Eps_DXYZ==0.
+    in_ref = size_t(rin_ref);
+    jn_ref = size_t(rjn_ref);
+    kn_ref = size_t(rkn_ref);
+    //.. Error checking, actually impossible: Be sure to be in addressing range
+    bool error = false;
+    if(rin_ref < 0.) {
+      cout << "CartesianPatch::xyzToRefNode, i_min"; error = true;
+      in_ref = 0;
     }
-    for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
-      QString var_name;
-      var_name.setNum(i_var + 1);
-      if (var_name.size() < 2) {
-        var_name = "0" + var_name;
+    if(rjn_ref < 0.) {
+      cout << "CartesianPatch::xyzToRefNode, j_min"; error = true;
+      jn_ref = 0;
+    }
+    if(rkn_ref < 0.) {
+      cout << "CartesianPatch::xyzToRefNode, k_min"; error = true;
+      kn_ref = 0;
+    }
+    if(in_ref > m_NumI-2) {
+      cout << "CartesianPatch::xyzToRefNode, i_max"; error = true;
+    }
+    if(jn_ref > m_NumJ-2) {
+      cout << "CartesianPatch::xyzToRefNode, j_max"; error = true;
+    }
+    if(kn_ref > m_NumK-2) {
+      cout << "CartesianPatch::xyzToRefNode, k_max"; error = true;
+    }
+    if(error) {
+      /// @todo may put this in debug condition
+      cout << endl;
+      cout << " m_xyzCCMin = " << m_xCCMin << ", " << m_yCCMin << ", " << m_zCCMin << endl;
+      cout << " m_xyzCCMax = " << m_xCCMax << ", " << m_yCCMax << ", " << m_zCCMax << endl;
+      cout << " (x,y,z)    = " << x        << ", " << y        << ", " << z             << endl;
+      exit(EXIT_FAILURE);
+    }
+  }
+  return inside;
+}
+
+
+real CartesianPatch::computeMinChLength()
+{
+  real min_ch_len = m_Dx;
+  if(min_ch_len > m_Dy) {
+    min_ch_len = m_Dy;
+  }
+  if(min_ch_len > m_Dz) {
+    min_ch_len = m_Dz;
+  }
+  return min_ch_len;
+}
+
+#ifdef WITH_VTK
+vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessingVariables &proc_vars)
+{
+  /// @todo: must transform output for non o-aligned patches !!!
+  /// @todo: does vtk know something like a general transformation in space ???
+  // Transform: use only linear transformations at present
+
+  vtkStructuredGrid* grid = vtkStructuredGrid::New();
+  grid->SetDimensions(m_NumI + 1, m_NumJ + 1, m_NumK + 1);
+
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+  for (size_t k = 0; k < m_NumK + 1; ++k) {
+    for (size_t j = 0; j < m_NumJ + 1; ++j) {
+      for (size_t i = 0; i < m_NumI + 1; ++i) {
+        vec3_t xyz_p;
+        vec3_t xyzo_p;
+        xyz_p[0] = i * m_Dx;
+        xyz_p[1] = j * m_Dy;
+        xyz_p[2] = k * m_Dz;
+        xyzo_p = m_TransformInertial2This.transformReverse(xyz_p);
+        points->InsertNextPoint(xyzo_p.data());
       }
-      vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
-      var->SetName(qPrintable("f_" + field_name + "_" + var_name));
-      var->SetNumberOfValues(variableSize());
-      grid->GetCellData()->AddArray(var);
-      vtkIdType id = 0;
-      for (size_t k = 0; k < m_NumK; ++k) {
-        for (size_t j = 0; j < m_NumJ; ++j) {
-          for (size_t i = 0; i < m_NumI; ++i) {
-            var->SetValue(id, f(getVariable(i_field, i_var), i, j, k));
-            ++id;
-          }
+    }
+  }
+
+  grid->SetPoints(points);
+
+  real* raw_var = new real [numVariables()];
+  for (int i_var = 0; i_var < proc_vars.numScalars(); ++i_var) {
+    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
+    var->SetName(proc_vars.getScalarName(i_var).c_str());
+    var->SetNumberOfValues(variableSize());
+    grid->GetCellData()->AddArray(var);
+    vtkIdType id = 0;
+    for (size_t k = 0; k < m_NumK; ++k) {
+      for (size_t j = 0; j < m_NumJ; ++j) {
+        for (size_t i = 0; i < m_NumI; ++i) {
+          getVar(i_field, i, j, k, raw_var);
+          var->SetValue(id, proc_vars.getScalar(i_var, raw_var));
+          ++id;
         }
       }
     }
   }
+  for (int i_var = 0; i_var < proc_vars.numVectors(); ++i_var) {
+    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
+    var->SetName(proc_vars.getVectorName(i_var).c_str());
+    var->SetNumberOfComponents(3);
+    var->SetNumberOfTuples(variableSize());
+    grid->GetCellData()->AddArray(var);
+    vtkIdType id = 0;
+    for (size_t k = 0; k < m_NumK; ++k) {
+      for (size_t j = 0; j < m_NumJ; ++j) {
+        for (size_t i = 0; i < m_NumI; ++i) {
+          getVar(i_field, i, j, k, raw_var);
+          vec3_t v = proc_vars.getVector(i_var, raw_var);
+          v = m_TransformInertial2This.transfreeReverse(v);
+          float vf[3];
+          vf[0] = v[0]; vf[1] = v[1]; vf[2] = v[2];
+          var->SetTuple(id, vf);
+          ++id;
+        }
+      }
+    }
+  }
+  delete [] raw_var;
+  return grid;
+}
 
-  vtkSmartPointer<vtkXMLRectilinearGridWriter> vtr = vtkSmartPointer<vtkXMLRectilinearGridWriter>::New();
-  vtr->SetFileName(qPrintable(file_name + ".vtr"));
-  vtr->SetInput(grid);
-  vtr->Write();
+vtkUnstructuredGrid* CartesianPatch::createVtkGridForCells(const list<size_t> &cells)
+{
+  vtkSmartPointer<vtkPoints> points = vtkPoints::New();
+  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::New();
+
+  size_t num_nodes = 0;
+  vector<int> c2c(sizeI()*sizeJ()*sizeK(), -1);
+  vector<int> n2n((sizeI() + 1)*(sizeJ() + 1)*(sizeK() + 1), -1);
+  vector<vec3_t> x_node((sizeI() + 1)*(sizeJ() + 1)*(sizeK() + 1));
+  for (list<size_t>::const_iterator i_cells = cells.begin(); i_cells != cells.end(); ++i_cells) {
+    size_t i, j, k;
+    ijk(*i_cells, i, j, k);
+    vector<size3_t> N(8);
+    N[0] = size3_t(i,   j,   k  );
+    N[1] = size3_t(i+1, j,   k  );
+    N[2] = size3_t(i+1, j+1, k  );
+    N[3] = size3_t(i,   j+1, k  );
+    N[4] = size3_t(i,   j,   k+1);
+    N[5] = size3_t(i+1, j,   k+1);
+    N[6] = size3_t(i+1, j+1, k+1);
+    N[7] = size3_t(i,   j+1, k+1);
+    for (size_t i_node = 0; i_node < 8; ++i_node) {
+      size_t id_node = nodeIndex(N[i_node]);
+      if (n2n[id_node] == -1) {
+        n2n[id_node] = num_nodes;
+        x_node[id_node][0] = N[i_node].i * m_Dx;
+        x_node[id_node][1] = N[i_node].j * m_Dy;
+        x_node[id_node][2] = N[i_node].k * m_Dz;
+        x_node[id_node] = m_TransformInertial2This.transformReverse(x_node[id_node]);
+        ++num_nodes;
+      }
+    }
+  }
+  points->SetNumberOfPoints(num_nodes);
+  grid->SetPoints(points);
+  grid->Allocate(cells.size());
+  for (list<size_t>::const_iterator i_cells = cells.begin(); i_cells != cells.end(); ++i_cells) {
+    size_t i, j, k;
+    ijk(*i_cells, i, j, k);
+    vector<size_t> id_node(8);
+    id_node[0] = nodeIndex(i,   j,   k  );
+    id_node[1] = nodeIndex(i+1, j,   k  );
+    id_node[2] = nodeIndex(i+1, j+1, k  );
+    id_node[3] = nodeIndex(i,   j+1, k  );
+    id_node[4] = nodeIndex(i,   j,   k+1);
+    id_node[5] = nodeIndex(i+1, j,   k+1);
+    id_node[6] = nodeIndex(i+1, j+1, k+1);
+    id_node[7] = nodeIndex(i,   j+1, k+1);
+    vtkIdType num_pts = 8, pts[8];
+    for (size_t i_node = 0; i_node < 8; ++i_node) {
+      grid->GetPoints()->SetPoint(n2n[id_node[i_node]], x_node[id_node[i_node]].data());
+      pts[i_node] = n2n[id_node[i_node]];
+    }
+    grid->InsertNextCell(VTK_HEXAHEDRON, num_pts, pts);
+  }
+  return grid;
 }
 
 #endif
-*/
-  //=======
-  //>>>>>>> master
+
+
+
+void CartesianPatch::writeData(QString base_data_filename, int count)
+{
+  QString str_filename = base_data_filename;
+  if (count >= 0) {
+    QString str_myindex;
+    QString str_num;
+    str_myindex.setNum(m_MyIndex);
+    str_num.setNum(count);
+    while (str_myindex.size() < 6) {
+      str_myindex = "0" + str_myindex;
+    }
+    while (str_num.size() < 6) {
+      str_num = "0" + str_num;
+    }
+    str_filename = base_data_filename += "_ip" + str_myindex + str_num;
+  }
+
+  /// @todo Need better data output construction.
+  //  cout << "writing to file \"" << qPrintable(str_filename) << ".vtr\"" << endl;
+  //  CompressibleVariables<PerfectGas> cvars;
+  //  patch.writeToVtk(0, str_filename, cvars);
+  BUG;
+}
+
+
