@@ -86,13 +86,13 @@ public: // methods
   CartesianPatch(PatchGrid *patch_grid, size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
 
 
-// NEW_SEEK_EXCEPTION
-//  /**
-//    * Set number of protection layers on all boundaries of the CartesianPatch.
-//    * NOTE: method setNumProtectException(...) allows individual settings for all six boundaries of CartesianPatch.
-//    * @param num_protectlayers number of protection layers
-//    */
-//  virtual void setNumProtectLayers(size_t num_protectlayers);
+  // NEW_SEEK_EXCEPTION
+  //  /**
+  //    * Set number of protection layers on all boundaries of the CartesianPatch.
+  //    * NOTE: method setNumProtectException(...) allows individual settings for all six boundaries of CartesianPatch.
+  //    * @param num_protectlayers number of protection layers
+  //    */
+  //  virtual void setNumProtectLayers(size_t num_protectlayers);
 
 
   /**
@@ -121,19 +121,19 @@ public: // methods
   virtual void scaleRefParental(real scfactor);
 
   // NEW_SEEK_EXCEPTION
-//  /**
-//    * Set individual number of protection layers on all six boundaries of the CartesianPatch. This setting is
-//    * intended to allow exceptions, like interpolations along boundaries or reduced (1D, 2D) computations.
-//    * @param numProtXmin number of protection layers on Xmin-side
-//    * @param numProtXmax number of protection layers on Xmax-side
-//    * @param numProtYmin number of protection layers on Ymin-side
-//    * @param numProtYmax number of protection layers on Ymax-side
-//    * @param numProtZmin number of protection layers on Zmin-side
-//    * @param numProtZmax number of protection layers on Zmax-side
-//    */
-//  void setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
-//                              const size_t& numProtYmin, const size_t& numProtYmax,
-//                              const size_t& numProtZmin, const size_t& numProtZmax);
+  //  /**
+  //    * Set individual number of protection layers on all six boundaries of the CartesianPatch. This setting is
+  //    * intended to allow exceptions, like interpolations along boundaries or reduced (1D, 2D) computations.
+  //    * @param numProtXmin number of protection layers on Xmin-side
+  //    * @param numProtXmax number of protection layers on Xmax-side
+  //    * @param numProtYmin number of protection layers on Ymin-side
+  //    * @param numProtYmax number of protection layers on Ymax-side
+  //    * @param numProtZmin number of protection layers on Zmin-side
+  //    * @param numProtZmax number of protection layers on Zmax-side
+  //    */
+  //  void setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
+  //                              const size_t& numProtYmin, const size_t& numProtYmax,
+  //                              const size_t& numProtZmin, const size_t& numProtZmax);
 
 
   /**
@@ -244,14 +244,14 @@ public: // methods
     return xyz;
   }
 
-//  inline vec3_t xyzoCell(const size_t& i, const size_t& j, const size_t& k) const
-//  {
-//    vec3_t xyz, xyzo;
-//    xyzCell(i, j, k,
-//            xyz[0], xyz[1], xyz[2]);
-//    xyzo = m_transformInertial2This.transformReverse(xyz);
-//    return xyzo;
-//  }
+  //  inline vec3_t xyzoCell(const size_t& i, const size_t& j, const size_t& k) const
+  //  {
+  //    vec3_t xyz, xyzo;
+  //    xyzCell(i, j, k,
+  //            xyz[0], xyz[1], xyz[2]);
+  //    xyzo = m_transformInertial2This.transformReverse(xyz);
+  //    return xyzo;
+  //  }
 
   inline void xyzCell(const size_t& i, const size_t& j, const size_t& k,
                       real& x, real& y, real& z) const
@@ -325,6 +325,17 @@ public: // methods
    */
   virtual bool computeCCDataInterpolCoeffs(real x, real y, real z,
                                            WeightedSet<real>& w_set);
+
+
+  // new since Sun Jun 30 04:15:41 CEST 2013
+  virtual bool computeCCDataInterpolCoeffs_V1 (real x, real y, real z,
+                                               WeightedSet<real>& w_set);
+
+  // new since Sun Jun 30 04:15:41 CEST 2013
+  bool linearCCInterpolCoeffs (const real& s_test,
+                               const size_t& ijk_donor_first, const size_t& ijk_donor_afterlast,
+                               const real& ds, const size_t& num,
+                               size_t& cell_ref, real& s_coeff, int& sector);
 
   /**
    * Get directional derivative (grad*n) interpolation coeff-sets.

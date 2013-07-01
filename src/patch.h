@@ -471,6 +471,10 @@ public: // methods
   virtual bool computeCCDataInterpolCoeffs(real x, real y, real z,
                                            WeightedSet<real>& w_set)=0;
 
+  // new since Sun Jun 30 04:15:41 CEST 2013
+  virtual bool computeCCDataInterpolCoeffs_V1 (real x, real y, real z,
+                                               WeightedSet<real>& w_set)=0;
+
 
   /**
    * Get directional derivative (grad*n) interpolation coeff-sets.

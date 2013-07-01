@@ -57,8 +57,8 @@ void run()
   //CartesianPatch& patch_0 = *(dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0)));
   patch_grid.writeToVtk(0, "testrun", CompressibleVariables<PerfectGas>(), count);
 
-  cout << "Press <ENTER> to start!";
-  cin.get();
+  //cout << "Press <ENTER> to start!";
+  //cin.get();
 
   startTiming();
 
