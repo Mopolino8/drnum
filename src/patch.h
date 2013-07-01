@@ -564,6 +564,7 @@ public: // methods
   void addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst);
 
   Transformation getTransformation() { return m_Transformation; }
+  CoordTransformVV getTransformInertial2This() { return m_TransformInertial2This; }
 
 
   /** Compute ...

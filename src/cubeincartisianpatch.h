@@ -23,6 +23,7 @@ public:
   CubeInCartisianPatch();
   CubeInCartisianPatch(CartesianPatch* patch);
   void setRange(size3_t i_start, size3_t i_stop);
+  void setRange(vec3_t x1, vec3_t x2);
   void setNumLayers(size_t N) { m_NumLayers = N; }
 
   virtual void operator()();

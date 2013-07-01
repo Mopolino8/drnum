@@ -217,6 +217,7 @@ void run()
   iterator_feeder.feed(patch_grid);
 
   CubeInCartisianPatch cube = setupCube(patch_grid.getPatch(2));
+  cube.setRange(vec3_t(-0.5, -0.5, -0.5), vec3_t(0.5, 0.5, 0.5));
   runge_kutta.addPostOperation(&cube);
 
   runge_kutta.addIterator(&iterator);
@@ -295,7 +296,7 @@ void run()
       cout << "  max: " << max_norm_allpatches << "  L2: " << l2_norm_allpatches;
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       ++write_counter;
-      //patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+      patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
       t_write -= write_interval;
     } else {
       ++iter;

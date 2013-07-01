@@ -33,6 +33,38 @@ void CubeInCartisianPatch::setRange(size3_t i_start, size3_t i_stop)
   m_Stop = i_stop;
 }
 
+void CubeInCartisianPatch::setRange(vec3_t x1, vec3_t x2)
+{
+  m_Start.i = m_Patch->sizeI();
+  m_Start.j = m_Patch->sizeJ();
+  m_Start.k = m_Patch->sizeK();
+  m_Stop.i = 0;
+  m_Stop.j = 0;
+  m_Stop.k = 0;
+  for (size_t k = 0; k < m_Patch->sizeI(); ++k) {
+    for (size_t j = 0; j < m_Patch->sizeJ(); ++j) {
+      for (size_t i = 0; i < m_Patch->sizeK(); ++i) {
+        vec3_t x;
+        x[0] = i * m_Patch->dx();
+        x[1] = j * m_Patch->dy();
+        x[2] = k * m_Patch->dz();
+        x = m_Patch->getTransformInertial2This().transformReverse(x);
+        if (x[0] > x1[0] && x[1] > x1[1] && x[2] > x1[2]) {
+          if (x[0] < x2[0] && x[1] < x2[1] && x[2] < x2[2]) {
+            m_Start.i = min(m_Start.i, i);
+            m_Start.j = min(m_Start.j, j);
+            m_Start.k = min(m_Start.k, k);
+            m_Stop.i = max(m_Stop.i, i);
+            m_Stop.j = max(m_Stop.j, j);
+            m_Stop.k = max(m_Stop.k, k);
+          }
+        }
+      }
+    }
+  }
+
+}
+
 void CubeInCartisianPatch::operator ()()
 {
   m_Patch->copyFieldToHost(0);
