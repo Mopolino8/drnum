@@ -37,6 +37,10 @@ class GPU_Patch;
 #include "postprocessingvariables.h"
 #include "donor_t.h"
 
+#ifdef CUDA
+#include "cudatools.h"
+#endif
+
 #ifdef WITH_VTK
 #include <vtkUnstructuredGrid.h>
 #endif
@@ -593,6 +597,18 @@ public: // methods
    */
   virtual vtkUnstructuredGrid* createVtkGridForCells(const list<size_t>& cells) = 0;
 
+  /**
+   * @brief Copy one field from host memory to GPU (device) memory
+   * @param i_field the index of the field to copy
+   */
+  void copyFieldToDevice(size_t i_field);
+
+  /**
+   * @brief Copy one field from GPU (device) memory to host memory
+   * @param i_field the index of the field to copy
+   */
+  void copyFieldToHost(size_t i_field);
+
 
   /// @todo destructor
   virtual ~Patch();
@@ -695,6 +711,24 @@ inline vec3_t Patch::accessBBoxXYZoMax()
     buildBoundingBox();
   }
   return m_BBoxXYZoMax;
+}
+
+inline void Patch::copyFieldToDevice(size_t i_field)
+{
+#ifdef CUDA
+  real *cpu_pointer = m_Data    + i_field*fieldSize();
+  real *gpu_pointer = m_GpuData + i_field*fieldSize();
+  cudaMemcpy(gpu_pointer, cpu_pointer, fieldSize()*sizeof(real), cudaMemcpyHostToDevice);
+#endif
+}
+
+inline void Patch::copyFieldToHost(size_t i_field)
+{
+#ifdef CUDA
+  real *cpu_pointer = m_Data    + i_field*fieldSize();
+  real *gpu_pointer = m_GpuData + i_field*fieldSize();
+  cudaMemcpy(cpu_pointer, gpu_pointer, fieldSize()*sizeof(real), cudaMemcpyDeviceToHost);
+#endif
 }
 
 
