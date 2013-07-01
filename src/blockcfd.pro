@@ -112,7 +112,8 @@ SOURCES += main.cpp \
     rungekuttapg1.cpp \
     prismaticlayerpatch.cpp \
     iteratorfeeder.cpp \
-    main.cu
+    main.cu \
+    cubeincartisianpatch.cpp
 
 
 SOURCES -= main.cu
@@ -223,7 +224,8 @@ HEADERS += \
     postprocessingvariables.h \
     stringtools.h \
     donor_t.h \
-    external_aero.h
+    external_aero.h \
+    cubeincartisianpatch.h
 
 
 CUDA_SOURCES += main.cu
