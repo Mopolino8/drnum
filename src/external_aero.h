@@ -168,9 +168,9 @@ void run()
   real u              = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real L              = 1.0;
   real time           = L/u;
-  real cfl_target     = 0.25;
+  real cfl_target     = 0.75;
   real t_write        = 0;
-  real write_interval = 0.1*time;
+  real write_interval = 0.5*time;
   real total_time     = 100.0*time;
 
   // Patch grid
@@ -217,7 +217,7 @@ void run()
   iterator_feeder.feed(patch_grid);
 
   CubeInCartisianPatch cube = setupCube(patch_grid.getPatch(2));
-  cube.setRange(vec3_t(-0.5, -0.5, -0.5), vec3_t(0.5, 0.5, 0.5));
+  cube.setRange(vec3_t(-0.5, -0.537, -0.5), vec3_t(0.5, 0.5, 0.529));
   runge_kutta.addPostOperation(&cube);
 
   runge_kutta.addIterator(&iterator);
