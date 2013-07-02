@@ -112,6 +112,9 @@ SOURCES += main.cpp \
     rungekuttapg1.cpp \
     prismaticlayerpatch.cpp \
     iteratorfeeder.cpp \
+    blockobject.cpp \
+    sphereobject.cpp \
+    cartboxobject.cpp \
     main.cu
 
 
@@ -223,8 +226,10 @@ HEADERS += \
     postprocessingvariables.h \
     stringtools.h \
     donor_t.h \
-    external_aero.h
-
+    external_aero.h \
+    blockobject.h \
+    sphereobject.h \
+    cartboxobject.h
 
 CUDA_SOURCES += main.cu
 

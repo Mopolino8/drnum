@@ -5,6 +5,7 @@
 #include "iterators/cartesianiterator.h"
 #include "iteratorfeeder.h"
 #include "rungekuttapg1.h"
+#include "sphereobject.h"
 
 extern "C" void computeDiagnose(PatchGrid& patch_grid, const real& dt,
                                 real& CFL_max,

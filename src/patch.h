@@ -183,6 +183,37 @@ public: // methods
 
 
   /**
+    * Get neighbour cells for a cell on patch.
+    * @param l_cell index of cell for which to search neighbour cells.
+    * @param l_cell_neighbours vector with neighbour cell indices (ret. reference).
+    */
+  virtual void cellNeighbours (const size_t& l_cell,
+                               vector<size_t>& i_cell_neighbours){BUG;};
+
+  /**
+    * Access coordinates of a cell in local xyz-system.
+    * @param l_cell index of cell
+    * @param x_cell x-coord. of cell center (return reference)
+    * @param y_cell y-coord. of cell center (return reference)
+    * @param z_cell z-coord. of cell center (return reference)
+    */
+  virtual void xyzCell(const size_t& l_cell,
+                       real& x_cell, real& y_cell, real& z_cell){BUG;};
+
+
+
+  /**
+    * Access coordinates of a cell in inertial xyzo-system.
+    * @param l_cell index of cell
+    * @param xo_cell xo-coord. of cell center (return reference)
+    * @param yo_cell yo-coord. of cell center (return reference)
+    * @param zo_cell zo-coord. of cell center (return reference)
+    */
+  void xyzoCell(const size_t& l_cell,
+                real& xo_cell, real& yo_cell, real& zo_cell);
+
+
+  /**
     * Data access from all donor patches from direct data lists
     * ATTENTION: DOES NOT TURN ANY VECTORIAL VARIABLES !!
     * @param field the field, for which all variables are transfered

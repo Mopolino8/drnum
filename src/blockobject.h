@@ -16,10 +16,27 @@ protected: // data
 
   PatchGrid* m_PatchGrid;
 
-  // 1st dim: patch id, 2nd dim: cell in patch , 3rd dim: neighbour cells to take data from
+  // mem stucture for m_Cells... data;
+  //  1st dim: counter index of affected patch
+  //  2nd dim: counter index of affected cell in patch
+  //  3rd dim (pair::first) : [0]: cell index in patch
+  //                          [1]..size() : indices of influencing cells
+  //          (pair::second): real (1.(size()-2)
   vector<vector<pair<vector<size_t>, real> > > m_CellsFront1;
   vector<vector<pair<vector<size_t>, real> > > m_CellsFront2;
   vector<vector<pair<vector<size_t>, real> > > m_CellsInside;
+
+  // postponed
+  //  1st dim: layer (front0, front, 1, ..., inside) [m_NumLayers + 1]
+  //  2nd dim: counter index of affected patch
+  //  3rd dim: counter index of affected cell in patch
+  //  4th dim (pair::first) : [0]: cell index in patch
+  //                          [1]..size() : indices of influencing cells
+  //          (pair::second): real (1.(size()-2)
+//  vector<vector<vector<pair<vector<size_t>, real> > > > m_CellsAllLayers;
+
+
+
 
   vector<size_t> m_affectedPatchIDs;
 
@@ -43,7 +60,9 @@ public: // methods
 
   virtual void operator ()();
 
-  void applyFrontBC (const Patch* patch, const size_t& l);
+  void applyFront1BC (const Patch* patch, const size_t& l);
+
+  void applyFront2BC (const Patch* patch, const size_t& l);
 
   void applyInnerBC (const Patch* patch, const size_t& l);
 

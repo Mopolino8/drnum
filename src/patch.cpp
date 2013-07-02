@@ -57,6 +57,20 @@ bool Patch::readFromFile(istringstream& iss_input)
 }
 
 
+/// @todo clean up this class, so to find methods, etc...
+
+void Patch::xyzoCell(const size_t& l_cell,
+                     real& xo_cell, real& yo_cell, real& zo_cell)
+{
+  // hand over to virtual method getting local ccords
+  real x_cell, y_cell, z_cell;
+  xyzCell(l_cell,
+          x_cell, y_cell, z_cell);
+  m_TransformInertial2This.transformReverse(x_cell, y_cell, z_cell,
+                                            xo_cell, yo_cell, zo_cell);
+}
+
+
 void Patch::buildDonorTransferData()
 {
   // Number of donor patches influencing this (receiver) patch

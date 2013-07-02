@@ -19,6 +19,60 @@ CartesianPatch::CartesianPatch(PatchGrid* patch_grid, size_t num_protectlayers, 
   // NEW NEW_SEEK_EXCEPTION  setNumProtectLayers(m_NumProtectLayers);
 }
 
+
+void CartesianPatch::cellNeighbours (const size_t& l_cell,
+                                     vector<size_t>& l_cell_neighbours)
+{
+  size_t i_cell, j_cell, k_cell;
+  ijk(l_cell,
+      i_cell, j_cell, k_cell);
+  cellNeighbours(i_cell, j_cell, k_cell,
+                 l_cell_neighbours);
+}
+
+
+void CartesianPatch::cellNeighbours (const size_t& i_cell,
+                                     const size_t& j_cell,
+                                     const size_t& k_cell,
+                                     vector<size_t>& l_cell_neighbours)
+{
+  /// @todo if save_index is too slow, can write a faster method, checking bounds
+
+  l_cell_neighbours.clear();
+  bool error;
+  size_t l_cn;
+
+  int i = int(i_cell);
+  int j = int(j_cell);
+  int k = int(k_cell);
+
+  l_cn = save_index( i  , j  , k-1,
+                    error);
+  if (!error) { l_cell_neighbours.push_back(l_cn); };
+
+  l_cn = save_index( i  , j  , k+1,
+                     error);
+  if (!error) { l_cell_neighbours.push_back(l_cn); };
+
+  l_cn = save_index( i  , j-1, k  ,
+                     error);
+  if (!error) { l_cell_neighbours.push_back(l_cn); };
+
+  l_cn = save_index( i  , j+1, k  ,
+                     error);
+  if (!error) { l_cell_neighbours.push_back(l_cn); };
+
+  l_cn = save_index( i-1, j  , k  ,
+                     error);
+  if (!error) { l_cell_neighbours.push_back(l_cn); };
+
+  l_cn = save_index( i+1, j  , k  ,
+                     error);
+  if (!error) { l_cell_neighbours.push_back(l_cn); };
+
+}
+
+
 bool CartesianPatch::readFromFile(istringstream& iss_input)
 {
   bool no_error = Patch::readFromFile(iss_input);

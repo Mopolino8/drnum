@@ -86,13 +86,26 @@ public: // methods
   CartesianPatch(PatchGrid *patch_grid, size_t num_seeklayers = 2, size_t num_addprotectlayers = 0);
 
 
-  // NEW_SEEK_EXCEPTION
-  //  /**
-  //    * Set number of protection layers on all boundaries of the CartesianPatch.
-  //    * NOTE: method setNumProtectException(...) allows individual settings for all six boundaries of CartesianPatch.
-  //    * @param num_protectlayers number of protection layers
-  //    */
-  //  virtual void setNumProtectLayers(size_t num_protectlayers);
+  /**
+    * Get neighbour cells for a cell on patch.
+    * @param l_cell index of cell for which to search neighbour cells.
+    * @param l_cell_neighbours vector with neighbour cell indices.
+    */
+  virtual void cellNeighbours (const size_t& l_cell,
+                               vector<size_t>& i_cell_neighbours);
+
+
+  /**
+    * Get neighbour cells for a cell on patch.
+    * @param i_cell i-index of cell for which to search neighbour cells.
+    * @param i_cell j-index of cell for which to search neighbour cells.
+    * @param i_cell k-index of cell for which to search neighbour cells.
+    * @param l_cell_neighbours vector with neighbour cell indices.
+    */
+  void cellNeighbours (const size_t& i_cell,
+                       const size_t& j_cell,
+                       const size_t& k_cell,
+                       vector<size_t>& l_cell_neighbours);
 
 
   /**
@@ -119,21 +132,6 @@ public: // methods
     * @param scfactor scaling factor.
     */
   virtual void scaleRefParental(real scfactor);
-
-  // NEW_SEEK_EXCEPTION
-  //  /**
-  //    * Set individual number of protection layers on all six boundaries of the CartesianPatch. This setting is
-  //    * intended to allow exceptions, like interpolations along boundaries or reduced (1D, 2D) computations.
-  //    * @param numProtXmin number of protection layers on Xmin-side
-  //    * @param numProtXmax number of protection layers on Xmax-side
-  //    * @param numProtYmin number of protection layers on Ymin-side
-  //    * @param numProtYmax number of protection layers on Ymax-side
-  //    * @param numProtZmin number of protection layers on Zmin-side
-  //    * @param numProtZmax number of protection layers on Zmax-side
-  //    */
-  //  void setNumProtectException(const size_t& numProtXmin, const size_t& numProtXmax,
-  //                              const size_t& numProtYmin, const size_t& numProtYmax,
-  //                              const size_t& numProtZmin, const size_t& numProtZmax);
 
 
   /**
@@ -228,6 +226,7 @@ public: // methods
     k = rest - j*m_NumK;
   }
 
+  /// @todo too many xyzCell methods. Clean up here.
   inline vec3_t xyzCell(const size_t& l) const
   {
     size_t i, j, k;
@@ -235,6 +234,7 @@ public: // methods
         i, j, k);
     return xyzCell(i, j, k);
   }
+
 
   inline vec3_t xyzCell(const size_t& i, const size_t& j, const size_t& k) const
   {
@@ -244,14 +244,24 @@ public: // methods
     return xyz;
   }
 
-  //  inline vec3_t xyzoCell(const size_t& i, const size_t& j, const size_t& k) const
-  //  {
-  //    vec3_t xyz, xyzo;
-  //    xyzCell(i, j, k,
-  //            xyz[0], xyz[1], xyz[2]);
-  //    xyzo = m_transformInertial2This.transformReverse(xyz);
-  //    return xyzo;
-  //  }
+  virtual void xyzCell(const size_t& l_cell,
+                       real& x_cell, real& y_cell, real& z_cell)
+  {
+    size_t i, j, k;
+    xyzCell(i, j, k,
+            x_cell, y_cell, z_cell);
+  }
+
+
+//  inline vec3_t xyzoCell(const size_t& i, const size_t& j, const size_t& k) const
+//  {
+//    vec3_t xyz, xyzo;
+//    xyzCell(i, j, k,
+//            xyz[0], xyz[1], xyz[2]);
+//    xyzo = m_TransformInertial2This.transformReverse(xyz);
+//    return xyzo;
+//  }
+
 
   inline void xyzCell(const size_t& i, const size_t& j, const size_t& k,
                       real& x, real& y, real& z) const
@@ -260,6 +270,7 @@ public: // methods
     y = m_yCCMin + j*m_Dy;
     z = m_zCCMin + k*m_Dz;
   }
+
 
   inline int boundingNVecDirection(const size_t& lc) const
   {
