@@ -461,8 +461,8 @@ public: // methods
 
 
 #ifdef WITH_VTK
-  virtual vtkDataSet* createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);
-  virtual vtkUnstructuredGrid* createVtkGridForCells(const list<size_t> &cells);
+  virtual vtkSmartPointer<vtkDataSet> createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);
+  virtual vtkSmartPointer<vtkUnstructuredGrid> createVtkGridForCells(const list<size_t> &cells);
 #endif
 
 };

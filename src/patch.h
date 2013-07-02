@@ -42,6 +42,7 @@ class GPU_Patch;
 #endif
 
 #ifdef WITH_VTK
+#include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 #endif
 
@@ -293,8 +294,19 @@ public: // methods
    * @return a pointer to the vtkDataSet which has been created
    */
 #ifdef WITH_VTK
-  virtual vtkDataSet* createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars) = 0;
+  virtual vtkSmartPointer<vtkDataSet> createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars) = 0;
 #endif
+
+  /**
+   * @brief create a vtkUnstructuredGrid which represents a subset of the whole patch.
+   * This method assumes that the concept of cells exists for any kind of patch.
+   * @param cells the cells to put into the unstructured grid output
+   * @return a pointer to the newly create vtkUnstructuredGrid
+   */
+#ifdef WITH_VTK
+  virtual vtkSmartPointer<vtkUnstructuredGrid> createVtkGridForCells(const list<size_t>& cells) = 0;
+#endif
+
 
 
   /**
@@ -589,14 +601,6 @@ public: // methods
    * @return a vector with all starting indices
    */
   vector<size_t> getVectorVarIndices() { return m_VectorVarIndices; }
-
-  /**
-   * @brief create a vtkUnstructuredGrid which represents a subset of the whole patch.
-   * This method assumes that the concept of cells exists for any kind of patch.
-   * @param cells the cells to put into the unstructured grid output
-   * @return a pointer to the newly create vtkUnstructuredGrid
-   */
-  virtual vtkUnstructuredGrid* createVtkGridForCells(const list<size_t>& cells) = 0;
 
   /**
    * @brief Copy one field from host memory to GPU (device) memory

@@ -1586,22 +1586,13 @@ real CartesianPatch::computeMinChLength()
 }
 
 #ifdef WITH_VTK
-vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessingVariables &proc_vars)
+vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessingVariables &proc_vars)
 {
   /// @todo: must transform output for non o-aligned patches !!!
   /// @todo: does vtk know something like a general transformation in space ???
   // Transform: use only linear transformations at present
 
-  /*
-  m_NumSeekImin = num_seekImin;
-  m_NumSeekImax = num_seekImax;
-  m_NumSeekJmin = num_seekJmin;
-  m_NumSeekJmax = num_seekJmax;
-  m_NumSeekKmin = num_seekKmin;
-  m_NumSeekKmax = num_seekKmax;
-  */
-
-  vtkStructuredGrid* grid = vtkStructuredGrid::New();
+  vtkSmartPointer<vtkStructuredGrid> grid = vtkSmartPointer<vtkStructuredGrid>::New();
 
   size_t i_start = m_NumSeekImin;
   size_t i_stop  = m_NumI - m_NumSeekImax;
@@ -1613,7 +1604,7 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
   grid->SetDimensions(i_stop - i_start + 1, j_stop - j_start + 1, k_stop - k_start + 1);
   size_t num_tuples = (i_stop - i_start)*(j_stop - j_start)*(k_stop - k_start);
 
-  vtkPoints* points = vtkPoints::New();
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   for (size_t k = k_start; k <= k_stop; ++k) {
     for (size_t j = j_start; j <= j_stop; ++j) {
       for (size_t i = i_start; i <= i_stop; ++i) {
@@ -1632,7 +1623,7 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
 
   real* raw_var = new real [numVariables()];
   for (int i_var = 0; i_var < proc_vars.numScalars(); ++i_var) {
-    vtkFloatArray* var = vtkFloatArray::New();
+    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
     var->SetName(proc_vars.getScalarName(i_var).c_str());
     var->SetNumberOfValues(num_tuples);
     grid->GetCellData()->AddArray(var);
@@ -1648,7 +1639,7 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
     }
   }
   for (int i_var = 0; i_var < proc_vars.numVectors(); ++i_var) {
-    vtkFloatArray* var = vtkFloatArray::New();
+    vtkSmartPointer<vtkFloatArray> var = vtkSmartPointer<vtkFloatArray>::New();
     var->SetName(proc_vars.getVectorName(i_var).c_str());
     var->SetNumberOfComponents(3);
     var->SetNumberOfTuples(num_tuples);
@@ -1672,13 +1663,12 @@ vtkDataSet* CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessin
   return grid;
 }
 
-vtkUnstructuredGrid* CartesianPatch::createVtkGridForCells(const list<size_t> &cells)
+vtkSmartPointer<vtkUnstructuredGrid> CartesianPatch::createVtkGridForCells(const list<size_t> &cells)
 {
-  vtkSmartPointer<vtkPoints> points = vtkPoints::New();
-  vtkUnstructuredGrid* grid = vtkUnstructuredGrid::New();
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+  vtkSmartPointer<vtkUnstructuredGrid> grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
   size_t num_nodes = 0;
-  vector<int> c2c(sizeI()*sizeJ()*sizeK(), -1);
   vector<int> n2n((sizeI() + 1)*(sizeJ() + 1)*(sizeK() + 1), -1);
   vector<vec3_t> x_node((sizeI() + 1)*(sizeJ() + 1)*(sizeK() + 1));
   for (list<size_t>::const_iterator i_cells = cells.begin(); i_cells != cells.end(); ++i_cells) {

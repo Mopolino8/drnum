@@ -508,12 +508,10 @@ void PatchGrid::writeToVtk(size_t i_field, string file_name, const PostProcessin
   // Synchronise blocks before saving to ensure correct values in overlap
   /// @todo field handling needed. New field required, "0 = new" OK?
   accessAllDonorData(0);
-
   using namespace StringTools;
-  //vtkSmartPointer<vtkMultiBlockDataSet> multi_block = vtkMultiBlockDataSet::New();
-  vtkMultiBlockDataSet* multi_block = vtkMultiBlockDataSet::New();
+  vtkSmartPointer<vtkMultiBlockDataSet> multi_block = vtkSmartPointer<vtkMultiBlockDataSet>::New();
   multi_block->SetNumberOfBlocks(getNumPatches());
-  vector<vtkDataSet*> data_sets(getNumPatches());
+  vector<vtkSmartPointer<vtkDataSet> > data_sets(getNumPatches());
   for (size_t i_patch = 0; i_patch < getNumPatches(); ++i_patch) {
     data_sets[i_patch] = getPatch(i_patch)->createVtkDataSet(i_field, proc_vars);
     multi_block->SetBlock(i_patch, data_sets[i_patch]);
@@ -522,14 +520,8 @@ void PatchGrid::writeToVtk(size_t i_field, string file_name, const PostProcessin
     file_name += "_" + leftFill(toString(count), '0', 6);
     file_name += ".vtm";
   }
-  //vtkSmartPointer<vtkXMLMultiBlockDataWriter> vmb = vtkXMLMultiBlockDataWriter::New();
-  vtkXMLMultiBlockDataWriter* vmb = vtkXMLMultiBlockDataWriter::New();
+  vtkSmartPointer<vtkXMLMultiBlockDataWriter> vmb = vtkSmartPointer<vtkXMLMultiBlockDataWriter>::New();
   vmb->SetInput(multi_block);
   vmb->SetFileName(file_name.c_str());
   vmb->Write();
-  for (size_t i_patch = 0; i_patch < getNumPatches(); ++i_patch) {
-    data_sets[i_patch]->Delete();
-  }
-  vmb->Delete();
-  multi_block->Delete();
 }
