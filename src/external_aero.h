@@ -168,7 +168,7 @@ void run()
   real u              = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real L              = 1.0;
   real time           = L/u;
-  real cfl_target     = 0.75;
+  real cfl_target     = 0.5;
   real t_write        = 0;
   real write_interval = 0.5*time;
   real total_time     = 100.0*time;
@@ -291,8 +291,8 @@ void run()
       ql2_norm_allpatches /= patch_grid.getNumPatches();
       l2_norm_allpatches = sqrt(ql2_norm_allpatches);
       ++iter;
-      cout << iter << " iterations,  t=" << t/time << "*L/u_oo,  dt: " << dt;;
-      cout << t/time << "  dt: " << dt << "  CFL: " << CFL_max;
+      cout << iter << " iterations,  t=" << t/time << "*L/u_oo,  dt: " << dt;
+      cout << "  CFL: " << CFL_max;
       cout << "  max: " << max_norm_allpatches << "  L2: " << l2_norm_allpatches;
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       ++write_counter;
