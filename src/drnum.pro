@@ -113,7 +113,8 @@ SOURCES += main.cpp \
     prismaticlayerpatch.cpp \
     iteratorfeeder.cpp \
     main.cu \
-    cubeincartisianpatch.cpp
+    cubeincartisianpatch.cpp \
+    configmap.cpp
 
 
 SOURCES -= main.cu
@@ -203,10 +204,12 @@ HEADERS += \
     stringtools.h \
     donor_t.h \
     external_aero.h \
-    cubeincartisianpatch.h
+    cubeincartisianpatch.h \
+    configmap.h
 
 
 CUDA_SOURCES += main.cu
 
 OTHER_FILES += \
-    doc/iterators.dox
+    doc/iterators.dox \
+    drnum.py
