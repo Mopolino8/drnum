@@ -33,8 +33,8 @@ class EaFlux
   //typedef Upwind2<SecondOrder>                           reconstruction_t;
 
   typedef Upwind2<VanAlbada>                             reconstruction_t;
-  //typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
-  typedef KNP<reconstruction_t, PerfectGas>              euler_t;
+  typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
+  //typedef KNP<reconstruction_t, PerfectGas>              euler_t;
   typedef CompressibleViscFlux<PerfectGas>               viscous_t;
   typedef CompressibleFarfieldFlux<Upwind1, PerfectGas>  farfield_t;
 
@@ -162,7 +162,7 @@ CubeInCartisianPatch setupCube(Patch* patch)
 void run()
 {
 
-  real Ma             = 1.30;
+  real Ma             = 0.30;
   real p              = 1.0e5;
   real T              = 300;
   real u              = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
@@ -170,8 +170,9 @@ void run()
   real time           = L/u;
   real cfl_target     = 0.5;
   real t_write        = 0;
-  real write_interval = 0.5*time;
-  real total_time     = 100.0*time;
+  real write_interval = 0.1*time;
+  real total_time     = 0.1*time;
+  bool write          = true;
 
   // Patch grid
   PatchGrid patch_grid;
@@ -216,9 +217,11 @@ void run()
   iterator_feeder.addIterator(&iterator);
   iterator_feeder.feed(patch_grid);
 
+  /*
   CubeInCartisianPatch cube = setupCube(patch_grid.getPatch(2));
   cube.setRange(vec3_t(-0.5, -0.537, -0.5), vec3_t(0.5, 0.5, 0.529));
   runge_kutta.addPostOperation(&cube);
+  */
 
   runge_kutta.addIterator(&iterator);
 
@@ -233,7 +236,9 @@ void run()
   runge_kutta.copyDonorData(0);
   iterator.updateHost();
 #endif
-  patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+  if (write) {
+    patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+  }
 
   startTiming();
 
@@ -296,7 +301,9 @@ void run()
       cout << "  max: " << max_norm_allpatches << "  L2: " << l2_norm_allpatches;
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       ++write_counter;
-      patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+      if (write) {
+        patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+      }
       t_write -= write_interval;
     } else {
       ++iter;
@@ -312,7 +319,9 @@ void run()
   iterator.updateHost();
 #endif
 
-  patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
+  if (write) {
+    patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
+  }
 }
 
 #endif // EXTERNAL_AERO_H
