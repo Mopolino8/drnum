@@ -1,64 +1,100 @@
 #include "blockobject.h"
 
 
-BlockObject::BlockObject()
+BlockObject::BlockObject(PatchGrid* patch_grid)
 {
-  // ???
+  m_PatchGrid = patch_grid;
 }
 
 
 void BlockObject::operator ()()
 {
-//  // loop for patches affected
-//  for (size_t ii_p = 0; ii_p < m_affectedPatchIDs.size(); ii_p++) {
+  // field to work on
+  size_t field = 0;
 
-//    size_t field = 0;
+  // loop for patches affected
+  for (size_t ii_p = 0; ii_p < m_affectedPatchIDs.size(); ii_p++) {
 
-//    size_t i_p = m_affectedPatchIDs[ii_p];
-//    Patch* patch = m_PatchGrid->getPatch(i_p);
-//    real* rho = patch->getVariable(field, 0);
-//    real* rhou = patch->getVariable(field, 1);
-//    real* rhov = patch->getVariable(field, 2);
-//    real* rhow = patch->getVariable(field, 3);
-//    real* rhoE = patch->getVariable(field, 4);
+    //.. patch settings
+    size_t i_p = m_affectedPatchIDs[ii_p];
+    Patch* patch = m_PatchGrid->getPatch(i_p);
+    real* rho = patch->getVariable(field, 0);
+    real* rhou = patch->getVariable(field, 1);
+    real* rhov = patch->getVariable(field, 2);
+    real* rhow = patch->getVariable(field, 3);
+    real* rhoE = patch->getVariable(field, 4);
 
-//    //.. loop for front cells of patch
-//    for (size_t i_c = 0; i_c < m_CellsFront[i_p].size(); i_c++) {
-//      size_t l = m_CellsFront[i_p][i_c];
-//      // do BC for front cells of block object
-//      applyFrontBC(rho, rhou, rhov, rhow, rhoE, patch, l);
-//    }
-//    for (size_t i_c = 0; i_c < m_CellsInside[i_p].size(); i_c++) {
-//      // do BC for non boundary cells inside block object
-//      applyInnerBC(rho, rhou, rhov, rhow, rhoE, patch, l);
-//    }
-//  }
-}
+    //.. patch related BC masks
+    vector<pair<vector<size_t>, real> >& patch_cells_front1 = m_CellsFront1[ii_p];
+    vector<pair<vector<size_t>, real> >& patch_cells_front2 = m_CellsFront2[ii_p];
+    vector<pair<vector<size_t>, real> >& patch_cells_inside = m_CellsInside[ii_p];
 
+    //.. loop for front_1 cells of patch
+    for (size_t ii_c = 0; ii_c < patch_cells_front1.size(); ii_c++) {
+      pair<vector<size_t>, real>& cell_front1_data = patch_cells_front1[ii_c];
+      size_t i_cell = cell_front1_data.first[0];
+      rho[i_cell] = 0.;
+      rhou[i_cell] = 0.;
+      rhov[i_cell] = 0.;
+      rhow[i_cell] = 0.;
+      rhoE[i_cell] = 0.;
+      //.... Loop for influencing nodes
+      for (size_t ii_cn = 1; ii_cn < cell_front1_data.first.size()-1; ii_cn++) {
+        size_t i_cn = cell_front1_data.first[ii_cn];
+        rho[i_cell]  += rho[i_cn]  * cell_front1_data.second;  // do on primitive vars later
+        rhoE[i_cell] += rhoE[i_cn] * cell_front1_data.second;
+      }
+    }
 
-void BlockObject::applyFrontBC(const Patch *patch, const size_t &l)
-{
-//  size_t field = 0;
-//  real* rho = patch->getVariable(field, 0);
-//  real* rhou = patch->getVariable(field, 1);
-//  real* rhov = patch->getVariable(field, 2);
-//  real* rhow = patch->getVariable(field, 3);
-//  real* rhoE = patch->getVariable(field, 4);
-//  m_Gas::conservativeToPrimitive()
+    //.. loop for front_2 cells of patch
+    for (size_t ii_c = 0; ii_c < patch_cells_front2.size(); ii_c++) {
+      pair<vector<size_t>, real>& cell_front2_data = patch_cells_front2[ii_c];
+      size_t i_cell = cell_front2_data.first[0];
+      rho[i_cell] = 0.;
+      rhou[i_cell] = 0.;
+      rhov[i_cell] = 0.;
+      rhow[i_cell] = 0.;
+      rhoE[i_cell] = 0.;
+      //.... Loop for influencing nodes
+      for (size_t ii_cn = 1; ii_cn < cell_front2_data.first.size()-1; ii_cn++) {
+        size_t i_cn = cell_front2_data.first[ii_cn];
+        rho[i_cell]  += rho[i_cn]  * cell_front2_data.second;  // do on primitive vars later
+        rhoE[i_cell] += rhoE[i_cn] * cell_front2_data.second;
+      }
+    }
 
-
-
-}
-
-
-void BlockObject::applyInnerBC(const Patch *patch, const size_t &l)
-{
-
+    //.. loop for front_2 cells of patch
+    //   ATTENTION: recursive
+    for (size_t ii_c = 0; ii_c < patch_cells_inside.size(); ii_c++) {
+      pair<vector<size_t>, real>& cell_inside_data = patch_cells_inside[ii_c];
+      size_t i_cell = cell_inside_data.first[0];
+      rho[i_cell] = 0.;
+      rhou[i_cell] = 0.;
+      rhov[i_cell] = 0.;
+      rhow[i_cell] = 0.;
+      rhoE[i_cell] = 0.;
+      //.... Loop for influencing nodes
+      for (size_t ii_cn = 1; ii_cn < cell_inside_data.first.size()-1; ii_cn++) {
+        size_t i_cn = cell_inside_data.first[ii_cn];
+        rho[i_cell]  += rho[i_cn]  * cell_inside_data.second;  // do on primitive vars later
+        rhoE[i_cell] += rhoE[i_cn] * cell_inside_data.second;
+      }
+    }
+  }
 }
 
 
 void BlockObject::fillAll()
 {
+  /**
+    * @todo Method may be rewritten to allow arbitrary numbers of front layers.
+    * Doing so, allows higher order discretizations (>=3).
+    */
+  /**
+    * @todo Clear method to give number of cells in patch is missing.
+    * variableSize() ???
+    */
+
   m_affectedPatchIDs.clear();  // just to be sure
 
   // build up first dim of m_Cells... data
@@ -68,268 +104,179 @@ void BlockObject::fillAll()
 
   // loop for patches to find cells located in object definition space
   for (size_t i_p = 0; i_p < m_PatchGrid->getNumPatches(); i_p++) {
-    m_CellsFront1[i_p].clear();  // just to be sure
-    m_CellsInside[i_p].clear(); // just to be sure
-    //Patch* patch = m_PatchGrid->getPatch(i_p);
-    /// @todo need a general function in Patch to access x,y,z
-    /// @todo restricted to cartesian at present
-    CartesianPatch& patch = *(dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_p)));
 
-    // build a scratch bool list to mark cells affected
-    size_t num_cells = patch.sizeL();
+    Patch* patch = m_PatchGrid->getPatch(i_p);
+
+    // build a scratch int list to mark cells affected
+    //  0: codes as outside object
+    //  1: 1st front layer
+    //  2: 2nd front layer
+    //  3: inside object
+
+    bool any_hit_in_patch = false;
+    size_t num_cells = patch->variableSize();
     vector<size_t> cell_marker;
     cell_marker.resize(num_cells, 0);  // 0 codes as outside object
 
-    // loop to find cells affected
-    for (size_t i_cell = 0; i_cell < patch.sizeI(); i_cell++) {
-      for (size_t j_cell = 0; j_cell < patch.sizeJ(); j_cell++) {
-        for (size_t k_cell = 0; k_cell < patch.sizeK(); k_cell++) {
-          vec3_t xyzo_cell = patch.xyzoCell(i_cell, j_cell, k_cell);
-          if (isInside(xyzo_cell)) {
-            size_t l = patch.index(i_cell, j_cell, k_cell);
-            cell_marker[l] = 3;  // markes as "body" inside region
-          }
-        }
+    // Loop for cells of patch to find the ones blocked by object
+    // Dont care front1, front2, inside at present
+    for (size_t i_c = 0; i_c < patch->variableSize(); i_c++) {
+      real xc, yc, zc;
+      patch->xyzoCell(i_c,
+                      xc, yc, zc);
+      if (isInside(xc, yc, zc)) {
+        cell_marker[i_c] = 3;  // preliminary setting: "body inside" region
+        any_hit_in_patch = true;
       }
     }
 
-    // insert cells affected into "front" and "inside" lists
-
-    // Find front_1 cells: These are cells in object, having at least one fluid neighbour.
-    for (size_t i_cell = 0; i_cell < patch.sizeI(); i_cell++) {
-      for (size_t j_cell = 0; j_cell < patch.sizeJ(); j_cell++) {
-        for (size_t k_cell = 0; k_cell < patch.sizeK(); k_cell++) {
-          size_t l = patch.index(i_cell, j_cell, k_cell);
-          if (cell_marker[l] == 3) {  // a body cell as found above
-            size_t l_n;
-            bool error;
-            bool inside = true;
-            // check neighbours
-            // i, j, k-1
-            l_n = patch.save_index(i_cell, j_cell, k_cell-1, error);
-            if (!error) {
-              if (cell_marker[l_n] == 0) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i, j, k+1
-            l_n = patch.save_index(i_cell, j_cell, k_cell+1, error);
-            if (!error) {
-              if (cell_marker[l_n] == 0) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i, j-1, k
-            l_n = patch.save_index(i_cell, j_cell-1, k_cell, error);
-            if (!error) {
-              if (cell_marker[l_n] == 0) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i, j+1, k
-            l_n = patch.save_index(i_cell, j_cell+1, k_cell, error);
-            if (!error) {
-              if (cell_marker[l_n] == 0) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i-1, j, k
-            l_n = patch.save_index(i_cell-1, j_cell, k_cell, error);
-            if (!error) {
-              if (cell_marker[l_n] == 0) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i+1, j, k
-            l_n = patch.save_index(i_cell+1, j_cell, k_cell, error);
-            if (!error) {
-              if (cell_marker[l_n] == 0) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // insert in "front" or "neighbour"
-            if (inside) {
-              cell_marker[l] = 1;  // this qualifies as "front 1" (first layer)
-            }
-          }   // cell_marker[l] == 3
-        }     // k_cell
-      }       // j_cell
-    }         // i_cell
-
-    // Find front_2 cells: These are cells in object, having at least one neighbour at front 1.
-    for (size_t i_cell = 0; i_cell < patch.sizeI(); i_cell++) {
-      for (size_t j_cell = 0; j_cell < patch.sizeJ(); j_cell++) {
-        for (size_t k_cell = 0; k_cell < patch.sizeK(); k_cell++) {
-          size_t l = patch.index(i_cell, j_cell, k_cell);
-          if (cell_marker[l] == 3) {  // a body cell as found above
-            size_t l_n;
-            bool error;
-            bool inside = true;
-            // check neighbours
-            // i, j, k-1
-            l_n = patch.save_index(i_cell, j_cell, k_cell-1, error);
-            if (!error) {
-              if (cell_marker[l_n] == 1) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i, j, k+1
-            l_n = patch.save_index(i_cell, j_cell, k_cell+1, error);
-            if (!error) {
-              if (cell_marker[l_n] == 1) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i, j-1, k
-            l_n = patch.save_index(i_cell, j_cell-1, k_cell, error);
-            if (!error) {
-              if (cell_marker[l_n] == 1) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i, j+1, k
-            l_n = patch.save_index(i_cell, j_cell+1, k_cell, error);
-            if (!error) {
-              if (cell_marker[l_n] == 1) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i-1, j, k
-            l_n = patch.save_index(i_cell-1, j_cell, k_cell, error);
-            if (!error) {
-              if (cell_marker[l_n] == 1) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // i+1, j, k
-            l_n = patch.save_index(i_cell+1, j_cell, k_cell, error);
-            if (!error) {
-              if (cell_marker[l_n] == 1) {  // a fluid cell
-                inside = false;
-              }
-            }
-            // insert in "front" or "neighbour"
-            if (inside) {
-              cell_marker[l] = 2;  // this qualifies as "front 2" (second layer)
-            }
-          }   // cell_marker[l] == 3
-        }     // k_cell
-      }       // j_cell
-    }         // i_cell
-
-    // insert in m_Cells... lists
-    for (size_t i_cell = 0; i_cell < patch.sizeI(); i_cell++) {
-      for (size_t j_cell = 0; j_cell < patch.sizeJ(); j_cell++) {
-        for (size_t k_cell = 0; k_cell < patch.sizeK(); k_cell++) {
-          size_t l = patch.index(i_cell, j_cell, k_cell);
-          if (cell_marker[l] == 1) {
-            m_CellsFront1[i_p].push_back(l);
-            size_t ll = m_CellsFront1[i_p].size()-1;
-            size_t l_n;
-            pair<vector<size_t>, real> contrib;
-            l_n = patch.save_index(i_cell, j_cell, k_cell-1, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell, j_cell, k_cell+1, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell, j_cell-1, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell, j_cell+1, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell-1, j_cell, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell+1, j_cell, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-          }
-          else if (cell_marker[l] == 2) {
-            m_CellsFront2[i_p].push_back(l);
-            size_t ll = m_CellsFront2[i_p].size()-1;
-            size_t l_n;
-            pair<vector<size_t>, real> contrib;
-            l_n = patch.save_index(i_cell, j_cell, k_cell-1, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell, j_cell, k_cell+1, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell, j_cell-1, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell, j_cell+1, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell-1, j_cell, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-            l_n = patch.save_index(i_cell+1, j_cell, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-          }
-          else if (cell_marker[l] == 2) {
-
-
-
-
-
-
-
-
-
-            if (k_cell != 0) {
-              l_n = patch.index(i_cell, j_cell, k_cell-1);
-              if (cell_marker[l_n] == 0) {contrib.first.push_back(l_n);}
-            }
-            if (k_cell != patch.sizeK()-1) {
-              l_n = patch.index(i_cell, j_cell, k_cell+1);
-              if (cell_marker[l_n] == 0) {contrib.first.push_back(l_n);}
-            }
-
-
-            l_n = patch.save_index(i_cell, j_cell-1, k_cell, error);
-            if (!error && cell_marker[l_n] == 0) {
-              contrib.first.push_back(l_n);
-            }
-
-
-
-
-              if (cell_marker[l_n] == 0) {contrib.first.push_back(l_n);}
-            }
-            if (k_cell != patch.sizeK()-1) {
-              l_n = patch.index(i_cell, j_cell, k_cell+1);
-              if (cell_marker[l_n] == 0) {contrib.first.push_back(l_n);}
-            }
-
-
-
-          }
-
-
-        }
-
-
-    // insert patch affected
-    if (m_CellsFront[i_p].size() > 0 || m_CellsInside[i_p].size() > 0) {
+    // Any hit?
+    if (any_hit_in_patch) {
+      // Insert patch in the affected list
       m_affectedPatchIDs.push_back(i_p);
+      size_t ii_p = m_affectedPatchIDs.size() - 1;
+      m_CellsFront1.resize(ii_p + 1);
+      m_CellsFront2.resize(ii_p + 1);
+      m_CellsInside.resize(ii_p + 1);
+
+      // Resolve first dimension of lists m_Cells...
+      vector<pair<vector<size_t>, real> >& patch_cells_front1 = m_CellsFront1[ii_p];
+      vector<pair<vector<size_t>, real> >& patch_cells_front2 = m_CellsFront2[ii_p];
+      vector<pair<vector<size_t>, real> >& patch_cells_inside = m_CellsInside[ii_p];
+      patch_cells_front1.clear();
+      patch_cells_front2.clear();
+      patch_cells_inside.clear();
+
+      // Find front_1 cells: These are cells in object, having at least one
+      // fluid neighbour cell.
+      for (size_t i_c = 0; i_c < patch->variableSize(); i_c++) {
+        if (cell_marker[i_c] == 3) {
+          vector<size_t> ind_cell_neighbours;
+          patch->cellNeighbours(i_c,
+                                ind_cell_neighbours);
+          //.... check neighbours cell_marker
+          bool any_fluid = false;
+          for (size_t ll_cn = 0; ll_cn < ind_cell_neighbours.size(); ll_cn++) {
+            size_t l_cell_neighbour = ind_cell_neighbours[ll_cn];
+            if (cell_marker[l_cell_neighbour] == 0) {
+              any_fluid = true;
+              break;
+            }
+          }
+          if (any_fluid) {
+            cell_marker[i_c] = 1; // cell on front_1
+            //...... resolve
+            pair<vector<size_t>, real> cell_BC_mask;
+            cell_BC_mask.first.push_back(i_c); // note: [0] for index of cell to apply blocking
+            //...... loop again to set fluid neighbours
+            for (size_t ll_cn = 0; ll_cn < ind_cell_neighbours.size(); ll_cn++) {
+              size_t l_cell_neighbour = ind_cell_neighbours[ll_cn];
+              if (cell_marker[l_cell_neighbour] == 0) {
+                cell_BC_mask.first.push_back(l_cell_neighbour);
+              }
+            }
+            cell_BC_mask.second = 1. / float(cell_BC_mask.first.size()-1);
+            patch_cells_front1.push_back(cell_BC_mask);
+          }
+        }
+      }
+
+      // Find front_2 cells: These are cells in object, that are not located in
+      // front1 layer, however having at least one neighbour cell in front1 laeyer.
+      for (size_t i_c = 0; i_c < patch->variableSize(); i_c++) {
+        if (cell_marker[i_c] == 3) {
+          vector<size_t> ind_cell_neighbours;
+          patch->cellNeighbours(i_c,
+                                ind_cell_neighbours);
+          //.... check neighbours cell_marker
+          bool any_lower_layer = false;
+          for (size_t ll_cn = 0; ll_cn < ind_cell_neighbours.size(); ll_cn++) {
+            size_t l_cell_neighbour = ind_cell_neighbours[ll_cn];
+            if (cell_marker[l_cell_neighbour] == 1) {
+              any_lower_layer = true;
+              break;
+            }
+          }
+          if (any_lower_layer) {
+            cell_marker[i_c] = 2; // cell on front_2
+            //...... resolve
+            pair<vector<size_t>, real> cell_BC_mask;
+            cell_BC_mask.first.push_back(i_c); // note: [0] for index of cell to apply blocking
+            //...... loop again to set lower layer neighbours
+            for (size_t ll_cn = 0; ll_cn < ind_cell_neighbours.size(); ll_cn++) {
+              size_t l_cell_neighbour = ind_cell_neighbours[ll_cn];
+              if (cell_marker[l_cell_neighbour] == 1) {
+                cell_BC_mask.first.push_back(l_cell_neighbour);
+              }
+            }
+            cell_BC_mask.second = 1. / float(cell_BC_mask.first.size()-1);
+            patch_cells_front2.push_back(cell_BC_mask);
+          }
+        }
+      }
+
+      // Insert the inner cells of the blockobject in patch_cells_inside
+      for (size_t i_c = 0; i_c < patch->variableSize(); i_c++) {
+        if (cell_marker[i_c] == 3) {
+          vector<size_t> ind_cell_neighbours;
+          patch->cellNeighbours(i_c,
+                                ind_cell_neighbours);
+          //.... resolve
+          pair<vector<size_t>, real> cell_BC_mask;
+          cell_BC_mask.first.push_back(i_c); // note: [0] for index of cell to apply blocking
+          //..... loop to set neighbours (all!)
+          for (size_t ll_cn = 0; ll_cn < ind_cell_neighbours.size(); ll_cn++) {
+            size_t l_cell_neighbour = ind_cell_neighbours[ll_cn];
+            cell_BC_mask.first.push_back(l_cell_neighbour);
+          }
+          cell_BC_mask.second = 1. / float(cell_BC_mask.first.size()-1);
+          patch_cells_inside.push_back(cell_BC_mask);
+        }
+      }
+    }   // if (any_hit_in_patch)
+  }     // for (size_t i_p = 0; i_p < m_PatchGrid->getNumPatches(); i_p++)
+}
+
+
+void BlockObject::setLayerIndexToVar (real** vvar)
+{
+  real Eps = 1.e-5;
+  // loop for püatches affected
+  for (size_t ii_p = 0; ii_p < m_affectedPatchIDs.size(); ii_p++) {
+    size_t i_p = m_affectedPatchIDs[ii_p];
+    Patch* patch = m_PatchGrid->getPatch(i_p);
+    real* var = vvar[i_p];
+
+    // set all var = Eps (means "outside")
+    for (size_t l_cell = 0; l_cell < patch->variableSize(); l_cell++) {
+      var[l_cell] = Eps;
     }
 
-  }           // i_p
+    // cells in front 1 layer:
+    {
+      vector<pair<vector<size_t>, real> >& patch_cells_front1 = m_CellsFront1[ii_p];
+      for (size_t ll_cell = 0; ll_cell < patch_cells_front1.size(); ll_cell++) {
+        size_t l_cell = patch_cells_front1[ll_cell].first[0];
+        var[l_cell] = 1.;
+      }
+    }
 
+    // cells in front 2 layer:
+    {
+      vector<pair<vector<size_t>, real> >& patch_cells_front2 = m_CellsFront2[ii_p];
+      for (size_t ll_cell = 0; ll_cell < patch_cells_front2.size(); ll_cell++) {
+        size_t l_cell = patch_cells_front2[ll_cell].first[0];
+        var[l_cell] = 2.;
+      }
+    }
+
+    // cells in inside region of block object
+    {
+      vector<pair<vector<size_t>, real> >& patch_cells_inside = m_CellsInside[ii_p];
+      for (size_t ll_cell = 0; ll_cell < patch_cells_inside.size(); ll_cell++) {
+        size_t l_cell = patch_cells_inside[ll_cell].first[0];
+        var[l_cell] = 3.;
+      }
+    }
+  }
 }

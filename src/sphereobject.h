@@ -17,7 +17,7 @@ protected:
 
 public:
 
-  SphereObject();
+  SphereObject(PatchGrid* patch_grid);
 
   void setParams (real xo_center, real yo_center, real zo_center, real radius);
 

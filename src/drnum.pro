@@ -112,6 +112,9 @@ SOURCES += main.cpp \
     rungekuttapg1.cpp \
     prismaticlayerpatch.cpp \
     iteratorfeeder.cpp \
+    blockobject.cpp \
+    sphereobject.cpp \
+    cartboxobject.cpp \
     main.cu \
     cubeincartisianpatch.cpp \
     configmap.cpp
@@ -205,7 +208,12 @@ HEADERS += \
     donor_t.h \
     external_aero.h \
     cubeincartisianpatch.h \
-    configmap.h
+    configmap.h \
+    blockobject.h \
+    sphereobject.h \
+    cartboxobject.h \
+    cubeincartisianpatch.h \
+    ghostfluid_test.h
 
 
 CUDA_SOURCES += main.cu
