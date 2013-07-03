@@ -37,7 +37,12 @@ class GPU_Patch;
 #include "postprocessingvariables.h"
 #include "donor_t.h"
 
+#ifdef CUDA
+#include "cudatools.h"
+#endif
+
 #ifdef WITH_VTK
+#include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 #endif
 
@@ -187,8 +192,10 @@ public: // methods
     * @param l_cell index of cell for which to search neighbour cells.
     * @param l_cell_neighbours vector with neighbour cell indices (ret. reference).
     */
-  virtual void cellNeighbours (const size_t& l_cell,
-                               vector<size_t>& i_cell_neighbours){BUG;};
+  //virtual void cellNeighbours (const size_t& l_cell,
+  //                             vector<size_t>& i_cell_neighbours){BUG;};
+  virtual void cellNeighbours (const size_t&,
+                               vector<size_t>&){BUG;};
 
   /**
     * Access coordinates of a cell in local xyz-system.
@@ -197,8 +204,10 @@ public: // methods
     * @param y_cell y-coord. of cell center (return reference)
     * @param z_cell z-coord. of cell center (return reference)
     */
-  virtual void xyzCell(const size_t& l_cell,
-                       real& x_cell, real& y_cell, real& z_cell){BUG;};
+  //virtual void xyzCell(const size_t& l_cell,
+  //                     real& x_cell, real& y_cell, real& z_cell){BUG;};
+  virtual void xyzCell(const size_t&,
+                       real&, real&, real&){BUG;};
 
 
 
@@ -320,8 +329,19 @@ public: // methods
    * @return a pointer to the vtkDataSet which has been created
    */
 #ifdef WITH_VTK
-  virtual vtkDataSet* createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars) = 0;
+  virtual vtkSmartPointer<vtkDataSet> createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars) = 0;
 #endif
+
+  /**
+   * @brief create a vtkUnstructuredGrid which represents a subset of the whole patch.
+   * This method assumes that the concept of cells exists for any kind of patch.
+   * @param cells the cells to put into the unstructured grid output
+   * @return a pointer to the newly create vtkUnstructuredGrid
+   */
+#ifdef WITH_VTK
+  virtual vtkSmartPointer<vtkUnstructuredGrid> createVtkGridForCells(const list<size_t>& cells) = 0;
+#endif
+
 
 
   /**
@@ -591,6 +611,7 @@ public: // methods
   void addField(size_t i_op1, real factor, size_t i_op2, size_t i_dst);
 
   Transformation getTransformation() { return m_Transformation; }
+  CoordTransformVV getTransformInertial2This() { return m_TransformInertial2This; }
 
 
   /** Compute ...
@@ -617,12 +638,16 @@ public: // methods
   vector<size_t> getVectorVarIndices() { return m_VectorVarIndices; }
 
   /**
-   * @brief create a vtkUnstructuredGrid which represents a subset of the whole patch.
-   * This method assumes that the concept of cells exists for any kind of patch.
-   * @param cells the cells to put into the unstructured grid output
-   * @return a pointer to the newly create vtkUnstructuredGrid
+   * @brief Copy one field from host memory to GPU (device) memory
+   * @param i_field the index of the field to copy
    */
-  virtual vtkUnstructuredGrid* createVtkGridForCells(const list<size_t>& cells) = 0;
+  void copyFieldToDevice(size_t i_field);
+
+  /**
+   * @brief Copy one field from GPU (device) memory to host memory
+   * @param i_field the index of the field to copy
+   */
+  void copyFieldToHost(size_t i_field);
 
 
   /// @todo destructor
@@ -726,6 +751,24 @@ inline vec3_t Patch::accessBBoxXYZoMax()
     buildBoundingBox();
   }
   return m_BBoxXYZoMax;
+}
+
+inline void Patch::copyFieldToDevice(size_t i_field)
+{
+#ifdef CUDA
+  real *cpu_pointer = m_Data    + i_field*fieldSize();
+  real *gpu_pointer = m_GpuData + i_field*fieldSize();
+  cudaMemcpy(gpu_pointer, cpu_pointer, fieldSize()*sizeof(real), cudaMemcpyHostToDevice);
+#endif
+}
+
+inline void Patch::copyFieldToHost(size_t i_field)
+{
+#ifdef CUDA
+  real *cpu_pointer = m_Data    + i_field*fieldSize();
+  real *gpu_pointer = m_GpuData + i_field*fieldSize();
+  cudaMemcpy(cpu_pointer, gpu_pointer, fieldSize()*sizeof(real), cudaMemcpyDeviceToHost);
+#endif
 }
 
 

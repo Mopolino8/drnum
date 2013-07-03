@@ -18,9 +18,4 @@ void RungeKutta::operator()(real dt)
     runPostOperations();
     countFlops(1);
   }
-
-  // Test
-  copyDonorData(0);
-
-
 }

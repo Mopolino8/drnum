@@ -115,7 +115,8 @@ SOURCES += main.cpp \
     blockobject.cpp \
     sphereobject.cpp \
     cartboxobject.cpp \
-    main.cu
+    main.cu \
+    cubeincartisianpatch.cpp
 
 
 SOURCES -= main.cu
@@ -129,28 +130,6 @@ HEADERS += \
     codestring.h \
     compressiblevariables.h \
     debug.h \
-    examples/cpuduct.h \
-    examples/cpujet.h \
-    examples/cpujet_pg.h \
-    examples/cpujet_pg_single.h \
-    examples/cpujet_pg_dual_1.h \
-    examples/cpujet_mb1.h \
-    examples/cpujet_mb_grid1.h \
-    examples/cpujet_mb_onlygrid.h \
-    examples/ffs1.h \
-    examples/flatplate.h \
-    examples/gpujet.h \
-    examples/interpolation1.h \
-    examples/jet_common.h \
-    examples/jet_pg_common.h \
-    examples/jetflux.h \
-    examples/kelvinhelmholtz.h \
-    examples/overexpandedjet2d.h \
-    examples/tjunction.h \
-    examples/two_patches_1.h \
-    examples/two_patches_2.h \
-    examples/two_patches_3.h \
-    examples/wedge.h \
     fluxes/ausmdv.h \
     fluxes/ausm.h \
     fluxes/ausmplus.h \
@@ -229,7 +208,10 @@ HEADERS += \
     external_aero.h \
     blockobject.h \
     sphereobject.h \
-    cartboxobject.h
+    cartboxobject.h \
+    cubeincartisianpatch.h \
+    ghostfluid_test.h
+
 
 CUDA_SOURCES += main.cu
 

@@ -42,7 +42,7 @@ protected: // data
 
 public: // methods
 
-  BlockObject();
+  BlockObject(PatchGrid* patch_grid);
 
   void fillAll();
 
@@ -57,6 +57,8 @@ public: // methods
   vector<size_t>* getAffectedPatchIDsPtr() {
     return &(m_affectedPatchIDs);
   }
+
+  void setLayerIndexToVar (real** var);
 
   virtual void operator ()();
 

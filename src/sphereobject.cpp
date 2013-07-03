@@ -1,7 +1,8 @@
 #include "sphereobject.h"
 
 
-SphereObject::SphereObject()
+SphereObject::SphereObject(PatchGrid* patch_grid) :
+  BlockObject(patch_grid)
 {
 }
 

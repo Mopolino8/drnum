@@ -1,6 +1,6 @@
 #ifndef GPU
-//#include "external_aero.h"
-#include "examples/cpujet_pg.h"
+// #include "external_aero.h"
+#include "ghostfluid_test.h"
 #endif
 
 extern "C" void GPU_main();

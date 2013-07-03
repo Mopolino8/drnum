@@ -24,6 +24,7 @@
 
 #include "rungekutta.h"
 #include "iteratorfeeder.h"
+#include "cubeincartisianpatch.h"
 
 class EaFlux
 {
@@ -32,7 +33,8 @@ class EaFlux
   //typedef Upwind2<SecondOrder>                           reconstruction_t;
 
   typedef Upwind2<VanAlbada>                             reconstruction_t;
-  typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
+  //typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
+  typedef KNP<reconstruction_t, PerfectGas>              euler_t;
   typedef CompressibleViscFlux<PerfectGas>               viscous_t;
   typedef CompressibleFarfieldFlux<Upwind1, PerfectGas>  farfield_t;
 
@@ -145,6 +147,16 @@ inline void EaFlux::zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real 
   m_FarfieldFlux.zWallM(P, i, j, k, x, y, z, A, flux);
 }
 
+CubeInCartisianPatch setupCube(Patch* patch)
+{
+  CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch);
+  if (!cart_patch) {
+    cerr << "wrong patch type!" << endl;
+    exit(-1);
+  }
+  CubeInCartisianPatch cube(cart_patch);
+  return cube;
+}
 
 
 void run()
@@ -156,10 +168,10 @@ void run()
   real u              = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real L              = 1.0;
   real time           = L/u;
-  real cfl_target     = 0.1;
+  real cfl_target     = 0.5;
   real t_write        = 0;
-  real write_interval = 0.0001*time;
-  real total_time     = 0.0001*time;
+  real write_interval = 0.5*time;
+  real total_time     = 100.0*time;
 
   // Patch grid
   PatchGrid patch_grid;
@@ -203,6 +215,10 @@ void run()
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator);
   iterator_feeder.feed(patch_grid);
+
+  CubeInCartisianPatch cube = setupCube(patch_grid.getPatch(2));
+  cube.setRange(vec3_t(-0.5, -0.537, -0.5), vec3_t(0.5, 0.5, 0.529));
+  runge_kutta.addPostOperation(&cube);
 
   runge_kutta.addIterator(&iterator);
 
@@ -275,8 +291,8 @@ void run()
       ql2_norm_allpatches /= patch_grid.getNumPatches();
       l2_norm_allpatches = sqrt(ql2_norm_allpatches);
       ++iter;
-      cout << iter << " iterations,  t=" << t/time << "*L/u_oo,  dt: " << dt;;
-      cout << t/time << "  dt: " << dt << "  CFL: " << CFL_max;
+      cout << iter << " iterations,  t=" << t/time << "*L/u_oo,  dt: " << dt;
+      cout << "  CFL: " << CFL_max;
       cout << "  max: " << max_norm_allpatches << "  L2: " << l2_norm_allpatches;
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       ++write_counter;

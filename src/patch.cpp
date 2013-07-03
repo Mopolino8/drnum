@@ -62,7 +62,7 @@ bool Patch::readFromFile(istringstream& iss_input)
 void Patch::xyzoCell(const size_t& l_cell,
                      real& xo_cell, real& yo_cell, real& zo_cell)
 {
-  // hand over to virtual method getting local ccords
+  // hand over to virtual method getting local coords
   real x_cell, y_cell, z_cell;
   xyzCell(l_cell,
           x_cell, y_cell, z_cell);

@@ -244,23 +244,16 @@ public: // methods
     return xyz;
   }
 
+
   virtual void xyzCell(const size_t& l_cell,
                        real& x_cell, real& y_cell, real& z_cell)
   {
     size_t i, j, k;
+    ijk(l_cell,
+        i, j, k);
     xyzCell(i, j, k,
             x_cell, y_cell, z_cell);
   }
-
-
-//  inline vec3_t xyzoCell(const size_t& i, const size_t& j, const size_t& k) const
-//  {
-//    vec3_t xyz, xyzo;
-//    xyzCell(i, j, k,
-//            xyz[0], xyz[1], xyz[2]);
-//    xyzo = m_TransformInertial2This.transformReverse(xyz);
-//    return xyzo;
-//  }
 
 
   inline void xyzCell(const size_t& i, const size_t& j, const size_t& k,
@@ -472,8 +465,8 @@ public: // methods
 
 
 #ifdef WITH_VTK
-  virtual vtkDataSet* createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);
-  virtual vtkUnstructuredGrid* createVtkGridForCells(const list<size_t> &cells);
+  virtual vtkSmartPointer<vtkDataSet> createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);
+  virtual vtkSmartPointer<vtkUnstructuredGrid> createVtkGridForCells(const list<size_t> &cells);
 #endif
 
 };
