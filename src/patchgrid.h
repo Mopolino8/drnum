@@ -188,18 +188,25 @@ public: // methods
 
 
   /**
-   * Find the patch dependencies, if not given as input.
-   * @param with_intercoeff flag directive to build transfer coefficients
+    * Find the patch dependencies, if not given as input.
+    * @param with_intercoeff flag directive to build transfer coefficients
    */
   void computeDependencies(const bool& with_intercoeff);
 
 
   /**
-     * Envoque same function for all patches.
-     * - Reduce contribution weights for receiving cells, being influenced by more than one donor patch.
-     * - Transfer data to padded data sets, if required.
-     */
+    * Envoque same function for all patches.
+    * - Reduce contribution weights for receiving cells, being influenced by more than one donor patch.
+    * - Transfer data to padded data sets, if required.
+    */
   void finalizeDependencies();
+
+
+  /**
+    * Write a log file for patch dependencies.
+    * @param dep_log_filename dependencies log filename
+    */
+  void writeDependenciesLog(string dep_log_filename = "./patches/dependencies_log");
 
 
   /**

@@ -21,7 +21,7 @@ protected: // data
   //  2nd dim: counter index of affected cell in patch
   //  3rd dim (pair::first) : [0]: cell index in patch
   //                          [1]..size() : indices of influencing cells
-  //          (pair::second): real (1.(size()-2)
+  //          (pair::second): real (1/(size()-1)
   vector<vector<pair<vector<size_t>, real> > > m_CellsFront1;
   vector<vector<pair<vector<size_t>, real> > > m_CellsFront2;
   vector<vector<pair<vector<size_t>, real> > > m_CellsInside;
@@ -34,8 +34,6 @@ protected: // data
   //                          [1]..size() : indices of influencing cells
   //          (pair::second): real (1.(size()-2)
 //  vector<vector<vector<pair<vector<size_t>, real> > > > m_CellsAllLayers;
-
-
 
 
   vector<size_t> m_affectedPatchIDs;

@@ -408,6 +408,7 @@ void CartesianPatch::extractSeekCells()
       }
     }
   }
+
   // K-max side:
   for (size_t k_cell = m_NumK - m_NumSeekKmax; k_cell < m_NumK; k_cell++) {
     for (size_t i_cell = 0; i_cell < m_NumI; i_cell++) {
@@ -421,6 +422,11 @@ void CartesianPatch::extractSeekCells()
       }
     }
   }
+
+  // Eliminate duplicates from m_ReceiveCells
+  compactReceiveCellLists();
+  m_receiveCells_OK = true;
+
 }
 // END NEW_SEEK_EXCEPTION
 

@@ -156,18 +156,6 @@ protected: // methods
   virtual void buildRegions() {BUG;}
 
 
-  /**
-    * Extract set of data seeking cells on the boundary faces of the patch.
-    */
-  virtual void extractSeekCells() {BUG;}
-
-
-  /**
-    * Clean up m_receive_cells and hit counter lists
-    */
-  void compactReceiveCellLists();
-
-
 public: // methods
 
 
@@ -185,6 +173,33 @@ public: // methods
     * vector<InterCoeffPad> m_InterCoeffData
     */
   void buildDonorTransferData();
+
+
+  /**
+    * Get / compute:
+    * number of cells in "this" receiving data from neighbour, stride for receiving
+    * number of cells in "neighbour" to be served fron "this", stride for serving
+    * @param neighbour pointer to neighbour patch to analyse
+    * @param num_receiving number receiving cells in "this"
+    * @param receive_stride
+    * @param num_seving
+    * @param serve_stride
+    */
+
+
+
+  /** @todo decide wether it is more useful to make PatchGrid a friend class
+    * and keep extractSeekCells() and compactReceiveCellLists() protected. */
+  /**
+    * Extract set of data seeking cells on the boundary faces of the patch.
+    */
+  virtual void extractSeekCells() {BUG;}
+
+
+  /**
+    * Clean up m_receive_cells and hit counter lists
+    */
+  void compactReceiveCellLists();
 
 
   /**

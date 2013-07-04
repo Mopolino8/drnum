@@ -189,14 +189,8 @@ void Patch::setupTransformation(vec3_t xyzoref,
   setTransformation(t.inverse());
 }
 
-void Patch::insertNeighbour(Patch* neighbour_patch) {
-  // Check, if boundary cells are yet extracted. If not, do so.
-  if(!m_receiveCells_OK) {
-    m_ReceiveCells.clear();
-    extractSeekCells();
-    compactReceiveCellLists();
-    m_receiveCells_OK = true;
-  }
+void Patch::insertNeighbour(Patch* neighbour_patch)
+{
   // Insert donor patch and relative coord transformation into m_neighbours and get neighbourship index
   pair<Patch*, CoordTransformVV> dependency_h;
   dependency_h.first = neighbour_patch;

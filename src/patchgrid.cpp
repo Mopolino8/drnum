@@ -121,10 +121,16 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
   //      from Patch::m_neighbours.
   //
   // 5) Finish building up inter-patch transfer lists.
+  //
+  // 6) Write a log file for patch dependencies
 
   if(!with_intercoeff) {
     // with_intercoeff==false is an intended option for grid gen purposes to be used later.
     BUG;
+  }
+
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    m_Patches[i_p]->extractSeekCells();
   }
 
   vector<vector<size_t> > pot_neigh;
@@ -224,6 +230,9 @@ void PatchGrid::computeDependencies(const bool& with_intercoeff)
   /// @todo Needs an error handling mechanism, at least a diagnose, if any receiving cell of a patch finds no donor at all.
   finalizeDependencies();
   m_DependenciesOk = true;
+
+  // 6) Write a log file for patch dependencies
+  writeDependenciesLog();
 }
 
 
@@ -240,6 +249,66 @@ void PatchGrid::finalizeDependencies()
   for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
     m_Patches[i_p]->finalizeDependencies();
   }
+}
+
+
+void PatchGrid::writeDependenciesLog(string dependencies_log)
+{
+  ofstream log(dependencies_log.c_str());
+
+  // Number of patches
+  log << "Number patches: " <<  m_Patches.size() << endl;
+
+  // Transfer type
+  log << "Transfer type:  " << m_TransferType << endl;
+
+  log << endl;
+
+  // Loop for patches
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    Patch* patch = m_Patches[i_p];
+    log << "Patch " << i_p << ",  type: " << patch->accessPatchType() << endl;
+    log << "  Number of neighbours: " << patch->accessNumNeighbours() << endl;
+
+    log << "  Neighbour "
+        << "  ID "
+        << "  type"
+        << "  receiving"
+        << "  stride"
+        << "  serving"
+        << "  stride"
+        << endl;
+
+    for (size_t ii_n = 0; ii_n < patch->accessNumNeighbours(); ii_n++) {
+      Patch* neighbour = patch->accessNeighbour(ii_n);
+      size_t n_id = patch->accessNeighbourIndex(ii_n);
+
+      //.. Number of cells to receive and serve (vice versa)
+      size_t num_receiving;
+      size_t receive_stride;
+      size_t num_seving;
+      size_t serve_stride;
+//      if (m_TransferType == "padded_direct") {
+//        patch->diagnoseViceVersaDependencies(neighbour,
+//                                             num_receiving, receive_stride,
+//                                             num_seving, serve_stride);
+//      }
+      log << "      " << ii_n
+          << "    " << n_id
+          << "    " << neighbour->accessPatchType()
+          << "    " << num_receiving
+          << "     " << receive_stride
+          << "     " << num_seving
+          << "     " << serve_stride
+          << endl;
+      //      log << "  Neighbour: " << ii_n
+      //          << ",  ID: " << n_id
+      //          << ",  type: " << neighbour->accessPatchType()
+      //          << endl;
+    }
+    log << endl;
+  }
+
 }
 
 
@@ -463,12 +532,12 @@ void PatchGrid::buildBoundingBox(const bool& force)
         vec3_t bbmax_h = m_Patches[i_p]->accessBBoxXYZoMax();
         m_BboxXyzoMin.minimisePerCoord(bbmin_h);
         m_BboxXyzoMax.maximisePerCoord(bbmax_h);
-//        if(m_BboxXyzoMin[0] > bbmin_h[0]) m_BboxXyzoMin[0] = bbmin_h[0];
-//        if(m_BboxXyzoMin[1] > bbmin_h[1]) m_BboxXyzoMin[1] = bbmin_h[1];
-//        if(m_BboxXyzoMin[2] > bbmin_h[2]) m_BboxXyzoMin[2] = bbmin_h[2];
-//        if(m_BboxXyzoMax[0] < bbmax_h[0]) m_BboxXyzoMax[0] = bbmax_h[0];
-//        if(m_BboxXyzoMax[1] < bbmax_h[1]) m_BboxXyzoMax[1] = bbmax_h[1];
-//        if(m_BboxXyzoMax[2] < bbmax_h[2]) m_BboxXyzoMax[2] = bbmax_h[2];
+        //        if(m_BboxXyzoMin[0] > bbmin_h[0]) m_BboxXyzoMin[0] = bbmin_h[0];
+        //        if(m_BboxXyzoMin[1] > bbmin_h[1]) m_BboxXyzoMin[1] = bbmin_h[1];
+        //        if(m_BboxXyzoMin[2] > bbmin_h[2]) m_BboxXyzoMin[2] = bbmin_h[2];
+        //        if(m_BboxXyzoMax[0] < bbmax_h[0]) m_BboxXyzoMax[0] = bbmax_h[0];
+        //        if(m_BboxXyzoMax[1] < bbmax_h[1]) m_BboxXyzoMax[1] = bbmax_h[1];
+        //        if(m_BboxXyzoMax[2] < bbmax_h[2]) m_BboxXyzoMax[2] = bbmax_h[2];
       }
       m_BboxOk = true;
     }
