@@ -29,6 +29,7 @@ class Patch:
     self.neighK1 = set([])
     self.neighK2 = set([])
     self.overlap_factor = 1.0;
+    self.neigh_overlap_factor = 0.5;
     self.overlap = 2
     self.name = "N/A"
     
@@ -132,22 +133,28 @@ class Patch:
       self.Nk += 1
     
   def inflateI1(self, hn):
-    self.x1 -= self.overlap_factor*(0.5*hn + 2*self.hi)
+    #self.x1 -= self.overlap_factor*(0.5*hn + 2*self.hi)
+    self.x1 -= self.neigh_overlap_factor*hn + self.overlap*self.overlap_factor*self.hi
     
   def inflateI2(self, hn):
-    self.x2 += self.overlap_factor*(0.5*hn + 2*self.hi)
+    #self.x2 += self.overlap_factor*(0.5*hn + 2*self.hi)
+    self.x2 += self.neigh_overlap_factor*hn + self.overlap*self.overlap_factor*self.hi
     
   def inflateJ1(self, hn):
-    self.y1 -= self.overlap_factor*(0.5*hn + 2*self.hj)
+    #self.y1 -= self.overlap_factor*(0.5*hn + 2*self.hj)
+    self.y1 -= self.neigh_overlap_factor*hn + self.overlap*self.overlap_factor*self.hj
     
   def inflateJ2(self, hn):
-    self.y2 += self.overlap_factor*(0.5*hn + 2*self.hj)
+    #self.y2 += self.overlap_factor*(0.5*hn + 2*self.hj)
+    self.y2 += self.neigh_overlap_factor*hn + self.overlap*self.overlap_factor*self.hj
     
   def inflateK1(self, hn):
-    self.z1 -= self.overlap_factor*(0.5*hn + 2*self.hk)
+    #self.z1 -= self.overlap_factor*(0.5*hn + 2*self.hk)
+    self.z1 -= self.neigh_overlap_factor*hn + self.overlap*self.overlap_factor*self.hk
     
   def inflateK2(self, hn):
-    self.z2 += self.overlap_factor*(0.5*hn + 2*self.hk)
+    #self.z2 += self.overlap_factor*(0.5*hn + 2*self.hk)
+    self.z2 += self.neigh_overlap_factor*hn + self.overlap*self.overlap_factor*self.hk
     
   def toString(self):
     txt = "1001 // index=%d name='%s'\n{\n" % (self.index, self.name)
@@ -302,6 +309,10 @@ class Mesh:
   def setOverlapFactor(self, of):
     for i in range(0, len(self.patches)):
       self.patches[i].overlap_factor = of
+    
+  def setNeighbourOverlapFactor(self, of):
+    for i in range(0, len(self.patches)):
+      self.patches[i].neigh_overlap_factor = of
     
   def printInfo(self):
     print "\n"

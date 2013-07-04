@@ -116,7 +116,8 @@ SOURCES += main.cpp \
     sphereobject.cpp \
     cartboxobject.cpp \
     main.cu \
-    cubeincartisianpatch.cpp
+    cubeincartisianpatch.cpp \
+    configmap.cpp
 
 
 SOURCES -= main.cu
@@ -206,6 +207,8 @@ HEADERS += \
     stringtools.h \
     donor_t.h \
     external_aero.h \
+    cubeincartisianpatch.h \
+    configmap.h \
     blockobject.h \
     sphereobject.h \
     cartboxobject.h \
@@ -216,4 +219,5 @@ HEADERS += \
 CUDA_SOURCES += main.cu
 
 OTHER_FILES += \
-    doc/iterators.dox
+    doc/iterators.dox \
+    drnum.py
