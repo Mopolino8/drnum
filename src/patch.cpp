@@ -164,6 +164,44 @@ void Patch::buildDonorTransferData()
 };
 
 
+void Patch::diagnoseViceVersaDependencies(Patch* neighbour,
+                                          bool& vice_exist, size_t& num_receiving, size_t& receive_stride,
+                                          bool& versa_exist, size_t& num_serving, size_t& serve_stride,
+                                          const bool& vice_versa)
+{
+  // Note: works only, if direct transfer lists are available ("padded_direct").
+
+  // find the donor index of neighbour patch (count index of m_Donor)
+  vice_exist = false;
+  size_t local_donor_index;
+  for (size_t ii_n = 0; ii_n < m_neighbours.size(); ii_n++ ) {
+    if (m_neighbours[ii_n].first == neighbour) {
+      local_donor_index = ii_n;
+      vice_exist = true;
+      break;
+    }
+  }
+  if (vice_exist) {
+    num_receiving = m_Donors[local_donor_index].num_receiver_cells;
+    receive_stride = m_Donors[local_donor_index].stride;
+  }
+  else {
+    num_receiving = 0;
+    receive_stride = 0;
+  }
+
+  // Check opposite donor-receiver relation
+  if (vice_versa) {
+    size_t i_dummi_0, i_dummi_1;
+    bool b_dummi_0;
+    neighbour->diagnoseViceVersaDependencies(this,
+                                             versa_exist, num_serving, serve_stride,
+                                             b_dummi_0, i_dummi_0, i_dummi_1,
+                                             false);
+  }
+}
+
+
 void Patch::readSolverCodes(istringstream& iss_input)
 {
   m_solvercodes.buildFrom(iss_input);

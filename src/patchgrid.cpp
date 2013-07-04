@@ -284,15 +284,18 @@ void PatchGrid::writeDependenciesLog(string dependencies_log)
       size_t n_id = patch->accessNeighbourIndex(ii_n);
 
       //.. Number of cells to receive and serve (vice versa)
+      bool vice_exists;
       size_t num_receiving;
       size_t receive_stride;
+      bool versa_exists;
       size_t num_seving;
       size_t serve_stride;
-//      if (m_TransferType == "padded_direct") {
-//        patch->diagnoseViceVersaDependencies(neighbour,
-//                                             num_receiving, receive_stride,
-//                                             num_seving, serve_stride);
-//      }
+      if (m_TransferType == "padded_direct") {
+        patch->diagnoseViceVersaDependencies(neighbour,
+                                             vice_exists, num_receiving, receive_stride,
+                                             versa_exists, num_seving, serve_stride,
+                                             true);
+      }
       log << "      " << ii_n
           << "    " << n_id
           << "    " << neighbour->accessPatchType()
