@@ -1,5 +1,5 @@
-#ifndef COMPRESSIBLEWALLFLUX_H
-#define COMPRESSIBLEWALLFLUX_H
+#ifndef COMPRESSIBLESLIPFLUX_H
+#define COMPRESSIBLESLIPFLUX_H
 
 #include "cartesianpatch.h"
 
