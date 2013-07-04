@@ -180,12 +180,18 @@ public: // methods
     * number of cells in "this" receiving data from neighbour, stride for receiving
     * number of cells in "neighbour" to be served fron "this", stride for serving
     * @param neighbour pointer to neighbour patch to analyse
-    * @param num_receiving number receiving cells in "this"
-    * @param receive_stride
-    * @param num_seving
-    * @param serve_stride
+    * @param vice_exist true, if a donor relation "neighbour"->"this" exists (return reference)
+    * @param num_receiving number receiving cells in "this" (return reference)
+    * @param receive_stride stride, donor cells per rec. cell (return reference)
+    * @param versa_exist true, if a donor relation "this"->"neighbour" exists (return reference)
+    * @param num_serving number of cells in neighbour, being served by "this"  (return reference)
+    * @param serve_stride stride, donor cells in this per rec. cell in neighbour (return reference)
+    * @param vice_versa indicates, wether to compute the "versa" relation relation
     */
-
+  void diagnoseViceVersaDependencies(Patch* neighbour,
+                                     bool& vice_exist, size_t& num_receiving, size_t& receive_stride,
+                                     bool& versa_exist, size_t& num_seving, size_t& serve_stride,
+                                     const bool& vice_versa = true);
 
 
   /** @todo decide wether it is more useful to make PatchGrid a friend class
