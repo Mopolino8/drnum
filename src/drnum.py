@@ -12,9 +12,9 @@ class Patch:
     self.Ni = 0
     self.Nj = 0
     self.Nk = 0
-    self.hi = 0
-    self.hj = 0
-    self.hk = 0
+    self.hi = 1e99
+    self.hj = 1e99
+    self.hk = 1e99
     self.SeekLayersI1 = 0
     self.SeekLayersI2 = 0
     self.SeekLayersJ1 = 0
@@ -29,9 +29,15 @@ class Patch:
     self.neighK1 = set([])
     self.neighK2 = set([])
     self.overlap_factor = 1.0;
-    self.neigh_overlap_factor = 0.5;
+    self.neigh_overlap_factor = 0.0;
     self.overlap = 2
     self.name = "N/A"
+    self.i1_flux = "far"
+    self.i2_flux = "far"
+    self.j1_flux = "far"
+    self.j2_flux = "far"
+    self.k1_flux = "far"
+    self.k2_flux = "far"
     
   def setName(self, name):
     self.name = name
@@ -175,27 +181,27 @@ class Patch:
     txt += "  fx fy fz\n"
     txt += " "
     if len(self.neighI1) == 0:
-      txt += " far"
+      txt += " " + self.i1_flux
     else:
       txt += " 0"
     if len(self.neighI2) == 0:
-      txt += " far"
+      txt += " " + self.i2_flux
     else:
       txt += " 0"
     if len(self.neighJ1) == 0:
-      txt += " far"
+      txt += " " + self.j1_flux
     else:
       txt += " 0"
     if len(self.neighJ2) == 0:
-      txt += " far"
+      txt += " " + self.j2_flux
     else:
       txt += " 0"
     if len(self.neighK1) == 0:
-      txt += " far"
+      txt += " " + self.k1_flux
     else:
       txt += " 0"
     if len(self.neighK2) == 0:
-      txt += " far"
+      txt += " " + self.k2_flux
     else:
       txt += " 0"
     txt += "\n"
@@ -215,7 +221,36 @@ class Patch:
     N += self.SeekLayersK1*self.Ni*self.Nj
     N += self.SeekLayersK2*self.Ni*self.Nj
     return N
-
+    
+  def setI1Flux(self, flux):
+    self.i1_flux = flux
+    
+  def setI2Flux(self, flux):
+    self.i2_flux = flux
+    
+  def setJ1Flux(self, flux):
+    self.j1_flux = flux
+    
+  def setJ2Flux(self, flux):
+    self.j2_flux = flux
+    
+  def setK1Flux(self, flux):
+    self.k1_flux = flux
+    
+  def setK2Flux(self, flux):
+    self.k2_flux = flux
+    
+  def pointInside(self, x, y, z):
+    point_inside = True
+    if x < self.x1 or x > self.x2:
+      point_inside = False
+    if y < self.y1 or y > self.y2:
+      point_inside = False
+    if z < self.z1 or z > self.z2:
+      point_inside = False
+    return point_inside
+    
+    
     
 class Mesh:
   
@@ -317,10 +352,95 @@ class Mesh:
   def printInfo(self):
     print "\n"
     print "number of patches       : %d" % len(self.patches)
-    print "total number of cells   : %d" % self.numCells()
-    print "number of core cells    : %d" % self.numCoreCells()
-    print "number of overlap cells : %d" % self.numOverlapCells()
+    print "total number of cells   : %.2f*10^6" % (1e-6*self.numCells())
+    print "number of core cells    : %.2f*10^6" % (1e-6*self.numCoreCells())
+    print "number of overlap cells : %.2f*10^6" % (1e-6*self.numOverlapCells())
     print "overlap ratio in %%      : %.2f" % (100*float(self.numOverlapCells())/float(self.numCoreCells()))
+
+  def setMaxRes(self, max_h):
+    for i in range(0, len(self.patches)):
+      self.patches[i].hi = min(max_h, self.patches[i].hi)
+      self.patches[i].hj = min(max_h, self.patches[i].hj)
+      self.patches[i].hk = min(max_h, self.patches[i].hk)
+      
+  def setGrading(self, growth_factor):
+    done = False
+    while not done:
+      done = True
+      for i in range(0, len(self.patches)):
+        h = self.patches[i].hi
+        h = min(h, self.patches[i].hj)
+        h = min(h, self.patches[i].hk)
+        h = h*growth_factor
+        neighbours  = []
+        neighbours += self.patches[i].neighI1
+        neighbours += self.patches[i].neighI2
+        neighbours += self.patches[i].neighJ1
+        neighbours += self.patches[i].neighJ2
+        neighbours += self.patches[i].neighK1
+        neighbours += self.patches[i].neighK2
+        for j in neighbours:
+          if h < self.patches[j].hi:
+            self.patches[j].hi = h
+            done = False
+          if h < self.patches[j].hj:
+            self.patches[j].hj = h
+            done = False
+          if h < self.patches[j].hk:
+            self.patches[j].hk = h
+            done = False
+        
+  def createRectGrid(self, x, y, z):
+    patch = []
+    for i in range(len(x) - 1):
+      patch.append([])
+      for j in range(len(y) - 1):
+        patch[i].append([])
+        for k in range(len(z) - 1):
+          patch[i][j].append(self.createPatch())
+          patch[i][j][k].setName(str(i) + ',' + str(j) + ',' + str(k))
+          patch[i][j][k].setBox(x[i], y[j], z[k], x[i+1], y[j+1], z[k+1])
+          if i > 0:
+            patch[i][j][k].addNeighI1(patch[i-1][j][k])
+          if j > 0:
+            patch[i][j][k].addNeighJ1(patch[i][j-1][k])
+          if k > 0:
+            patch[i][j][k].addNeighK1(patch[i][j][k-1])
+    return patch
+    
+  def setI1Flux(self, flux):
+    for i in range(0, len(self.patches)):
+      if len(self.patches[i].neighI1) == 0:
+        self.patches[i].setI1Flux(flux)
+      
+  def setI2Flux(self, flux):
+    for i in range(0, len(self.patches)):
+      if len(self.patches[i].neighI2) == 0:
+        self.patches[i].setI2Flux(flux)
+    
+  def setJ1Flux(self, flux):
+    for i in range(0, len(self.patches)):
+      if len(self.patches[i].neighJ1) == 0:
+        self.patches[i].setJ1Flux(flux)
+      
+  def setJ2Flux(self, flux):
+    for i in range(0, len(self.patches)):
+      if len(self.patches[i].neighJ2) == 0:
+        self.patches[i].setJ2Flux(flux)
+    
+  def setK1Flux(self, flux):
+    for i in range(0, len(self.patches)):
+      if len(self.patches[i].neighK1) == 0:
+        self.patches[i].setK1Flux(flux)
+      
+  def setK2Flux(self, flux):
+    for i in range(0, len(self.patches)):
+      if len(self.patches[i].neighK2) == 0:
+        self.patches[i].setK2Flux(flux)
+      
+
+      
+    
 
 
 
