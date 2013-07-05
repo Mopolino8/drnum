@@ -41,9 +41,9 @@ void CubeInCartisianPatch::setRange(vec3_t x1, vec3_t x2)
   m_Stop.i = 0;
   m_Stop.j = 0;
   m_Stop.k = 0;
-  for (size_t k = 0; k < m_Patch->sizeI(); ++k) {
+  for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
     for (size_t j = 0; j < m_Patch->sizeJ(); ++j) {
-      for (size_t i = 0; i < m_Patch->sizeK(); ++i) {
+      for (size_t i = 0; i < m_Patch->sizeI(); ++i) {
         vec3_t x;
         x[0] = i * m_Patch->dx();
         x[1] = j * m_Patch->dy();
@@ -62,7 +62,6 @@ void CubeInCartisianPatch::setRange(vec3_t x1, vec3_t x2)
       }
     }
   }
-
 }
 
 void CubeInCartisianPatch::operator ()()
