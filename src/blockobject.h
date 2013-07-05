@@ -13,8 +13,8 @@ class BlockObject : public GenericOperation
 protected: // data
 
   PerfectGas m_Gas;
-
   PatchGrid* m_PatchGrid;
+  size_t     m_FieldIndex;
 
   // mem stucture for m_Cells... data;
   //  1st dim: counter index of affected patch
@@ -33,44 +33,35 @@ protected: // data
   //  4th dim (pair::first) : [0]: cell index in patch
   //                          [1]..size() : indices of influencing cells
   //          (pair::second): real (1.(size()-2)
-//  vector<vector<vector<pair<vector<size_t>, real> > > > m_CellsAllLayers;
+  //  vector<vector<vector<pair<vector<size_t>, real> > > > m_CellsAllLayers;
 
 
-  vector<size_t> m_affectedPatchIDs;
+  vector<size_t> m_AffectedPatchIDs;
+
+protected: // methods
+
+  void copyToHost();
+  void copyToDevice();
+  void processFront(vector<vector<pair<vector<size_t>, real> > >& front, real& p_average, real& T_average);
+
 
 public: // methods
 
   BlockObject(PatchGrid* patch_grid);
 
-  void fillAll();
+  void update();
 
   virtual bool isInside(const real& xo, const real& yo, const real& zo) = 0;
 
-  bool isInside(vec3_t xyzo);
+  bool isInside(vec3_t xyzo) { return isInside (xyzo[0], xyzo[1],xyzo[2]); }
 
-  vector<size_t> getAffectedPatchIDs() {
-    return m_affectedPatchIDs;
-  }
+  vector<size_t> getAffectedPatchIDs() { return m_AffectedPatchIDs; }
 
-  vector<size_t>* getAffectedPatchIDsPtr() {
-    return &(m_affectedPatchIDs);
-  }
+  vector<size_t>* getAffectedPatchIDsPtr() { return &(m_AffectedPatchIDs); }
 
   void setLayerIndexToVar (real** var);
 
-  virtual void operator ()();
-
-  void applyFront1BC (const Patch* patch, const size_t& l);
-
-  void applyFront2BC (const Patch* patch, const size_t& l);
-
-  void applyInnerBC (const Patch* patch, const size_t& l);
-
+  virtual void operator()();
 };
-
-inline bool BlockObject::isInside(vec3_t xyzo)
-{
-  return isInside (xyzo[0], xyzo[1],xyzo[2]);
-}
 
 #endif // BLOCKOBJECT_H

@@ -4,87 +4,42 @@
 BlockObject::BlockObject(PatchGrid* patch_grid)
 {
   m_PatchGrid = patch_grid;
+  m_FieldIndex = 0;
 }
 
 
-void BlockObject::operator ()()
+void BlockObject::copyToHost()
 {
-  // field to work on
-  size_t field = 0;
-
-  // loop for patches affected
-  for (size_t ii_p = 0; ii_p < m_affectedPatchIDs.size(); ii_p++) {
-
-    //.. patch settings
-    size_t i_p = m_affectedPatchIDs[ii_p];
-    Patch* patch = m_PatchGrid->getPatch(i_p);
-    real* rho = patch->getVariable(field, 0);
-    real* rhou = patch->getVariable(field, 1);
-    real* rhov = patch->getVariable(field, 2);
-    real* rhow = patch->getVariable(field, 3);
-    real* rhoE = patch->getVariable(field, 4);
-
-    //.. patch related BC masks
-    vector<pair<vector<size_t>, real> >& patch_cells_front1 = m_CellsFront1[ii_p];
-    vector<pair<vector<size_t>, real> >& patch_cells_front2 = m_CellsFront2[ii_p];
-    vector<pair<vector<size_t>, real> >& patch_cells_inside = m_CellsInside[ii_p];
-
-    //.. loop for front_1 cells of patch
-    for (size_t ii_c = 0; ii_c < patch_cells_front1.size(); ii_c++) {
-      pair<vector<size_t>, real>& cell_front1_data = patch_cells_front1[ii_c];
-      size_t i_cell = cell_front1_data.first[0];
-      rho[i_cell] = 0.;
-      rhou[i_cell] = 0.;
-      rhov[i_cell] = 0.;
-      rhow[i_cell] = 0.;
-      rhoE[i_cell] = 0.;
-      //.... Loop for influencing nodes
-      for (size_t ii_cn = 1; ii_cn < cell_front1_data.first.size()-1; ii_cn++) {
-        size_t i_cn = cell_front1_data.first[ii_cn];
-        rho[i_cell]  += rho[i_cn]  * cell_front1_data.second;  // do on primitive vars later
-        rhoE[i_cell] += rhoE[i_cn] * cell_front1_data.second;
-      }
-    }
-
-    //.. loop for front_2 cells of patch
-    for (size_t ii_c = 0; ii_c < patch_cells_front2.size(); ii_c++) {
-      pair<vector<size_t>, real>& cell_front2_data = patch_cells_front2[ii_c];
-      size_t i_cell = cell_front2_data.first[0];
-      rho[i_cell] = 0.;
-      rhou[i_cell] = 0.;
-      rhov[i_cell] = 0.;
-      rhow[i_cell] = 0.;
-      rhoE[i_cell] = 0.;
-      //.... Loop for influencing nodes
-      for (size_t ii_cn = 1; ii_cn < cell_front2_data.first.size()-1; ii_cn++) {
-        size_t i_cn = cell_front2_data.first[ii_cn];
-        rho[i_cell]  += rho[i_cn]  * cell_front2_data.second;  // do on primitive vars later
-        rhoE[i_cell] += rhoE[i_cn] * cell_front2_data.second;
-      }
-    }
-
-    //.. loop for front_2 cells of patch
-    //   ATTENTION: recursive
-    for (size_t ii_c = 0; ii_c < patch_cells_inside.size(); ii_c++) {
-      pair<vector<size_t>, real>& cell_inside_data = patch_cells_inside[ii_c];
-      size_t i_cell = cell_inside_data.first[0];
-      rho[i_cell] = 0.;
-      rhou[i_cell] = 0.;
-      rhov[i_cell] = 0.;
-      rhow[i_cell] = 0.;
-      rhoE[i_cell] = 0.;
-      //.... Loop for influencing nodes
-      for (size_t ii_cn = 1; ii_cn < cell_inside_data.first.size()-1; ii_cn++) {
-        size_t i_cn = cell_inside_data.first[ii_cn];
-        rho[i_cell]  += rho[i_cn]  * cell_inside_data.second;  // do on primitive vars later
-        rhoE[i_cell] += rhoE[i_cn] * cell_inside_data.second;
-      }
-    }
+  for (size_t i = 0; i < m_AffectedPatchIDs.size(); ++i) {
+    m_PatchGrid->getPatch(m_AffectedPatchIDs[i])->copyFieldToHost(m_FieldIndex);
   }
 }
 
+void BlockObject::copyToDevice()
+{
+  for (size_t i = 0; i < m_AffectedPatchIDs.size(); ++i) {
+    m_PatchGrid->getPatch(m_AffectedPatchIDs[i])->copyFieldToDevice(m_FieldIndex);
+  }
+}
 
-void BlockObject::fillAll()
+void BlockObject::processFront(vector<vector<pair<vector<size_t>, real> > > &front, real &p_average, real &T_average)
+{
+  int N = 0;
+  p_average = 0;
+  T_average = 0;
+}
+
+void BlockObject::operator()()
+{
+  copyToHost();
+
+  // ...
+
+  copyToDevice();
+}
+
+
+void BlockObject::update()
 {
   /**
     * @todo Method may be rewritten to allow arbitrary numbers of front layers.
@@ -95,7 +50,7 @@ void BlockObject::fillAll()
     * variableSize() ???
     */
 
-  m_affectedPatchIDs.clear();  // just to be sure
+  m_AffectedPatchIDs.clear();  // just to be sure
 
   // build up first dim of m_Cells... data
   m_CellsFront1.resize(m_PatchGrid->getNumPatches());
@@ -133,8 +88,8 @@ void BlockObject::fillAll()
     // Any hit?
     if (any_hit_in_patch) {
       // Insert patch in the affected list
-      m_affectedPatchIDs.push_back(i_p);
-      size_t ii_p = m_affectedPatchIDs.size() - 1;
+      m_AffectedPatchIDs.push_back(i_p);
+      size_t ii_p = m_AffectedPatchIDs.size() - 1;
       m_CellsFront1.resize(ii_p + 1);
       m_CellsFront2.resize(ii_p + 1);
       m_CellsInside.resize(ii_p + 1);
@@ -242,8 +197,8 @@ void BlockObject::setLayerIndexToVar (real** vvar)
 {
   real Eps = 1.e-5;
   // loop for püatches affected
-  for (size_t ii_p = 0; ii_p < m_affectedPatchIDs.size(); ii_p++) {
-    size_t i_p = m_affectedPatchIDs[ii_p];
+  for (size_t ii_p = 0; ii_p < m_AffectedPatchIDs.size(); ii_p++) {
+    size_t i_p = m_AffectedPatchIDs[ii_p];
     Patch* patch = m_PatchGrid->getPatch(i_p);
     real* var = vvar[i_p];
 
