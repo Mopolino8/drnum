@@ -51,7 +51,7 @@ protected:
 
 public: // methods
 
-  EaFlux(real u, real p, real T);
+  EaFlux(real u, real v, real p, real T);
   EaFlux();
 
   template <typename PATCH> CUDA_DH void xField(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
@@ -68,9 +68,9 @@ public: // methods
 };
 
 
-EaFlux::EaFlux(real u, real p, real T)
+EaFlux::EaFlux(real u, real v, real p, real T)
 {
-  m_FarfieldFlux.setFarfield(p, T, u, 0, 0);
+  m_FarfieldFlux.setFarfield(p, T, u, v, 0);
 }
 
 EaFlux::EaFlux()
@@ -158,7 +158,7 @@ class EaWFluxZM : public EaFlux
 
 public:
 
-  EaWFluxZM(real u, real p, real T) : EaFlux(u, p, T) {}
+  EaWFluxZM(real u, real v, real p, real T) : EaFlux(u, v, p, T) {}
   EaWFluxZM() {}
 
   template <typename PATCH>
@@ -172,34 +172,100 @@ public:
 
 
 
-CubeInCartisianPatch setupCube(PatchGrid patch_grid)
+vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
 {
-  size_t i_patch = 51;
-  CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-  if (!cart_patch) {
-    cerr << "wrong patch type!" << endl;
-    exit(-1);
+  vector<CubeInCartisianPatch> cubes;
+
+  // Building 1
+  {
+    vec3_t x1(-42.30365, -5, 0);
+    vec3_t x2(-13.46731, 9.07423, 14.29426);
+    {
+      //size_t i_patch = 16;
+      size_t i_patch = 60;
+      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+      CubeInCartisianPatch cube(cart_patch);
+      cube.setRange(x1, x2);
+      cubes.push_back(cube);
+    }
   }
-  CubeInCartisianPatch cube(cart_patch);
-  cube.setRange(vec3_t(-6, -6, 0), vec3_t(4, 4, 100));
-  return cube;
+
+  // Bulding 2
+  {
+    vec3_t x1(-5, -5, 0);
+    vec3_t x2(5, 5, 65);
+    {
+      //size_t i_patch = 28;
+      size_t i_patch = 85;
+      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+      CubeInCartisianPatch cube(cart_patch);
+      cube.setRange(x1, x2);
+      cubes.push_back(cube);
+    }
+    {
+      //size_t i_patch = 29;
+      size_t i_patch = 86;
+      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+      CubeInCartisianPatch cube(cart_patch);
+      cube.setRange(x1, x2);
+      cubes.push_back(cube);
+    }
+  }
+
+  // Bulding 3
+  {
+    vec3_t x1(22.04841, -5, 0);
+    vec3_t x2(34.91528, 18.73290, 84.33866);
+    {
+      //size_t i_patch = 40;
+      size_t i_patch = 110;
+      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+      CubeInCartisianPatch cube(cart_patch);
+      cube.setRange(x1, x2);
+      cubes.push_back(cube);
+    }
+    {
+      //size_t i_patch = 41;
+      size_t i_patch = 111;
+      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+      CubeInCartisianPatch cube(cart_patch);
+      cube.setRange(x1, x2);
+      cubes.push_back(cube);
+    }
+    {
+      //size_t i_patch = 42;
+      size_t i_patch = 112;
+      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+      CubeInCartisianPatch cube(cart_patch);
+      cube.setRange(x1, x2);
+      cubes.push_back(cube);
+    }
+  }
+
+  return cubes;
 }
 
 
 void run()
 {
 
-  real Ma             = 0.20;
+  real Ma             = 0.15;
   real p              = 1.0e5;
   real T              = 300;
-  real u              = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-  real L              = 1.0;
-  real time           = L/u;
-  real cfl_target     = 0.5;
+  real uabs           = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+  real alpha          = 10.0;
+  real L              = 10.0;
+  real time           = L/uabs;
+  real cfl_target     = 1.0;
   real t_write        = 0;
-  real write_interval = 0.1*time;
-  real total_time     = 1*time;
+  real write_interval = 1.0*time;
+  real total_time     = 100*time;
   bool write          = true;
+
+
+  alpha = M_PI*alpha/180.0;
+  real u = uabs*cos(alpha);
+  real v = uabs*sin(alpha);
 
   // Patch grid
   PatchGrid patch_grid;
@@ -223,16 +289,16 @@ void run()
 
   // Initialize
   real init_var[5];
-  PerfectGas::primitiveToConservative(p, T, u, 0, 0, init_var);
+  PerfectGas::primitiveToConservative(p, T, u, v, 0, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
   if (write) {
     patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
   }
-  //exit(-1); /// meshing!!!
+  //  exit(-1); /// meshing!!!
 
-  EaFlux    flux_std(u, p, T);
-  EaWFluxZM flux_wzm(u, p, T);
+  EaFlux    flux_std(u, v, p, T);
+  EaWFluxZM flux_wzm(u, v, p, T);
 
   RungeKutta runge_kutta;
   runge_kutta.addAlpha(0.25);
@@ -240,40 +306,38 @@ void run()
   runge_kutta.addAlpha(1.000);
 
 #ifdef GPU
-  GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_wzm);
-  //GPU_CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
+  GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_std);
+  GPU_CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
 #else
   CartesianIterator<5, EaFlux>    iterator_std(flux_std);
-  //CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
+  CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
 #endif
-  //iterator_std.setCodeString(CodeString("fx fy fz far far far far wall far 0"));
-  iterator_std.setCodeString(CodeString("fx fy fz far far far far far far 0"));
-  //iterator_wzm.setCodeString(CodeString("fx fy fz far far far far wall far 0"));
+  iterator_std.setCodeString(CodeString("fx fy fz far far far far far  far 0"));
+  iterator_wzm.setCodeString(CodeString("fx fy fz far far far far wall far 0"));
 
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator_std);
-  //iterator_feeder.addIterator(&iterator_wzm);
+  iterator_feeder.addIterator(&iterator_wzm);
   iterator_feeder.feed(patch_grid);
 
-  /*
-  CubeInCartisianPatch cube = setupCube(patch_grid);
-  runge_kutta.addPostOperation(&cube);
-  */
+  vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
+  for (size_t i = 0; i < cubes.size(); ++i) {
+    runge_kutta.addPostOperation(&cubes[i]);
+  }
 
   runge_kutta.addIterator(&iterator_std);
-  //runge_kutta.addIterator(&iterator_wzm);
+  runge_kutta.addIterator(&iterator_wzm);
 
   int write_counter = 0;
   int iter = 0;
   real t = 0;
 
-  //cout << "std:" << iterator_std.numPatches() << endl;
-  //cout << "wzm:" << iterator_wzm.numPatches() << endl;
-  //exit(-1);
+  cout << "std:" << iterator_std.numPatches() << endl;
+  cout << "wzm:" << iterator_wzm.numPatches() << endl;
 
 #ifdef GPU
   iterator_std.updateDevice();
-  //iterator_wzm.updateDevice();
+  iterator_wzm.updateDevice();
 #endif
 
   startTiming();
@@ -297,7 +361,7 @@ void run()
 #ifdef GPU
       runge_kutta.copyDonorData(0);
       iterator_std.updateHost();
-      //iterator_wzm.updateHost();
+      iterator_wzm.updateHost();
 #endif
 
       for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
@@ -342,6 +406,9 @@ void run()
         patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
       }
       t_write -= write_interval;
+      if (t > 80.0) {
+        write_interval = 0.05;
+      }
     } else {
       ++iter;
       cout << iter << " iterations,  t=" << t/time << "*L/u_oo,  dt: " << dt << endl;
@@ -354,7 +421,7 @@ void run()
 #ifdef GPU
   runge_kutta.copyDonorData(0);
   iterator_std.updateHost();
-  //iterator_wzm.updateHost();
+  iterator_wzm.updateHost();
 #endif
 
   if (write) {
