@@ -193,12 +193,12 @@ void run()
   real p              = 1.0e5;
   real T              = 300;
   real u              = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-  real L              = 10.0;
+  real L              = 1.0;
   real time           = L/u;
   real cfl_target     = 0.5;
   real t_write        = 0;
-  real write_interval = 1*time;
-  real total_time     = 100*time;
+  real write_interval = 0.1*time;
+  real total_time     = 1*time;
   bool write          = true;
 
   // Patch grid
@@ -240,13 +240,14 @@ void run()
   runge_kutta.addAlpha(1.000);
 
 #ifdef GPU
-  GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_std);
+  GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_wzm);
   //GPU_CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
 #else
   CartesianIterator<5, EaFlux>    iterator_std(flux_std);
   //CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
 #endif
-  iterator_std.setCodeString(CodeString("fx fy fz far far far far 0 far 0"));
+  //iterator_std.setCodeString(CodeString("fx fy fz far far far far wall far 0"));
+  iterator_std.setCodeString(CodeString("fx fy fz far far far far far far 0"));
   //iterator_wzm.setCodeString(CodeString("fx fy fz far far far far wall far 0"));
 
   IteratorFeeder iterator_feeder;
@@ -254,8 +255,10 @@ void run()
   //iterator_feeder.addIterator(&iterator_wzm);
   iterator_feeder.feed(patch_grid);
 
+  /*
   CubeInCartisianPatch cube = setupCube(patch_grid);
   runge_kutta.addPostOperation(&cube);
+  */
 
   runge_kutta.addIterator(&iterator_std);
   //runge_kutta.addIterator(&iterator_wzm);
@@ -266,7 +269,7 @@ void run()
 
   //cout << "std:" << iterator_std.numPatches() << endl;
   //cout << "wzm:" << iterator_wzm.numPatches() << endl;
-  exit(-1);
+  //exit(-1);
 
 #ifdef GPU
   iterator_std.updateDevice();
