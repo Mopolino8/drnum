@@ -200,7 +200,8 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
     cudaMemset(this->m_GpuPatches[i_patch].getField(2), 0, this->m_GpuPatches[i_patch].fieldSize()*sizeof(real));
     CUDA_CHECK_ERROR;
 
-    size_t k_lines = max(size_t(1), size_t(512/this->m_Patches[i_patch]->sizeK()));
+    size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, DIM, OP>::m_MaxNumThreads;
+    size_t k_lines = max(size_t(1), size_t(max_num_threads/this->m_Patches[i_patch]->sizeK()));
 
     {
       dim3 blocks(this->m_Patches[i_patch]->sizeI()/2+1, this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);

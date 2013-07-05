@@ -52,7 +52,7 @@ GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::GPU_PatchIterator(OP op)
     cerr << "error fetching device properties" << endl;
     exit(EXIT_FAILURE);
   }
-  m_MaxNumThreads = min(512,min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]));
+  m_MaxNumThreads = min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]);
 }
 
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
@@ -108,14 +108,6 @@ __global__ void GPU_PatchIterator_kernelResetReceiverData(T_GPU patch, size_t i_
       patch.getVariable(i_field, i_var)[i_rec] = 0;
     }
   }
-  /*
-  if (i < patch.m_NumReceivingCellsUnique) {
-    size_t i_rec = patch.m_ReceivingCellIndicesUnique[i];
-    for (size_t i_var = 0; i_var < patch.m_NumVariables; ++i_var) {
-      //patch.getVariable(i_field, i_var)[i_rec] = 0;
-    }
-  }
-  */
 }
 
 template <typename T_GPU>
@@ -129,8 +121,6 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
     size_t i_rec = patch.getReceivingCellIndicesConcat()[donor.receiver_index_field_start + i];
 
     // start address in m_DonorCells/m_DonorWeights pattern
-    //size_t l_doner_cells_start = donor.donor_wi_field_start + ll_rec * donor.stride;
-
     size_t i_donor_cells_start = donor.donor_wi_field_start + i*donor.stride;
 
     // loop for contributing cells
@@ -143,8 +133,6 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
       //real* donated_var = new real [patch.numVariables()];
 
       for (size_t i_var = 0; i_var < patch.numVariables(); ++i_var) {
-        //*(this_vars[i_var]+i_rec) += donor_vars[i_var][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
-
         real* dvar = donor.data + i_var*donor.variable_size;
         //donated_var[i_var] = dvar[donor_cell_index];
         patch.getVariable(i_field, i_var)[i_rec] += donor_cell_weight*dvar[donor_cell_index];
@@ -177,42 +165,27 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
 template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
 void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::copyDonorData(size_t i_field)
 {
-  //cout << "ping" << endl;
   // reset receiver cells
   for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
     int N = PatchIterator::getPatch(i_patch)->getNumReceivingCellsUnique();
-    /*
-    set<size_t> check_cells;
-    for (size_t i = 0; i < N; ++i) {
-      check_cells.insert(PatchIterator::getPatch(i_patch)->getReceivingCellIndicesUnique()[i]);
-    }
-    cout << check_cells.size() << " == " << N << endl;
-    */
     int blocks  = N/m_MaxNumThreads + 1;
-    //cout << PatchIterator::getPatch(i_patch)->accessIndex() << ", " << N << ", " << blocks << ", " << m_MaxNumThreads << endl;
     GPU_PatchIterator_kernelResetReceiverData<<<blocks, m_MaxNumThreads>>>(m_GpuPatches[i_patch], i_field);
-    cudaThreadSynchronize();
     CUDA_CHECK_ERROR
   }
 
-  //exit(-1);
   cudaThreadSynchronize();
   CUDA_CHECK_ERROR
-  //cout << "pong" << endl;
 
   // compute interpolated data
   for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
     for (size_t i_donor = 0; i_donor < m_GpuPatches[i_patch].getNumDonorPatches(); ++i_donor) {
       int N = PatchIterator::getPatch(i_patch)->getDonors()[i_donor].num_receiver_cells;
       int blocks  = N/m_MaxNumThreads + 1;
-      //cout << i_patch << ", " << i_donor << ", " << blocks << ", " << m_MaxNumThreads << endl;
       GPU_PatchIterator_kernelCopyDonorData<<<blocks, m_MaxNumThreads>>>(m_GpuPatches[i_patch], i_field, i_donor);
       CUDA_CHECK_ERROR
       cudaThreadSynchronize();
     }
   }
-  //cout << "pang" << endl;
-  //exit(-1);
 }
 
 
