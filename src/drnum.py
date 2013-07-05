@@ -356,8 +356,11 @@ class Mesh:
     print "\n"
     print "number of patches       : %d" % len(self.patches)
     print "total number of cells   : %.2f*10^6" % (1e-6*self.numCells())
+    print "                        : %d" % self.numCells()
     print "number of core cells    : %.2f*10^6" % (1e-6*self.numCoreCells())
+    print "                        : %d" % self.numCoreCells()
     print "number of overlap cells : %.2f*10^6" % (1e-6*self.numOverlapCells())
+    print "                        : %d" % self.numOverlapCells()
     print "overlap ratio in %%      : %.2f" % (100*float(self.numOverlapCells())/float(self.numCoreCells()))
 
   def setMaxRes(self, max_h):
