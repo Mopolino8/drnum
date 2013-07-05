@@ -193,12 +193,12 @@ template <unsigned int DIM, typename OP>
 void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &patches)
 {
   cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
-  CudaTools::checkError();
+  CUDA_CHECK_ERROR;
 
   for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
 
     cudaMemset(this->m_GpuPatches[i_patch].getField(2), 0, this->m_GpuPatches[i_patch].fieldSize()*sizeof(real));
-    CudaTools::checkError();
+    CUDA_CHECK_ERROR;
 
     size_t k_lines = max(size_t(1), size_t(512/this->m_Patches[i_patch]->sizeK()));
 
