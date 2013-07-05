@@ -38,7 +38,10 @@ class Patch:
     self.j2_flux = "far"
     self.k1_flux = "far"
     self.k2_flux = "far"
-    
+
+  def setOverlap(self, overlap):
+    self.overlap = overlap  
+  
   def setName(self, name):
     self.name = name
     
@@ -437,6 +440,10 @@ class Mesh:
     for i in range(0, len(self.patches)):
       if len(self.patches[i].neighK2) == 0:
         self.patches[i].setK2Flux(flux)
+      
+  def setOverlap(self, overlap):
+    for i in range(0, len(self.patches)):
+      self.patches[i].setOverlap(overlap)
       
 
       
