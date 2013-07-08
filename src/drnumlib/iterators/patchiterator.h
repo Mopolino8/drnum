@@ -3,7 +3,6 @@
 
 #include "patch.h"
 #include "patchgrid.h"
-#include "shapes/shape.h"
 #include "codestring.h"
 
 class PatchIterator
