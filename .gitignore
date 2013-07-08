@@ -30,8 +30,6 @@ callgrind*
 
 # build folder(s) and executables
 /platforms/
-engrid
-engrid_debug
 release
 debug
 Release
@@ -110,5 +108,5 @@ blockcfd*
 # CUDA
 *.i
 *.ii
-main.*
+main.*.o
 
