@@ -21,7 +21,6 @@ SOURCES += \
     structuredhexraster.cpp \
     raster.cpp \
     debug.cpp \
-    rungekuttapg1.cpp \
     prismaticlayerpatch.cpp \
     iteratorfeeder.cpp \
     blockobject.cpp \
