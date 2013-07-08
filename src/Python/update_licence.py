@@ -4,7 +4,7 @@
 # + This file is part of DrNUM.                                          +
 # +                                                                      +
 # + Copyright 2013 numrax GmbH, enGits GmbH                              +
-# +   Bonkers                                                            +
+# +                                                                      +
 # + DrNUM is free software: you can redistribute it and/or modify        +
 # + it under the terms of the GNU General Public License as published by +
 # + the Free Software Foundation, either version 3 of the License, or    +
@@ -65,6 +65,8 @@ def recursive_traversal(dir, header):
       if (file_name.endswith(".cu")):
         update_file(file_name, header, "//", 0)
       if (file_name.endswith(".pro")):
+        update_file(file_name, header, "#", 0)
+      if (file_name.endswith(".pri")):
         update_file(file_name, header, "#", 0)
       if (file_name.endswith(".sh")):
         update_file(file_name, header, "#", 1)
