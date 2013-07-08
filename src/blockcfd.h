@@ -12,12 +12,6 @@
 using namespace std;
 
 
-#include "utility/namespace_mouse.hh"
-#include "utility/mouse_types.hh"    /// @todo mouse_types needed for namespace (?)
-
-using namespace fvmouse;
-
-
 // configuration macros
 //
 //#define DEBUG

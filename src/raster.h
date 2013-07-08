@@ -3,7 +3,7 @@
 
 #include <cstddef>
 #include "blockcfd.h"
-#include "utility/weightedset.h"
+#include "weightedset.h"
 #include "math/coordtransformvv.h"
 
 //class Raster;

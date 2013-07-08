@@ -9,7 +9,7 @@ struct SingleInterCoeffWS;
 class InterCoeffWS;
 
 #include "patch.h"
-#include "utility/usparseweightedset.h"
+#include "usparseweightedset.h"
 
 /// @todo Structures need some better naming conventions to allow easyer understanding
 

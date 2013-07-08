@@ -94,15 +94,12 @@ SOURCES += main.cpp \
     rungekutta.cpp \
     patchgrid.cpp \
     patchgroups.cpp \
-    utility/List.cc \
-    utility/MError.cc \
     math/coordtransform.cpp \
     math/coordtransformvv.cpp \
     transformation.cpp \
     shapes/sphere.cpp \
     shapes/halfspace.cpp \
     cartesianraster.cpp \
-    utility/TInsectionList.cc \
     structuredhexraster.cpp \
     raster.cpp \
     shapes/triangulatedshape.cpp \
@@ -124,7 +121,6 @@ SOURCES -= main.cu
 
 HEADERS += \
     blockcfd.h \
-    boundary_conditions/compressibleeulerwall.h \
     cartesianpatch_common.h \
     cartesianpatch.h \
     cartesianraster.h \
@@ -190,17 +186,12 @@ HEADERS += \
     timeintegration.h \
     tinsecthashraster.h \
     transformation.h \
-    utility/List.hh \
-    utility/MError.hh \
-    utility/namespace_mouse.hh \
-    utility/sparseweightedset.h \
-    utility/TInsectionList.hh \
-    utility/usparseweightedset.h \
-    utility/weightedset.h \
+    sparseweightedset.h \
+    usparseweightedset.h \
+    weightedset.h \
     vectorhashraster.h \
     iterators/cartesianiterator.h \
     prismaticlayerpatch.h \
-    prismaticlayerpatch_common.h \
     iteratorfeeder.h \
     cudatools.h \
     postprocessingvariables.h \
@@ -212,8 +203,7 @@ HEADERS += \
     blockobject.h \
     sphereobject.h \
     cartboxobject.h \
-    cubeincartisianpatch.h \
-    ghostfluid_test.h
+    cubeincartisianpatch.h
 
 
 CUDA_SOURCES += main.cu

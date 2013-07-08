@@ -1,13 +1,6 @@
 #ifndef PATCH_H
 #define PATCH_H
 
-//#include <cstddef>
-//#include <string.h>
-//#include <iostream>
-//#include <fstream>
-//#include <sstream>
-//#include <vector>
-
 #include "blockcfd.h"
 
 #include <iostream>
@@ -19,11 +12,8 @@
 
 #include <vtkDataSet.h>
 
-using namespace std;
 
-//#include "blockcfd.h"
-
-#include "utility/weightedset.h"
+#include "weightedset.h"
 
 struct donor_t;
 class Patch;
