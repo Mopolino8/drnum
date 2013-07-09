@@ -18,7 +18,7 @@
 # + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-include (../../drnum.pri)
+include (../drnum.pri)
 
 LIBS += -L../../drnumlib
 LIBS += -ldrnumlib
