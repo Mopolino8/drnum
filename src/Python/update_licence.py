@@ -74,6 +74,8 @@ def recursive_traversal(dir, header):
         update_file(file_name, header, "#", 1)
       if (file_name.endswith(".py")):
         update_file(file_name, header, "#", 1)
+      if (file_name.endswith(".f")):
+        update_file(file_name, header, "c    ", 0)
 
 
 f = open("licence_header.txt")
