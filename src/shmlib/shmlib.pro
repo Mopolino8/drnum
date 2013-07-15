@@ -18,18 +18,31 @@
 # + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-TEMPLATE  = subdirs
-LANGUAGE  = C++
-CONFIG   += ordered recursive
+TEMPLATE     = lib
+shmlib.path  = ../../lib
+shmlib.files = libshmlib.*
+INSTALLS    += shmlib
+QT          -= gui core
 
-include (drnum.pri)
+include (../drnum.pri)
 
-SUBDIRS  += drnumlib
-SUBDIRS  += shmlib
-SUBDIRS  += applications
+SOURCES += shmlib.cpp
+SOURCES += sharedmemory.cpp
+SOURCES += semaphore.cpp
+SOURCES += ipcobject.cpp
+SOURCES += mutex.cpp
+SOURCES += barrier.cpp
+SOURCES += ipcexception.cpp
 
-drnumlib.file = drnumlib/drnumlib.pro
-shmlib.file   = shmlib/shmlib.pro
+HEADERS += sharedmemory.h
+HEADERS += semaphore.h
+HEADERS += ipcobject.h
+HEADERS += mutex.h
+HEADERS += barrier.h
+HEADERS += sharedmemory.f.h
+HEADERS += mutex.f.h
+HEADERS += barrier.f.h
+HEADERS += ipcexception.h
 
-applications.file    = applications/applications.pro
-applications.depends = drnumlib
+OTHER_FILES += test_write.f
+OTHER_FILES += shock_tube.f

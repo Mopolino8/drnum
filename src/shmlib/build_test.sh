@@ -1,3 +1,4 @@
+#!/bin/sh
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # +                                                                      +
 # + This file is part of DrNUM.                                          +
@@ -18,18 +19,6 @@
 # + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-TEMPLATE  = subdirs
-LANGUAGE  = C++
-CONFIG   += ordered recursive
-
-include (drnum.pri)
-
-SUBDIRS  += drnumlib
-SUBDIRS  += shmlib
-SUBDIRS  += applications
-
-drnumlib.file = drnumlib/drnumlib.pro
-shmlib.file   = shmlib/shmlib.pro
-
-applications.file    = applications/applications.pro
-applications.depends = drnumlib
+c++ -g -o test_read -L$1 test_read.C -liplshm
+gfortran -g -o test_write -lstdc++ -L$1 test_write.f -liplshm
+gfortran -g -o shock_tube -lstdc++ -L$1 shock_tube.f -liplshm
