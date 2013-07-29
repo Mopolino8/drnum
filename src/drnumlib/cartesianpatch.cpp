@@ -71,23 +71,23 @@ void CartesianPatch::cellNeighbours (const size_t& i_cell,
   if (!error) { l_cell_neighbours.push_back(l_cn); };
 
   l_cn = save_index( i  , j  , k+1,
-                     error);
+                    error);
   if (!error) { l_cell_neighbours.push_back(l_cn); };
 
   l_cn = save_index( i  , j-1, k  ,
-                     error);
+                    error);
   if (!error) { l_cell_neighbours.push_back(l_cn); };
 
   l_cn = save_index( i  , j+1, k  ,
-                     error);
+                    error);
   if (!error) { l_cell_neighbours.push_back(l_cn); };
 
   l_cn = save_index( i-1, j  , k  ,
-                     error);
+                    error);
   if (!error) { l_cell_neighbours.push_back(l_cn); };
 
   l_cn = save_index( i+1, j  , k  ,
-                     error);
+                    error);
   if (!error) { l_cell_neighbours.push_back(l_cn); };
 
 }
@@ -1259,216 +1259,6 @@ bool CartesianPatch::computeCCDataInterpolCoeffs_V1(real x, real y, real z,
 }
 
 
-//real* w_octet;
-
-//// Virtual reference cell
-//long int ivc_ref, jvc_ref, kvc_ref;
-//// ivc_ref = long int (x/m_Dx - 0.5);  // unsave below zero, must round down ??
-//// jvc_ref = long int (y/m_Dy - 0.5);  // unsave below zero, must round down ??
-//// kvc_ref = long int (z/m_Dz - 0.5);  // unsave below zero, must round down ??
-//ivc_ref = long int (x / m_Dx - 0.5 + float(m_NumI)) - m_NumI; // m_NumI to ensure rounding down
-//jvc_ref = long int (y / m_Dy - 0.5 + float(m_NumJ)) - m_NumJ; // m_NumJ to ensure rounding down
-//kvc_ref = long int (z / m_Dz - 0.5 + float(m_NumK)) - m_NumK; // m_NumK to ensure rounding down
-
-//// Virtual reference position of cell (ii, jj, kk)
-//real xvc_ref, yvc_ref, zvc_ref;
-//xvc_ref = (float(ivc_ref) + 0.5) * m_Dx;
-//yvc_ref = (float(jvc_ref) + 0.5) * m_Dy;
-//zvc_ref = (float(kvc_ref) + 0.5) * m_Dz;
-
-//// Decide, how to proceed. Opütions are:
-////   * all coords inside DonorZone
-////     => can interpolate between 8 cells
-////   * any coords in corresponding 0.5*m_D.. range around DonorZone
-////     => interpolate in cell layer available
-////   * fully outside DonorZone plus 0.5*m_D.. boundary
-//inside_donor_plus = true;
-//if (xvc_ref < ((float(m_IDonorZoneFirst) - 0.5) * m_Dx) ) {inside_donor_plus = false;}
-//if (yvc_ref < ((float(m_JDonorZoneFirst) - 0.5) * m_Dy) ) {inside_donor_plus = false;}
-//if (zvc_ref < ((float(m_KDonorZoneFirst) - 0.5) * m_Dz) ) {inside_donor_plus = false;}
-//if (xvc_ref > ((float(m_IDonorZoneAfterlast - 1) + 0.5) * m_Dx) ) {inside_donor_plus = false;}
-//if (yvc_ref > ((float(m_JDonorZoneAfterlast - 1) + 0.5) * m_Dy) ) {inside_donor_plus = false;}
-//if (zvc_ref > ((float(m_KDonorZoneAfterlast - 1) + 0.5) * m_Dz) ) {inside_donor_plus = false;}
-
-//if (inside_donor_plus) {  // at least inside DonorZonePlus
-//  // Perform virtual interpolation, dont care, if reference cell exists
-//  real x_coeff, y_coeff, z_coeff;
-//  computeInterpolWeights(x, y, z,
-//                         xvc_ref, yvc_ref, zvc_ref,
-//                         x_coeff, y_coeff, z_coeff);
-
-//  // Check, if x,y,z resides in DonorZonePlus, but not in DonorZone.
-//  // if so, shift interpolation weights from forbidden layers to valid cells in DonorZone
-//  inside_donor = true;
-//  if (ivc_ref < long int (m_IDonorZoneFirst) ) {
-//    //.. forbidden layer at lower i-side
-//    inside_donor = false;
-//    x_coeff = 1.;  // shift weights to (ivc_ref + 1) side.
-//  }
-//  if (jvc_ref < long int (m_JDonorZoneFirst) ) {
-//    //.. forbidden layer at lower j-side
-//    inside_donor = false;
-//    y_coeff = 1.;  // shift weights to (jvc_ref + 1) side.
-//  }
-//  if (kvc_ref < long int (m_KDonorZoneFirst) ) {
-//    //.. forbidden layer at lower k-side
-//    inside_donor = false;
-//    z_coeff = 1.;  // shift weights to (jvc_ref + 1) side.
-//  }
-//  if (ivc_ref >= long int (m_IDonorZoneAfterlast) ) {
-//    //.. forbidden layer at upper i-side
-//    inside_donor = false;
-//    x_coeff = 0.;  // shift weights to (ivc_ref) side.
-//  }
-
-//  if (ivc_ref < long int (m_IDonorZoneFirst) - 1) {inside_donor_plus = false;}
-//  if (jvc_ref < long int (m_JDonorZoneFirst) - 1) {inside_donor_plus = false;}
-//  if (kvc_ref < long int (m_KDonorZoneFirst) - 1) {inside_donor_plus = false;}
-//  if (ivc_ref > long int (m_IDonorZoneAfterlast)) {inside_donor_plus = false;}
-//  if (jvc_ref > long int (m_JDonorZoneAfterlast)) {inside_donor_plus = false;}
-//  if (kvc_ref > long int (m_KDonorZoneAfterlast)) {inside_donor_plus = false;}
-
-//  if (inside_donor_plus) {  // at least inside DonorZonePlus
-
-//    // Virtual reference position of cell (ii, jj, kk)
-//    real xvc_ref, yvc_ref, zvc_ref;
-//    xvc_ref = (float(ivc_ref) + 0.5) * m_Dx;
-//    yvc_ref = (float(jvc_ref) + 0.5) * m_Dy;
-//    zvc_ref = (float(kvc_ref) + 0.5) * m_Dz;
-
-//    // Perform virtual interpolation, dont care, if reference cell exists
-//    computeInterpolWeights(x, y, z,
-//                           xvc_ref, yvc_ref, zvc_ref,
-//                           w_octet);
-
-//    // Reduce weights
-//    if ()
-
-
-//      jj = long int (y/m_Dy);
-//    kk = long int (z/m_Dz);
-
-//    // virtual reference position of cell (ii, jj, kk)
-//    // Note: cell (ii, jj, kk) may
-//    //  * exist in patch
-//    //  * exist in donor zone
-//    //  * not really exist
-
-
-//    //
-//    // Check limits of donor zone:
-//    //  * all coords inside DonorZone
-//    //    => can interpolate between 8 cells
-//    //  * in a boundary zone of thicknes 0.5 * m_D..
-//    //    => still can inter-/extrapolate from cells inside DonorZone
-//    // NOTE: No eps-bounds needed
-
-//    cout << "DEBUG HERE" << endl;
-
-//    if(x < m_xCCInterMin) {
-//      inside_donor_cc = false;
-//      b_imin = true;
-//      if(x < m_xCCInterMin - 0.5 * m_Dx) {
-//        inside_donor_plus = false;
-//      }
-//    }
-//    if(y < m_yCCInterMin) {
-//      inside_donor_cc = false;
-//      b_jmin = true;
-//      if(y < m_yCCInterMin - 0.5 * m_Dy) {
-//        inside_donor_plus = false;
-//      }
-//    }
-//    if(z < m_zCCInterMin) {
-//      inside_donor_cc = false;
-//      b_kmin = true;
-//      if(z < m_zCCInterMin - 0.5 * m_Dz) {
-//        inside_donor_plus = false;
-//      }
-//    }
-//    if(x > m_xCCInterMax) {
-//      inside_donor_cc = false;
-//      b_imax = true;
-//      if(x < m_xCCInterMax + 0.5 * m_Dx) {
-//        inside_donor_plus = false;
-//      }
-//    }
-//    if(y > m_yCCInterMax) {
-//      inside_donor_cc = false;
-//      b_jmax = true;
-//      if(y < m_yCCInterMax + 0.5 * m_Dy) {
-//        inside_donor_plus = false;
-//      }
-//    }
-//    if(z > m_zCCInterMax) {
-//      inside_donor_cc = false;
-//      b_kmax = true;
-//      if(z < m_zCCInterMax + 0.5 * m_Dz) {
-//        inside_donor_plus = false;
-//      }
-//    }
-
-
-
-//    ic_ref = 0; inside = false;};
-
-
-
-//  if(x < m_xCCInterMin-m_EpsDX) {ic_ref = 0; inside = false;};
-//  if(y < m_yCCInterMin-m_EpsDY) {jc_ref = 0; inside = false;};
-//  if(z < m_zCCInterMin-m_EpsDZ) {kc_ref = 0; inside = false;};
-//  if(x > m_xCCInterMax+m_EpsDX) {ic_ref = m_NumI-1; inside = false;};
-//  if(y > m_yCCInterMax+m_EpsDY) {jc_ref = m_NumJ-1; inside = false;};
-//  if(z > m_zCCInterMax+m_EpsDZ) {kc_ref = m_NumK-1; inside = false;};
-//  //
-//  // Indicees pick, if inside
-//  if(inside) {
-//    //..Position relative to lowest CC-coords (indicees hashing)
-//    real ric_ref = (x - m_xCCMin) / m_Dx;
-//    real rjc_ref = (y - m_yCCMin) / m_Dy;
-//    real rkc_ref = (z - m_zCCMin) / m_Dz;
-//    //.. Correct relative position to ensure indicees are in range
-//    //   (lower bounds correction: ensure non-negative)
-//    if(ric_ref < m_Eps) {ric_ref = m_Eps;}
-//    if(rjc_ref < m_Eps) {rjc_ref = m_Eps;}
-//    if(rkc_ref < m_Eps) {rkc_ref = m_Eps;}
-//    //.. Convert to size_t
-//    ic_ref = size_t(ric_ref);
-//    jc_ref = size_t(rjc_ref);
-//    kc_ref = size_t(rkc_ref);
-//    //
-//    //.. Correct reference cell indices to ensure inside donor region
-//    //   NOTE: Later interpolation will be between
-//    //          [ic_ref , (ic_ref + 1)]
-//    //          [jc_ref , (jc_ref + 1)]
-//    //          [kc_ref , (kc_ref + 1)]
-//    //   => ic_ref, jc_ref, kc_ref restricted to
-//    //          [m_IDonorZoneFirst , m_IDonorZoneAfterlast-2]
-//    //          [m_JDonorZoneFirst , m_JDonorZoneAfterlast-2]
-//    //          [m_KDonorZoneFirst , m_KDonorZoneAfterlast-2]
-//    if(ic_ref < m_IDonorZoneFirst) {
-//      ic_ref = m_IDonorZoneFirst;}
-//    if(jc_ref < m_JDonorZoneFirst) {
-//      jc_ref = m_JDonorZoneFirst;}
-//    if(kc_ref < m_KDonorZoneFirst) {
-//      kc_ref = m_KDonorZoneFirst;}
-//    if(ic_ref > m_IDonorZoneAfterlast-2) {
-//      ic_ref = m_IDonorZoneAfterlast-2;}
-//    if(jc_ref > m_JDonorZoneAfterlast-2) {
-//      jc_ref = m_JDonorZoneAfterlast-2;}
-//    if(kc_ref > m_KDonorZoneAfterlast-2) {
-//      kc_ref = m_KDonorZoneAfterlast-2;}
-//  }
-
-//  else {
-//    // Not "inside" the full CC-interpolation access range, might still be useful
-//    // for close boundary interpolations
-
-
-
-//    return inside;
-//  }
-
 bool CartesianPatch::xyzToRefInterCell(real x, real y, real z,
                                        size_t& ic_ref, size_t& jc_ref, size_t& kc_ref)
 {
@@ -1664,6 +1454,100 @@ real CartesianPatch::computeMinChLength()
   }
   return min_ch_len;
 }
+
+
+void CartesianPatch::cellOverFaceNeighbours (const size_t& l_cell,
+                                             vector<size_t>& l_cell_neighbours)
+{
+  size_t i_cell, j_cell, k_cell;
+
+  ijk(l_cell,
+      i_cell, j_cell, k_cell);
+
+  cellOverFaceNeighbours(i_cell, j_cell, k_cell,
+                         l_cell_neighbours);
+}
+
+
+void CartesianPatch::cellOverFaceNeighbours (const size_t& i,
+                                             const size_t& j,
+                                             const size_t& k,
+                                             vector<size_t>& l_cell_neighbours)
+{
+
+  l_cell_neighbours.clear();
+
+  // check face neighbours
+  // NOTE: size_t(0-1) is huge and will be detected by save_index
+  bool error;
+  size_t l_fn;
+
+  l_fn = save_index(i  , j  , k-1,
+                    error);
+  if (!error) l_cell_neighbours.push_back(l_fn);
+
+  l_fn = save_index(i  , j  , k+1,
+                    error);
+  if (!error) l_cell_neighbours.push_back(l_fn);
+
+  l_fn = save_index(i  , j-1, k  ,
+                    error);
+  if (!error) l_cell_neighbours.push_back(l_fn);
+
+  l_fn = save_index(i  , j+1, k  ,
+                    error);
+  if (!error) l_cell_neighbours.push_back(l_fn);
+
+  l_fn = save_index(i-1, j  , k  ,
+                    error);
+  if (!error) l_cell_neighbours.push_back(l_fn);
+
+  l_fn = save_index(i+1, j  , k  ,
+                    error);
+  if (!error) l_cell_neighbours.push_back(l_fn);
+
+}
+
+
+void CartesianPatch::cellOverNodeNeighbours (const size_t& l_cell,
+                                             vector<size_t>& l_cell_neighbours)
+{
+  size_t i_c, j_c, k_c;
+
+  ijk(l_cell,
+      i_c, j_c, k_c);
+
+  cellOverNodeNeighbours(i_c, j_c, k_c,
+                         l_cell_neighbours);
+}
+
+
+void CartesianPatch::cellOverNodeNeighbours (const size_t& i_c,
+                                             const size_t& j_c,
+                                             const size_t& k_c,
+                                             vector<size_t>& l_cell_neighbours)
+{
+  l_cell_neighbours.clear();
+
+  // check face neighbours
+  bool error;
+  size_t l_fn;
+
+  for (int i_shift = -1; i_shift <= 1; i_shift++) {
+    for (int j_shift = -1; j_shift <= 1; j_shift++) {
+      for (int k_shift = -1; k_shift <= 1; k_shift++) {
+        if (i_shift!=0 || j_shift!= 0 || k_shift!=0) {  // any non-0, forbids 0,0,0
+          l_fn = save_index(i_c + i_shift, j_c + j_shift, k_c + k_shift,
+                            error);
+          if(!error) {
+            l_cell_neighbours.push_back(l_fn);
+          }
+        }
+      }
+    }
+  }
+}
+
 
 #ifdef WITH_VTK
 vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessingVariables &proc_vars)

@@ -285,6 +285,42 @@ public: // methods
   }
 
 
+  virtual void xyzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
+                                vector<vec3_t>& subcells)
+  {
+    subcells.clear();
+
+    // i, j, k
+    size_t i, j, k;
+    ijk(l_cell,
+        i, j, k);
+
+    // increment in subcell resolution
+    real resolve_factor = 1./float(lin_mult_res);
+    real dx_sub = m_Dx * resolve_factor;
+    real dy_sub = m_Dy * resolve_factor;
+    real dz_sub = m_Dz * resolve_factor;
+
+    // lower corner point in all coords
+    real x_low = i*m_Dx + 0.5 * dx_sub;
+    real y_low = j*m_Dy + 0.5 * dy_sub;
+    real z_low = k*m_Dz + 0.5 * dz_sub;
+
+    // fill subcell coord triples in list
+    vec3_t xyz_h;
+    for (size_t i_sub = 0; i_sub < lin_mult_res; i_sub ++) {
+      xyz_h[0] = x_low + i_sub * dx_sub;
+      for (size_t j_sub = 0; j_sub < lin_mult_res; j_sub ++) {
+        xyz_h[1] = y_low + j_sub * dy_sub;
+        for (size_t k_sub = 0; k_sub < lin_mult_res; k_sub ++) {
+          xyz_h[2] = z_low + k_sub * dz_sub;
+          subcells.push_back(xyz_h);
+        }
+      }
+    }
+  }
+
+
   inline int boundingNVecDirection(const size_t& lc) const
   {
     int direction;
@@ -309,6 +345,7 @@ public: // methods
     return direction;
   }
 
+
   /**
    * @brief Get the field index of an (i, j, k) triple/
    * @param i first Cartesian index
@@ -317,20 +354,31 @@ public: // methods
    * @param error true, if (i, j, k) are out of bounds
    * @return the index in the one dimensional data field
    */
-  size_t save_index(int i, int j, int k,
+  size_t save_index(size_t i, size_t j, size_t k,
                     bool& error) {
-    size_t si = i;  // avoid vast compiler warnings
-    size_t sj = j;
-    size_t sk = k;
     error = false;
-    if(i < 0) error = true;
-    if(j < 0) error = true;
-    if(k < 0) error = true;
-    if(si > m_NumI-1) error = true;
-    if(sj > m_NumJ-1) error = true;
-    if(sk > m_NumK-1) error = true;
-    return si*m_NumJ*m_NumK + sj*m_NumK + sk;
+    // NOTE: attempt to enter a negative i,j, of k will be seen as out of range,
+    //       as size_t(negative) is huge.
+    if(i > m_NumI-1) error = true;
+    if(j > m_NumJ-1) error = true;
+    if(k > m_NumK-1) error = true;
+    return i*m_NumJ*m_NumK + j*m_NumK + k;
   }
+
+//  size_t save_index(int i, int j, int k,
+//                    bool& error) {
+//    size_t si = i;  // avoid vast compiler warnings
+//    size_t sj = j;
+//    size_t sk = k;
+//    error = false;
+//    if(i < 0) error = true;
+//    if(j < 0) error = true;
+//    if(k < 0) error = true;
+//    if(si > m_NumI-1) error = true;
+//    if(sj > m_NumJ-1) error = true;
+//    if(sk > m_NumK-1) error = true;
+//    return si*m_NumJ*m_NumK + sj*m_NumK + sk;
+//  }
 
   /**
    * Set up interpolation methods for giving data to foreign patches.
@@ -482,6 +530,50 @@ public: // methods
    * @param count discrete counter (usually time counter).
    */
   virtual void writeData(QString base_data_filename, int count);
+
+
+  /**
+   * Collect neighbour cells of a cell. Version for neighbour cells, that share a
+   * common face with cell.
+   * @param l_cell index of the cell for which to search neighbour cells.
+   * @param l_cell_neighbours vector with neighbour cells indices (ret. ref.)
+   */
+  virtual void cellOverFaceNeighbours(const size_t& l_c,
+                                      vector<size_t>& l_cell_neighbours);
+
+
+  /**
+   * Collect neighbour cells of a cell. Version for neighbour cells, that share at
+   * least one common node with cell.
+   * @param l_cell index of the cell for which to search neighbour cells.
+   * @param l_cell_neighbours vector of neighbour cells of l_cell (ret. ref.)
+   */
+  virtual void cellOverNodeNeighbours(const size_t& l_c,
+                                      vector<size_t>& l_cell_neighbours);
+
+
+  /**
+   * Collect neighbour cells of a cell. Version for neighbour cells, that share a
+   * common face with cell.
+   * @param l_cell index of the cell for which to search neighbour cells.
+   * @param l_cell_neighbours vector with neighbour cells indices (ret. ref.)
+   */
+  void cellOverFaceNeighbours(const size_t& i_c,
+                              const size_t& j_c,
+                              const size_t& k_c,
+                              vector<size_t>& l_cell_neighbours);
+
+
+  /**
+   * Collect neighbour cells of a cell. Version for neighbour cells, that share at
+   * least one common node with cell.
+   * @param l_cell index of the cell for which to search neighbour cells.
+   * @param l_cell_neighbours vector of neighbour cells of l_cell (ret. ref.)
+   */
+  void cellOverNodeNeighbours(const size_t& i_c,
+                              const size_t& j_c,
+                              const size_t& k_c,
+                              vector<size_t>& l_cell_neighbours);
 
 
 #ifdef WITH_VTK

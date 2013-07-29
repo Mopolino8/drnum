@@ -24,6 +24,9 @@ CONFIG   += ordered recursive
 
 CONFIG += debug_and_release
 
-SUBDIRS += drnumBasicAero
+SUBDIRS += drnumBasicAero \
+    testBlockObjects
+
 drnumBasicAero.file = drnumBasicAero/drnumBasicAero.pro
 
+testBlockObjects.file = testBlockObjects/testBlockObjects.pro
