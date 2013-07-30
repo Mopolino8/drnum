@@ -49,6 +49,10 @@ SOURCES += \
     cartboxobject.cpp \
     sphereobject.cpp \
     cylinderobject.cpp \
+    combiobject.cpp \
+    combiobjector.cpp \
+    combiobjectand.cpp \
+    combiobjectandnot.cpp \
     blockobject.cpp \
     blockobjectbc.cpp \
     compressibleeulerbobc.cpp
@@ -130,6 +134,10 @@ HEADERS += \
     cartboxobject.h \
     sphereobject.h \
     cylinderobject.h \
+    combiobject.h \
+    combiobjector.h \
+    combiobjectand.h \
+    combiobjectandnot.h \
     blockobject.h \
     blockobjectbc.h \
     compressibleeulerbobc.h

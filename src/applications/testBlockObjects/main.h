@@ -47,6 +47,15 @@
 #include "iteratorfeeder.h"
 #include "cubeincartisianpatch.h"
 
+#include "blockobject.h"
+#include "cartboxobject.h"
+#include "sphereobject.h"
+#include "cylinderobject.h"
+#include "combiobjectand.h"
+#include "combiobjector.h"
+#include "combiobjectandnot.h"
+
+
 class EaFlux
 {
 
@@ -192,78 +201,78 @@ public:
 
 
 
-vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
-{
-  vector<CubeInCartisianPatch> cubes;
+//vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
+//{
+//  vector<CubeInCartisianPatch> cubes;
 
-  // Building 1
-  {
-    vec3_t x1(-42.30365, -5, 0);
-    vec3_t x2(-13.46731, 9.07423, 14.29426);
-    {
-      //size_t i_patch = 16;
-      size_t i_patch = 60;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-  }
+//  // Building 1
+//  {
+//    vec3_t x1(-42.30365, -5, 0);
+//    vec3_t x2(-13.46731, 9.07423, 14.29426);
+//    {
+//      //size_t i_patch = 16;
+//      size_t i_patch = 60;
+//      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+//      CubeInCartisianPatch cube(cart_patch);
+//      cube.setRange(x1, x2);
+//      cubes.push_back(cube);
+//    }
+//  }
 
-  // Bulding 2
-  {
-    vec3_t x1(-5, -5, 0);
-    vec3_t x2(5, 5, 65);
-    {
-      //size_t i_patch = 28;
-      size_t i_patch = 85;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-    {
-      //size_t i_patch = 29;
-      size_t i_patch = 86;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-  }
+//  // Bulding 2
+//  {
+//    vec3_t x1(-5, -5, 0);
+//    vec3_t x2(5, 5, 65);
+//    {
+//      //size_t i_patch = 28;
+//      size_t i_patch = 85;
+//      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+//      CubeInCartisianPatch cube(cart_patch);
+//      cube.setRange(x1, x2);
+//      cubes.push_back(cube);
+//    }
+//    {
+//      //size_t i_patch = 29;
+//      size_t i_patch = 86;
+//      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+//      CubeInCartisianPatch cube(cart_patch);
+//      cube.setRange(x1, x2);
+//      cubes.push_back(cube);
+//    }
+//  }
 
-  // Bulding 3
-  {
-    vec3_t x1(22.04841, -5, 0);
-    vec3_t x2(34.91528, 18.73290, 84.33866);
-    {
-      //size_t i_patch = 40;
-      size_t i_patch = 110;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-    {
-      //size_t i_patch = 41;
-      size_t i_patch = 111;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-    {
-      //size_t i_patch = 42;
-      size_t i_patch = 112;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-  }
+//  // Bulding 3
+//  {
+//    vec3_t x1(22.04841, -5, 0);
+//    vec3_t x2(34.91528, 18.73290, 84.33866);
+//    {
+//      //size_t i_patch = 40;
+//      size_t i_patch = 110;
+//      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+//      CubeInCartisianPatch cube(cart_patch);
+//      cube.setRange(x1, x2);
+//      cubes.push_back(cube);
+//    }
+//    {
+//      //size_t i_patch = 41;
+//      size_t i_patch = 111;
+//      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+//      CubeInCartisianPatch cube(cart_patch);
+//      cube.setRange(x1, x2);
+//      cubes.push_back(cube);
+//    }
+//    {
+//      //size_t i_patch = 42;
+//      size_t i_patch = 112;
+//      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
+//      CubeInCartisianPatch cube(cart_patch);
+//      cube.setRange(x1, x2);
+//      cubes.push_back(cube);
+//    }
+//  }
 
-  return cubes;
-}
+//  return cubes;
+//}
 
 
 void run()
@@ -281,6 +290,7 @@ void run()
   real write_interval = 1.0*time;
   real total_time     = 100*time;
   bool write          = true;
+  bool write_blockobj = true;
 
 
   alpha = M_PI*alpha/180.0;
@@ -312,6 +322,122 @@ void run()
   PerfectGas::primitiveToConservative(p, T, u, v, 0, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
+  // Define blockobject geometries here:
+
+  // #define test_1
+  // #define test_2
+   #define test_3
+
+#ifdef test_1
+
+  // Test 1: single sphere
+  SphereObject object;
+  object.setParams(5., 5., 5., 3.);
+
+#elif test_2
+
+  // some spheres
+  SphereObject obj_sph_1;
+  SphereObject obj_sph_2;
+  SphereObject obj_sph_3;
+  obj_sph_1.setParams(4., 4., 4., 2.5);
+  obj_sph_2.setParams(6., 6., 6., 2.5);
+  obj_sph_3.setParams(4., 5., 6., 2.5);
+  // some cylinders
+  CylinderObject obj_cyl_1;
+  obj_cyl_1.setParams(1., 5., 5.,
+                      6., 0., 0.,
+                      1.);
+
+  // Combis of two
+  // CombiObjectOr object(&obj_sph_1, &obj_sph_2);
+  // CombiObjectAnd object(&obj_sph_1, &obj_sph_2);
+  // CombiObjectAndNot object(&obj_sph_1, &obj_sph_2);
+
+  // Combis of three
+  // test 3.1
+  // CombiObjectAnd object_inter1(&obj_sph_1, &obj_sph_2);
+  // CombiObjectAndNot object(&obj_sph_3, &object_inter1);
+  // test 3.2
+  CombiObjectAnd object_inter1(&obj_sph_1, &obj_sph_2);
+  CombiObjectAnd object_inter2(&obj_sph_2, &obj_sph_3);
+  CombiObjectAnd object_inter3(&obj_sph_3, &obj_sph_1);
+  CombiObjectOr object_inter4(&object_inter1, &object_inter2);
+  CombiObjectOr object_inter5(&object_inter4, &object_inter3);
+  CombiObjectAndNot object(&object_inter5, &obj_cyl_1);
+#endif
+#ifdef test_3
+
+// Model a desk
+  CartboxObject plate;
+  CartboxObject leg_1;
+  CartboxObject leg_2;
+  CartboxObject leg_3;
+  CartboxObject leg_4;
+  SphereObject vase_body;
+  CylinderObject vase_inner;
+
+  real x_p_min = 2.0;
+  real x_p_max = 7.0;
+  real y_p_min = 3.0;
+  real y_p_max = 7.0;
+  real leg_thick = 0.5;
+
+  plate.setParams(x_p_min, x_p_max,
+                  y_p_min, y_p_max,
+                  2.5, 3.0);
+
+  leg_1.setParams(x_p_min,             x_p_min + leg_thick,
+                  y_p_min,             y_p_min + leg_thick,
+                  -1.0, 2.75);
+
+  leg_2.setParams(x_p_min,             x_p_min + leg_thick,
+                  y_p_max - leg_thick, y_p_max,
+                  -1.0, 2.75);
+
+  leg_3.setParams(x_p_max - leg_thick, x_p_max,
+                  y_p_min,             y_p_min + leg_thick,
+                  -1.0, 2.75);
+
+  leg_4.setParams(x_p_max - leg_thick, x_p_max,
+                  y_p_max - leg_thick, y_p_max,
+                  -1.0, 2.75);
+
+  vase_body.setParams(4., 5., 3.8, 1.0);
+  vase_inner.setParams(4., 5., 3.3,
+                       0., 0., 100.,
+                       0.3);
+
+  // Combi objects
+  // desk; plate and legs
+  /// @todo How about a multiple boolean OR ?
+  /// @todo Or a general class with boolean Ops
+  CombiObjectOr h1(&leg_1, &leg_2);
+  CombiObjectOr h2(&h1, &leg_3);
+  CombiObjectOr h3(&h2, &leg_4);
+  CombiObjectOr desk(&plate, &h3);
+//  CombiObjectOr desk(&plate,
+//        &CombiObjectOr(&leg_1,
+//          &CombiObjectOr(&leg_2
+//            &CombiObjectOr(&leg_3, &leg_4))));
+  // vase
+  CombiObjectAndNot vase(&vase_body, &vase_inner);
+  // together
+  CombiObjectOr object(&desk, &vase);
+
+#endif
+
+  // Transform in block object on patch_grid
+  BlockObject block_object(&patch_grid);
+  block_object.update(&object);
+  // Produce output of block object for visualization (abuse field 0 , variable 0)
+  block_object.setLayerIndexToVar(0, 0);
+  // Write plotteable output
+  if (write_blockobj) {
+    /// @todo Abuse field=0, var=0 to write file with blockobjects. Define other write method later.
+    patch_grid.writeToVtk(0, "VTK/blockobjects", CompressibleVariables<PerfectGas>(), 0);
+  }
+
   if (write) {
     patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
   }
@@ -340,10 +466,10 @@ void run()
   iterator_feeder.addIterator(&iterator_wzm);
   iterator_feeder.feed(patch_grid);
 
-  vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
-  for (size_t i = 0; i < cubes.size(); ++i) {
-    runge_kutta.addPostOperation(&cubes[i]);
-  }
+//  vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
+//  for (size_t i = 0; i < cubes.size(); ++i) {
+//    runge_kutta.addPostOperation(&cubes[i]);
+//  }
 
   runge_kutta.addIterator(&iterator_std);
   runge_kutta.addIterator(&iterator_wzm);
