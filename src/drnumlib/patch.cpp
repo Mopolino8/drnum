@@ -91,6 +91,26 @@ void Patch::xyzoCell(const size_t& l_cell,
 }
 
 
+void Patch::xyzoSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
+                              vector<vec3_t>& xyzo_subcells,
+                              vec3_t& ref_dxyzo)
+{
+  // hand over to virtual method getting local coords
+  vector<vec3_t> xxyyzz_subcells;
+  vec3_t ref_dxxyyzz;
+  xxyyzzSubCellRaster(l_cell, lin_mult_res,
+                      xxyyzz_subcells,
+                      ref_dxxyyzz);
+  // transform the whole data set
+  xyzo_subcells.resize(xxyyzz_subcells.size());
+  for (size_t i_s = 0; i_s < xxyyzz_subcells.size(); i_s++) {
+    xyzo_subcells[i_s] =
+        m_TransformInertial2This.transformReverse(xxyyzz_subcells[i_s]);
+  }
+  ref_dxyzo = m_TransformInertial2This.transfreeReverse(ref_dxxyyzz);
+}
+
+
 void Patch::buildDonorTransferData()
 {
   // Number of donor patches influencing this (receiver) patch
@@ -550,9 +570,9 @@ void Patch::accessDonorDataDirect(const size_t &field)
   donor_vars.resize(this_vars.size());
 
   // Set all receiving data variables to 0, as donors will add their contributions onto
-  #ifndef DEBUG
-  #pragma omp parallel for
-  #endif
+#ifndef DEBUG
+#pragma omp parallel for
+#endif
   for(size_t ll_rc = 0; ll_rc < m_NumReceivingCellsUnique; ++ll_rc) {
     size_t l_rc = m_ReceivingCellIndicesUnique[ll_rc];
     for (size_t i_v = 0; i_v < numVariables(); ++i_v) {
@@ -569,9 +589,9 @@ void Patch::accessDonorDataDirect(const size_t &field)
       donor_vars[i_v] = donor.data + i_v * donor.variable_size;
     }
     //.. loop for indirect receiving cells
-    #ifndef DEBUG
-    #pragma omp parallel for
-    #endif
+#ifndef DEBUG
+#pragma omp parallel for
+#endif
     for (size_t ll_rec = 0; ll_rec < donor.num_receiver_cells; ++ll_rec) {
       //.... receiving cells index
       size_t i_rec = m_ReceivingCellIndicesConcat[donor.receiver_index_field_start + ll_rec];
@@ -593,14 +613,14 @@ void Patch::accessDonorDataDirect(const size_t &field)
       for (size_t i_vec = 0; i_vec < m_VectorVarIndices.size(); ++i_vec) {
         size_t i_var = m_VectorVarIndices[i_vec];
         real u =   donor.axx * inter_vars[i_var + 0]
-                 + donor.axy * inter_vars[i_var + 1]
-                 + donor.axz * inter_vars[i_var + 2];
+            + donor.axy * inter_vars[i_var + 1]
+            + donor.axz * inter_vars[i_var + 2];
         real v =   donor.ayx * inter_vars[i_var + 0]
-                 + donor.ayy * inter_vars[i_var + 1]
-                 + donor.ayz * inter_vars[i_var + 2];
+            + donor.ayy * inter_vars[i_var + 1]
+            + donor.ayz * inter_vars[i_var + 2];
         real w =   donor.azx * inter_vars[i_var + 0]
-                 + donor.azy * inter_vars[i_var + 1]
-                 + donor.azz * inter_vars[i_var + 2];
+            + donor.azy * inter_vars[i_var + 1]
+            + donor.azz * inter_vars[i_var + 2];
         inter_vars[i_var + 0] = u;
         inter_vars[i_var + 1] = v;
         inter_vars[i_var + 2] = w;
@@ -610,10 +630,10 @@ void Patch::accessDonorDataDirect(const size_t &field)
         *(this_vars[i_v]+i_rec) += inter_vars[i_v];  // contribute to receiving cell
       }
 
-//        //...... loop for variables
-//        for (size_t i_v = 0; i_v < m_NumVariables; ++i_v) {
-//          *(this_vars[i_v]+i_rec) += donor_vars[i_v][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
-//        }
+      //        //...... loop for variables
+      //        for (size_t i_v = 0; i_v < m_NumVariables; ++i_v) {
+      //          *(this_vars[i_v]+i_rec) += donor_vars[i_v][donor_cell_index] * donor_cell_weight;  // contribute to receiving cell
+      //        }
     }
   }
 }

@@ -244,18 +244,30 @@ public: // methods
 
 
   /**
-    * Create a subcell resolution raster of a cell
+    * Create a subcell resolution raster of a cell. Coord-syst. of "this".
     * @param l_cell the cell index
     * @param lin_mult_res linear resolutiojn multiplyer. NOTE 3D!
-    * @param subcells vector of subcell coordinate tiples (return reference)
-    * @param ref_dxyz reference cell size x,y,z as vec3_t (return reference)
+    * @param xxyyzz_subcells vector of subcell coordinate tiples (return reference)
+    * @param ref_dxxyyzz reference cell size dxx,dyy,dzz as vec3_t (return reference)
     */
-  //  virtual void xyzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
-  //                        vector<vec3_t>& subcells,
-  //                        vec3_t& ref_dxyz){BUG;};
-  virtual void xyzSubCellRaster(const size_t&, const size_t&,
-                                vector<vec3_t>&,
-                                vec3_t&){BUG;};
+  //  virtual void xxyyzzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
+  //                                   vector<vec3_t>& xxyyzz_subcells,
+  //                                   vec3_t& ref_dxxyyzz){BUG;};
+  virtual void xxyyzzSubCellRaster(const size_t&, const size_t&,
+                                   vector<vec3_t>&,
+                                   vec3_t&){BUG;};
+
+
+  /**
+    * Create a subcell resolution raster of a cell. Coord-syst. xyzo.
+    * @param l_cell the cell index
+    * @param lin_mult_res linear resolutiojn multiplyer. NOTE 3D!
+    * @param xyzo_subcells vector of subcell coordinate tiples (return reference)
+    * @param ref_dxyzo reference cell size x,y,z as vec3_t (return reference)
+    */
+  void xyzoSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
+                         vector<vec3_t>& xyzo_subcells,
+                         vec3_t& ref_dxyzo);
 
 
   /**

@@ -169,7 +169,7 @@ void BlockObject::update(ObjectDefinition *object)
                              grey_count[l_c], max_grey_count[l_c],
                              n_vec[l_c]);
 
-            /// @todo prevent from storing grey_counts, and grads n total patch.
+            /// @todo prevent from storing grey_counts, and grads in total patch.
 
             if (grey_count[l_c] > 0) { // truly a grey cell
               cell_marker[l_c] = 1;  // grey marker, also 1st layer
@@ -320,6 +320,26 @@ void BlockObject::update(ObjectDefinition *object)
         }
         inner_groups++;
       }
+
+//#ifdef DEBUG
+      // DEBUG ONLY: find nr. cells per types
+      size_t max_marker_after = 0;
+      for (size_t l_c = 0; l_c < patch->variableSize(); l_c++) {
+        if (cell_marker[l_c] > max_marker_after) {max_marker_after = cell_marker[l_c];}
+      }
+      vector<size_t> marker_count;
+      marker_count.resize(max_marker_after+1, 0);
+      for (size_t l_c = 0; l_c < patch->variableSize(); l_c++) {
+        marker_count[cell_marker[l_c]]++;
+      }
+      cout << endl;
+      cout << "Ghost cells in patch " << i_p << endl;
+      for (size_t i_m = 0; i_m < marker_count.size(); i_m++) {
+        if (marker_count[i_m] > 0) {
+          cout << "  marker " << i_m << ": " << marker_count[i_m] << endl;
+        }
+      }
+//#endif
 
       // Manage memory
       //
@@ -542,50 +562,54 @@ void BlockObject::checkRecurrence()
 
 void BlockObject::analyseGreyCount(Patch* patch, size_t l_cell,
                                    size_t& grey_count, size_t& max_grey_count,
-                                   vec3_t& n_vec)
+                                   vec3_t& no_vec)
 {
+  /** @todo ATTENTION: Need consequent coord-syst and naming convention.
+    * Currently runs in xyzo (syst. of origin) */
+
   // Center of cell
-  real x_c, y_c, z_c;
-  patch->xyzCell(l_cell,
-                 x_c, y_c, z_c);
+  real xo_c, yo_c, zo_c;
+  patch->xyzoCell(l_cell,
+                  xo_c, yo_c, zo_c);
 
   // Raster subcell resolutions in patches
-  vector<vec3_t> subcells;
-  vec3_t ref_dxyz;
-  patch->xyzSubCellRaster (l_cell, m_GreyResolution,
-                           subcells,
-                           ref_dxyz);
+  vector<vec3_t> xyzo_subcells;
+  vec3_t ref_dxyzo;
+  patch->xyzoSubCellRaster (l_cell, m_GreyResolution,
+                            xyzo_subcells,
+                            ref_dxyzo);
 
-  max_grey_count = subcells.size();
+  max_grey_count = xyzo_subcells.size();
   grey_count = 0;
 
-  n_vec[0] = 0.;
-  n_vec[1] = 0.;
-  n_vec[2] = 0.;
+  no_vec[0] = 0.;
+  no_vec[1] = 0.;
+  no_vec[2] = 0.;
 
   for (size_t i_sub = 0; i_sub < max_grey_count; i_sub++) {
-    real xsc = subcells[i_sub][0];
-    real ysc = subcells[i_sub][1];
-    real zsc = subcells[i_sub][2];
+    real xo_sc = xyzo_subcells[i_sub][0];
+    real yo_sc = xyzo_subcells[i_sub][1];
+    real zo_sc = xyzo_subcells[i_sub][2];
 
-    if (m_ObjectDefinition->isInside(xsc, ysc, zsc)) {
+    if (m_ObjectDefinition->isInside(xo_sc, yo_sc, zo_sc)) {
       grey_count++;
 
-      real dx = xsc - x_c;
-      real dy = ysc - y_c;
-      real dz = zsc - z_c;
-      n_vec[0] -= dx;  // nx += dx * 1.; (value "1" for a hit)
-      n_vec[1] -= dy;  // ny += dy * 1.;
-      n_vec[2] -= dz;  // nz += dz * 1.;
+      real delta_xo = xo_sc - xo_c;
+      real delta_yo = yo_sc - yo_c;
+      real delta_zo = zo_sc - zo_c;
+      no_vec[0] -= delta_xo;  // nxo -= delta_xo * 1.; (value "1" for a hit)
+      no_vec[1] -= delta_yo;  // nyo -= delta_yo * 1.;
+      no_vec[2] -= delta_zo;  // nzo -= delta_zo * 1.;
     }
   }
   // Scale coord directions but do NOT normalize n vector.
   // Reason: it can be singular, if above discrete integral is symmetric
   //         in all 3 coordinate directions (example: fully black or fully
   //         white cell).
-  n_vec[0] *= (1. / (ref_dxyz[0] * ref_dxyz[0]));
-  n_vec[1] *= (1. / (ref_dxyz[1] * ref_dxyz[1]));
-  n_vec[2] *= (1. / (ref_dxyz[2] * ref_dxyz[2]));
+  /// @todo Debug this once more carefully before using gradients
+  no_vec[0] *= (1. / (ref_dxyzo[0] * ref_dxyzo[0]));
+  no_vec[1] *= (1. / (ref_dxyzo[1] * ref_dxyzo[1]));
+  no_vec[2] *= (1. / (ref_dxyzo[2] * ref_dxyzo[2]));
 }
 
 

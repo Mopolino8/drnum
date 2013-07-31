@@ -220,6 +220,18 @@ public: // methods
                                const bool& only_core = true);
 
 
+  /**
+    * Create a subcell resolution raster of a cell. Coord-syst. of "this".
+    * @param l_cell the cell index
+    * @param lin_mult_res linear resolutiojn multiplyer. NOTE 3D!
+    * @param xxyyzz_subcells vector of subcell coordinate tiples (return reference)
+    * @param ref_dxxyyzz reference cell size dxx,dyy,dzz as vec3_t (return reference)
+    */
+  virtual void xxyyzzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
+                                   vector<vec3_t>& xxyyzz_subcells,
+                                   vec3_t& ref_dxxyyzz);
+
+
   /// @todo shift all addressing stuff into StructuredPatch and inherite CartesianPatch from it
   /// @todo check, if the int - size_t conversion may cause performance issues
 
@@ -282,46 +294,6 @@ public: // methods
     x = m_xCCMin + i*m_Dx;
     y = m_yCCMin + j*m_Dy;
     z = m_zCCMin + k*m_Dz;
-  }
-
-
-  virtual void xyzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
-                                vector<vec3_t>& subcells,
-                                vec3_t& ref_dxyz)
-  {
-    subcells.clear();
-
-    // i, j, k
-    size_t i, j, k;
-    ijk(l_cell,
-        i, j, k);
-
-    // increment in subcell resolution
-    real resolve_factor = 1./float(lin_mult_res);
-    real dx_sub = m_Dx * resolve_factor;
-    real dy_sub = m_Dy * resolve_factor;
-    real dz_sub = m_Dz * resolve_factor;
-
-    // lower corner point in all coords
-    real x_low = i*m_Dx + 0.5 * dx_sub;
-    real y_low = j*m_Dy + 0.5 * dy_sub;
-    real z_low = k*m_Dz + 0.5 * dz_sub;
-
-    // fill subcell coord triples in list
-    vec3_t xyz_h;
-    for (size_t i_sub = 0; i_sub < lin_mult_res; i_sub ++) {
-      xyz_h[0] = x_low + i_sub * dx_sub;
-      for (size_t j_sub = 0; j_sub < lin_mult_res; j_sub ++) {
-        xyz_h[1] = y_low + j_sub * dy_sub;
-        for (size_t k_sub = 0; k_sub < lin_mult_res; k_sub ++) {
-          xyz_h[2] = z_low + k_sub * dz_sub;
-          subcells.push_back(xyz_h);
-        }
-      }
-    }
-    ref_dxyz[0] = m_Dx;
-    ref_dxyz[1] = m_Dy;
-    ref_dxyz[2] = m_Dz;
   }
 
 

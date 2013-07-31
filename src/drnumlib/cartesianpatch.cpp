@@ -269,6 +269,46 @@ void CartesianPatch::buildBoundingBox()
 }
 
 
+void CartesianPatch::xxyyzzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
+                                         vector<vec3_t>& xxyyzz_subcells,
+                                         vec3_t& ref_dxxyyzz)
+{
+  xxyyzz_subcells.clear();
+
+  // i, j, k
+  size_t i, j, k;
+  ijk(l_cell,
+      i, j, k);
+
+  // increment in subcell resolution
+  real resolve_factor = 1./float(lin_mult_res);
+  real dxx_sub = m_Dx * resolve_factor;
+  real dyy_sub = m_Dy * resolve_factor;
+  real dzz_sub = m_Dz * resolve_factor;
+
+  // lower corner point in all coords
+  real xx_low = i*m_Dx + 0.5 * dxx_sub;
+  real yy_low = j*m_Dy + 0.5 * dyy_sub;
+  real zz_low = k*m_Dz + 0.5 * dzz_sub;
+
+  // fill subcell coord triples in list
+  vec3_t xxyyzz_h;
+  for (size_t i_sub = 0; i_sub < lin_mult_res; i_sub ++) {
+    xxyyzz_h[0] = xx_low + i_sub * dxx_sub;
+    for (size_t j_sub = 0; j_sub < lin_mult_res; j_sub ++) {
+      xxyyzz_h[1] = yy_low + j_sub * dyy_sub;
+      for (size_t k_sub = 0; k_sub < lin_mult_res; k_sub ++) {
+        xxyyzz_h[2] = zz_low + k_sub * dzz_sub;
+        xxyyzz_subcells.push_back(xxyyzz_h);
+      }
+    }
+  }
+  ref_dxxyyzz[0] = m_Dx;
+  ref_dxxyyzz[1] = m_Dy;
+  ref_dxxyyzz[2] = m_Dz;
+}
+
+
 void CartesianPatch::buildRegions()
 {
   // Example: a 16x8 patch with 2 seek layers and 1 protection layer
@@ -348,7 +388,6 @@ void CartesianPatch::buildRegions()
 }
 
 
-// NEW_SEEK_EXCEPTION
 void CartesianPatch::extractSeekCells()
 {
   bool any_error = false;
@@ -448,7 +487,6 @@ void CartesianPatch::extractSeekCells()
   m_receiveCells_OK = true;
 
 }
-// END NEW_SEEK_EXCEPTION
 
 
 bool CartesianPatch::computeDependencies(const size_t& i_neighbour)
