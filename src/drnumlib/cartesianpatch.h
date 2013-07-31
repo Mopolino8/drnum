@@ -286,7 +286,8 @@ public: // methods
 
 
   virtual void xyzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
-                                vector<vec3_t>& subcells)
+                                vector<vec3_t>& subcells,
+                                vec3_t& ref_dxyz)
   {
     subcells.clear();
 
@@ -318,6 +319,9 @@ public: // methods
         }
       }
     }
+    ref_dxyz[0] = m_Dx;
+    ref_dxyz[1] = m_Dy;
+    ref_dxyz[2] = m_Dz;
   }
 
 

@@ -9,6 +9,7 @@ class CombiObjectAndNot : public CombiObject
 {
 public:
   CombiObjectAndNot(ObjectDefinition* object_a, ObjectDefinition* object_b);
+  CombiObjectAndNot(ObjectDefinition* object_a);
   virtual bool evalBool();
 };
 

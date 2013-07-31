@@ -116,6 +116,8 @@ public: // methods
               size_t num_layers = 2, size_t num_inner = 2,
               size_t grey_resolution = 10);
 
+  void setGreyResolution(real grey_resolution) {m_GreyResolution = grey_resolution;}
+
   void update(ObjectDefinition* object);
 
   void analyseGreyCount(Patch* patch, size_t l_cell,

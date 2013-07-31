@@ -55,7 +55,8 @@ SOURCES += \
     combiobjectandnot.cpp \
     blockobject.cpp \
     blockobjectbc.cpp \
-    compressibleeulerbobc.cpp
+    compressibleeulerbobc.cpp \
+    coneobject.cpp
 
 HEADERS += \
     blockcfd.h \
@@ -140,4 +141,5 @@ HEADERS += \
     combiobjectandnot.h \
     blockobject.h \
     blockobjectbc.h \
-    compressibleeulerbobc.h
+    compressibleeulerbobc.h \
+    coneobject.h

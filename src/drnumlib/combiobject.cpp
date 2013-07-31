@@ -3,9 +3,37 @@
 
 CombiObject::CombiObject(ObjectDefinition* object_a, ObjectDefinition* object_b)
 {
-  m_ObjectA = object_a;
-  m_ObjectB = object_b;
+  m_Objects.clear();
+  m_Objects.push_back(object_a);
+  m_Objects.push_back(object_b);
   findLowestObjects();
+
+  //  m_ObjectA = object_a;
+  //  m_ObjectB = object_b;
+  //  findLowestObjects();
+}
+
+
+CombiObject::CombiObject(ObjectDefinition* object_a)
+{
+  m_Objects.clear();
+  m_Objects.push_back(object_a);
+  findLowestObjects();
+}
+
+
+void CombiObject::includeObject(ObjectDefinition* object)
+{
+  m_Objects.push_back(object);
+  considerLowestObjectsOf(object);
+}
+
+
+void CombiObject::considerLowestObjectsOf(ObjectDefinition* object)
+{
+  vector<ObjectDefinition*> your_lowest_objects;
+  object->getLowestObjects(your_lowest_objects);
+  concatLowestObjects(your_lowest_objects);
 }
 
 
@@ -29,13 +57,21 @@ void CombiObject::findLowestObjects()
 {
   m_LowestObjects.clear();
 
-  //.. Let object A write directly into own list of "this"
-  m_ObjectA->getLowestObjects(m_LowestObjects);
+  // Loop for Objects in this combo.
+  // Let objects write into help list and concatenate on m_LowestObjects
+  for (size_t i_o = 0; i_o < m_Objects.size(); i_o++) {
+    vector<ObjectDefinition*> your_lowest_objects;
+    m_Objects[i_o]->getLowestObjects(your_lowest_objects);
+    concatLowestObjects(your_lowest_objects);
+  }
 
-  //.. Let object B write into help list and concatenate on m_LowestObjects
-  vector<ObjectDefinition*> your_lowest_objects;
-  m_ObjectB->getLowestObjects(your_lowest_objects);
-  concatLowestObjects(your_lowest_objects);
+//  //.. Let object A write directly into own list of "this"
+//  m_ObjectA->getLowestObjects(m_LowestObjects);
+
+//  //.. Let object B write into help list and concatenate on m_LowestObjects
+//  vector<ObjectDefinition*> your_lowest_objects;
+//  m_ObjectB->getLowestObjects(your_lowest_objects);
+//  concatLowestObjects(your_lowest_objects);
 }
 
 

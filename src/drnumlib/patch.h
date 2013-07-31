@@ -248,6 +248,7 @@ public: // methods
     * @param l_cell the cell index
     * @param lin_mult_res linear resolutiojn multiplyer. NOTE 3D!
     * @param subcells vector of subcell coordinate tiples (return reference)
+    * @param ref_dxyz reference cell size x,y,z as vec3_t (return reference)
     */
   //  virtual void xyzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
   //                        vector<vec3_t>& subcells,

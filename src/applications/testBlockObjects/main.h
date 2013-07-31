@@ -18,8 +18,8 @@
 // + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef EXTERNAL_AERO_H
-#define EXTERNAL_AERO_H
+#ifndef TESTBLOCKOBJECTS_H
+#define TESTBLOCKOBJECTS_H
 
 #include "reconstruction/upwind1.h"
 #include "reconstruction/upwind2.h"
@@ -51,6 +51,7 @@
 #include "cartboxobject.h"
 #include "sphereobject.h"
 #include "cylinderobject.h"
+#include "coneobject.h"
 #include "combiobjectand.h"
 #include "combiobjector.h"
 #include "combiobjectandnot.h"
@@ -113,7 +114,7 @@ inline void EaFlux::xField
   size_t i, size_t j, size_t k,
   real x, real y, real z,
   real A, real* flux
-)
+  )
 {
   m_EulerFlux.xField(patch, i, j, k, x, y, z, A, flux);
   m_ViscFlux.xField(patch, i, j, k, x, y, z, A, flux);
@@ -126,7 +127,7 @@ inline void EaFlux::yField
   size_t i, size_t j, size_t k,
   real x, real y, real z,
   real A, real* flux
-)
+  )
 {
   m_EulerFlux.yField(patch, i, j, k, x, y, z, A, flux);
   m_ViscFlux.yField(patch, i, j, k, x, y, z, A, flux);
@@ -139,7 +140,7 @@ inline void EaFlux::zField
   size_t i, size_t j, size_t k,
   real x, real y, real z,
   real A, real* flux
-)
+  )
 {
   m_EulerFlux.zField(patch, i, j, k, x, y, z, A, flux);
   m_ViscFlux.zField(patch, i, j, k, x, y, z, A, flux);
@@ -324,17 +325,19 @@ void run()
 
   // Define blockobject geometries here:
 
-  // #define test_1
-  // #define test_2
-   #define test_3
+  // #define TEST_1
+  // #define TEST_2
+  // #define TEST_3
+  // #define TEST_4
+  #define TEST_5
 
-#ifdef test_1
+#ifdef TEST_1
 
   // Test 1: single sphere
   SphereObject object;
   object.setParams(5., 5., 5., 3.);
 
-#elif test_2
+#elif TEST_2
 
   // some spheres
   SphereObject obj_sph_1;
@@ -366,9 +369,9 @@ void run()
   CombiObjectOr object_inter5(&object_inter4, &object_inter3);
   CombiObjectAndNot object(&object_inter5, &obj_cyl_1);
 #endif
-#ifdef test_3
+#ifdef TEST_3
 
-// Model a desk
+  // Model a desk
   CartboxObject plate;
   CartboxObject leg_1;
   CartboxObject leg_2;
@@ -410,25 +413,67 @@ void run()
 
   // Combi objects
   // desk; plate and legs
-  /// @todo How about a multiple boolean OR ?
-  /// @todo Or a general class with boolean Ops
-  CombiObjectOr h1(&leg_1, &leg_2);
-  CombiObjectOr h2(&h1, &leg_3);
-  CombiObjectOr h3(&h2, &leg_4);
-  CombiObjectOr desk(&plate, &h3);
-//  CombiObjectOr desk(&plate,
-//        &CombiObjectOr(&leg_1,
-//          &CombiObjectOr(&leg_2
-//            &CombiObjectOr(&leg_3, &leg_4))));
-  // vase
-  CombiObjectAndNot vase(&vase_body, &vase_inner);
-  // together
+
+
+  //  /// @todo How about a multiple boolean OR ?
+  //  /// @todo Or a general class with boolean Ops
+  //  CombiObjectOr h1(&leg_1, &leg_2);
+  //  CombiObjectOr h2(&h1, &leg_3);
+  //  CombiObjectOr h3(&h2, &leg_4);
+  //  CombiObjectOr desk(&plate, &h3);
+  ////  CombiObjectOr desk(&plate,
+  ////        &CombiObjectOr(&leg_1,
+  ////          &CombiObjectOr(&leg_2
+  ////            &CombiObjectOr(&leg_3, &leg_4))));
+  //  // vase
+  //  CombiObjectAndNot vase(&vase_body, &vase_inner);
+  //  // together
+  //  CombiObjectOr object(&desk, &vase);
+
+
+  CombiObjectOr desk (&plate);
+  desk.includeObject(&leg_1);
+  desk.includeObject(&leg_2);
+  desk.includeObject(&leg_3);
+  desk.includeObject(&leg_4);
+
+  CombiObjectAndNot vase (&vase_body);
+  vase.includeObject(&vase_inner);
+
   CombiObjectOr object(&desk, &vase);
 
 #endif
+#ifdef TEST_4
 
-  // Transform in block object on patch_grid
-  BlockObject block_object(&patch_grid);
+  ConeObject cone;
+  cone.setParams(1., 5., 5.,
+                 8., 0., 0.,
+                 3., 1.);
+  CylinderObject drill_1;
+  drill_1.setParams(5., 5., -3.,
+                    0., 0., 100.,
+                    1.);
+  CylinderObject drill_2;
+  drill_2.setParams(4., -3., 5.,
+                    0., 100., 0.,
+                    1.);
+  CombiObjectAndNot object (&cone);
+  object.includeObject(&drill_1);
+  object.includeObject(&drill_2);
+
+#endif
+#ifdef TEST_5
+
+  CylinderObject object;
+  object.setParams(2., 5., 5.,
+                   6., 0., 0.,
+                   1.);
+
+#endif
+
+      // Transform in block object on patch_grid
+      BlockObject block_object(&patch_grid);
+  block_object.setGreyResolution(5); // overwrite default
   block_object.update(&object);
   // Produce output of block object for visualization (abuse field 0 , variable 0)
   block_object.setLayerIndexToVar(0, 0);
@@ -441,7 +486,8 @@ void run()
   if (write) {
     patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
   }
-  //  exit(-1); /// meshing!!!
+
+  exit(-1); /// meshing!!!
 
   EaFlux    flux_std(u, v, p, T);
   EaWFluxZM flux_wzm(u, v, p, T);
@@ -466,10 +512,10 @@ void run()
   iterator_feeder.addIterator(&iterator_wzm);
   iterator_feeder.feed(patch_grid);
 
-//  vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
-//  for (size_t i = 0; i < cubes.size(); ++i) {
-//    runge_kutta.addPostOperation(&cubes[i]);
-//  }
+  //  vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
+  //  for (size_t i = 0; i < cubes.size(); ++i) {
+  //    runge_kutta.addPostOperation(&cubes[i]);
+  //  }
 
   runge_kutta.addIterator(&iterator_std);
   runge_kutta.addIterator(&iterator_wzm);
@@ -575,4 +621,4 @@ void run()
   }
 }
 
-#endif // EXTERNAL_AERO_H
+#endif // TESTBLOCKOBJECTS_H
