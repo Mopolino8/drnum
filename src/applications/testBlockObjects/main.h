@@ -327,8 +327,8 @@ void run()
 
   // #define TEST_1
   // #define TEST_2
-  // #define TEST_3
-  #define TEST_4
+  #define TEST_3
+  // #define TEST_4
   // #define TEST_5
 
 #ifdef TEST_1
@@ -337,7 +337,8 @@ void run()
   SphereObject object;
   object.setParams(5., 5., 5., 3.);
 
-#elif TEST_2
+#endif
+#ifdef TEST_2
 
   // some spheres
   SphereObject obj_sph_1;
@@ -368,6 +369,7 @@ void run()
   CombiObjectOr object_inter4(&object_inter1, &object_inter2);
   CombiObjectOr object_inter5(&object_inter4, &object_inter3);
   CombiObjectAndNot object(&object_inter5, &obj_cyl_1);
+
 #endif
 #ifdef TEST_3
 

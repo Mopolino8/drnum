@@ -11,16 +11,20 @@ class BlockObjectBC : public GenericOperation
 
 protected: // attributes
   BlockObject* m_BlockObject; // the block object to work on
+  size_t m_Field;             // the variable field to work on
 
 
 public:
 
-  BlockObjectBC();
+  BlockObjectBC (size_t field);
 
-  void setBlockObject(BlockObject* block_object) {m_BlockObject = block_object;}
+  BlockObjectBC (size_t field, BlockObject* block_object);
 
-  virtual void operator()() = 0;
+  void setBlockObject (BlockObject* block_object) {m_BlockObject = block_object;}
 
+  virtual void operator ()() = 0;
+
+  void standardBlackCells ();
 };
 
 #endif // BLOCKOBJECTBC_H

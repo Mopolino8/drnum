@@ -19,6 +19,7 @@
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #CONFIG += cuda
+CONFIG   += debug_and_release
 
 QMAKE_CXXFLAGS += -Wno-deprecated
 QMAKE_CXXFLAGS += -fopenmp

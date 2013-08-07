@@ -8,8 +8,11 @@ class CompressibleEulerBOBC;
 class CompressibleEulerBOBC : public BlockObjectBC
 {
 public:
-    CompressibleEulerBOBC();
-    virtual void operator()() {BUG;}
+    CompressibleEulerBOBC(size_t field);
+
+    CompressibleEulerBOBC(size_t field, BlockObject* block_object);
+
+    virtual void operator()();
 };
 
 #endif // COMPRESSIBLEEULERBOBC_H

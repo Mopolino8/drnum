@@ -29,6 +29,9 @@ struct blackcell_t
 class BlockObject
 {
 
+  friend class BlockObjectBC;
+  friend class CompressibleEulerBOBC;
+
 protected: // data
 
   PerfectGas m_Gas;
@@ -126,9 +129,18 @@ public: // methods
 
   void checkRecurrence();
 
+  PatchGrid* getPatchGrid() {return m_PatchGrid; }
+
   vector<size_t> getAffectedPatchIDs() { return m_AffectedPatchIDs; }
 
   vector<size_t>* getAffectedPatchIDsPtr() { return &(m_AffectedPatchIDs); }
+
+  vector<vector<vector<blackcell_t> > > getBlackCells() {return m_BlackCells; }
+
+  vector<vector<greycell_t> > getGreyCells() {return m_GreyCells; }
+
+  vector<size_t> getFullyBlackPatches() {return m_FullyBlackPatches; }
+
 
   //void setLayerIndexToVar (real** var);
   void setLayerIndexToVar (const size_t &i_field,
