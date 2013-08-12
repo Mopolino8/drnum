@@ -24,7 +24,7 @@ public:
 
   virtual void operator ()() = 0;
 
-  void standardBlackCells ();
+  void standardBlackCells0 ();
 };
 
 #endif // BLOCKOBJECTBC_H

@@ -29,7 +29,10 @@ public:
 
   ObjectDefinition();
 
-  virtual bool isInside(const real& xo, const real& yo, const real& zo) = 0;
+  virtual bool isInside(const real& xo, const real& yo, const real& zo) {
+    cout << " need derived class for ObjectDefinition::isInside" << endl;
+    BUG;
+  }
 
   bool isInside(vec3_t xyzo) { return isInside (xyzo[0], xyzo[1],xyzo[2]); }
 

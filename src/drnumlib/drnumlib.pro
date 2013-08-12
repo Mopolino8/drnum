@@ -56,7 +56,8 @@ SOURCES += \
     blockobject.cpp \
     blockobjectbc.cpp \
     compressibleeulerbobc.cpp \
-    coneobject.cpp
+    coneobject.cpp \
+    compressiblesolidwallbobc.cpp
 
 HEADERS += \
     blockcfd.h \
@@ -142,4 +143,6 @@ HEADERS += \
     blockobject.h \
     blockobjectbc.h \
     compressibleeulerbobc.h \
-    coneobject.h
+    coneobject.h \
+    compressiblesolidwallbobc.h \
+    compressiblevariablesandg.h

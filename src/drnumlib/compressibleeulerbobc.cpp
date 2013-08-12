@@ -1,19 +1,22 @@
 #include "compressibleeulerbobc.h"
 
-CompressibleEulerBOBC::CompressibleEulerBOBC(size_t field)
-  : BlockObjectBC(field)
+CompressibleEulerBOBC::CompressibleEulerBOBC (size_t field)
+  : BlockObjectBC (field)
 {
 }
 
 
-CompressibleEulerBOBC::CompressibleEulerBOBC(size_t field, BlockObject* block_object)
-  : BlockObjectBC(field, block_object)
+CompressibleEulerBOBC::CompressibleEulerBOBC (size_t field, BlockObject* block_object)
+  : BlockObjectBC (field, block_object)
 {
 }
 
 
 void CompressibleEulerBOBC::operator()()
 {
+  // ATTENTION Assume first 5 variables to make up compressible vars.
+  /// @todo Will overwrite variables beyond the 5th with undefined code
+
   BlockObject* bo = m_BlockObject;
   PatchGrid* pg = m_BlockObject->getPatchGrid();
 
@@ -27,16 +30,20 @@ void CompressibleEulerBOBC::operator()()
       greycell_t& gc = grey_cells[ll_cg];
       size_t l_cell = gc.l_cell;
       //.... Set variable set to zero
-      patch->setVarsetToZero (m_Field, l_cell);
+      patch->setVarsubsetToZero (m_Field, l_cell,
+                                 0, 5);
       //.... loop for contributors (average of vars from sourrounding fluid nodes)
       for (size_t ll_cn = 0; ll_cn < gc.influencing_cells.size(); ll_cn++) {
         size_t l_cn = gc.influencing_cells[ll_cn];
-        patch->addToVarset (m_Field, l_cell, l_cn);
+        patch->addToVarsubset (m_Field, l_cell, l_cn,
+                               0, 5);
       }
-      patch->multVarsetScalar (m_Field, l_cell, gc.average_quote);
+      patch->multVarsubsetScalar (m_Field, l_cell, gc.average_quote,
+                                  0, 5);
       //.... Set normal speed component to zero
       real varset_euler[5];
-      patch->getVarset (m_Field, l_cell, varset_euler);
+      patch->getVarsubset (m_Field, l_cell, varset_euler,
+                           0, 5);
       real p, T, u, v, w;
       PerfectGas::conservativeToPrimitive(varset_euler, p, T, u, v, w);
       real n_speed = u * gc.n_vec[0] + v * gc.n_vec[1] + w * gc.n_vec[2];
@@ -44,11 +51,12 @@ void CompressibleEulerBOBC::operator()()
       v -= n_speed * gc.n_vec[1];
       w -= n_speed * gc.n_vec[2];
       PerfectGas::primitiveToConservative(p, T, u, v, w, varset_euler);
-      patch->setVarset (m_Field, l_cell, varset_euler);
+      patch->setVarsubset (m_Field, l_cell, varset_euler,
+                           0, 5);
     }
   }
 
   // Black cells:
-  standardBlackCells ();
+  standardBlackCells0 ();
 
 }

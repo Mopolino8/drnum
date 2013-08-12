@@ -9,7 +9,7 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,            +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
@@ -35,6 +35,7 @@
 #include "fluxes/compressibleslipflux.h"
 #include "perfectgas.h"
 #include "compressiblevariables.h"
+#include "compressiblevariablesandg.h"
 #include "rungekutta.h"
 
 #ifdef GPU
@@ -55,6 +56,8 @@
 #include "combiobjectand.h"
 #include "combiobjector.h"
 #include "combiobjectandnot.h"
+
+#include "compressibleeulerbobc.h"
 
 
 class EaFlux
@@ -276,70 +279,20 @@ public:
 //}
 
 
-void run()
+
+void geoTest1(ObjectDefinition& object, string& gridfile)
 {
-
-  real Ma             = 0.15;
-  real p              = 1.0e5;
-  real T              = 300;
-  real uabs           = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-  real alpha          = 10.0;
-  real L              = 10.0;
-  real time           = L/uabs;
-  real cfl_target     = 1.0;
-  real t_write        = 0;
-  real write_interval = 1.0*time;
-  real total_time     = 100*time;
-  bool write          = true;
-  bool write_blockobj = true;
-
-
-  alpha = M_PI*alpha/180.0;
-  real u = uabs*cos(alpha);
-  real v = uabs*sin(alpha);
-
-  // Patch grid
-  PatchGrid patch_grid;
-  //.. general settings (apply to all subsequent patches)
-  patch_grid.setNumberOfFields(3);
-  patch_grid.setNumberOfVariables(5);
-  patch_grid.defineVectorVar(1);
-  patch_grid.setInterpolateData();
-  patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
-  patch_grid.setTransferType("padded_direct");
-  patch_grid.readGrid("patches/standard.grid");
-  //patch_grid.readGrid("patches/V1");
-  patch_grid.computeDependencies(true);
-
-  // Time step
-  real ch_speed = u + sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-  real dt       = cfl_target*patch_grid.computeMinChLength()/ch_speed;
-
-  cout << " patch_grid.computeMinChLength() = " << patch_grid.computeMinChLength() << endl;
-  cout << " dt  =  " << dt << endl;
-
-  // Initialize
-  real init_var[5];
-  PerfectGas::primitiveToConservative(p, T, u, v, 0, init_var);
-  patch_grid.setFieldToConst(0, init_var);
-
-  // Define blockobject geometries here:
-
-  // #define TEST_1
-  // #define TEST_2
-  #define TEST_3
-  // #define TEST_4
-  // #define TEST_5
-
-#ifdef TEST_1
-
   // Test 1: single sphere
-  SphereObject object;
-  object.setParams(5., 5., 5., 3.);
+  SphereObject sphere;
+  sphere.setParams(5., 5., 5., 3.);
 
-#endif
-#ifdef TEST_2
+  object = sphere;
+  gridfile = gridfile;
+}
 
+
+void geoTest2(ObjectDefinition*& object, string& gridfile)
+{
   // some spheres
   SphereObject obj_sph_1;
   SphereObject obj_sph_2;
@@ -353,27 +306,21 @@ void run()
                       6., 0., 0.,
                       1.);
 
-  // Combis of two
-  // CombiObjectOr object(&obj_sph_1, &obj_sph_2);
-  // CombiObjectAnd object(&obj_sph_1, &obj_sph_2);
-  // CombiObjectAndNot object(&obj_sph_1, &obj_sph_2);
-
-  // Combis of three
-  // test 3.1
-  // CombiObjectAnd object_inter1(&obj_sph_1, &obj_sph_2);
-  // CombiObjectAndNot object(&obj_sph_3, &object_inter1);
-  // test 3.2
   CombiObjectAnd object_inter1(&obj_sph_1, &obj_sph_2);
   CombiObjectAnd object_inter2(&obj_sph_2, &obj_sph_3);
   CombiObjectAnd object_inter3(&obj_sph_3, &obj_sph_1);
   CombiObjectOr object_inter4(&object_inter1, &object_inter2);
   CombiObjectOr object_inter5(&object_inter4, &object_inter3);
-  CombiObjectAndNot object(&object_inter5, &obj_cyl_1);
+  CombiObjectAndNot total_object(&object_inter5, &obj_cyl_1);
 
-#endif
-#ifdef TEST_3
+  object = &total_object;
+  gridfile = gridfile;
+}
 
-  // Model a desk
+
+void geoTest3(ObjectDefinition*& object, string& gridfile)
+{
+  // Model a desk with a vase on it
   CartboxObject plate;
   CartboxObject leg_1;
   CartboxObject leg_2;
@@ -413,26 +360,6 @@ void run()
                        0., 0., 100.,
                        0.3);
 
-  // Combi objects
-  // desk; plate and legs
-
-
-  //  /// @todo How about a multiple boolean OR ?
-  //  /// @todo Or a general class with boolean Ops
-  //  CombiObjectOr h1(&leg_1, &leg_2);
-  //  CombiObjectOr h2(&h1, &leg_3);
-  //  CombiObjectOr h3(&h2, &leg_4);
-  //  CombiObjectOr desk(&plate, &h3);
-  ////  CombiObjectOr desk(&plate,
-  ////        &CombiObjectOr(&leg_1,
-  ////          &CombiObjectOr(&leg_2
-  ////            &CombiObjectOr(&leg_3, &leg_4))));
-  //  // vase
-  //  CombiObjectAndNot vase(&vase_body, &vase_inner);
-  //  // together
-  //  CombiObjectOr object(&desk, &vase);
-
-
   CombiObjectOr desk (&plate);
   desk.includeObject(&leg_1);
   desk.includeObject(&leg_2);
@@ -442,11 +369,16 @@ void run()
   CombiObjectAndNot vase (&vase_body);
   vase.includeObject(&vase_inner);
 
-  CombiObjectOr object(&desk, &vase);
+  CombiObjectOr total_object(&desk, &vase);
 
-#endif
-#ifdef TEST_4
+  object = &total_object;
+  gridfile = gridfile;
+}
 
+
+void geoTest4(ObjectDefinition*& object, string& gridfile)
+{
+  // A cone with some cross drillings
   ConeObject cone;
   cone.setParams(1., 5., 5.,
                  8., 0., 0.,
@@ -459,40 +391,217 @@ void run()
   drill_2.setParams(4., -3., 5.,
                     0., 100., 0.,
                     1.);
-  CombiObjectAndNot object (&cone);
-  object.includeObject(&drill_1);
-  object.includeObject(&drill_2);
+  CombiObjectAndNot total_object (&cone);
+  total_object.includeObject(&drill_1);
+  total_object.includeObject(&drill_2);
 
-#endif
-#ifdef TEST_5
+  object = &total_object;
+  gridfile = gridfile;
+}
 
-  CylinderObject object;
-  object.setParams(2., 5., 5.,
-                   6., 0., 0.,
-                   1.);
 
-#endif
+void geoTest5(ObjectDefinition*& object, string& gridfile)
+{
+  CylinderObject cylinder;
+  cylinder.setParams(2., 5., 5.,
+                     6., 0., 0.,
+                     1.);
+  object = &cylinder;
+  gridfile = gridfile;
+}
 
-      // Transform in block object on patch_grid
-      BlockObject block_object(&patch_grid);
-  block_object.setGreyResolution(5); // overwrite default
+
+void geoTest6(ObjectDefinition*& object, string& gridfile)
+{
+  // rocket example needs grid rocket.grid
+
+  real x_base = 0.;
+  real x_stage_1 = 1.;
+  real x_stage_2 = 2.8;
+  real x_nose_cone = 3.5;
+  real x_nose = 4.0;
+  real x_boost_nose = 1.5;
+
+  real y_c = 0.;
+  real y_left = -0.4;
+  real y_right = 0.4;
+
+  real z_all = 0.;
+
+  real r_thick = 0.25;
+  real r_thin = 0.15;
+  real r_boost = 0.2;
+  real r_min = 0.03;
+
+  real intercone = 0.2;
+
+  real save = 0.01;
+
+  // stage 1;
+  CylinderObject stage_1_cyl;
+  stage_1_cyl.setParams(x_base, y_c, z_all,
+                        (x_stage_1 - x_base), 0., 0.,
+                        r_thick);
+
+  // stage 2:
+  CylinderObject stage_2_cyl;
+  stage_2_cyl.setParams((x_stage_1 - save), y_c, z_all,
+                        (x_stage_2 - x_stage_1 + save), 0., 0.,
+                        r_thin);
+
+  // stage 3:
+  CylinderObject stage_3_cyl;
+  stage_3_cyl.setParams(x_stage_2, y_c, z_all,
+                        (x_nose_cone - x_stage_2), 0., 0.,
+                        r_thick);
+
+  // interstage 1-2:
+  ConeObject interstage_1_2;
+  interstage_1_2.setParams(x_stage_1, y_c, z_all,
+                           (2*intercone), 0., 0.,
+                           r_thick, r_thin);
+
+  // interstage 2-3:
+  ConeObject interstage_2_3;
+  interstage_2_3.setParams(x_stage_2, y_c, z_all,
+                           - intercone, 0., 0.,
+                           r_thick, r_thin);
+
+  // nose cone
+  ConeObject nose_cone;
+  nose_cone.setParams(x_nose_cone, y_c, z_all,
+                      x_nose - x_nose_cone, 0., 0.,
+                      r_thick, r_min);
+
+  // left booster
+  //.. body
+  CylinderObject lb_cyl;
+  lb_cyl.setParams(x_base, y_left, z_all,
+                   (x_stage_1 - x_base), 0., 0.,
+                   r_boost);
+  //.. cone
+  ConeObject lb_cone;
+  lb_cone.setParams(x_stage_1, y_left, z_all,
+                    (x_boost_nose - x_stage_1),  0., 0.,
+                    r_boost, r_min);
+
+  // right booster
+  //.. body
+  CylinderObject rb_cyl;
+  rb_cyl.setParams(x_base, y_right, z_all,
+                   (x_stage_1 - x_base), 0., 0.,
+                   r_boost);
+  //.. cone
+  ConeObject rb_cone;
+  rb_cone.setParams(x_stage_1, y_right, z_all,
+                    (x_boost_nose - x_stage_1),  0., 0.,
+                    r_boost, r_min);
+
+  // all together
+  CombiObjectOr total_object (&stage_1_cyl);
+  total_object.includeObject (&stage_2_cyl);
+  total_object.includeObject (&stage_3_cyl);
+  total_object.includeObject (&interstage_1_2);
+  total_object.includeObject (&interstage_2_3);
+  total_object.includeObject (&nose_cone);
+  total_object.includeObject (&lb_cyl);
+  total_object.includeObject (&lb_cone);
+  total_object.includeObject (&rb_cyl);
+  total_object.includeObject (&rb_cone);
+
+  object = &total_object;
+  gridfile = "patches/rocket.grid";
+}
+
+
+void run()
+{
+
+  real Ma             = 0.15;
+  real p              = 1.0e5;
+  real T              = 300;
+  real uabs           = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+  real alpha          = 10.0;
+  real L              = 10.0;
+  real time           = L/uabs;
+  real cfl_target     = 1.0;
+  real t_write        = 0;
+  real write_interval = 1.0*time;
+  real total_time     = 100*time;
+  bool write          = true;
+  bool write_blockobj = true;
+
+  alpha = M_PI*alpha/180.0;
+  real u = uabs*cos(alpha);
+  real v = uabs*sin(alpha);
+
+
+  // Geometric block object test case selection
+  string gridfile = "must_overwrite_this";
+
+#include "geoblockobjecttest001.h"   // Test 1: single sphere
+// #include "geoblockobjecttest002.h"   // Test 2: some spheres
+// #include "geoblockobjecttest003.h"   // Test 3: desk and vase
+// #include "geoblockobjecttest004.h"   // Test 4: a cone with some cross drillings
+// #include "geoblockobjecttest005.h"   // Test 5: single cylinder (??)
+// #include "geoblockobjecttest006.h"   // Test 6: rocket (model of a launcher)
+
+  // Patch grid
+  PatchGrid patch_grid;
+  //.. general settings (apply to all subsequent patches)
+  patch_grid.setNumberOfFields(3);
+
+  patch_grid.setNumberOfVariables(5);
+  // problem? patch_grid.setNumberOfVariables(6);
+
+
+  patch_grid.defineVectorVar(1);
+  patch_grid.setInterpolateData();
+  patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
+  patch_grid.setTransferType("padded_direct");
+  patch_grid.readGrid(gridfile);
+
+  //patch_grid.readGrid("patches/V1");
+  patch_grid.computeDependencies(true);
+
+  // Time step
+  real ch_speed = u + sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+  real dt       = cfl_target*patch_grid.computeMinChLength()/ch_speed;
+
+  cout << " patch_grid.computeMinChLength() = " << patch_grid.computeMinChLength() << endl;
+  cout << " dt  =  " << dt << endl;
+
+  // Initialize
+  // real init_var[5];
+  real init_var[6];
+  PerfectGas::primitiveToConservative(p, T, u, v, 0, init_var);  // this manages the first 5 variables
+  init_var[5] = 0.;  // this is preliminary setting for the G-variable
+  patch_grid.setFieldToConst(0, init_var);
+
+  // Transform in block object on patch_grid
+  BlockObject block_object(&patch_grid);
+  block_object.setGreyResolution(10); // overwrite default
   block_object.update(&object);
-  // Produce output of block object for visualization (abuse field 0 , variable 0)
-  block_object.setLayerIndexToVar(0, 0);
+
+  // Produce output of block object for visualization (abuse field 0 , variable 5)
+  // problem? block_object.setLayerIndexToVar(0, 5);  // abusing dfensity was ...(0, 0);
+
   // Write plotteable output
   if (write_blockobj) {
     /// @todo Abuse field=0, var=0 to write file with blockobjects. Define other write method later.
+    //patch_grid.writeToVtk(0, "VTK/blockobjects", CompressibleVariablesAndG<PerfectGas>(), 0);
     patch_grid.writeToVtk(0, "VTK/blockobjects", CompressibleVariables<PerfectGas>(), 0);
   }
 
   if (write) {
+    //patch_grid.writeToVtk(0, "VTK/step", CompressibleVariablesAndG<PerfectGas>(), 0);
     patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
   }
 
-  exit(-1); /// meshing!!!
+  //exit(0); /// stop here by now
 
   EaFlux    flux_std(u, v, p, T);
-  EaWFluxZM flux_wzm(u, v, p, T);
+//  EaWFluxZM flux_wzm(u, v, p, T);
 
   RungeKutta runge_kutta;
   runge_kutta.addAlpha(0.25);
@@ -501,17 +610,17 @@ void run()
 
 #ifdef GPU
   GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_std);
-  GPU_CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
+//  GPU_CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
 #else
   CartesianIterator<5, EaFlux>    iterator_std(flux_std);
-  CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
+//  CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
 #endif
   iterator_std.setCodeString(CodeString("fx fy fz far far far far far  far 0"));
-  iterator_wzm.setCodeString(CodeString("fx fy fz far far far far wall far 0"));
+//  iterator_wzm.setCodeString(CodeString("fx fy fz far far far far wall far 0"));
 
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator_std);
-  iterator_feeder.addIterator(&iterator_wzm);
+//  iterator_feeder.addIterator(&iterator_wzm);
   iterator_feeder.feed(patch_grid);
 
   //  vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
@@ -520,18 +629,21 @@ void run()
   //  }
 
   runge_kutta.addIterator(&iterator_std);
-  runge_kutta.addIterator(&iterator_wzm);
+//  runge_kutta.addIterator(&iterator_wzm);
+
+  CompressibleEulerBOBC c_euler_bobc(0, &block_object);
+  runge_kutta.addPostOperation(&c_euler_bobc);
 
   int write_counter = 0;
   int iter = 0;
   real t = 0;
 
   cout << "std:" << iterator_std.numPatches() << endl;
-  cout << "wzm:" << iterator_wzm.numPatches() << endl;
+//  cout << "wzm:" << iterator_wzm.numPatches() << endl;
 
 #ifdef GPU
   iterator_std.updateDevice();
-  iterator_wzm.updateDevice();
+//  iterator_wzm.updateDevice();
 #endif
 
   startTiming();
@@ -555,7 +667,7 @@ void run()
 #ifdef GPU
       runge_kutta.copyDonorData(0);
       iterator_std.updateHost();
-      iterator_wzm.updateHost();
+//      iterator_wzm.updateHost();
 #endif
 
       for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
@@ -597,6 +709,7 @@ void run()
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       ++write_counter;
       if (write) {
+        //patch_grid.writeToVtk(0, "VTK/step", CompressibleVariablesAndG<PerfectGas>(), write_counter);
         patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
       }
       t_write -= write_interval;
@@ -615,11 +728,13 @@ void run()
 #ifdef GPU
   runge_kutta.copyDonorData(0);
   iterator_std.updateHost();
-  iterator_wzm.updateHost();
+//  iterator_wzm.updateHost();
 #endif
 
   if (write) {
+    //patch_grid.writeToVtk(0, "VTK/final", CompressibleVariablesAndG<PerfectGas>(), -1);
     patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
+
   }
 }
 

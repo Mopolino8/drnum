@@ -13,7 +13,7 @@ BlockObjectBC::BlockObjectBC (size_t field, BlockObject* block_object)
 }
 
 
-void BlockObjectBC::standardBlackCells()
+void BlockObjectBC::standardBlackCells0 ()
 {
   BlockObject* bo = m_BlockObject;
   PatchGrid* pg = m_BlockObject->getPatchGrid();

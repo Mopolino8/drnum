@@ -602,14 +602,24 @@ void BlockObject::analyseGreyCount(Patch* patch, size_t l_cell,
       no_vec[2] -= delta_zo;  // nzo -= delta_zo * 1.;
     }
   }
+
   // Scale coord directions but do NOT normalize n vector.
-  // Reason: it can be singular, if above discrete integral is symmetric
-  //         in all 3 coordinate directions (example: fully black or fully
-  //         white cell).
   /// @todo Debug this once more carefully before using gradients
+  /// @todo Recover thoery for this directional norming
   no_vec[0] *= (1. / (ref_dxyzo[0] * ref_dxyzo[0]));
   no_vec[1] *= (1. / (ref_dxyzo[1] * ref_dxyzo[1]));
   no_vec[2] *= (1. / (ref_dxyzo[2] * ref_dxyzo[2]));
+
+  // Normalize carefully (by epsing it).
+  // Reason: no_vec might be singular (0,0,0), if hits in above discrete integral are symmetric
+  //         around cell center in all 3 coordinate directions (example: fully black or fully
+  //         white cell).
+  real eps = 1.e-5 * (ref_dxyzo[0] + ref_dxyzo[1] + ref_dxyzo[2]);  // see above: no_vec ~ counts/length
+  real q_len = no_vec[0]*no_vec[0] + no_vec[1]*no_vec[1] + no_vec[2]*no_vec[2] + eps*eps;
+  real len = sqrt(q_len); // allways > 0.
+  no_vec[0] /= len;
+  no_vec[1] /= len;
+  no_vec[2] /= len;
 }
 
 

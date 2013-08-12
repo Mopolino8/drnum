@@ -33,7 +33,13 @@ INSTALLS += drnum_app
 include (../drnum_app.pri)
 
 SOURCES      = main.cpp
-HEADERS      = main.h
+HEADERS      = main.h \
+    geoblockobjecttest001.h \
+    geoblockobjecttest002.h \
+    geoblockobjecttest003.h \
+    geoblockobjecttest004.h \
+    geoblockobjecttest005.h \
+    geoblockobjecttest006.h
 
 #SOURCES      = main.cpp main.cu
 #SOURCES     -= main.cu
