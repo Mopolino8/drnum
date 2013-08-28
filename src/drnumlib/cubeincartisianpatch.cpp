@@ -82,6 +82,18 @@ void CubeInCartisianPatch::setRange(vec3_t x1, vec3_t x2)
       }
     }
   }
+  if (m_Patch->sizeI() == 1) {
+    m_Start.i = 0;
+    m_Stop.i = 1;
+  }
+  if (m_Patch->sizeJ() == 1) {
+    m_Start.j = 0;
+    m_Stop.j = 1;
+  }
+  if (m_Patch->sizeK() == 1) {
+    m_Start.k = 0;
+    m_Stop.k = 1;
+  }
 }
 
 void CubeInCartisianPatch::operator ()()
@@ -286,6 +298,7 @@ void CubeInCartisianPatch::operator ()()
       stop.k -= m_NumLayers;
     }
     PerfectGas::primitiveToConservative(p0, T0, 0, 0, 0, var1);
+    PerfectGas::primitiveToConservative(1e5, 300, 0, 0, 0, var1);
     for (size_t i = start.i; i < stop.i; ++i) {
       for (size_t j = start.j; j < stop.j; ++j) {
         for (size_t k = start.k; k < stop.k; ++k) {
