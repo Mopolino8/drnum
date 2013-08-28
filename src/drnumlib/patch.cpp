@@ -700,12 +700,6 @@ void Patch::computeVariableDifference(size_t i_field1, size_t i_var1, size_t i_f
   l2_norm  = sqrt(l2_norm);
 }
 
-void Patch::setGpuData(real* gpu_data)
-{
-  m_GpuData = gpu_data;
-  m_GpuDataSet = true;
-}
-
 real* Patch::getGpuData()
 {
   if (!m_GpuDataSet) {

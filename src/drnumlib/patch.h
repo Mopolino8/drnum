@@ -85,6 +85,8 @@ class GPU_Patch;
 class Patch
 {
 
+  friend class GPU_Patch;
+
 #include "patch_common.h"
 
   void  allocateData();
@@ -92,8 +94,13 @@ class Patch
 
 private: // attributes
 
-  real* m_GpuData;
-  bool  m_GpuDataSet;
+  real*    m_GpuData;
+  size_t*  m_GpuReceivingCellIndicesConcat;
+  size_t*  m_GpuReceivingCellIndicesUnique;
+  donor_t* m_GpuDonors;
+  size_t*  m_GpuDonorIndexConcat;
+  real*    m_GpuDonorWeightConcat;
+  bool     m_GpuDataSet;
 
 
 protected: // attributes
@@ -651,10 +658,10 @@ public: // methods
   virtual real computeMinChLength() { BUG; return 0; }
 
   /**
-   * @brief set the corresponding GPU patch data pointer
-   * @param data the pointer to the corresponding GPU patch adat
+   * @brief check if the GPU data pointer has been set already
+   * @return true if the GPU data pointer has been set already
    */
-  void setGpuData(real* gpu_data);
+  bool gpuDataSet() { return m_GpuDataSet; }
 
   /**
    * @brief get the GPU data pointer for pointer translation

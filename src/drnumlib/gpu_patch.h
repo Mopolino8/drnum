@@ -43,48 +43,60 @@ public:
   CUDA_HO GPU_Patch(Patch* patch)
   {
     copyAttributes(patch);
-    if (cudaMalloc(&m_Data, sizeof(real)*patch->dataSize()) != cudaSuccess) {
-      BUG;
+    if (patch->m_GpuDataSet) {
+      m_Data                       = patch->m_GpuData;
+      m_DonorIndexConcat           = patch->m_GpuDonorIndexConcat;
+      m_Donors                     = patch->m_GpuDonors;
+      m_DonorWeightConcat          = patch->m_GpuDonorWeightConcat;
+      m_ReceivingCellIndicesConcat = patch->m_GpuReceivingCellIndicesConcat;
+      m_ReceivingCellIndicesUnique = patch->m_GpuReceivingCellIndicesUnique;
     } else {
-      //cout << real(sizeof(real)*patch->dataSize())/1024/1024 << " Mbytes allocated on the GPU"<< endl;
+      if (cudaMalloc(&m_Data, sizeof(real)*patch->dataSize()) != cudaSuccess) {
+        BUG;
+      }
+      copyToDevice(patch);
+
+      cudaMalloc(&m_ReceivingCellIndicesConcat, sizeof(size_t)*m_NumReceivingCellsConcat);
+      CUDA_CHECK_ERROR;
+      cudaMemcpy(m_ReceivingCellIndicesConcat, patch->getReceivingCellIndicesConcat(), m_NumReceivingCellsConcat*sizeof(size_t), cudaMemcpyHostToDevice);
+      CUDA_CHECK_ERROR;
+
+      cudaMalloc(&m_ReceivingCellIndicesUnique, sizeof(size_t)*m_NumReceivingCellsUnique);
+      CUDA_CHECK_ERROR;
+      cudaMemcpy(m_ReceivingCellIndicesUnique, patch->getReceivingCellIndicesUnique(), m_NumReceivingCellsUnique*sizeof(size_t), cudaMemcpyHostToDevice);
+      CUDA_CHECK_ERROR;
+
+      cudaMalloc(&m_DonorIndexConcat, sizeof(size_t)*m_NumDonorWIConcat);
+      CUDA_CHECK_ERROR;
+      cudaMemcpy(m_DonorIndexConcat, patch->getDonorIndexConcat(), m_NumDonorWIConcat*sizeof(size_t), cudaMemcpyHostToDevice);
+      CUDA_CHECK_ERROR;
+
+      cudaMalloc(&m_DonorWeightConcat, sizeof(real)*m_NumDonorWIConcat);
+      CUDA_CHECK_ERROR;
+      cudaMemcpy(m_DonorWeightConcat, patch->getDonorWeightConcat(), m_NumDonorWIConcat*sizeof(real), cudaMemcpyHostToDevice);
+      CUDA_CHECK_ERROR;
+
+      cudaMalloc(&m_Donors, sizeof(donor_t)*m_NumDonorPatches);
+      CUDA_CHECK_ERROR;
+      cudaMemcpy(m_Donors, patch->getDonors(), m_NumDonorPatches*sizeof(donor_t), cudaMemcpyHostToDevice);
+      CUDA_CHECK_ERROR;
+
+      // copy data for vectorial variables
+      vector<size_t> vector_indices = patch->getVectorVarIndices();
+      m_NumVectorVars = vector_indices.size();
+      cudaMalloc(&m_VectorVarIndices, sizeof(size_t)*m_NumVectorVars);
+      CUDA_CHECK_ERROR;
+      cudaMemcpy(m_VectorVarIndices, &vector_indices[0], m_NumVectorVars*sizeof(size_t), cudaMemcpyHostToDevice);
+      CUDA_CHECK_ERROR;
+
+      patch->m_GpuData                       = m_Data;
+      patch->m_GpuDonorIndexConcat           = m_DonorIndexConcat;
+      patch->m_GpuDonors                     = m_Donors;
+      patch->m_GpuDonorWeightConcat          = m_DonorWeightConcat;
+      patch->m_GpuReceivingCellIndicesConcat = m_ReceivingCellIndicesConcat;
+      patch->m_GpuReceivingCellIndicesUnique = m_ReceivingCellIndicesUnique;
+      patch->m_GpuDataSet = true;
     }
-    //cout << "GPU_Patch::GPU_Patch: m_Data = " << m_Data << endl;
-    copyToDevice(patch);
-
-    cudaMalloc(&m_ReceivingCellIndicesConcat, sizeof(size_t)*m_NumReceivingCellsConcat);
-    CUDA_CHECK_ERROR;
-    cudaMemcpy(m_ReceivingCellIndicesConcat, patch->getReceivingCellIndicesConcat(), m_NumReceivingCellsConcat*sizeof(size_t), cudaMemcpyHostToDevice);
-    CUDA_CHECK_ERROR;
-
-    cudaMalloc(&m_ReceivingCellIndicesUnique, sizeof(size_t)*m_NumReceivingCellsUnique);
-    CUDA_CHECK_ERROR;
-    cudaMemcpy(m_ReceivingCellIndicesUnique, patch->getReceivingCellIndicesUnique(), m_NumReceivingCellsUnique*sizeof(size_t), cudaMemcpyHostToDevice);
-    CUDA_CHECK_ERROR;
-
-    cudaMalloc(&m_DonorIndexConcat, sizeof(size_t)*m_NumDonorWIConcat);
-    CUDA_CHECK_ERROR;
-    cudaMemcpy(m_DonorIndexConcat, patch->getDonorIndexConcat(), m_NumDonorWIConcat*sizeof(size_t), cudaMemcpyHostToDevice);
-    CUDA_CHECK_ERROR;
-
-    cudaMalloc(&m_DonorWeightConcat, sizeof(real)*m_NumDonorWIConcat);
-    CUDA_CHECK_ERROR;
-    cudaMemcpy(m_DonorWeightConcat, patch->getDonorWeightConcat(), m_NumDonorWIConcat*sizeof(real), cudaMemcpyHostToDevice);
-    CUDA_CHECK_ERROR;
-
-    cudaMalloc(&m_Donors, sizeof(donor_t)*m_NumDonorPatches);
-    CUDA_CHECK_ERROR;
-    cudaMemcpy(m_Donors, patch->getDonors(), m_NumDonorPatches*sizeof(donor_t), cudaMemcpyHostToDevice);
-    CUDA_CHECK_ERROR;
-
-    // copy data for vectorial variables
-    vector<size_t> vector_indices = patch->getVectorVarIndices();
-    m_NumVectorVars = vector_indices.size();
-    cudaMalloc(&m_VectorVarIndices, sizeof(size_t)*m_NumVectorVars);
-    CUDA_CHECK_ERROR;
-    cudaMemcpy(m_VectorVarIndices, &vector_indices[0], m_NumVectorVars*sizeof(size_t), cudaMemcpyHostToDevice);
-    CUDA_CHECK_ERROR;
-
-    patch->setGpuData(m_Data);
   }
 
   CUDA_HO void copyToDevice(Patch* patch)
