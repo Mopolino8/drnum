@@ -211,6 +211,7 @@ inline CUDA_DH void fill(real* var, size_t num_vars, real value)
 
 extern void startTiming();
 extern void stopTiming();
+extern void printTiming();
 
 
 inline CUDA_DH real sqr(const real x)

@@ -24,12 +24,23 @@ unsigned long int global_flops     = 0;
 unsigned long int global_flops_x86 = 0;
 
 time_t global_start_time = time(NULL);
+time_t global_last_time  = time(NULL);
 
 void startTiming()
 {
   global_flops     = 0;
   global_flops_x86 = 0;
+  global_start_time = time(NULL);
+  global_last_time = global_start_time;
   cout << "\nTiming started.\n" << endl;
+}
+
+void printTiming()
+{
+  time_t now = time(NULL);
+  cout << now - global_start_time << " seconds since timing began" << endl;
+  cout << now - global_last_time << " seconds since last timing output" << endl;
+  global_last_time = now;
 }
 
 void stopTiming()
