@@ -21,6 +21,8 @@
 TEMPLATE  = subdirs
 LANGUAGE  = C++
 CONFIG   += ordered recursive
+CONFIG += debug_and_release
+
 
 include (drnum.pri)
 

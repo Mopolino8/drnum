@@ -29,5 +29,7 @@ QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
 
 INCLUDEPATH += $(VTKINCDIR)
 
+CONFIG += debug_and_release
+
 
 

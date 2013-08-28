@@ -25,6 +25,25 @@ INSTALLS += drnumlib
 
 include (../drnum.pri)
 
+# CUDA
+# ====
+#
+cuda {
+  USEGPU                 = -DGPU
+  LIBS                  += -L$(CUDALIBDIR)
+  LIBS                  += -lcudart
+  QMAKE_CXXFLAGS        += $$USEGPU -DCUDA
+  INCLUDEPATH           += $(CUDAINCDIR)
+}
+
+cuda_debug {
+  USEGPU                 = -DGPU
+  LIBS                  += -L$(CUDALIBDIR)
+  LIBS                  += -lcudart
+  QMAKE_CXXFLAGS        += $$USEGPU -DCUDA
+  INCLUDEPATH           += $(CUDAINCDIR)
+}
+
 SOURCES += \
     patch.cpp \
     blockcfd.cpp \
@@ -125,5 +144,6 @@ HEADERS += \
     blockobject.h \
     sphereobject.h \
     cartboxobject.h \
-    cubeincartisianpatch.h
+    cubeincartisianpatch.h \
+    cartesiancycliccopy.h
 
