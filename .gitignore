@@ -43,6 +43,11 @@ Makefile.Debug
 Makefile.Release
 Makefile.*engrid*
 
+# CMake
+*.cmake
+build/*
+build*/*
+
 netgen_svn
 third_party
 third_party64
