@@ -115,3 +115,7 @@ blockcfd*
 *.ii
 main.*.o
 
+# binaries
+bin/*
+lib/*
+
