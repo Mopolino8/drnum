@@ -55,6 +55,7 @@ void IteratorFeeder::feed(PatchGrid &patch_grid)
       }
     }
     if (!found) {
+      cout << cs.c_str() << endl;
       BUG;
     }
   }
