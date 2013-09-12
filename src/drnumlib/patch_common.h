@@ -156,6 +156,217 @@ CUDA_HO PatchGrid* getPatchGrid()
   return m_PatchGrid;
 }
 
+/**
+ * @brief Set a variable set at a specified l_c - position.
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param varset the variable set
+ */
+CUDA_DH void setVarset(size_t i_field, size_t l_c, real* varset)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    *(start_p + i_var*m_VariableSize) = varset[i_var];
+    //    m_Data[i_field*m_FieldSize + i_var*m_VariableSize + l_c] = varset[i_var];
+  }
+}
+
+
+/**
+ * @brief Set a variable set at a specified l_c - position.
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param varset the variable set
+ * @param start_iv starting var-index (example: 0 for rho, etc...)
+ * @param after_last_iv after last var-index (example: 2 for rho_v, etc...)
+ * @param start_ivss starting subset var-index (e.g. 0 for var[0])
+ */
+CUDA_DH void setVarsubset(size_t i_field, size_t l_c, real* varset,
+                          size_t start_iv, size_t after_last_iv,
+                          size_t start_ivss = 0)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = start_iv; i_var < after_last_iv; ++i_var) {
+    size_t i_var_ss = i_var - start_iv + start_ivss;
+    *(start_p + i_var*m_VariableSize) = varset[i_var_ss];
+  }
+}
+
+
+/**
+ * @brief Set a variable set to at a specified l_c - position to (0,0,0...)
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ */
+CUDA_DH void setVarsetToZero(size_t i_field, size_t l_c)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    *(start_p + i_var*m_VariableSize) = 0.;
+    //    m_Data[i_field*m_FieldSize + i_var*m_VariableSize + l_c] = 0.;
+  }
+}
+
+
+/**
+ * @brief Set a variable set to at a specified l_c - position to (0,0,0...)
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param start_iv starting var-index (example: 0 for rho, etc...)
+ * @param after_last_iv after last var-index (example: 2 for rho_v, etc...)
+ */
+CUDA_DH void setVarsubsetToZero(size_t i_field, size_t l_c,
+                                size_t start_iv, size_t after_last_iv)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = start_iv; i_var < after_last_iv; ++i_var) {
+    *(start_p + i_var*m_VariableSize) = 0.;
+    //    m_Data[i_field*m_FieldSize + i_var*m_VariableSize + l_c] = 0.;
+  }
+}
+
+
+/**
+ * @brief Add a varset to a specified varset at an l_c - position.
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param varset the variable set
+ */
+CUDA_DH void addToVarset(size_t i_field, size_t l_c, real* varset)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    *(start_p + i_var*m_VariableSize) += varset[i_var];
+  }
+}
+
+
+/**
+ * @brief Add a varset to a specified varset at an l_c - position.
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param varset the variable set
+ * @param start_iv starting var-index (example: 0 for rho, etc...)
+ * @param after_last_iv after last var-index (example: 2 for rho_v, etc...)
+ * @param start_ivss starting subset var-index (e.g. 0 for var[0])
+ */
+CUDA_DH void addToVarsubset(size_t i_field, size_t l_c, real* varset,
+                            size_t start_iv, size_t after_last_iv,
+                            size_t start_ivss = 0)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = start_iv; i_var < after_last_iv; ++i_var) {
+    size_t i_var_ss = i_var - start_iv + start_ivss;
+    *(start_p + i_var*m_VariableSize) += varset[i_var_ss];
+  }
+}
+
+
+/**
+ * @brief Add a varset at position l_give to varset at position l_rec .
+ * @param i_field the field index
+ * @param l_rec the receiving cell index (in 1D-alignment, e.g. unstructured)
+ * @param l_give the "giving" cell index.
+ */
+CUDA_DH void addToVarset(size_t i_field, size_t l_rec, size_t l_give)
+{
+  real* start_rec = m_Data + i_field*m_FieldSize + l_rec; // for i_var = 0;
+  real* start_give = m_Data + i_field*m_FieldSize + l_give; // for i_var = 0;
+  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    *(start_rec + i_var*m_VariableSize) += *(start_give + i_var*m_VariableSize);
+  }
+}
+
+
+/**
+ * @brief Add a varset at position l_give to varset at position l_rec .
+ * @param i_field the field index
+ * @param l_rec the receiving cell index (in 1D-alignment, e.g. unstructured)
+ * @param l_give the "giving" cell index.
+ * @param start_iv starting var-index (example: 0 for rho, etc...)
+ * @param after_last_iv after last var-index (example: 2 for rho_v, etc...)
+ */
+CUDA_DH void addToVarsubset(size_t i_field, size_t l_rec, size_t l_give,
+                            size_t start_iv, size_t after_last_iv)
+{
+  real* start_rec = m_Data + i_field*m_FieldSize + l_rec; // for i_var = 0;
+  real* start_give = m_Data + i_field*m_FieldSize + l_give; // for i_var = 0;
+  for (size_t i_var = start_iv; i_var < after_last_iv; ++i_var) {
+    *(start_rec + i_var*m_VariableSize) += *(start_give + i_var*m_VariableSize);
+  }
+}
+
+
+/**
+ * @brief Multiply a varset at position l_c with a scalar value.
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param scalar the scalar value to multiply with
+ */
+CUDA_DH void multVarsetScalar(const size_t& i_field, const size_t& l_c, const real& scalar)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    *(start_p + i_var*m_VariableSize) *= scalar;
+  }
+}
+
+
+/**
+ * @brief Multiply a varset at position l_c with a scalar value.
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param scalar the scalar value to multiply with
+ * @param start_iv starting var-index (example: 0 for rho, etc...)
+ * @param after_last_iv after last var-index (example: 2 for rho_v, etc...)
+ */
+CUDA_DH void multVarsubsetScalar(const size_t& i_field, const size_t& l_c, const real& scalar,
+                                 size_t start_iv, size_t after_last_iv)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = start_iv; i_var < after_last_iv; ++i_var) {
+    *(start_p + i_var*m_VariableSize) *= scalar;
+  }
+}
+
+
+/**
+ * @brief Get a varset from l_c - position.
+ *        Better avoid this function due to its mem jumping.
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param ret_varset the conservative variable set (return: write after pointer)
+ */
+CUDA_DH real* getVarset(size_t i_field, size_t l_c, real* ret_varset)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    ret_varset[i_var] = *(start_p + i_var*m_VariableSize);
+  }
+}
+
+
+/**
+ * @brief Get a varset from l_c - position.
+ *        Better avoid this function due to its mem jumping.
+ * @param i_field the field index
+ * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
+ * @param ret_varset the conservative variable set (return: write after pointer)
+ * @param start_iv starting var-index (example: 0 for rho, etc...)
+ * @param after_last_iv after last var-index (example: 2 for rho_v, etc...)
+ * @param start_ivss starting subset var-index (e.g. 0 for var[0])
+ */
+CUDA_DH real* getVarsubset(size_t i_field, size_t l_c, real* ret_varset,
+                           size_t start_iv, size_t after_last_iv,
+                           size_t start_ivss = 0)
+{
+  real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
+  for (size_t i_var = start_iv; i_var < after_last_iv; ++i_var) {
+    size_t i_var_ss = i_var - start_iv + start_ivss;
+    ret_varset[i_var_ss] = *(start_p + i_var*m_VariableSize);
+  }
+}
+
 
 /**
  * Copy simple data attributes from another object.

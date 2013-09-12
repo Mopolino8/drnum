@@ -62,12 +62,21 @@ SOURCES += \
     debug.cpp \
     prismaticlayerpatch.cpp \
     iteratorfeeder.cpp \
-    blockobject.cpp \
-    sphereobject.cpp \
-    cartboxobject.cpp \
     cubeincartisianpatch.cpp \
-    configmap.cpp
-
+    configmap.cpp \
+    objectdefinition.cpp \
+    cartboxobject.cpp \
+    sphereobject.cpp \
+    cylinderobject.cpp \
+    combiobject.cpp \
+    combiobjector.cpp \
+    combiobjectand.cpp \
+    combiobjectandnot.cpp \
+    blockobject.cpp \
+    blockobjectbc.cpp \
+    compressibleeulerbobc.cpp \
+    coneobject.cpp \
+    compressiblesolidwallbobc.cpp
 
 HEADERS += \
     blockcfd.h \
@@ -141,9 +150,20 @@ HEADERS += \
     donor_t.h \
     cubeincartisianpatch.h \
     configmap.h \
-    blockobject.h \
-    sphereobject.h \
+    cubeincartisianpatch.h \
+    objectdefinition.h \
     cartboxobject.h \
     cubeincartisianpatch.h \
-    cartesiancycliccopy.h
-
+    cartesiancycliccopy.h \
+    sphereobject.h \
+    cylinderobject.h \
+    combiobject.h \
+    combiobjector.h \
+    combiobjectand.h \
+    combiobjectandnot.h \
+    blockobject.h \
+    blockobjectbc.h \
+    compressibleeulerbobc.h \
+    coneobject.h \
+    compressiblesolidwallbobc.h \
+    compressiblevariablesandg.h

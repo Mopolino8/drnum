@@ -226,16 +226,6 @@ public: // methods
 
 
   /**
-    * Get neighbour cells for a cell on patch.
-    * @param l_cell index of cell for which to search neighbour cells.
-    * @param l_cell_neighbours vector with neighbour cell indices (ret. reference).
-    */
-  //virtual void cellNeighbours (const size_t& l_cell,
-  //                             vector<size_t>& i_cell_neighbours){BUG;};
-  virtual void cellNeighbours (const size_t&,
-                               vector<size_t>&){BUG;};
-
-  /**
     * Access coordinates of a cell in local xyz-system.
     * @param l_cell index of cell
     * @param x_cell x-coord. of cell center (return reference)
@@ -258,6 +248,33 @@ public: // methods
     */
   void xyzoCell(const size_t& l_cell,
                 real& xo_cell, real& yo_cell, real& zo_cell);
+
+
+  /**
+    * Create a subcell resolution raster of a cell. Coord-syst. of "this".
+    * @param l_cell the cell index
+    * @param lin_mult_res linear resolutiojn multiplyer. NOTE 3D!
+    * @param xxyyzz_subcells vector of subcell coordinate tiples (return reference)
+    * @param ref_dxxyyzz reference cell size dxx,dyy,dzz as vec3_t (return reference)
+    */
+  //  virtual void xxyyzzSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
+  //                                   vector<vec3_t>& xxyyzz_subcells,
+  //                                   vec3_t& ref_dxxyyzz){BUG;};
+  virtual void xxyyzzSubCellRaster(const size_t&, const size_t&,
+                                   vector<vec3_t>&,
+                                   vec3_t&){BUG;};
+
+
+  /**
+    * Create a subcell resolution raster of a cell. Coord-syst. xyzo.
+    * @param l_cell the cell index
+    * @param lin_mult_res linear resolutiojn multiplyer. NOTE 3D!
+    * @param xyzo_subcells vector of subcell coordinate tiples (return reference)
+    * @param ref_dxyzo reference cell size x,y,z as vec3_t (return reference)
+    */
+  void xyzoSubCellRaster(const size_t& l_cell, const size_t& lin_mult_res,
+                         vector<vec3_t>& xyzo_subcells,
+                         vec3_t& ref_dxyzo);
 
 
   /**
@@ -686,6 +703,25 @@ public: // methods
    * @param i_field the index of the field to copy
    */
   void copyFieldToHost(size_t i_field);
+
+
+  /**
+   * Collect neighbour cells of a cell. Version for neighbour cells, that share a
+   * common face with cell.
+   * @param l_cell index of the cell for which to search neighbour cells.
+   * @param l_cell_neighbours vector with neighbour cells indices (ret. ref.)
+   */
+  virtual void cellOverFaceNeighbours(const size_t& l_c,
+                                      vector<size_t>& l_cell_neighbours) = 0;
+
+  /**
+   * Collect neighbour cells of a cell. Version for neighbour cells, that share at
+   * least one common node with cell.
+   * @param l_cell index of the cell for which to search neighbour cells.
+   * @param l_cell_neighbours vector of neighbour cells of l_cell (ret. ref.)
+   */
+  virtual void cellOverNodeNeighbours(const size_t& l_c,
+                                      vector<size_t>& l_cell_neighbours) = 0;
 
 
   /// @todo destructor

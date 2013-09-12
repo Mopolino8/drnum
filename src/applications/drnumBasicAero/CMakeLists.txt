@@ -1,0 +1,29 @@
+SET(drnumBasicAero_CC_SOURCES main.cpp)
+SET(DRNUM_USED_LIBS drnumlib)
+
+IF(USE_GPU)
+    SET(drnumBasicAero_CU_SOURCES main.cu)
+    cuda_add_library(maincuda ${drnumBasicAero_CU_SOURCES} SHARED) # OPTIONS -G)
+    SET(DRNUM_USED_LIBS maincuda ${DRNUM_USED_LIBS})
+ENDIF(USE_GPU)
+
+
+ADD_EXECUTABLE(drnumBasicAero ${drnumBasicAero_CC_SOURCES})
+ADD_DEPENDENCIES(drnumBasicAero ${DRNUM_USED_LIBS})
+TARGET_LINK_LIBRARIES(drnumBasicAero ${DRNUM_USED_LIBS} ${QT_LIBRARIES} ${VTK_LIBRARIES} "-lgomp")
+#QT5_USE_MODULES(drnumBasicAero Core)
+
+SET_TARGET_PROPERTIES(drnumBasicAero
+    PROPERTIES
+    LINKER_LANGUAGE CXX
+    PREFIX "")
+
+SET_TARGET_PROPERTIES(drnumBasicAero
+    PROPERTIES
+    VERSION ${DRNUM_VERSION})
+
+INSTALL(TARGETS drnumBasicAero RUNTIME DESTINATION bin)
+IF(USE_GPU)
+    INSTALL(TARGETS maincuda LIBRARY DESTINATION lib)
+ENDIF(USE_GPU)
+

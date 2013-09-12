@@ -9,7 +9,7 @@
 # + the Free Software Foundation, either version 3 of the License, or    +
 # + (at your option) any later version.                                  +
 # +                                                                      +
-# + enGrid is distributed in the hope that it will be useful,            +
+# + DrNUM is distributed in the hope that it will be useful,             +
 # + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 # + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 # + GNU General Public License for more details.                         +
@@ -18,19 +18,45 @@
 # + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#CONFIG += cuda
-CONFIG   += debug_and_release
+#-------------------------------------------------
+#
+# Project created by QtCreator 2013-07-27T05:11:42
+#
+#-------------------------------------------------
+TEMPLATE = app
+CONFIG += console
 
-QMAKE_CXXFLAGS += -Wno-deprecated
-QMAKE_CXXFLAGS += -fopenmp
-QMAKE_CXXFLAGS_RELEASE += -O3
-QMAKE_CXXFLAGS_RELEASE += -finline-limit=100000
-QMAKE_CXXFLAGS_RELEASE += --param large-function-growth=100000
-QMAKE_CXXFLAGS_RELEASE += --param inline-unit-growth=100000
+drnum_app.path  = ../../../bin
+drnum_app.files = testBlockObjects
+INSTALLS += drnum_app
 
-INCLUDEPATH += $(VTKINCDIR)
+include (../drnum_app.pri)
 
-CONFIG += debug_and_release
+SOURCES      = main.cpp
+HEADERS      = main.h \
+    geoblockobjecttest001.h \
+    geoblockobjecttest002.h \
+    geoblockobjecttest003.h \
+    geoblockobjecttest004.h \
+    geoblockobjecttest005.h \
+    geoblockobjecttest006.h
+
+#SOURCES      = main.cpp main.cu
+#SOURCES     -= main.cu
+#HEADERS      = main.h
+#CUDA_SOURCES = main.cu
 
 
 
+#QT       += core
+
+#QT       -= gui
+
+#TARGET = testBlockObjects
+#CONFIG   += console
+#CONFIG   -= app_bundle
+
+#TEMPLATE = app
+
+
+#SOURCES += main.cpp
