@@ -104,7 +104,9 @@ using namespace std;
 #ifdef WITH_VTK
   #include <Qt>
   #ifdef QT_DEBUG
-    #define DEBUG
+    #ifndef DEBUG
+      #define DEBUG
+    #endif
   #endif
 #endif
 
