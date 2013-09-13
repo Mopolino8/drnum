@@ -62,7 +62,6 @@ qtc-gdbmacros
 *.out
 *.vtu
 *.egc
-*.txt
 *.bcs
 netgen_svn_old
 *.tag
