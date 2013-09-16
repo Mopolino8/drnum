@@ -19,6 +19,7 @@ SET(drnumlib_SOURCES
     debug.cpp
     externalexchangelist.cpp
     iteratorfeeder.cpp
+    mpicommunicator.cpp
     objectdefinition.cpp
     patch.cpp
     patchgrid.cpp

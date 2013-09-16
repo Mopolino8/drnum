@@ -9,7 +9,7 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
@@ -18,16 +18,27 @@
 // + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef EXTERNALEXCHANGELIST_H
-#define EXTERNALEXCHANGELIST_H
 
-class ExternalExchangeList
+#ifndef MPICOMMUNICATOR_H
+#define MPICOMMUNICATOR_H
+
+#include <mpi.h>
+
+class MpiCommunicator
 {
+
+private: // attributes
+
+  int m_Size;
+  int m_Rank;
 
 public:
 
-  ExternalExchangeList();
+  MpiCommunicator();
+
+  int size() { return m_Size; }
+  int rank() { return m_Rank; }
 
 };
 
-#endif // EXTERNALEXCHANGELIST_H
+#endif // MPICOMMUNICATOR_H
