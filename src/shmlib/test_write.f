@@ -9,7 +9,7 @@ c     + it under the terms of the GNU General Public License as published by +
 c     + the Free Software Foundation, either version 3 of the License, or    +
 c     + (at your option) any later version.                                  +
 c     +                                                                      +
-c     + enGrid is distributed in the hope that it will be useful,            +
+c     + DrNUM is distributed in the hope that it will be useful,             +
 c     + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 c     + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 c     + GNU General Public License for more details.                         +
