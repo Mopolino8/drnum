@@ -15,7 +15,7 @@ c     + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 c     + GNU General Public License for more details.                         +
 c     +                                                                      +
 c     + You should have received a copy of the GNU General Public License    +
-c     + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+c     + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 c     +                                                                      +
 c     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 c     This is a simple simulation of a shock tube.

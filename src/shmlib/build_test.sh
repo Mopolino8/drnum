@@ -16,7 +16,7 @@
 # + GNU General Public License for more details.                         +
 # +                                                                      +
 # + You should have received a copy of the GNU General Public License    +
-# + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+# + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 c++ -g -o test_read -L$1 test_read.C -liplshm
