@@ -21,8 +21,15 @@
 
 #include "mpicommunicator.h"
 
-MpiCommunicator::MpiCommunicator()
+MpiCommunicator::MpiCommunicator(int argc, char **argv)
 {
+  MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &m_Size);
   MPI_Comm_rank(MPI_COMM_WORLD, &m_Rank);
+}
+
+MpiCommunicator::~MpiCommunicator()
+{
+  barrier();
+  MPI_Finalize();
 }
