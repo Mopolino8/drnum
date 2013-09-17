@@ -118,3 +118,7 @@ main.*.o
 bin/*
 lib/*
 
+# OpenFOAM
+*linux64GccDPOpt*
+*.dep
+
