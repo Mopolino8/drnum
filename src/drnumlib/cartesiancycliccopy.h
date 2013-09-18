@@ -21,6 +21,7 @@
 #ifndef CARTESIANCYCLICCOPY_H
 #define CARTESIANCYCLICCOPY_H
 
+template <unsigned int DIM>
 class CartesianCyclicCopy;
 
 #include "patchgrid.h"
@@ -28,13 +29,14 @@ class CartesianCyclicCopy;
 #include "cartesianpatch.h"
 #include "gpu_cartesianpatch.h"
 
+template <unsigned int DIM>
 class CartesianCyclicCopy : public GenericOperation
 {
 
 private:
 
   PatchGrid *m_PatchGrid;
-  vector<GPU_CartesianPatch*> m_GpuPatches;
+  vector<GPU_CartesianPatch<DIM>*> m_GpuPatches;
 
   void updatePatches();
 
@@ -46,7 +48,8 @@ public:
 };
 
 #ifdef CUDA
-__global__ void CartesianCyclicCopy_kernel(GPU_CartesianPatch patch)
+template <unsigned int DIM>
+__global__ void CartesianCyclicCopy_kernel(GPU_CartesianPatch<DIM> patch)
 {
   size_t i = blockIdx.x;
   size_t j = threadIdx.x;
@@ -68,26 +71,29 @@ __global__ void CartesianCyclicCopy_kernel(GPU_CartesianPatch patch)
 #endif
 
 
-inline CartesianCyclicCopy::CartesianCyclicCopy(PatchGrid *patch_grid)
+template <unsigned int DIM>
+inline CartesianCyclicCopy<DIM>::CartesianCyclicCopy(PatchGrid *patch_grid)
 {
   m_PatchGrid = patch_grid;
   updatePatches();
 }
 
-inline void CartesianCyclicCopy::updatePatches()
+template <unsigned int DIM>
+inline void CartesianCyclicCopy<DIM>::updatePatches()
 {
   if (m_GpuPatches.size() != m_PatchGrid->getNumPatches()) {
     m_GpuPatches.resize(m_PatchGrid->getNumPatches(), NULL);
     for (int i = 0; i < m_PatchGrid->getNumPatches(); ++i) {
       CartesianPatch *cart_patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i));
       if (cart_patch) {
-        m_GpuPatches[i] = new GPU_CartesianPatch(cart_patch);
+        m_GpuPatches[i] = new GPU_CartesianPatch<DIM>(cart_patch);
       }
     }
   }
 }
 
-inline void CartesianCyclicCopy::operator ()()
+template <unsigned int DIM>
+inline void CartesianCyclicCopy<DIM>::operator ()()
 {
   updatePatches();
   for (int i = 0; i < m_GpuPatches.size(); ++i) {

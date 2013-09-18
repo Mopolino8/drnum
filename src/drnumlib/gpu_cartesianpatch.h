@@ -27,6 +27,7 @@
 #include "cartesianpatch.h"
 #include "gpu_patch.h"
 
+template <unsigned int DIM>
 class GPU_CartesianPatch : public GPU_Patch
 {
 

@@ -58,13 +58,13 @@ class EaFlux
 protected:
 
   //typedef Upwind1 reconstruction_t;
-  typedef Upwind2<SecondOrder>                           reconstruction_t;
+  typedef Upwind2<5, SecondOrder>                           reconstruction_t;
 
-  //typedef Upwind2<VanAlbada>                             reconstruction_t;
+  //typedef Upwind2<5, VanAlbada>                             reconstruction_t;
   typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
   //typedef KNP<reconstruction_t, PerfectGas>              euler_t;
   typedef CompressibleSlipFlux<Upwind1, PerfectGas>      wall_t;
-  typedef CompressibleViscFlux<PerfectGas>               viscous_t;
+  typedef CompressibleViscFlux<5, PerfectGas>               viscous_t;
   typedef CompressibleFarfieldFlux<Upwind1, PerfectGas>  farfield_t;
 
   reconstruction_t m_Reconstruction;
@@ -278,7 +278,7 @@ void run()
   for (size_t i = 0; i < cubes.size(); ++i) {
     runge_kutta.addPostOperation(&cubes[i]);
   }
-  CartesianCyclicCopy cyclic(&patch_grid);
+  CartesianCyclicCopy<5> cyclic(&patch_grid);
   runge_kutta.addPostOperation(&cyclic);
 
   runge_kutta.addIterator(&iterator_std);
