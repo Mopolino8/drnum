@@ -6,9 +6,11 @@ This method is thus well suited to run on modern, massively parallel computing d
 
 http://www.youtube.com/watch?v=S8MBjVtqahY
 
-DrNUM is being developed by numrax GmbH and enGits GmbH.
+DrNUM is being developed by numrax GmbH and enGits GmbH (see links below).
 
-http://www.numrax.de
+http://www.numrax.de ,     http://engits.eu
 
-http://engits.eu
+Every night Doxygen is run to generate source code documentation for the master branch. The documentation can be found here:
+
+http://todtnau.engits.de/drnum/master
 

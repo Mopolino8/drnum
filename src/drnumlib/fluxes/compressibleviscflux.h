@@ -24,7 +24,7 @@
 #include "fluxes/compressibleflux.h"
 #include "cartesianpatch.h"
 
-template <typename TGas>
+template <unsigned int DIM, typename TGas>
 class CompressibleViscFlux : public CompressibleFlux
 {
 
@@ -36,18 +36,18 @@ public: // methods
                       real x, real y, real z,
                       real A, real* flux)
   {
-    real var_l[5], var_r[5], var[5];
+    real var_l[DIM], var_r[DIM], var[DIM];
     patch->getVar(0, i-1, j, k, var_l);
     patch->getVar(0, i,   j, k, var_r);
-    for (int i_var = 0; i_var < 5; ++i_var) {
-      var[i_var] = 0.5*(var_l[i_var] + var_r[i_var]);
+    for (int i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var] = (real)0.5*(var_l[i_var] + var_r[i_var]);
     }
     countFlops(10);
 
     // Compute some useful coefficients
     real gamma  = TGas::gamma(var);
-    real gamma1 = gamma - 1.0;
-    real ir     = 1.0/var[0];
+    real gamma1 = gamma - (real)1.0;
+    real ir     = (real)1.0/var[0];
     countFlops(2);
 
     real F2,F3,F4;
@@ -61,18 +61,18 @@ public: // methods
     F4 = k_heat/R;
     countFlops(4);
 
-    real gradx[5];
-    real grady[5], grady_l[5], grady_r[5];
-    real gradz[5], gradz_l[5], gradz_r[5];
+    real gradx[DIM];
+    real grady[DIM], grady_l[DIM], grady_r[DIM];
+    real gradz[DIM], gradz_l[DIM], gradz_r[DIM];
     patch->getYGrad(0, i-1, j, k, grady_l);
     patch->getZGrad(0, i-1, j, k, gradz_l);
     patch->getYGrad(0, i, j, k, grady_r);
     patch->getZGrad(0, i, j, k, gradz_r);
-    real D = 1.0/patch->dx();
-    for (int i_var = 0; i_var < 5; ++i_var) {
+    real D = (real)1.0/patch->dx();
+    for (int i_var = 0; i_var < DIM; ++i_var) {
       gradx[i_var] = (var_r[i_var] - var_l[i_var])*D;
-      grady[i_var] = 0.5*(grady_l[i_var] + grady_r[i_var]);
-      gradz[i_var] = 0.5*(gradz_l[i_var] + gradz_r[i_var]);
+      grady[i_var] = (real)0.5*(grady_l[i_var] + grady_r[i_var]);
+      gradz[i_var] = (real)0.5*(gradz_l[i_var] + gradz_r[i_var]);
     }
     countFlops(31);
 
@@ -90,7 +90,7 @@ public: // methods
     countFlops(48);
 
     // tensions
-    real tau_xx = F2 * (2.0*du_dx - dv_dy - dw_dz);
+    real tau_xx = F2 * ((real)2.0*du_dx - dv_dy - dw_dz);
     real tau_xy = F3 * ( du_dy + dv_dx);
     real tau_xz = F3 * ( du_dz + dw_dx);
     countFlops(9);
@@ -113,18 +113,18 @@ public: // methods
                       real x, real y, real z,
                       real A, real* flux)
   {
-    real var_l[5], var_r[5], var[5];
+    real var_l[DIM], var_r[DIM], var[DIM];
     patch->getVar(0, i, j-1, k, var_l);
     patch->getVar(0, i, j,   k, var_r);
-    for (int i_var = 0; i_var < 5; ++i_var) {
-      var[i_var] = 0.5*(var_l[i_var] + var_r[i_var]);
+    for (int i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var] = (real)0.5*(var_l[i_var] + var_r[i_var]);
     }
     countFlops(10);
 
     // Compute some useful coefficients
     real gamma  = TGas::gamma(var);
-    real gamma1 = gamma - 1.0;
-    real ir     = 1.0/var[0];
+    real gamma1 = gamma - (real)1.0;
+    real ir     = (real)1.0/var[0];
     countFlops(2);
 
     real F2,F3,F4;
@@ -138,18 +138,18 @@ public: // methods
     F4 = k_heat/R;
     countFlops(4);
 
-    real gradx[5], gradx_l[5], gradx_r[5];
-    real grady[5];
-    real gradz[5], gradz_l[5], gradz_r[5];
+    real gradx[DIM], gradx_l[DIM], gradx_r[DIM];
+    real grady[DIM];
+    real gradz[DIM], gradz_l[DIM], gradz_r[DIM];
     patch->getXGrad(0, i, j-1, k, gradx_l);
     patch->getZGrad(0, i, j-1, k, gradz_l);
     patch->getXGrad(0, i, j, k, gradx_r);
     patch->getZGrad(0, i, j, k, gradz_r);
-    real D = 1.0/patch->dy();
-    for (int i_var = 0; i_var < 5; ++i_var) {
-      gradx[i_var] = 0.5*(gradx_l[i_var] + gradx_r[i_var]);
+    real D = (real)1.0/patch->dy();
+    for (int i_var = 0; i_var < DIM; ++i_var) {
+      gradx[i_var] = (real)0.5*(gradx_l[i_var] + gradx_r[i_var]);
       grady[i_var] = (var_r[i_var] - var_l[i_var])*D;
-      gradz[i_var] = 0.5*(gradz_l[i_var] + gradz_r[i_var]);
+      gradz[i_var] = (real)0.5*(gradz_l[i_var] + gradz_r[i_var]);
     }
     countFlops(31);
 
@@ -167,7 +167,7 @@ public: // methods
     countFlops(48);
 
     // tensions
-    real tau_yy = F2 * (-du_dx + 2.0*dv_dy - dw_dz);
+    real tau_yy = F2 * (-du_dx + (real)2.0*dv_dy - dw_dz);
     real tau_xy = F3 * ( du_dy + dv_dx);
     real tau_yz = F3 * ( dv_dz + dw_dy);
     countFlops(9);
@@ -190,18 +190,18 @@ public: // methods
                       real x, real y, real z,
                       real A, real* flux)
   {
-    real var_l[5], var_r[5], var[5];
+    real var_l[DIM], var_r[DIM], var[DIM];
     patch->getVar(0, i, j, k-1, var_l);
     patch->getVar(0, i, j, k,   var_r);
-    for (int i_var = 0; i_var < 5; ++i_var) {
-      var[i_var] = 0.5*(var_l[i_var] + var_r[i_var]);
+    for (int i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var] = (real)0.5*(var_l[i_var] + var_r[i_var]);
     }
     countFlops(10);
 
     // Compute some useful coefficients
     real gamma  = TGas::gamma(var);
-    real gamma1 = gamma - 1.0;
-    real ir     = 1.0/var[0];
+    real gamma1 = gamma - (real)1.0;
+    real ir     = (real)1.0/var[0];
     countFlops(2);
 
     real F2,F3,F4;
@@ -215,17 +215,17 @@ public: // methods
     F4 = k_heat/R;
     countFlops(4);
 
-    real gradx[5], gradx_l[5], gradx_r[5];
-    real grady[5], grady_l[5], grady_r[5];
-    real gradz[5];
+    real gradx[DIM], gradx_l[DIM], gradx_r[DIM];
+    real grady[DIM], grady_l[DIM], grady_r[DIM];
+    real gradz[DIM];
     patch->getXGrad(0, i, j, k-1, gradx_l);
     patch->getYGrad(0, i, j, k-1, grady_l);
     patch->getXGrad(0, i, j, k, gradx_r);
     patch->getYGrad(0, i, j, k, grady_r);
-    real D = 1.0/patch->dz();
-    for (int i_var = 0; i_var < 5; ++i_var) {
-      gradx[i_var] = 0.5*(gradx_l[i_var] + gradx_r[i_var]);
-      grady[i_var] = 0.5*(grady_l[i_var] + grady_r[i_var]);
+    real D = (real)1.0/patch->dz();
+    for (int i_var = 0; i_var < DIM; ++i_var) {
+      gradx[i_var] = (real)0.5*(gradx_l[i_var] + gradx_r[i_var]);
+      grady[i_var] = (real)0.5*(grady_l[i_var] + grady_r[i_var]);
       gradz[i_var] = (var_r[i_var] - var_l[i_var])*D;
     }
     countFlops(31);
@@ -244,7 +244,7 @@ public: // methods
     countFlops(48);
 
     // tensions
-    real tau_zz = F2 * (-du_dx - dv_dy + 2.0*dw_dz);
+    real tau_zz = F2 * (-du_dx - dv_dy + (real)2.0*dw_dz);
     real tau_xz = F3 * ( du_dz + dw_dx);
     real tau_yz = F3 * ( dv_dz + dw_dy);
     countFlops(9);

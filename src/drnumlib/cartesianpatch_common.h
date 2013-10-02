@@ -21,6 +21,11 @@
 
 #include "drnum.h"
 
+#ifndef DIM
+#define DIM 5
+#define UNDEF_DIM
+#endif
+
 private:
 
 size_t m_NumI;
@@ -93,7 +98,7 @@ CUDA_DH size_t nodeIndex(size3_t ijk) { return ijk.i*(m_NumJ + 1)*(m_NumK + 1) +
 CUDA_DH void getVar(size_t i_field, size_t i, size_t j, size_t k, real* var)
 {
   GlobalDebug::ijk(i, j, k);
-  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+  for (size_t i_var = 0; i_var < DIM; ++i_var) {
     var[i_var] = f(i_field, i_var, i, j, k);
   }
 }
@@ -109,7 +114,7 @@ CUDA_DH void getVar(size_t i_field, size_t i, size_t j, size_t k, real* var)
 CUDA_DH void setVar(size_t i_field, size_t i, size_t j, size_t k, real* var)
 {
   GlobalDebug::ijk(i, j, k);
-  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+  for (size_t i_var = 0; i_var < DIM; ++i_var) {
     f(i_field, i_var, i, j, k) = var[i_var];
   }
 }
@@ -145,8 +150,8 @@ CUDA_DH real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k)
  */
 CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
-  real var[10]; /// @todo possibly better done with a template parameter
-  real D = 0.5/dx();
+  real var[DIM];
+  real D = (real)0.5/dx();
   countFlops(1);
   size_t i1 = i - 1;
   size_t i2 = i + 1;
@@ -162,11 +167,11 @@ CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
   }
   getVar(i_field, i2, j, k, grad);
   getVar(i_field, i1, j, k, var);
-  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+  for (size_t i_var = 0; i_var < DIM; ++i_var) {
     grad[i_var] -= var[i_var];
     grad[i_var] *= D;
   }
-  countFlops(2*numVariables());
+  countFlops(2*DIM);
 }
 
 /**
@@ -181,8 +186,8 @@ CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
   if (sizeJ() > 2) {
-    real var[10]; /// @todo possibly better done with a template parameter
-    real D = 0.5/dy();
+    real var[DIM];
+    real D = (real)0.5/dy();
     countFlops(1);
     size_t j1 = j - 1;
     size_t j2 = j + 1;
@@ -198,13 +203,13 @@ CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
     }
     getVar(i_field, i, j2, k, grad);
     getVar(i_field, i, j1, k, var);
-    for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
       grad[i_var] -= var[i_var];
       grad[i_var] *= D;
     }
-    countFlops(2*numVariables());
+    countFlops(2*DIM);
   } else {
-    for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
       grad[i_var] = 0;
     }
   }
@@ -221,8 +226,8 @@ CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
  */
 CUDA_DH void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
-  real var[10]; /// @todo possibly better done with a template parameter
-  real D = 0.5/dz();
+  real var[DIM];
+  real D = (real)0.5/dz();
   countFlops(1);
   size_t k1 = k - 1;
   size_t k2 = k + 1;
@@ -238,11 +243,11 @@ CUDA_DH void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
   }
   getVar(i_field, i, j, k2, grad);
   getVar(i_field, i, j, k1, var);
-  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+  for (size_t i_var = 0; i_var < DIM; ++i_var) {
     grad[i_var] -= var[i_var];
     grad[i_var] *= D;
   }
-  countFlops(2*numVariables());
+  countFlops(2*DIM);
 }
 
 /**
@@ -282,9 +287,9 @@ CUDA_HO void copyAttributes(T* obj)
   m_InvDz = obj->idz();
 }
 
-
-
-
-
+#ifdef UNDEF_DIM
+#undef DIM
+#undef UNDEF_DIM
+#endif
 
 
