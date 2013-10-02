@@ -23,9 +23,17 @@
 
 MpiCommunicator::MpiCommunicator(int argc, char **argv)
 {
-  MPI_Init(&argc, &argv);
+  int initialised;
+  MPI_Initialized(&initialised);
+  if (!initialised) {
+    MPI_Init(&argc, &argv);
+  }
   MPI_Comm_size(MPI_COMM_WORLD, &m_Size);
   MPI_Comm_rank(MPI_COMM_WORLD, &m_Rank);
+  m_SendReq.resize(size());
+  m_RecvReq.resize(size());
+  m_SendPending.resize(size(),false);
+  m_RecvPending.resize(size(),false);
 }
 
 MpiCommunicator::~MpiCommunicator()

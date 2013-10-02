@@ -25,6 +25,8 @@
 #include <mpi.h>
 #include <vector>
 
+#include "drnum.h"
+
 class MpiCommunicator
 {
 
@@ -39,7 +41,11 @@ private: // attributes
   std::vector<bool>        m_RecvPending;
 
 
-public:
+public: // data types
+
+  enum transfer_type_t { blocking, non_blocking };
+
+public: // methods
 
   MpiCommunicator(int argc, char **argv);
   ~MpiCommunicator();
@@ -50,11 +56,11 @@ public:
 
   template <typename T> void broadcast(T *t, int bcast_rank, int n);
   template <typename T> void broadcast(T &t, int bcast_rank);
-  template <typename T> void send(T &t, int to_rank, bool non_block);
-  template <typename T> void send(T *t, int length, int to_rank, bool non_block);
-  template <typename T> T    receive(int from_rank, bool non_block);
-  template <typename T> void receive(T& t, int from_rank, bool non_block);
-  template <typename T> void receive(T* t, int length, int from_rank, bool non_block);
+  template <typename T> void send(T &t, int to_rank, transfer_type_t ttype);
+  template <typename T> void send(T *t, int length, int to_rank, transfer_type_t ttype);
+  template <typename T> T    receive(int from_rank, transfer_type_t ttype);
+  template <typename T> void receive(T& t, int from_rank, transfer_type_t ttype);
+  template <typename T> void receive(T* t, int length, int from_rank, transfer_type_t ttype);
 
 };
 
@@ -71,13 +77,13 @@ void MpiCommunicator::broadcast(T &t, int bcast_rank)
 }
 
 template <typename T>
-void MpiCommunicator::send(T &t, int to_rank, bool non_block)
+void MpiCommunicator::send(T &t, int to_rank, transfer_type_t ttype)
 {
   MPI_Status status;
   if (m_SendPending[to_rank]) MPI_Wait(&m_SendReq[to_rank], &status);
   int tag = 1000*rank() + to_rank;
   MPI_Isend(&t, sizeof(T), MPI_CHAR, to_rank, tag, MPI_COMM_WORLD, &m_SendReq[to_rank]);
-  if (non_block) {
+  if (ttype == non_blocking) {
     m_SendPending[to_rank] = true;
   } else {
     MPI_Wait(&m_SendReq[to_rank], &status);
@@ -86,13 +92,13 @@ void MpiCommunicator::send(T &t, int to_rank, bool non_block)
 }
 
 template <typename T>
-void MpiCommunicator::send(T *t, int length, int to_rank, bool non_block)
+void MpiCommunicator::send(T *t, int length, int to_rank, transfer_type_t ttype)
 {
   MPI_Status status;
   if (m_SendPending[to_rank]) MPI_Wait(&m_SendReq[to_rank], &status);
   int tag = 1000*rank() + to_rank;
   MPI_Isend(t, sizeof(T)*length, MPI_CHAR, to_rank, tag, MPI_COMM_WORLD, &m_SendReq[to_rank]);
-  if (non_block) {
+  if (ttype == non_blocking) {
     m_SendPending[to_rank] = true;
   } else {
     MPI_Wait(&m_SendReq[to_rank], &status);
@@ -101,14 +107,14 @@ void MpiCommunicator::send(T *t, int length, int to_rank, bool non_block)
 }
 
 template <typename T>
-T MpiCommunicator::receive(int from_rank, bool non_block)
+T MpiCommunicator::receive(int from_rank, transfer_type_t ttype)
 {
   MPI_Status status;
   if (m_RecvPending[from_rank]) MPI_Wait(&m_RecvReq[from_rank], &status);
   int tag = 1000*from_rank + rank();
   T t;
   MPI_Irecv(&t, sizeof(T), MPI_CHAR, from_rank, tag, MPI_COMM_WORLD, &m_RecvReq[from_rank]);
-  if (non_block) {
+  if (ttype == non_blocking) {
     m_RecvPending[from_rank] = true;
   } else {
     MPI_Wait(&m_RecvReq[from_rank], &status);
@@ -118,19 +124,19 @@ T MpiCommunicator::receive(int from_rank, bool non_block)
 }
 
 template <typename T>
-void MpiCommunicator::receive(T& t, int from_rank, bool non_block)
+void MpiCommunicator::receive(T& t, int from_rank, transfer_type_t ttype)
 {
-  t = receive<T>(from_rank);
+  t = receive<T>(from_rank, ttype);
 }
 
 template <typename T>
-void MpiCommunicator::receive(T* t, int length, int from_rank, bool non_block)
+void MpiCommunicator::receive(T* t, int length, int from_rank, transfer_type_t ttype)
 {
   MPI_Status status;
   if (m_RecvPending[from_rank]) MPI_Wait(&m_RecvReq[from_rank], &status);
   int tag = 1000*from_rank + rank();
   MPI_Irecv(t, sizeof(T)*length, MPI_CHAR, from_rank, tag, MPI_COMM_WORLD, &m_RecvReq[from_rank]);
-  if (non_block) {
+  if (ttype == non_blocking) {
     m_RecvPending[from_rank] = true;
   } else {
     MPI_Wait(&m_RecvReq[from_rank], &status);
