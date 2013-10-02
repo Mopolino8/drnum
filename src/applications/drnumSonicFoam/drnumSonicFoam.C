@@ -30,10 +30,16 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
+#include <list>
+#include <vector>
+
 #include "fvCFD.H"
 #include "psiThermo.H"
 #include "turbulenceModel.H"
 #include "pimpleControl.H"
+
+#include "mpicommunicator.h"
+#include "externalexchangelist.h"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,6 +55,8 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+    #include "drnumInit.h"
+    
     Info<< "\nStarting time loop\n" << endl;
 
     while (runTime.loop())
@@ -57,6 +65,7 @@ int main(int argc, char *argv[])
 
         #include "readTimeControls.H"
         #include "compressibleCourantNo.H"
+        #include "setDeltaT.H"
 
         #include "rhoEqn.H"
 

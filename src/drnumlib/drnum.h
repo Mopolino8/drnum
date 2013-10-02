@@ -102,7 +102,7 @@ using namespace std;
 }
 
 #ifdef WITH_VTK
-  #include <Qt>
+  #include <QtCore/Qt>
   #ifdef QT_DEBUG
     #ifndef DEBUG
       #define DEBUG
