@@ -21,7 +21,7 @@
 #ifndef MINMOD_H
 #define MINMOD_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 struct MinMod
 {

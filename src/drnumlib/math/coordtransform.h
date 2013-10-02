@@ -21,7 +21,7 @@
 #ifndef COORDTRANSFORM_H
 #define COORDTRANSFORM_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 class CoordTransform
 {

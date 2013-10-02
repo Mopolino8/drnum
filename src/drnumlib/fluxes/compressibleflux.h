@@ -21,7 +21,7 @@
 #ifndef COMPRESSIBLEFLUX_H
 #define COMPRESSIBLEFLUX_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 #define COMPR_VARS \
   real r  = var[0]; \

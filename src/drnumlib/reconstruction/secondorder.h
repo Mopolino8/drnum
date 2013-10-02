@@ -21,7 +21,7 @@
 #ifndef SECONDORDER_H
 #define SECONDORDER_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 struct SecondOrder
 {

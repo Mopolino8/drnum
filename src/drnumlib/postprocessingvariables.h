@@ -18,10 +18,11 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #ifndef POSTPROCESSINGVARIABLES_H
 #define POSTPROCESSINGVARIABLES_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 class PostProcessingVariables
 {

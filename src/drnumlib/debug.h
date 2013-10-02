@@ -23,7 +23,7 @@
 
 #include <iostream>
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 namespace GlobalDebug
 {

@@ -18,7 +18,8 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include "blockcfd.h"
+
+#include "drnum.h"
 
 private:
 

@@ -22,7 +22,7 @@
 #define INTERCOEFFWS_H
 
 #include <cstddef>
-#include "blockcfd.h"
+#include "drnum.h"
 #include "math/coordtransform.h"
 
 struct SingleInterCoeffWS;

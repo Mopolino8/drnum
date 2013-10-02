@@ -23,7 +23,7 @@
 
 class ObjectDefinition;
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 class ObjectDefinition
 {

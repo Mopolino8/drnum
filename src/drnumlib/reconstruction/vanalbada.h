@@ -21,7 +21,7 @@
 #ifndef VANALBADA_H
 #define VANALBADA_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 struct VanAlbada
 {

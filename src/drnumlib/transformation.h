@@ -21,7 +21,7 @@
 #ifndef TRANSFORMATION_H
 #define TRANSFORMATION_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 class Transformation
 {

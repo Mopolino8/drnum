@@ -22,7 +22,7 @@
 #define INTERCOEFFPAD_H
 
 #include <cstddef>
-#include "blockcfd.h"
+#include "drnum.h"
 #include "math/coordtransform.h"
 #include "intercoeffws.h"
 

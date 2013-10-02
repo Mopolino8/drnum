@@ -48,7 +48,7 @@ template <class V> struct MathVector;
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include "blockcfd.h"
+#include "drnum.h"
 
 using namespace std;
 
@@ -88,7 +88,7 @@ struct MathVector : public V
   // ---------
   void operator=  (const MathVector<V> &vec);
   //void operator=  (MathVector<V> &vec);
-  void operator=  (const vector<typename V::value_type> &vec);
+  void operator=  (const std::vector<typename V::value_type> &vec);
   void operator-= (const MathVector<V> &vec); 
   void operator+= (const MathVector<V> &vec);
   void operator*= (const scalar_t s);

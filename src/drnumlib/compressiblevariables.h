@@ -21,7 +21,7 @@
 #ifndef COMPRESSIBLEVARIABLES_H
 #define COMPRESSIBLEVARIABLES_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 #include "postprocessingvariables.h"
 
 #include <QString>

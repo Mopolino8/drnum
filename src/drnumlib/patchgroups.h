@@ -31,7 +31,7 @@
 struct SinglePatchGroup;
 class PatchGroups;
 
-#include "blockcfd.h"
+#include "drnum.h"
 #include "patch.h"
 #include "patchgrid.h"
 #include "codestring.h"

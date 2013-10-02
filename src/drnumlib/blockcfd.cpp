@@ -18,7 +18,8 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include "blockcfd.h"
+
+#include "drnum.h"
 
 unsigned long int global_flops     = 0;
 unsigned long int global_flops_x86 = 0;

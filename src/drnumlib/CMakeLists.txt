@@ -17,6 +17,7 @@ SET(drnumlib_SOURCES
     cubeincartisianpatch.cpp
     cylinderobject.cpp
     debug.cpp
+    drnum.h
     externalexchangelist.cpp
     iteratorfeeder.cpp
     mpicommunicator.cpp

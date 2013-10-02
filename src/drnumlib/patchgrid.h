@@ -29,7 +29,7 @@
 
 class PatchGrid;
 
-#include "blockcfd.h"
+#include "drnum.h"
 #include "patch.h"
 #include "cartesianpatch.h"
 #include "vectorhashraster.h"

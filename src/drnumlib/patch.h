@@ -21,7 +21,7 @@
 #ifndef PATCH_H
 #define PATCH_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 #include <iostream>
 #include <sstream>
