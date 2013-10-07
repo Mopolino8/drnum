@@ -27,7 +27,7 @@ SharedMemory::SharedMemory(int id_num, int size, bool is_owner) : IPCObject(id_n
     m_Size = size;
     setId(shmget(key(), size, IPC_CREAT | IPC_EXCL | 0660));
     if (id() == -1) {
-      setId(shmget(key(), size, IPC_CREAT | 0660));
+      setId(shmget(key(), 1, IPC_CREAT | 0660));
       if (id() == -1) {
         throw IpcException("unable to create sshared memory\nA\nshmget " + errorText(errno));
       }
