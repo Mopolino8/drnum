@@ -18,8 +18,8 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef STRINGTOOLS_HH
-#define STRINGTOOLS_HH
+#ifndef StringTools_H
+#define StringTools_H
 
 #include <string>
 #include <vector>
@@ -35,13 +35,13 @@ namespace StringTools
 
 
 /**
- * append a character to the left side of a string until a given length has been reached.
- * @param s the source string
+ * append a character to the left side of a std::string until a given length has been reached.
+ * @param s the source std::string
  * @param c the character to append
  * @param l the desired length
- * @return the filled string
+ * @return the filled std::string
  */
-inline string leftFill(string s, char c, size_t l)
+inline std::string leftFill(std::string s, char c, size_t l)
 {
   while (s.size() < l) {
     s = c + s;
@@ -51,13 +51,13 @@ inline string leftFill(string s, char c, size_t l)
 
 
 /**
- * append a character to the right side of a string until a given length has been reached.
- * @param s the source string
+ * append a character to the right side of a std::string until a given length has been reached.
+ * @param s the source std::string
  * @param c the character to append
  * @param l the desired length
- * @return the filled string
+ * @return the filled std::string
  */
-inline string rightFill(string s, char c, size_t l)
+inline std::string rightFill(std::string s, char c, size_t l)
 {
   while (s.size() < l) {
     s = s + c;
@@ -67,52 +67,52 @@ inline string rightFill(string s, char c, size_t l)
 
 
 /**
- * convert a string into another type.
+ * convert a std::string into another type.
  * <b>Attention</b> this method only works for a type <i>T</i> for
  * which an input operator <i>operator>></i>exists.
- * @param s the string to convert
+ * @param s the std::string to convert
  * @param t a variable which will contain the converted value
  * @return true if the operation succeeded
  */
 template <typename T>
-bool stringTo(string s, T &t)
+bool stringTo(std::string s, T &t)
 {
   s += " -";
-  istringstream stream(s);
+  std::stringstream stream(s);
   stream >> t;
   return stream.good();
 }
 
 
 /**
- * convert another type into a string.
+ * convert another type into a std::string.
  * <b>Attention</b> this method only works for a type <i>T</i> for
  * which an output operator <i>operator<<</i>exists.
  * @param t the variable to convert
- * @param s the resulting string
+ * @param s the resulting std::string
  */
 template <typename T>
-void toString(T t, string &s)
+void toString(T t, std::string &s)
 {
-  ostringstream stream;
+  std::ostringstream stream;
   stream << t;
   s = stream.str();
 }
 
 
 /**
- * convert another type into a string.
+ * convert another type into a std::string.
  * <b>Attention</b> this method only works for a type <i>T</i> for
  * which an output operator <i>operator<<</i>exists.
  * @param t the variable to convert
- * @return the resulting string
+ * @return the resulting std::string
  */
 template <typename T>
-string toString(T t, int fill = 0)
+std::string toString(T t, int fill = 0)
 {
-  ostringstream stream;
+  std::ostringstream stream;
   stream << t;
-  string s = stream.str();
+  std::string s = stream.str();
   if      (fill < 0) s = leftFill(s,' ',-fill);
   else if (fill > 0) s = rightFill(s,' ',fill);
   return s;
@@ -121,15 +121,15 @@ string toString(T t, int fill = 0)
 
 /**
  * replace a character with a different one.
- * @param s the source string
+ * @param s the source std::string
  * @param c_orig the character to replace
  * @param c_new the new character
- * return a string with the replaced characters
+ * return a std::string with the replaced characters
  */
-inline string replace(string s, char c_orig, char c_new)
+inline std::string replace(std::string s, char c_orig, char c_new)
 {
-  string s_new = "";
-  string::iterator i = s.begin();
+  std::string s_new = "";
+  std::string::iterator i = s.begin();
   while (i != s.end()) {
     if (*i == c_orig) s_new += c_new;
     else s_new += *i;
@@ -144,9 +144,9 @@ inline string replace(string s, char c_orig, char c_new)
  * @param s the stream to read from
  * @return the line read
  */
-inline string readLine(istream &s)
+inline std::string readLine(istream &s)
 {
-  string line = "";
+  std::string line = "";
   bool done = false;
   do {
     char c;
@@ -163,15 +163,15 @@ inline string readLine(istream &s)
 
 
 /**
- * extract a part of a string.
- * @param s the original string
- * @param i1 index of the first character of the intended sub-string
- * @param i2 index of the last character of the intended sub-string
- * @return the sub-string
+ * extract a part of a std::string.
+ * @param s the original std::string
+ * @param i1 index of the first character of the intended sub-std::string
+ * @param i2 index of the last character of the intended sub-std::string
+ * @return the sub-std::string
  */
-inline string subString(string s, size_t i1, size_t i2)
+inline std::string subString(std::string s, size_t i1, size_t i2)
 {
-  string sub = "";
+  std::string sub = "";
   size_t i = i1;
   while ((i <= i2) && (i < s.size())) {
     sub += s[i];
@@ -182,39 +182,39 @@ inline string subString(string s, size_t i1, size_t i2)
 
 
 /**
- * extract a part at the end of a string.
- * @param s the original string
- * @param n number of characters of the intended sub-string
- * @return the sub-string
+ * extract a part at the end of a std::string.
+ * @param s the original std::string
+ * @param n number of characters of the intended sub-std::string
+ * @return the sub-std::string
  */
-inline string right(string s, size_t n)
+inline std::string right(std::string s, size_t n)
 {
   return subString(s,s.size()-n-1,s.size()-1);
 }
 
 
 /**
- * extract a part at the beginning of a string.
- * @param s the original string
- * @param n number of characters of the intended sub-string
- * @return the sub-string
+ * extract a part at the beginning of a std::string.
+ * @param s the original std::string
+ * @param n number of characters of the intended sub-std::string
+ * @return the sub-std::string
  */
-inline string left(string s, size_t n)
+inline std::string left(std::string s, size_t n)
 {
   return subString(s,0,n-1);
 }
 
 
 /**
- * split a string into several strings.
- * @param s the string to be split
- * @param sub the list which the sub strings will be appeneded to
+ * split a std::string into several std::strings.
+ * @param s the std::string to be split
+ * @param sub the list which the sub std::strings will be appeneded to
  * @param c the dividing character
- * @return the number of sub strings
+ * @return the number of sub std::strings
  */
-inline int split(string s, list<string> &sub, char c = ' ')
+inline int split(std::string s, list<std::string> &sub, char c = ' ')
 {
-  string word = "";
+  std::string word = "";
   bool first = true;
   int N = 0;
   for (size_t i = 0; i < s.size(); ++i) {
@@ -239,15 +239,15 @@ inline int split(string s, list<string> &sub, char c = ' ')
 
 
 /**
- * split a string into several strings.
- * @param s the string to be split
- * @param sub the vector which will contain the sub strings
+ * split a std::string into several std::strings.
+ * @param s the std::string to be split
+ * @param sub the vector which will contain the sub std::strings
  * @param c the dividing character
- * @return the number of sub strings
+ * @return the number of sub std::strings
  */
-inline int split(string s, vector<string> &sub, char c = ' ')
+inline int split(std::string s, std::vector<std::string> &sub, char c = ' ')
 {
-  list<string> l;
+  std::list<std::string> l;
   int N = split(s,l,c);
   sub.resize(N);
   copy(l.begin(),l.end(),sub.begin());
