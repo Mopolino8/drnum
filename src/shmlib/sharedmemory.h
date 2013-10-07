@@ -44,7 +44,7 @@ private:
 
 public:
 
-  enum DataType { Unknown, Real, Integer, Character };
+  enum DataType { Unknown, Real4, Real8, Integer, Character };
 
 protected:
 
@@ -96,7 +96,8 @@ void SharedMemory::writeArray(std::string name, int length, T *array)
 
     // compare the data type
     DataType data_type = Unknown;
-    if (TypeMatch<T,double>()) data_type = Real;
+    if (TypeMatch<T,float>())  data_type = Real4;
+    if (TypeMatch<T,double>()) data_type = Real8;
     if (TypeMatch<T,int>())    data_type = Integer;
     if (TypeMatch<T,char>())   data_type = Character;
     if (data_type != arrayDataType(i_array)) {
@@ -138,7 +139,8 @@ void SharedMemory::writeArray(std::string name, int length, T *array)
 
     // write the data type
     DataType data_type = Unknown;
-    if (TypeMatch<T,double>()) data_type = Real;
+    if (TypeMatch<T,float>())  data_type = Real4;
+    if (TypeMatch<T,double>()) data_type = Real8;
     if (TypeMatch<T,int>())    data_type = Integer;
     if (TypeMatch<T,char>())   data_type = Character;
     DataType *DT;
@@ -184,7 +186,8 @@ void SharedMemory::readArray(std::string name, T *&array)
 
   // compare the data type
   DataType data_type = Unknown;
-  if (TypeMatch<T,double>()) data_type = Real;
+  if (TypeMatch<T,float>())  data_type = Real4;
+  if (TypeMatch<T,double>()) data_type = Real8;
   if (TypeMatch<T,int>())    data_type = Integer;
   if (TypeMatch<T,char>())   data_type = Character;
   if (data_type != arrayDataType(i)) {
