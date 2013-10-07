@@ -18,7 +18,7 @@ SET(drnumlib_SOURCES
     cylinderobject.cpp
     debug.cpp
     drnum.h
-    externalexchangelist.cpp
+    externalexchangelist.h
     iteratorfeeder.cpp
     mpicommunicator.cpp
     objectdefinition.cpp
@@ -29,6 +29,7 @@ SET(drnumlib_SOURCES
     raster.cpp
     rungekutta.cpp
     sphereobject.cpp
+    stringtools.h
     structuredhexraster.cpp
     timeintegration.cpp
     transformation.cpp
