@@ -23,11 +23,14 @@
 
 class IPCObject;
 
+#ifndef NO_IPC
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/types.h>
 #include <errno.h>
+#endif
+
 #include <string>
 #include <iostream>
 #include <cstdlib>
@@ -40,6 +43,10 @@ class IPCObject
 {
 
 private:
+
+#ifdef NO_IPC
+  typedef int key_t;
+#endif
 
   key_t m_Key;
   int   m_Id;

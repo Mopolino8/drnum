@@ -68,45 +68,65 @@ void Semaphore::close()
 #endif
 }
 
+#ifndef NO_IPC
 void Semaphore::decr(int sem_num)
 {
-#ifndef NO_IPC
   struct sembuf sem_decr = {sem_num, -1, 0};
   semop(id(), &sem_decr, 1);
-#endif
 }
+#else
+void Semaphore::decr(int)
+{
+}
+#endif
 
+#ifndef NO_IPC
 void Semaphore::incr(int sem_num)
 {
-#ifndef NO_IPC
   struct sembuf sem_incr_nw = {sem_num, 1, IPC_NOWAIT};
   semop(id(), &sem_incr_nw, 1);
-#endif
 }
+#else
+void Semaphore::incr(int)
+{
+}
+#endif
 
+#ifndef NO_IPC
 void Semaphore::wait(int sem_num)
 {
-#ifndef NO_IPC
   struct sembuf sem_decr = {sem_num, 0, 0};
   semop(id(), &sem_decr, 1);
-#endif
 }
+#else
+void Semaphore::wait(int)
+{
+}
+#endif
 
+#ifndef NO_IPC
 int Semaphore::get(int sem_num)
 {
-#ifndef NO_IPC
   return semctl(id(), sem_num, GETVAL, 0);
-#endif
 }
+#else
+int Semaphore::get(int)
+{
+  return 0;
+}
+#endif
 
+#ifndef NO_IPC
 void Semaphore::set(int sem_num, int value)
 {
-#ifndef NO_IPC
   union semun semopts;
   semopts.val = value;
   if (semctl(id(), sem_num, SETVAL, semopts) == -1) {
     error("semctl " + errorText(errno));
   }
-#endif
 }
-
+#else
+void Semaphore::set(int, int)
+{
+}
+#endif

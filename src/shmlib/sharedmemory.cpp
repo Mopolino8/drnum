@@ -22,24 +22,25 @@
 
 SharedMemory::SharedMemory(int id_num, int size, bool is_owner) : IPCObject(id_num, is_owner)
 {
+#ifndef NO_IPC
   if (m_Owner) {
     m_Size = size;
     setId(shmget(key(), size, IPC_CREAT | IPC_EXCL | 0660));
     if (id() == -1) {
       setId(shmget(key(), size, IPC_CREAT | 0660));
       if (id() == -1) {
-        throw IpcException("unable to create sshared memory\nshmget " + errorText(errno));
+        throw IpcException("unable to create sshared memory\nA\nshmget " + errorText(errno));
       }
       SharedMemory::close();
       setId(shmget(key(), size, IPC_CREAT | IPC_EXCL | 0660));
       if (id() == -1) {
-        throw IpcException("unable to create sshared memory\nshmget " + errorText(errno));
+        throw IpcException("unable to create sshared memory\nB\nshmget " + errorText(errno));
       }
     }
   } else {
     setId(shmget(key(), size, IPC_CREAT | 0660));
     if (id() == -1) {
-      throw IpcException("unable to create sshared memory\nshmget " + errorText(errno));
+      throw IpcException("unable to create sshared memory\nC\nshmget " + errorText(errno));
     }
     struct shmid_ds buf;
     shmctl(id(), IPC_STAT, &buf);
@@ -56,6 +57,9 @@ SharedMemory::SharedMemory(int id_num, int size, bool is_owner) : IPCObject(id_n
   if (m_Owner) {
     reset();
   }
+#else
+  size = size;
+#endif
 }
 
 SharedMemory::~SharedMemory()
@@ -65,9 +69,11 @@ SharedMemory::~SharedMemory()
 
 void SharedMemory::close()
 {
+#ifndef NO_IPC
   if (isOwner()) {
     shmctl(id(), 0, IPC_RMID);
   }
+#endif
 }
 
 void SharedMemory::reset()

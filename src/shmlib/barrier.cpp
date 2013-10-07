@@ -20,7 +20,7 @@
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #include "barrier.h"
 
-Barrier::Barrier(int id_num, bool is_owner) : Semaphore(id_num, is_owner, 1)
+Barrier::Barrier(int id_num, bool is_owner) : Semaphore(id_num, is_owner, 2)
 {
   if (isOwner()) {
     set(0,1);
@@ -33,6 +33,7 @@ Barrier::Barrier(int id_num, bool is_owner) : Semaphore(id_num, is_owner, 1)
 
 Barrier::~Barrier()
 {
+  wait();
   decr(0);
   decr(1);
 }
@@ -40,8 +41,10 @@ Barrier::~Barrier()
 void Barrier::wait()
 {
   using namespace std;
-  decr(0);
+  int s0 = get(0);
+  int s1 = get(1);
   int max_count = get(1);
+  decr(0);
   Semaphore::wait(0);
   decr(1);
   if (isOwner()) {
@@ -63,4 +66,3 @@ void Barrier::print()
 {
   std::cout << get(0) << " " << get(1) << std::endl;
 }
-

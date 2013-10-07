@@ -24,7 +24,10 @@
 
 IPCObject::IPCObject(int id_num, bool is_owner)
 {
+  m_Key = 0;
+#ifndef NO_IPC
   m_Key = ftok(".", id_num);
+#endif
   m_Owner = is_owner;
 }
 
@@ -32,12 +35,19 @@ IPCObject::IPCObject(int id_num, bool is_owner)
 
 std::string IPCObject::errorText(int err)
 {
+#ifndef NO_IPC
   trErr(EACCES);
   trErr(EEXIST);
   trErr(EIDRM);
   trErr(ENOENT);
   trErr(ENOMEM);
   trErr(ENOSPC);
+  trErr(EINVAL);
+  trErr(ERANGE);
+  trErr(EPERM);
+  trErr(EFAULT);
+
+#endif
   std::stringstream out;
   out << err;
   return std::string("unknown error: ") + out.str();
