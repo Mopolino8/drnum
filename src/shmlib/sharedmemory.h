@@ -40,7 +40,7 @@ private:
   size_t  m_ArrayDescrLength;
   size_t  m_Offset;
 
-  template <class T1, class T2> bool TypeMatch() { T1 t1; T2 t2; return typeid(t1) == typeid(t2); }
+  template <typename T1, typename T2> bool TypeMatch() { T1 t1; T2 t2; return typeid(t1) == typeid(t2); }
 
 public:
 
@@ -55,7 +55,7 @@ protected:
   int    arrayStart(int i)           { return *((int*) (&m_Buffer[indexOfArrayStart(i)])); }
   size_t dataIndex();
 
-  template <class T> void get_pointer(int i, T *&t) { t = (T*)(&m_Buffer[i]); }
+  template <typename T> void get_pointer(int i, T *&t) { t = (T*)(&m_Buffer[i]); }
 
 public:
 
@@ -73,16 +73,16 @@ public:
   std::string arrayName(int i);
   size_t      numArrays();
 
-  template <class T> void writeArray(std::string name, int length, T *array);
-  template <class T> void readArray(std::string name, T *&array);
-  template <class T> void writeValue(std::string name, T *value) { writeArray(name, 1, value); }
-  template <class T> void readValue(std::string name, T &value);
+  template <typename T> void writeArray(std::string name, int length, T *array);
+  template <typename T> void readArray(std::string name, T *array);
+  template <typename T> void writeValue(std::string name, T *value) { writeArray(name, 1, value); }
+  template <typename T> void readValue(std::string name, T *value);
 
   std::string readString(std::string name);
 
 };
 
-template <class T>
+template <typename T>
 void SharedMemory::writeArray(std::string name, int length, T *array)
 {
   if (name.size() >= m_MaxNameLength) {
@@ -176,8 +176,8 @@ void SharedMemory::writeArray(std::string name, int length, T *array)
   }
 }
 
-template <class T>
-void SharedMemory::readArray(std::string name, T *&array)
+template <typename T>
+void SharedMemory::readArray(std::string name, T *array)
 {
   int i = arrayIndex(name);
   if (i < 0) {
@@ -196,7 +196,6 @@ void SharedMemory::readArray(std::string name, T *&array)
 
 
   int L = arrayLength(i);
-  array = new T[L];
   T *shm_array = 0;
   get_pointer(arrayStart(i), shm_array);
   for (int j = 0; j < L; ++j) {
@@ -205,13 +204,10 @@ void SharedMemory::readArray(std::string name, T *&array)
 
 }
 
-template <class T>
-void SharedMemory::readValue(std::string name, T &value)
+template <typename T>
+void SharedMemory::readValue(std::string name, T *value)
 {
-  T *pointer;
-  readArray(name, pointer);
-  value = *pointer;
-  delete [] pointer;
+  readArray(name, value);
 }
 
 #endif // SHAREDMEMORY_H
