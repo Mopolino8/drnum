@@ -1,5 +1,5 @@
 SET(drnumBasicAero_CC_SOURCES main.cpp)
-SET(DRNUM_USED_LIBS drnumlib)
+SET(DRNUM_USED_LIBS drnumlib shmlib)
 
 IF(USE_GPU)
     SET(drnumBasicAero_CU_SOURCES main.cu)
