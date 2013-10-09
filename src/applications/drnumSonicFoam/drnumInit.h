@@ -32,30 +32,40 @@ std::vector<bool> cell_marked(mesh.cells().size(), false);
 Info << int(cell_marked.size()) << endl;
 Info << drnum_patch.size() << endl;
 
-forAll(drnum_patch, id_face) {
-  label id_cell = mesh.owner()[id_face];
+forAll (drnum_patch.faceCells(), i_cell) {
+  label id_cell = drnum_patch.faceCells()[i_cell];
   if (!cell_marked[id_cell]) {
     cell_marked[id_cell] = true;
     exchange_cells[0].push_back(id_cell);
   }
 }
 
-Info << int(exchange_cells[0].size()) << endl;
 for (int i_layer = 1; i_layer < 4; ++i_layer) {
   for (std::list<int>::iterator i = exchange_cells[i_layer - 1].begin(); i != exchange_cells[i_layer - 1].end(); ++i) {
-    //Info << i_layer << "," << *i << ": " << mesh.cellCells(*i).size() << endl;
-    forAll(mesh.cellCells(*i), id_cell) {
+    forAll(mesh.cellCells(*i), i_cell) {
+      label id_cell = mesh.cellCells(*i)[i_cell];       
       if (!cell_marked[id_cell]) {
         cell_marked[id_cell] = true;
         exchange_cells[i_layer].push_back(id_cell);
       }
     }
   }
-  Info << int(exchange_cells[i_layer].size()) << endl;
 } 
 
-ExternalExchangeList receive_list(&mpi_comm);
-ExternalExchangeList send_list(&mpi_comm);
+SharedMemory *shmem   = NULL;
+Barrier      *barrier = NULL;
+
+if (mpi_comm.rank() == 0) {
+  try {
+    shmem = new SharedMemory(1, 32*1024*1024, false);
+    barrier = new Barrier(2, false);
+  } catch (IpcException E) {
+    E.print();
+  }
+}
+
+ExternalExchangeList receive_list(5, &mpi_comm, shmem, barrier);
+ExternalExchangeList send_list(5, &mpi_comm, shmem, barrier);
 
 for (int i_layer = 0; i_layer < 2; ++i_layer) {
   for (std::list<int>::iterator i = exchange_cells[i_layer].begin(); i != exchange_cells[i_layer].end(); ++i) {
@@ -82,50 +92,60 @@ send_list.sort();
 
 if (mpi_comm.rank() == 0) {
   for (int i_rank = 1; i_rank < mpi_comm.size(); ++i_rank) {
-    ExternalExchangeList add_list(&mpi_comm);
-    add_list.receive(i_rank);
+    ExternalExchangeList add_list(5, &mpi_comm, shmem, barrier);
+    add_list.mpiReceive(i_rank);
     receive_list += add_list;
-    add_list.receive(i_rank);
+    add_list.mpiReceive(i_rank);
     send_list += add_list;
   }
 } else {
-  receive_list.send();
-  send_list.send();
+  receive_list.mpiSend(0);
+  send_list.mpiSend(0);
 }
+
+// DEBUG -- will be deleted later on
 
 Info << endl;
 Info << "receive cells:\n";
 Info << "--------------" << endl;
 
-receive_list.initIteration();
-for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
-  int N = 0;
-  while (receive_list.grid() == i_rank && !receive_list.endCell()) {
-    ++N;
-    receive_list.nextCell();
+{
+  int i = 0;
+  for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
+    int N = 0;
+    while (receive_list.grid(i) == i_rank && i < receive_list.size()) {
+      ++N;
+      ++i;
+    }
+    Info << "rank = " << i_rank << "   " << N << " cells" << endl;
   }
-  Info << "rank = " << i_rank << "   " << N << " cells" << endl;
 }
 
 Info << endl;
 Info << "send cells:\n";
 Info << "-----------" << endl;
 
-send_list.initIteration();
-for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
-  int N = 0;
-  while (send_list.grid() == i_rank && !send_list.endCell()) {
-    ++N;
-    send_list.nextCell();
+{
+  int i = 0;
+  for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
+    int N = 0;
+    while (send_list.grid(i) == i_rank && i < send_list.size()) {
+      ++N;
+      ++i;
+    }
+    Info << "rank = " << i_rank << "   " << N << " cells" << endl;
   }
-  Info << "rank = " << i_rank << "   " << N << " cells" << endl;
 }
 
-mpi_comm.barrier();
+Info << "trying to connect to DrNUM ..." << endl;
+int client_ready = 1;
+shmem->writeValue("client-ready", &client_ready);
+barrier->wait();
+Info << "connection established" << endl;
+
 Info << "exiting" << endl;
 exit(-1);
 
+// end of DEBUG
 
 
-
-//Info << "Area " << A << endl; 
