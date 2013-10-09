@@ -37,6 +37,7 @@
 #include "compressiblevariables.h"
 #include "rungekutta.h"
 #include "cartesiancycliccopy.h"
+#include "externalexchangelist.h"
 
 #ifdef GPU
 #include "iterators/gpu_cartesianiterator.h"
@@ -51,6 +52,8 @@
 // BEGIN testing
 #include <QVector>
 // END testing
+
+#include "configmap.h"
 
 class EaFlux
 {
@@ -207,19 +210,23 @@ vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
 void run()
 {
 
-  real Ma             = 0.15;
-  real p              = 1.0e5;
-  real T              = 300;
+  // control files
+  ConfigMap config;
+  config.addDirectory("control");
+
+  real Ma             = config.getValue<real>("Mach-number");
+  real p              = config.getValue<real>("pressure");
+  real T              = config.getValue<real>("temperature");
   real uabs           = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real alpha          = 0.0;
-  real L              = 0.000305298288755695;
+  real L              = config.getValue<real>("reference-length");
   real time           = 1e-4/uabs;
-  real cfl_target     = 0.5;
+  real cfl_target     = config.getValue<real>("CFL-number");
   real t_write        = 0;
-  real write_interval = 1.0*time;
-  real total_time     = 1000*time;
-  bool write          = true;
-
+  real write_interval = config.getValue<real>("write-interval")*time;
+  real total_time     = config.getValue<real>("total-time")*time;
+  bool mesh_preview   = config.getValue<bool>("mesh-preview");
+  bool code_coupling  = config.getValue<bool>("code-coupling");
 
   alpha = M_PI*alpha/180.0;
   real u = uabs*cos(alpha);
@@ -238,6 +245,7 @@ void run()
   //patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
 
+
   // Time step
   real ch_speed = u + sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real dt       = cfl_target*patch_grid.computeMinChLength()/ch_speed;
@@ -254,7 +262,9 @@ void run()
     patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
   }
 
-  //exit(-1); /// meshing!!!
+  if (mesh_preview) {
+    exit(EXIT_SUCCESS);
+  }
 
   EaFlux    flux_std(u, v, p, T);
 
@@ -292,6 +302,32 @@ void run()
 #ifdef GPU
   iterator_std.updateDevice();
 #endif
+
+  SharedMemory         *shmem = NULL;
+  Barrier              *barrier = NULL;
+  ExternalExchangeList *ex_list = NULL;
+
+  if (code_coupling) {
+    try {
+      shmem = new SharedMemory(1, 32*1024*1024, true);
+      barrier = new Barrier(2, true);
+    } catch (IpcException E) {
+      E.print();
+    }
+    ex_list = new ExternalExchangeList(5, NULL, shmem, barrier);
+    int client_ready = 0;
+    shmem->writeValue("client-ready", &client_ready);
+    cout << "External code coupling has been enabled." << endl;
+    cout << "waiting for client to connect ..." << endl;
+    cout << shmem->key() << endl;
+    while (!client_ready) {
+      shmem->readValue("client-ready", &client_ready);
+      //cout << client_ready << endl;
+    }
+    cout << "The client connection has been established." << endl;
+    barrier->wait();
+    exit(-1);
+  }
 
   startTiming();
 
