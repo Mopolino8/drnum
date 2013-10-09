@@ -101,6 +101,18 @@ using namespace std;
   assert(false);                          \
 }
 
+/**
+ * Issue an error message and stop the program.
+ * Additionally this macro will print the line number and the file
+ * where the error occurred.
+ */
+#define ERROR(msg) {                      \
+  printf("An error occured: %s\n", msg);  \
+  printf("  file: %s\n", __FILE__);       \
+  printf("  line: %d\n", __LINE__);       \
+  assert(false);                          \
+}
+
 #ifdef WITH_VTK
   #include <QtCore/Qt>
   #ifdef QT_DEBUG
