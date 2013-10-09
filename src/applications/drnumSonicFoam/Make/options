@@ -4,7 +4,9 @@ EXE_INC = \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I../../drnumlib \
     -I../../drnumlib/math \
-    -I$(WM_PROJECT_INST_DIR)/ThirdParty-$(WM_PROJECT_VERSION)/platforms/$(WM_ARCH)$(WM_COMPILER)/openmpi-1.6.3/include
+    -I../../shmlib \
+    -I$(WM_PROJECT_INST_DIR)/ThirdParty-$(WM_PROJECT_VERSION)/platforms/$(WM_ARCH)$(WM_COMPILER)/openmpi-1.6.3/include \
+    -DFULLDEBUG -g -O0
 
 EXE_LIBS = \
     -lfluidThermophysicalModels \
