@@ -28,6 +28,7 @@
 #include <cassert>
 #include <cstdio>
 #include <omp.h>
+#include <limits>
 
 using namespace std;
 
@@ -54,8 +55,12 @@ using namespace std;
 
 typedef float real;
 
+#define MAX_REAL numeric_limits<real>::max()
+#define MIN_REAL numeric_limits<real>::min()
+
 #define FR12 real(0.5)
 #define FR13 real(0.3333333)
+#define FR14 real(0.25)
 #define FR23 real(0.6666666)
 
 #define GLOBAL_EPS real(1e-10)
