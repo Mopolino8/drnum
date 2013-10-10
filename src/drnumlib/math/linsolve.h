@@ -44,8 +44,8 @@
 #define linsolve_H
 
 struct LinSolveError {
-  double det;
-  LinSolveError(double d) { det = d; };
+  real det;
+  LinSolveError(real d) { det = d; }
 };
 
 // Rainers full matrix solver
@@ -60,8 +60,8 @@ void linsolve(const M &Ain, const V &rsv, V &b)
   
   int n = A.size();
   int k,i,j,p[n];
-  double q,s,max,h,det;
-  double ele_max = 0;
+  real q,s,max,h,det;
+  real ele_max = 0;
   
   // Find maximum element to get a relative value
   for (int i = 0; i < A.size(); ++i) {
@@ -128,6 +128,6 @@ void linsolve(const M &Ain, const V &rsv, V &b)
   if (fabs(det) < 1e-20) {
     throw LinSolveError(det);
   };
-};
+}
 
 #endif
