@@ -4,6 +4,7 @@ SET(drnumlib_SOURCES
     blockobject.cpp
     cartboxobject.cpp
     cartesianpatch.cpp
+    cartesianpatch_common.h
     cartesianraster.cpp
     codestring.cpp
     combiobjectand.cpp
@@ -23,6 +24,7 @@ SET(drnumlib_SOURCES
     mpicommunicator.cpp
     objectdefinition.cpp
     patch.cpp
+    patch_common.h
     patchgrid.cpp
     patchgroups.cpp
     prismaticlayerpatch.cpp
