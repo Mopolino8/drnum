@@ -15,11 +15,13 @@ SET(drnumlib_SOURCES
     compressiblesolidwallbobc.cpp
     coneobject.cpp
     configmap.cpp
+    containertricks.h
     cubeincartisianpatch.cpp
     cylinderobject.cpp
     debug.cpp
     drnum.h
     externalexchangelist.h
+    geometrytools.cpp
     iteratorfeeder.cpp
     mpicommunicator.cpp
     objectdefinition.cpp
@@ -33,6 +35,7 @@ SET(drnumlib_SOURCES
     sphereobject.cpp
     stringtools.h
     structuredhexraster.cpp
+    utilities.cpp
     timeintegration.cpp
     transformation.cpp
     iterators/cartesianiterator.h
