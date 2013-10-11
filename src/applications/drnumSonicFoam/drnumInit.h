@@ -64,8 +64,8 @@ if (mpi_comm.rank() == 0) {
   }
 }
 
-ExternalExchangeList receive_list(5, &mpi_comm, shmem, barrier);
-ExternalExchangeList send_list(5, &mpi_comm, shmem, barrier);
+ExternalExchangeList recv_list("recv", 5, &mpi_comm, shmem, barrier);
+ExternalExchangeList send_list("send", 5, &mpi_comm, shmem, barrier);
 
 for (int i_layer = 0; i_layer < 2; ++i_layer) {
   for (std::list<int>::iterator i = exchange_cells[i_layer].begin(); i != exchange_cells[i_layer].end(); ++i) {
@@ -73,7 +73,7 @@ for (int i_layer = 0; i_layer < 2; ++i_layer) {
     double x = mesh.cellCentres()[id_cell][0];
     double y = mesh.cellCentres()[id_cell][1];
     double z = mesh.cellCentres()[id_cell][2];
-    receive_list.append(mpi_comm.rank(), id_cell, x, y, z);
+    recv_list.append(mpi_comm.rank(), id_cell, x, y, z);
   }
 }
 
@@ -87,23 +87,23 @@ for (int i_layer = 2; i_layer < 4; ++i_layer) {
   }
 }
 
-receive_list.sort();
+recv_list.sort();
 send_list.sort();
 
 if (mpi_comm.rank() == 0) {
   for (int i_rank = 1; i_rank < mpi_comm.size(); ++i_rank) {
-    ExternalExchangeList add_list(5, &mpi_comm, shmem, barrier);
+    ExternalExchangeList add_list("tmp", 5, &mpi_comm, shmem, barrier);
     add_list.mpiReceive(i_rank);
-    receive_list += add_list;
+    recv_list += add_list;
     add_list.mpiReceive(i_rank);
     send_list += add_list;
   }
 } else {
-  receive_list.mpiSend(0);
+  recv_list.mpiSend(0);
   send_list.mpiSend(0);
 }
 
-// DEBUG -- will be deleted later on
+// some infos -- might be deleted later on
 
 Info << endl;
 Info << "receive cells:\n";
@@ -113,7 +113,7 @@ Info << "--------------" << endl;
   int i = 0;
   for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
     int N = 0;
-    while (receive_list.grid(i) == i_rank && i < receive_list.size()) {
+    while (recv_list.grid(i) == i_rank && i < recv_list.size()) {
       ++N;
       ++i;
     }
@@ -137,15 +137,23 @@ Info << "-----------" << endl;
   }
 }
 
-Info << "trying to connect to DrNUM ..." << endl;
-int client_ready = 1;
-shmem->writeValue("client-ready", &client_ready);
-barrier->wait();
-Info << "connection established" << endl;
+// end of infos
+
+if (mpi_comm.rank() == 0) {
+  Info << "trying to connect to DrNUM ..." << endl;
+  int client_ready = 1;
+  shmem->writeValue("client-ready", &client_ready);
+  barrier->wait();
+  Info << "connection established" << endl;
+
+  send_list.ipcSend();
+  recv_list.ipcSend();
+  barrier->wait();
+  barrier->wait();
+}
 
 Info << "exiting" << endl;
 exit(-1);
 
-// end of DEBUG
 
 

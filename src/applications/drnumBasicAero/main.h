@@ -305,7 +305,8 @@ void run()
 
   SharedMemory         *shmem = NULL;
   Barrier              *barrier = NULL;
-  ExternalExchangeList *ex_list = NULL;
+  ExternalExchangeList *send_list = NULL;
+  ExternalExchangeList *recv_list = NULL;
 
   if (code_coupling) {
     try {
@@ -314,18 +315,24 @@ void run()
     } catch (IpcException E) {
       E.print();
     }
-    ex_list = new ExternalExchangeList(5, NULL, shmem, barrier);
+    send_list = new ExternalExchangeList("send", 5, NULL, shmem, barrier);
+    recv_list = new ExternalExchangeList("recv", 5, NULL, shmem, barrier);
     int client_ready = 0;
     shmem->writeValue("client-ready", &client_ready);
     cout << "External code coupling has been enabled." << endl;
     cout << "waiting for client to connect ..." << endl;
-    cout << shmem->key() << endl;
     while (!client_ready) {
       shmem->readValue("client-ready", &client_ready);
-      //cout << client_ready << endl;
     }
+    barrier->wait();
     cout << "The client connection has been established." << endl;
     barrier->wait();
+    send_list->ipcReceive();
+    recv_list->ipcReceive();
+    barrier->wait();
+    int id_patch = config.getValue<int>("coupling-patch");
+    send_list->finalise(&patch_grid, id_patch);
+    recv_list->finalise(&patch_grid, id_patch);
     exit(-1);
   }
 
