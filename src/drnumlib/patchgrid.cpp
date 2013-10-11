@@ -25,6 +25,7 @@
 
 #include "patchgrid.h"
 #include "stringtools.h"
+#include "geometrytools.h"
 
 PatchGrid::PatchGrid(size_t num_seeklayers, size_t num_addprotectlayers)
 {
@@ -616,4 +617,27 @@ void PatchGrid::writeToVtk(size_t i_field, string file_name, const PostProcessin
   vmb->SetInput(multi_block);
   vmb->SetFileName(file_name.c_str());
   vmb->Write();
+}
+
+bool PatchGrid::findCell(vec3_t xo, int &id_patch, int &id_cell)
+{
+  id_patch = -1;
+  id_cell = -1;
+  real min_distance = MAX_REAL;
+  for (size_t id_patch = 0; id_patch < getNumPatches(); ++id_patch) {
+    int id_cell_patch = getPatch(id_patch)->findCell(xo);
+    if (id_cell_patch) {
+      vec3_t xo_cell = getPatch(id_patch)->xyzoCell(id_cell_patch);
+      real distance = (xo - xo_cell).abs();
+      if (distance < min_distance) {
+        min_distance = distance;
+        id_patch = id_patch;
+        id_cell = id_cell_patch;
+      }
+    }
+  }
+  if (id_patch < 0) {
+    return false;
+  }
+  return true;
 }

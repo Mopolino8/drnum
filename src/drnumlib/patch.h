@@ -241,13 +241,20 @@ public: // methods
 
   /**
     * Access coordinates of a cell in inertial xyzo-system.
-    * @param l_cell index of cell
+    * @param l_cell index of the cell
     * @param xo_cell xo-coord. of cell center (return reference)
     * @param yo_cell yo-coord. of cell center (return reference)
     * @param zo_cell zo-coord. of cell center (return reference)
     */
   void xyzoCell(const size_t& l_cell,
                 real& xo_cell, real& yo_cell, real& zo_cell);
+
+  /**
+   * @brief Access coordinates of a cell in inertial xyzo-system.
+   * @param l_cell index of the cell
+   * @return the coordinates of the cell in inertial xyzo-system
+   */
+  vec3_t xyzoCell(const size_t& l_cell);
 
 
   /**
@@ -722,6 +729,9 @@ public: // methods
    */
   virtual void cellOverNodeNeighbours(const size_t& l_c,
                                       vector<size_t>& l_cell_neighbours) = 0;
+
+
+  virtual int findCell(vec3_t xo);
 
 
   /// @todo destructor

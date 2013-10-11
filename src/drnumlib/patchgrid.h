@@ -320,6 +320,8 @@ public: // methods
 
   vector<size_t> getVectorVarIndices();
 
+  bool findCell(vec3_t xo, int &id_patch, int &id_cell);
+
   virtual ~PatchGrid();
 
 };

@@ -21,6 +21,7 @@
 #include "patch.h"
 #include "patchgrid.h"
 #include "stringtools.h"
+#include "geometrytools.h"
 
 #ifdef WITH_VTK
 #include <vtkXMLUnstructuredGridWriter.h>
@@ -88,6 +89,13 @@ void Patch::xyzoCell(const size_t& l_cell,
           x_cell, y_cell, z_cell);
   m_TransformInertial2This.transformReverse(x_cell, y_cell, z_cell,
                                             xo_cell, yo_cell, zo_cell);
+}
+
+vec3_t Patch::xyzoCell(const size_t &l_cell)
+{
+  vec3_t xo;
+  xyzoCell(l_cell, xo[0], xo[1], xo[2]);
+  return xo;
 }
 
 
@@ -726,5 +734,25 @@ real* Patch::getGpuData()
     BUG;
   }
   return m_GpuData;
+}
+
+int Patch::findCell(vec3_t xo)
+{
+  int id_cell = -1;
+  real min_distance = MAX_REAL;
+  vec3_t xo1 = accessBBoxXYZoMin();
+  vec3_t xo2 = accessBBoxXYZoMax();
+  if (GeometryTools::isInsideCartesianBox(xo, xo1, xo2)) {
+    for (size_t i = 0; i < variableSize(); ++i) {
+      vec3_t xo_cell;
+      xyzoCell(i, xo_cell[0], xo_cell[1], xo_cell[2]);
+      real distance = (xo - xo_cell).abs();
+      if (distance < min_distance) {
+        min_distance = distance;
+        id_cell = i;
+      }
+    }
+  }
+  return id_cell;
 }
 
