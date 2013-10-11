@@ -368,6 +368,63 @@ CUDA_DH real* getVarsubset(size_t i_field, size_t l_c, real* ret_varset,
   }
 }
 
+/**
+ * @brief Get a variable set at a specified index.
+ * @param i_field the field index
+ * @param i the cell index
+ * @param var will hold the conservative variable set afterwards (needs to be allocated beforehand)
+ */
+template <unsigned int DIM>
+CUDA_DH void getVar(size_t i_field, size_t i, real *var)
+{
+  for (size_t i_var = 0; i_var < DIM; ++i_var) {
+    var[i_var] = getVariable(i_field, i_var)[i];
+  }
+}
+
+/**
+ * @brief Get a variable set at a specified index. This method take the dimension (number of variables)
+ *        as parameter and should not be used in performance critical routines.
+ * @param dim the number of variables
+ * @param i_field the field index
+ * @param i the cell index
+ * @param var will hold the conservative variable set afterwards (needs to be allocated beforehand)
+ */
+CUDA_DH void getVar(unsigned int dim, size_t i_field, size_t i, real *var)
+{
+  for (size_t i_var = 0; i_var < dim; ++i_var) {
+    var[i_var] = getVariable(i_field, i_var)[i];
+  }
+}
+
+/**
+ * @brief Set a variable set at a specified index.
+ * @param i_field the field index
+ * @param i the cell index
+ * @param the conservative variable set
+ */
+template <unsigned int DIM>
+CUDA_DH void setVar(size_t i_field, size_t i, real* var)
+{
+  for (size_t i_var = 0; i_var < DIM; ++i_var) {
+    getVariable(i_field, i_var)[i] = var[i_var];
+  }
+}
+
+/**
+ * @brief Set a variable set at a specified index. This method take the dimension (number of variables)
+ *        as parameter and should not be used in performance critical routines.
+ * @param dim the number of variables
+ * @param i_field the field index
+ * @param i the cell index
+ * @param the conservative variable set
+ */
+CUDA_DH void setVar(unsigned int dim, size_t i_field, size_t i, real *var)
+{
+  for (size_t i_var = 0; i_var < dim; ++i_var) {
+    getVariable(i_field, i_var)[i] = var[i_var];
+  }
+}
 
 /**
  * Copy simple data attributes from another object.

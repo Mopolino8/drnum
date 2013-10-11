@@ -64,7 +64,7 @@
     } \
   }
 
-template <typename TReconstruction, typename TGas>
+template <unsigned int DIM, typename TReconstruction, typename TGas>
 class CompressibleFarfieldFlux
 {
 

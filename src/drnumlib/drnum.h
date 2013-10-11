@@ -263,5 +263,11 @@ struct size3_t
   CUDA_DH bool operator==(const size3_t& s)     { return i == s.i && j == s.j && k == s.k; }
 };
 
+template <unsigned int DIM>
+struct dim_t
+{
+  static const unsigned int dim = DIM;
+};
+
 
 #endif // BLOCKCFD_H

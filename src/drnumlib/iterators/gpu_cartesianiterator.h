@@ -27,12 +27,12 @@
 #include "gpu_patchiterator.h"
 
 template <unsigned int DIM, typename OP>
-class GPU_CartesianIterator : public GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch<DIM>, OP>
+class GPU_CartesianIterator : public GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>
 {
 
 public:
 
-  using GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch<DIM>, OP>::addPatch;
+  using GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::addPatch;
 
   CUDA_HO GPU_CartesianIterator(OP op);
 
@@ -42,14 +42,14 @@ public:
 
 template <unsigned int DIM, typename OP>
 GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(OP op)
-  : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch<DIM>, OP>(op)
+  : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>(op)
 {
 }
 
 #define NDEBUG
 
 template <unsigned int DIM, typename OP>
-__global__ void GPU_CartesianIterator_kernelXFieldFluxes(GPU_CartesianPatch<DIM> patch, OP op, size_t offset)
+__global__ void GPU_CartesianIterator_kernelXFieldFluxes(GPU_CartesianPatch patch, OP op, size_t offset)
 {
   size_t i = 2*blockIdx.x + offset;
   size_t j = blockDim.y*blockIdx.y + threadIdx.y;
@@ -70,7 +70,7 @@ __global__ void GPU_CartesianIterator_kernelXFieldFluxes(GPU_CartesianPatch<DIM>
 }
 
 template <unsigned int DIM, typename OP>
-__global__ void GPU_CartesianIterator_kernelYFieldFluxes(GPU_CartesianPatch<DIM> patch, OP op, size_t offset)
+__global__ void GPU_CartesianIterator_kernelYFieldFluxes(GPU_CartesianPatch patch, OP op, size_t offset)
 {
   size_t i = blockDim.y*blockIdx.x + threadIdx.y;
   size_t j = 2*blockIdx.y + offset;
@@ -91,7 +91,7 @@ __global__ void GPU_CartesianIterator_kernelYFieldFluxes(GPU_CartesianPatch<DIM>
 }
 
 template <unsigned int DIM, typename OP>
-__global__ void GPU_CartesianIterator_kernelZFieldFluxes(GPU_CartesianPatch<DIM> patch, OP op, size_t offset)
+__global__ void GPU_CartesianIterator_kernelZFieldFluxes(GPU_CartesianPatch patch, OP op, size_t offset)
 {
   size_t i = blockIdx.x;
   size_t j = blockDim.y*blockIdx.y + threadIdx.y;
@@ -112,7 +112,7 @@ __global__ void GPU_CartesianIterator_kernelZFieldFluxes(GPU_CartesianPatch<DIM>
 }
 
 template <unsigned int DIM, typename OP>
-__global__ void GPU_CartesianIterator_kernelXBoundaryFluxes(GPU_CartesianPatch<DIM> patch, OP op)
+__global__ void GPU_CartesianIterator_kernelXBoundaryFluxes(GPU_CartesianPatch patch, OP op)
 {
   size_t j = blockIdx.x;
   size_t k = threadIdx.x;
@@ -136,7 +136,7 @@ __global__ void GPU_CartesianIterator_kernelXBoundaryFluxes(GPU_CartesianPatch<D
 }
 
 template <unsigned int DIM, typename OP>
-__global__ void GPU_CartesianIterator_kernelYBoundaryFluxes(GPU_CartesianPatch<DIM> patch, OP op)
+__global__ void GPU_CartesianIterator_kernelYBoundaryFluxes(GPU_CartesianPatch patch, OP op)
 {
   size_t i = blockIdx.x;
   size_t k = threadIdx.x;
@@ -160,7 +160,7 @@ __global__ void GPU_CartesianIterator_kernelYBoundaryFluxes(GPU_CartesianPatch<D
 }
 
 template <unsigned int DIM, typename OP>
-__global__ void GPU_CartesianIterator_kernelZBoundaryFluxes(GPU_CartesianPatch<DIM> patch, OP op)
+__global__ void GPU_CartesianIterator_kernelZBoundaryFluxes(GPU_CartesianPatch patch, OP op)
 {
   size_t i = blockIdx.x;
   size_t j = threadIdx.x;
@@ -184,7 +184,7 @@ __global__ void GPU_CartesianIterator_kernelZBoundaryFluxes(GPU_CartesianPatch<D
 }
 
 template <unsigned int DIM>
-__global__ void GPU_CartesianIterator_kernelAdvance(GPU_CartesianPatch<DIM> patch, real factor)
+__global__ void GPU_CartesianIterator_kernelAdvance(GPU_CartesianPatch patch, real factor)
 {
   size_t i = blockIdx.x;
   size_t j = blockIdx.y;
@@ -220,7 +220,7 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
     cudaMemset(this->m_GpuPatches[i_patch].getField(2), 0, this->m_GpuPatches[i_patch].fieldSize()*sizeof(real));
     CUDA_CHECK_ERROR;
 
-    size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch<DIM>, OP>::m_MaxNumThreads;
+    size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
     size_t k_lines = max(size_t(1), size_t(max_num_threads/this->m_Patches[i_patch]->sizeK()));
 
     {

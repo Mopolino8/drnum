@@ -36,9 +36,11 @@ public: // methods
                       real x, real y, real z,
                       real A, real* flux)
   {
+    dim_t<DIM> dim;
+
     real var_l[DIM], var_r[DIM], var[DIM];
-    patch->getVar(0, i-1, j, k, var_l);
-    patch->getVar(0, i,   j, k, var_r);
+    patch->getVar(dim, 0, i-1, j, k, var_l);
+    patch->getVar(dim, 0, i,   j, k, var_r);
     for (int i_var = 0; i_var < DIM; ++i_var) {
       var[i_var] = (real)0.5*(var_l[i_var] + var_r[i_var]);
     }
@@ -64,10 +66,10 @@ public: // methods
     real gradx[DIM];
     real grady[DIM], grady_l[DIM], grady_r[DIM];
     real gradz[DIM], gradz_l[DIM], gradz_r[DIM];
-    patch->getYGrad(0, i-1, j, k, grady_l);
-    patch->getZGrad(0, i-1, j, k, gradz_l);
-    patch->getYGrad(0, i, j, k, grady_r);
-    patch->getZGrad(0, i, j, k, gradz_r);
+    patch->getYGrad(dim, 0, i-1, j, k, grady_l);
+    patch->getZGrad(dim, 0, i-1, j, k, gradz_l);
+    patch->getYGrad(dim, 0, i, j, k, grady_r);
+    patch->getZGrad(dim, 0, i, j, k, gradz_r);
     real D = (real)1.0/patch->dx();
     for (int i_var = 0; i_var < DIM; ++i_var) {
       gradx[i_var] = (var_r[i_var] - var_l[i_var])*D;
@@ -113,9 +115,11 @@ public: // methods
                       real x, real y, real z,
                       real A, real* flux)
   {
+    dim_t<DIM> dim;
+
     real var_l[DIM], var_r[DIM], var[DIM];
-    patch->getVar(0, i, j-1, k, var_l);
-    patch->getVar(0, i, j,   k, var_r);
+    patch->getVar(dim, 0, i, j-1, k, var_l);
+    patch->getVar(dim, 0, i, j,   k, var_r);
     for (int i_var = 0; i_var < DIM; ++i_var) {
       var[i_var] = (real)0.5*(var_l[i_var] + var_r[i_var]);
     }
@@ -141,10 +145,10 @@ public: // methods
     real gradx[DIM], gradx_l[DIM], gradx_r[DIM];
     real grady[DIM];
     real gradz[DIM], gradz_l[DIM], gradz_r[DIM];
-    patch->getXGrad(0, i, j-1, k, gradx_l);
-    patch->getZGrad(0, i, j-1, k, gradz_l);
-    patch->getXGrad(0, i, j, k, gradx_r);
-    patch->getZGrad(0, i, j, k, gradz_r);
+    patch->getXGrad(dim, 0, i, j-1, k, gradx_l);
+    patch->getZGrad(dim, 0, i, j-1, k, gradz_l);
+    patch->getXGrad(dim, 0, i, j, k, gradx_r);
+    patch->getZGrad(dim, 0, i, j, k, gradz_r);
     real D = (real)1.0/patch->dy();
     for (int i_var = 0; i_var < DIM; ++i_var) {
       gradx[i_var] = (real)0.5*(gradx_l[i_var] + gradx_r[i_var]);
@@ -190,9 +194,11 @@ public: // methods
                       real x, real y, real z,
                       real A, real* flux)
   {
+    dim_t<DIM> dim;
+
     real var_l[DIM], var_r[DIM], var[DIM];
-    patch->getVar(0, i, j, k-1, var_l);
-    patch->getVar(0, i, j, k,   var_r);
+    patch->getVar(dim, 0, i, j, k-1, var_l);
+    patch->getVar(dim, 0, i, j, k,   var_r);
     for (int i_var = 0; i_var < DIM; ++i_var) {
       var[i_var] = (real)0.5*(var_l[i_var] + var_r[i_var]);
     }
@@ -218,10 +224,10 @@ public: // methods
     real gradx[DIM], gradx_l[DIM], gradx_r[DIM];
     real grady[DIM], grady_l[DIM], grady_r[DIM];
     real gradz[DIM];
-    patch->getXGrad(0, i, j, k-1, gradx_l);
-    patch->getYGrad(0, i, j, k-1, grady_l);
-    patch->getXGrad(0, i, j, k, gradx_r);
-    patch->getYGrad(0, i, j, k, grady_r);
+    patch->getXGrad(dim, 0, i, j, k-1, gradx_l);
+    patch->getYGrad(dim, 0, i, j, k-1, grady_l);
+    patch->getXGrad(dim, 0, i, j, k, gradx_r);
+    patch->getYGrad(dim, 0, i, j, k, grady_r);
     real D = (real)1.0/patch->dz();
     for (int i_var = 0; i_var < DIM; ++i_var) {
       gradx[i_var] = (real)0.5*(gradx_l[i_var] + gradx_r[i_var]);

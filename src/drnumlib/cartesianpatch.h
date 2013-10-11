@@ -551,6 +551,7 @@ public: // methods
                               const size_t& k_c,
                               vector<size_t>& l_cell_neighbours);
 
+  virtual int findCell(vec3_t xo);
 
 #ifdef WITH_VTK
   virtual vtkSmartPointer<vtkDataSet> createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);

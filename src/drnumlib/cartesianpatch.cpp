@@ -18,7 +18,9 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #include "cartesianpatch.h"
+#include "geometrytools.h"
 
 #ifdef WITH_VTK
 #include <vtkCellType.h>
@@ -1633,7 +1635,7 @@ vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, con
     for (size_t k = k_start; k < k_stop; ++k) {
       for (size_t j = j_start; j < j_stop; ++j) {
         for (size_t i = i_start; i < i_stop; ++i) {
-          getVar(i_field, i, j, k, raw_var);
+          getVarDim(numVariables(), i_field, i, j, k, raw_var);
           var->SetValue(id, proc_vars.getScalar(i_var, raw_var));
           ++id;
         }
@@ -1650,7 +1652,7 @@ vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, con
     for (size_t k = k_start; k < k_stop; ++k) {
       for (size_t j = j_start; j < j_stop; ++j) {
         for (size_t i = i_start; i < i_stop; ++i) {
-          getVar(i_field, i, j, k, raw_var);
+          getVarDim(numVariables(), i_field, i, j, k, raw_var);
           vec3_t v = proc_vars.getVector(i_var, raw_var);
           v = m_TransformInertial2This.transfreeReverse(v);
           float vf[3];
@@ -1750,4 +1752,16 @@ void CartesianPatch::writeData(QString base_data_filename, int count)
   BUG;
 }
 
-
+int CartesianPatch::findCell(vec3_t xo)
+{
+  vec3_t x = m_TransformInertial2This.transform(xo);
+  vec3_t x0(0, 0, 0);
+  vec3_t x1(sizeI()*dx(), sizeJ()*dy(), sizeK()*dz());
+  if (!GeometryTools::isInsideCartesianBox(x, x0, x1)) {
+    return -1;
+  }
+  int i = x[0]/dx();
+  int j = x[1]/dy();
+  int k = x[2]/dz();
+  return index(i, j, k);
+}

@@ -36,7 +36,7 @@ class CartesianCyclicCopy : public GenericOperation
 private:
 
   PatchGrid *m_PatchGrid;
-  vector<GPU_CartesianPatch<DIM>*> m_GpuPatches;
+  vector<GPU_CartesianPatch*> m_GpuPatches;
 
   void updatePatches();
 
@@ -48,8 +48,7 @@ public:
 };
 
 #ifdef CUDA
-template <unsigned int DIM>
-__global__ void CartesianCyclicCopy_kernel(GPU_CartesianPatch<DIM> patch)
+__global__ void CartesianCyclicCopy_kernel(GPU_CartesianPatch patch)
 {
   size_t i = blockIdx.x;
   size_t j = threadIdx.x;
@@ -86,7 +85,7 @@ inline void CartesianCyclicCopy<DIM>::updatePatches()
     for (int i = 0; i < m_PatchGrid->getNumPatches(); ++i) {
       CartesianPatch *cart_patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i));
       if (cart_patch) {
-        m_GpuPatches[i] = new GPU_CartesianPatch<DIM>(cart_patch);
+        m_GpuPatches[i] = new GPU_CartesianPatch(cart_patch);
       }
     }
   }

@@ -3,6 +3,7 @@ SET(drnumlib_SOURCES
     blockobjectbc.cpp
     blockobject.cpp
     cartboxobject.cpp
+    cartesiancycliccopy.h
     cartesianpatch.cpp
     cartesianpatch_common.h
     cartesianraster.cpp
@@ -22,6 +23,8 @@ SET(drnumlib_SOURCES
     drnum.h
     externalexchangelist.cpp
     geometrytools.cpp
+    gpu_patch.h
+    gpu_cartesianpatch.h
     iteratorfeeder.cpp
     mpicommunicator.cpp
     objectdefinition.cpp
