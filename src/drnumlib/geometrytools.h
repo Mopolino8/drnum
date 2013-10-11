@@ -83,6 +83,8 @@ bool intersectEdgeAndTriangle(const vec3_t& a, const vec3_t& b, const vec3_t& c,
 
 bool isInsideTriangle(vec2_t t_M, real tol = 1e-4);
 
+bool isInsideCartesianBox(vec3_t x, vec3_t x1, vec3_t x2);
+
 /** Calculates the intersection point M between the lines (r1,u1) and (r2,u2).
  * @param k1 Returned by reference. Verifies M = r1+k1*u1
  * @param k2 Returned by reference. Verifies M = r2+k2*u2

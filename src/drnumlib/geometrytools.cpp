@@ -493,4 +493,14 @@ void cart2spherical(vec3_t x, real &alpha, real &beta, real &r)
   }
 }
 
+bool isInsideCartesianBox(vec3_t x, vec3_t x1, vec3_t x2)
+{
+  for (int i = 0; i < 3; ++i) {
+    if (x[i] < x1[i] || x[i] > x2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 } // namespace
