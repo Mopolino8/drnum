@@ -20,7 +20,7 @@ SET(drnumlib_SOURCES
     cylinderobject.cpp
     debug.cpp
     drnum.h
-    externalexchangelist.h
+    externalexchangelist.cpp
     geometrytools.cpp
     iteratorfeeder.cpp
     mpicommunicator.cpp
