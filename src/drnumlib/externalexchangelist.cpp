@@ -161,8 +161,9 @@ void ExternalExchangeList::ipcSend(int pos, int length)
 
         // get existing array from shared memory (if it exists)
         int i_array = m_SharedMem->arrayIndex(name);
-        if (i_array) {
+        if (i_array > 0) {
           if (m_SharedMem->arrayLength(i_array) != m_Cells.size()) {
+            cout << m_SharedMem->arrayLength(i_array) << ", " << m_Cells.size() << endl;
             BUG;
           }
           m_SharedMem->readArray(name, &data[0]);
@@ -286,21 +287,30 @@ void ExternalExchangeList::sort()
 void ExternalExchangeList::finalise(PatchGrid *patch_grid, int id_patch)
 {
   sort();
+
   if (patch_grid && id_patch >= 0) {
     for (int i = 0; i < m_XyzCells.size(); ++i) {
-      int id_cell = patch_grid->getPatch(id_patch)->findCell(vec3_t(m_XyzCells[i].x, m_XyzCells[i].y, m_XyzCells[i].z));
-      if (!id_cell) {
+      vec3_t xo = vec3_t(m_XyzCells[i].x, m_XyzCells[i].y, m_XyzCells[i].z);
+      int id_cell = patch_grid->getPatch(id_patch)->findCell(xo);
+      if (id_cell < 0) {
         ERROR("unable to find coupled cell");
       }
+      m_XyzCells[i].index = id_cell;
+      m_XyzCells[i].grid  = id_patch;
     }
   }
+
   m_Cells.resize(m_XyzCells.size());
   for (int i = 0; i < m_Cells.size(); ++i) {
     m_Cells[i].grid  = m_XyzCells[i].grid;
     m_Cells[i].index = m_XyzCells[i].index;
   }
   m_XyzCells.clear();
-  m_Data.resize(m_Cells.size());
+
+  for (int i_array = 0; i_array < m_Data.size(); ++i_array) {
+    m_Data[i_array].resize(m_Cells.size());
+  }
+
   m_Finalised = true;
 }
 

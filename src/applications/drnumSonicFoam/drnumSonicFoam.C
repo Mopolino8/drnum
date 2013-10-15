@@ -56,12 +56,14 @@ int main(int argc, char *argv[])
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
     #include "drnumInit.h"
+    #include "drnumSync.H"
+    exit(-1);
     
     Info<< "\nStarting time loop\n" << endl;
 
     while (runTime.loop())
     {
-        Info<< "Time = " << runTime.timeName() << nl << endl;
+        Info<< "Time = " << runTime.timeName() << nl << endl;              
 
         #include "readTimeControls.H"
         #include "compressibleCourantNo.H"
@@ -89,6 +91,7 @@ int main(int argc, char *argv[])
 
         rho = thermo.rho();
 
+        #include "drnumSync.H"
         runTime.write();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"

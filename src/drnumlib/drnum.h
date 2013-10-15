@@ -267,6 +267,7 @@ template <unsigned int DIM>
 struct dim_t
 {
   static const unsigned int dim = DIM;
+  unsigned int operator() () { return DIM; }
 };
 
 

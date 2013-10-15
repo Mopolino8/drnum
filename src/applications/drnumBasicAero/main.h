@@ -66,9 +66,9 @@ protected:
   //typedef Upwind2<5, VanAlbada>                             reconstruction_t;
   typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
   //typedef KNP<reconstruction_t, PerfectGas>              euler_t;
-  typedef CompressibleSlipFlux<Upwind1, PerfectGas>      wall_t;
+  typedef CompressibleSlipFlux<5, Upwind1, PerfectGas>     wall_t;
   typedef CompressibleViscFlux<5, PerfectGas>               viscous_t;
-  typedef CompressibleFarfieldFlux<Upwind1, PerfectGas>  farfield_t;
+  typedef CompressibleFarfieldFlux<5, Upwind1, PerfectGas>  farfield_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
@@ -206,9 +206,39 @@ vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
   return cubes;
 }
 
+void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *dn2of_list, Barrier *barrier)
+{
+  cout << "A" << endl;
+  barrier->wait();
+
+  dim_t<5> dim;
+  patch->copyFieldToHost(0);
+  real var[dim()];
+  real p, T, u, v, w;
+  for (int i = 0; i < dn2of_list->size(); ++i) {
+    patch->getVar(dim, 0, dn2of_list->index(i), var);
+    PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+    dn2of_list->data(0, i) = p;
+    dn2of_list->data(1, i) = u;
+    dn2of_list->data(2, i) = v;
+    dn2of_list->data(3, i) = w;
+    dn2of_list->data(4, i) = T;
+  }
+  dn2of_list->ipcSend();
+  cout << "B" << endl;
+  barrier->wait();
+  cout << "C" << endl;
+  of2dn_list->ipcReceive();
+
+  //PerfectGas::primitiveToConservative(p, T, 0, 0, 0, var1);
+
+
+  patch->copyFieldToDevice(0);
+}
 
 void run()
 {
+  dim_t<5> dim;
 
   // control files
   ConfigMap config;
@@ -244,7 +274,6 @@ void run()
   patch_grid.readGrid("patches/standard.grid");
   //patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
-
 
   // Time step
   real ch_speed = u + sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
@@ -299,14 +328,12 @@ void run()
 
   cout << "std:" << iterator_std.numPatches() << endl;
 
-#ifdef GPU
-  iterator_std.updateDevice();
-#endif
-
   SharedMemory         *shmem = NULL;
   Barrier              *barrier = NULL;
-  ExternalExchangeList *send_list = NULL;
-  ExternalExchangeList *recv_list = NULL;
+  ExternalExchangeList *of2dn_list = NULL;
+  ExternalExchangeList *dn2of_list = NULL;
+  int                   coupling_patch_id = -1;
+  Patch                *coupling_patch = NULL;
 
   if (code_coupling) {
     try {
@@ -315,8 +342,8 @@ void run()
     } catch (IpcException E) {
       E.print();
     }
-    send_list = new ExternalExchangeList("send", 5, NULL, shmem, barrier);
-    recv_list = new ExternalExchangeList("recv", 5, NULL, shmem, barrier);
+    of2dn_list = new ExternalExchangeList("of2dn", 5, NULL, shmem, barrier);
+    dn2of_list = new ExternalExchangeList("dn2of", 5, NULL, shmem, barrier);
     int client_ready = 0;
     shmem->writeValue("client-ready", &client_ready);
     cout << "External code coupling has been enabled." << endl;
@@ -327,16 +354,23 @@ void run()
     barrier->wait();
     cout << "The client connection has been established." << endl;
     barrier->wait();
-    send_list->ipcReceive();
-    recv_list->ipcReceive();
+    of2dn_list->ipcReceive();
+    dn2of_list->ipcReceive();
     barrier->wait();
-    int id_patch = config.getValue<int>("coupling-patch");
-    send_list->finalise(&patch_grid, id_patch);
-    recv_list->finalise(&patch_grid, id_patch);
+    coupling_patch_id = config.getValue<int>("coupling-patch");
+    of2dn_list->finalise(&patch_grid, coupling_patch_id);
+    dn2of_list->finalise(&patch_grid, coupling_patch_id);
+    coupling_patch = patch_grid.getPatch(coupling_patch_id);
+    sync(coupling_patch, of2dn_list, dn2of_list, barrier);
     exit(-1);
   }
 
+#ifdef GPU
+  iterator_std.updateDevice();
+#endif
+
   startTiming();
+
 
   while (t < total_time) {
 
@@ -369,7 +403,7 @@ void run()
           for (size_t j = 0; j < NJ; ++j) {
             for (size_t k = 0; k < NK; ++k) {
               real p, u, v, w, T, var[5];
-              patch.getVar(0, i, j, k, var);
+              patch.getVar(dim, 0, i, j, k, var);
               rho_min = min(var[0], rho_min);
               rho_max = max(var[0], rho_max);
               PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);

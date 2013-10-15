@@ -64,8 +64,8 @@ if (mpi_comm.rank() == 0) {
   }
 }
 
-ExternalExchangeList recv_list("recv", 5, &mpi_comm, shmem, barrier);
-ExternalExchangeList send_list("send", 5, &mpi_comm, shmem, barrier);
+ExternalExchangeList dn2of_list("dn2of", 5, &mpi_comm, shmem, barrier);
+ExternalExchangeList of2dn_list("of2dn", 5, &mpi_comm, shmem, barrier);
 
 for (int i_layer = 0; i_layer < 2; ++i_layer) {
   for (std::list<int>::iterator i = exchange_cells[i_layer].begin(); i != exchange_cells[i_layer].end(); ++i) {
@@ -73,7 +73,7 @@ for (int i_layer = 0; i_layer < 2; ++i_layer) {
     double x = mesh.cellCentres()[id_cell][0];
     double y = mesh.cellCentres()[id_cell][1];
     double z = mesh.cellCentres()[id_cell][2];
-    recv_list.append(mpi_comm.rank(), id_cell, x, y, z);
+    dn2of_list.append(mpi_comm.rank(), id_cell, x, y, z);
   }
 }
 
@@ -83,77 +83,84 @@ for (int i_layer = 2; i_layer < 4; ++i_layer) {
     double x = mesh.cellCentres()[id_cell][0];
     double y = mesh.cellCentres()[id_cell][1];
     double z = mesh.cellCentres()[id_cell][2];
-    send_list.append(mpi_comm.rank(), id_cell, x, y, z);
+    of2dn_list.append(mpi_comm.rank(), id_cell, x, y, z);
   }
 }
 
-recv_list.sort();
-send_list.sort();
+dn2of_list.sort();
+of2dn_list.sort();
 
 if (mpi_comm.rank() == 0) {
   for (int i_rank = 1; i_rank < mpi_comm.size(); ++i_rank) {
     ExternalExchangeList add_list("tmp", 5, &mpi_comm, shmem, barrier);
     add_list.mpiReceive(i_rank);
-    recv_list += add_list;
+    dn2of_list += add_list;
     add_list.mpiReceive(i_rank);
-    send_list += add_list;
+    of2dn_list += add_list;
   }
 } else {
-  recv_list.mpiSend(0);
-  send_list.mpiSend(0);
+  dn2of_list.mpiSend(0);
+  of2dn_list.mpiSend(0);
 }
 
-// some infos -- might be deleted later on
-
-Info << endl;
-Info << "receive cells:\n";
-Info << "--------------" << endl;
-
-{
-  int i = 0;
-  for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
-    int N = 0;
-    while (recv_list.grid(i) == i_rank && i < recv_list.size()) {
-      ++N;
-      ++i;
-    }
-    Info << "rank = " << i_rank << "   " << N << " cells" << endl;
-  }
-}
-
-Info << endl;
-Info << "send cells:\n";
-Info << "-----------" << endl;
-
-{
-  int i = 0;
-  for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
-    int N = 0;
-    while (send_list.grid(i) == i_rank && i < send_list.size()) {
-      ++N;
-      ++i;
-    }
-    Info << "rank = " << i_rank << "   " << N << " cells" << endl;
-  }
-}
-
-// end of infos
+std::vector<int> of2dn_start(mpi_comm.size(), 0);
+std::vector<int> dn2of_start(mpi_comm.size(), 0);
+std::vector<int> of2dn_size(mpi_comm.size(), 0);
+std::vector<int> dn2of_size(mpi_comm.size(), 0);
 
 if (mpi_comm.rank() == 0) {
+
+  Info << endl;
+  Info << "receive cells:\n";
+  Info << "--------------" << endl;
+
+  {
+    int i = 0;
+    for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
+      int N = 0;
+      dn2of_start[i_rank] = i;
+      while (dn2of_list.grid(i) == i_rank && i < dn2of_list.size()) {
+        ++N;
+        ++dn2of_size[i_rank];
+        ++i;
+      }
+      Info << "rank = " << i_rank << "   " << N << " cells" << endl;
+    }
+  }
+
+  Info << endl;
+  Info << "of2dn cells:\n";
+  Info << "-----------" << endl;
+
+  {
+    int i = 0;
+    for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
+      int N = 0;
+      of2dn_start[i_rank] = i;
+      while (of2dn_list.grid(i) == i_rank && i < of2dn_list.size()) {
+        ++N;
+        ++of2dn_size[i_rank];
+        ++i;
+      }
+      Info << "rank = " << i_rank << "   " << N << " cells" << endl;
+    }
+  }
+
   Info << "trying to connect to DrNUM ..." << endl;
   int client_ready = 1;
   shmem->writeValue("client-ready", &client_ready);
   barrier->wait();
   Info << "connection established" << endl;
 
-  send_list.ipcSend();
-  recv_list.ipcSend();
+  of2dn_list.ipcSend();
+  dn2of_list.ipcSend();
   barrier->wait();
   barrier->wait();
 }
 
-Info << "exiting" << endl;
-exit(-1);
+of2dn_list.finalise();
+dn2of_list.finalise();
+
 
 
 
