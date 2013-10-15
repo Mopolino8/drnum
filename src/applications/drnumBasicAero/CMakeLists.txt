@@ -3,8 +3,8 @@ SET(DRNUM_USED_LIBS drnumlib shmlib)
 
 IF(USE_GPU)
     SET(drnumBasicAero_CU_SOURCES main.cu)
-    cuda_add_library(maincuda ${drnumBasicAero_CU_SOURCES} SHARED) # OPTIONS -G)
-    SET(DRNUM_USED_LIBS maincuda ${DRNUM_USED_LIBS})
+    cuda_add_library(drnumBasicAero_cuda ${drnumBasicAero_CU_SOURCES} SHARED) # OPTIONS -G)
+    SET(DRNUM_USED_LIBS drnumBasicAero_cuda ${DRNUM_USED_LIBS})
 ENDIF(USE_GPU)
 
 
@@ -24,6 +24,6 @@ SET_TARGET_PROPERTIES(drnumBasicAero
 
 INSTALL(TARGETS drnumBasicAero RUNTIME DESTINATION bin)
 IF(USE_GPU)
-    INSTALL(TARGETS maincuda LIBRARY DESTINATION lib)
+    INSTALL(TARGETS drnumBasicAero_cuda LIBRARY DESTINATION lib)
 ENDIF(USE_GPU)
 
