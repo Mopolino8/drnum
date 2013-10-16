@@ -66,6 +66,7 @@ GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device)
     exit(EXIT_FAILURE);
   }
   if (count < m_CudaDevice + 1) {
+    CudaTools::info();
     cerr << "specified CUDA device does not exists" << endl;
     exit(EXIT_FAILURE);
   }
