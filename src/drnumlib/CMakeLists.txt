@@ -18,6 +18,7 @@ SET(drnumlib_SOURCES
     configmap.cpp
     containertricks.h
     cubeincartisianpatch.cpp
+    cudatools.h
     cylinderobject.cpp
     debug.cpp
     drnum.h
