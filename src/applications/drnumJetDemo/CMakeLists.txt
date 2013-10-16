@@ -1,0 +1,29 @@
+SET(drnumJetDemo_CC_SOURCES main.cpp jetflux.h eaflux.h)
+SET(DRNUM_USED_LIBS drnumlib shmlib)
+
+IF(USE_GPU)
+    SET(drnumJetDemo_CU_SOURCES main.cu)
+    cuda_add_library(drnumJetDemo_cuda ${drnumJetDemo_CU_SOURCES} SHARED) # OPTIONS -G)
+    SET(DRNUM_USED_LIBS drnumJetDemo_cuda ${DRNUM_USED_LIBS})
+ENDIF(USE_GPU)
+
+
+ADD_EXECUTABLE(drnumJetDemo ${drnumJetDemo_CC_SOURCES})
+ADD_DEPENDENCIES(drnumJetDemo ${DRNUM_USED_LIBS})
+TARGET_LINK_LIBRARIES(drnumJetDemo ${DRNUM_USED_LIBS} ${QT_LIBRARIES} ${VTK_LIBRARIES} ${MPI_LIBRARIES} "-lgomp")
+#QT5_USE_MODULES(drnumJetDemo Core)
+
+SET_TARGET_PROPERTIES(drnumJetDemo
+    PROPERTIES
+    LINKER_LANGUAGE CXX
+    PREFIX "")
+
+SET_TARGET_PROPERTIES(drnumJetDemo
+    PROPERTIES
+    VERSION ${DRNUM_VERSION})
+
+INSTALL(TARGETS drnumJetDemo RUNTIME DESTINATION bin)
+IF(USE_GPU)
+    INSTALL(TARGETS drnumJetDemo_cuda LIBRARY DESTINATION lib)
+ENDIF(USE_GPU)
+

@@ -34,15 +34,15 @@ public:
 
   using GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::addPatch;
 
-  CUDA_HO GPU_CartesianIterator(OP op);
+  CUDA_HO GPU_CartesianIterator(OP op, int cuda_device = 0);
 
   CUDA_HO virtual void compute(real factor, const vector<size_t>& patches);
 
 };
 
 template <unsigned int DIM, typename OP>
-GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(OP op)
-  : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>(op)
+GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(OP op, int cuda_device)
+  : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>(op, cuda_device)
 {
 }
 

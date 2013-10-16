@@ -37,11 +37,12 @@ protected: // attributes
   bool          m_GpuPointersSet;
   vector<T_GPU> m_GpuPatches;
   size_t        m_MaxNumThreads;
+  int           m_CudaDevice;
 
 
 public:
 
-  GPU_PatchIterator(OP op);
+  GPU_PatchIterator(OP op, int cuda_device = 0);
 
   CUDA_HO void updateHost();
   CUDA_HO void updateDevice();
@@ -54,24 +55,26 @@ public:
 
 
 template <typename T_CPU, typename T_GPU, typename OP>
-GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op)
+GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device)
   : TPatchIterator<T_CPU, OP>(op)
 {
   m_GpuPointersSet = false;
+  m_CudaDevice = cuda_device;
   int count;
   if (cudaGetDeviceCount(&count) != cudaSuccess) {
     cerr << "error detecting CUDA devices" << endl;
     exit(EXIT_FAILURE);
   }
-  if (count == 0) {
-    cerr << "no CUDA devices found" << endl;
+  if (count < m_CudaDevice + 1) {
+    cerr << "specified CUDA device does not exists" << endl;
     exit(EXIT_FAILURE);
   }
   cudaDeviceProp prop;
-  if (cudaGetDeviceProperties(&prop, 0) != cudaSuccess) {
+  if (cudaGetDeviceProperties(&prop, m_CudaDevice) != cudaSuccess) {
     cerr << "error fetching device properties" << endl;
     exit(EXIT_FAILURE);
   }
+  cudaSetDevice(m_CudaDevice);
   m_MaxNumThreads = min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]);
 }
 
