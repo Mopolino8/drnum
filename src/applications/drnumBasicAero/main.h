@@ -383,6 +383,7 @@ void run()
     sync(coupling_patch, of2dn_list, dn2of_list, barrier, shmem, write_flag, stop_flag, dt);
     write_interval = MAX_REAL;
     total_time = MAX_REAL;
+    iterator_std.deactivatePatch(coupling_patch_id);
   }
 
 #ifdef GPU
