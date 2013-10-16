@@ -116,9 +116,6 @@ std::string SharedMemory::arrayName(int i)
 
 int SharedMemory::arrayIndex(std::string name)
 {  
-  if (name == "dn2of-data-0") {
-    std::cout << "SharedMemory::arrayIndex(\"" << name << "\")" << std::endl;
-  }
   size_t i = 0;
   while (i < numArrays() && arrayName(i) != name) {
     ++i;

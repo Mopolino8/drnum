@@ -1,5 +1,9 @@
+
 mpi_comm.barrier();
-barrier->wait();
+if (mpi_comm.rank() == 0) {
+  barrier->wait();
+}
+mpi_comm.barrier();
 
 // collect of2dn lists from MPI processes
 {
@@ -28,6 +32,15 @@ mpi_comm.barrier();
 
 if (mpi_comm.rank() == 0) {
   of2dn_list.ipcSend();
+  int write = 0;
+  if (runTime.outputTime()) {
+    write = 1;
+  }
+  shmem->writeValue("write", &write);
+  real dt = runTime.deltaT().value();
+  shmem->writeValue("dt", &dt);
+  int stop = 0;
+  shmem->writeValue("stop", &stop);
   barrier->wait();
   dn2of_list.ipcReceive();
 }
@@ -51,7 +64,9 @@ mpi_comm.barrier();
       U[dn2of_list.index(i_cell)][2] = dn2of_list.data(3, i_cell);
       thermo.T()[dn2of_list.index(i_cell)] = dn2of_list.data(4, i_cell);
     }
-  } else {
+  }
+  mpi_comm.barrier();
+  if (mpi_comm.rank() != 0) {
     for (int i_cell = 0; i_cell < dn2of_list.size(); ++i_cell) {
       p[dn2of_list.index(i_cell)] = dn2of_list.data(0, i_cell);
       U[dn2of_list.index(i_cell)][0] = dn2of_list.data(1, i_cell);

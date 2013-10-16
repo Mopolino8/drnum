@@ -29,9 +29,6 @@ const polyPatch& drnum_patch = mesh.boundaryMesh()[id_patch];
 std::vector<std::list<int> > exchange_cells(4);
 std::vector<bool> cell_marked(mesh.cells().size(), false);
 
-Info << int(cell_marked.size()) << endl;
-Info << drnum_patch.size() << endl;
-
 forAll (drnum_patch.faceCells(), i_cell) {
   label id_cell = drnum_patch.faceCells()[i_cell];
   if (!cell_marked[id_cell]) {
@@ -109,7 +106,7 @@ std::vector<int> of2dn_size(mpi_comm.size(), 0);
 std::vector<int> dn2of_size(mpi_comm.size(), 0);
 
 if (mpi_comm.rank() == 0) {
-
+  
   Info << endl;
   Info << "receive cells:\n";
   Info << "--------------" << endl;
@@ -146,7 +143,7 @@ if (mpi_comm.rank() == 0) {
     }
   }
 
-  Info << "trying to connect to DrNUM ..." << endl;
+  Info << "\ntrying to connect to DrNUM ..." << endl;
   int client_ready = 1;
   shmem->writeValue("client-ready", &client_ready);
   barrier->wait();

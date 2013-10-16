@@ -49,9 +49,7 @@
 #include "iteratorfeeder.h"
 #include "cubeincartisianpatch.h"
 
-// BEGIN testing
-#include <QVector>
-// END testing
+#include <QTime>
 
 #include "configmap.h"
 
@@ -206,11 +204,9 @@ vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
   return cubes;
 }
 
-void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *dn2of_list, Barrier *barrier)
+void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *dn2of_list, Barrier *barrier, SharedMemory *shmem, bool &write_flag, bool &stop_flag, real &dt)
 {
-  cout << "A" << endl;
   barrier->wait();
-
   dim_t<5> dim;
   patch->copyFieldToHost(0);
   real var[dim()];
@@ -225,13 +221,35 @@ void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *
     dn2of_list->data(4, i) = T;
   }
   dn2of_list->ipcSend();
-  cout << "B" << endl;
   barrier->wait();
-  cout << "C" << endl;
+  int write = 0;
+  int stop = 0;
+  shmem->readValue("write", &write);
+  shmem->readValue("stop", &stop);
+  shmem->readValue("dt", &dt);
+  if (write) {
+    write_flag = true;
+  } else {
+    write_flag = false;
+  }
+  if (stop) {
+    stop_flag = true;
+    cout << "Received stop signal from client." << endl;
+  } else {
+    stop_flag = false;
+  }
   of2dn_list->ipcReceive();
 
-  //PerfectGas::primitiveToConservative(p, T, 0, 0, 0, var1);
-
+  for (int i = 0; i < of2dn_list->size(); ++i) {
+    real var[5];
+    p = of2dn_list->data(0, i);
+    u = of2dn_list->data(1, i);
+    v = of2dn_list->data(2, i);
+    w = of2dn_list->data(3, i);
+    T = of2dn_list->data(4, i);
+    PerfectGas::primitiveToConservative(p, T, u, v, w, var);
+    patch->setVar(dim, 0, of2dn_list->index(i), var);
+  }
 
   patch->copyFieldToDevice(0);
 }
@@ -250,13 +268,15 @@ void run()
   real uabs           = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real alpha          = 0.0;
   real L              = config.getValue<real>("reference-length");
-  real time           = 1e-4/uabs;
+  real time           = L/uabs;
   real cfl_target     = config.getValue<real>("CFL-number");
   real t_write        = 0;
   real write_interval = config.getValue<real>("write-interval")*time;
   real total_time     = config.getValue<real>("total-time")*time;
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
   bool code_coupling  = config.getValue<bool>("code-coupling");
+  bool write_flag     = false;
+  bool stop_flag      = false;
 
   alpha = M_PI*alpha/180.0;
   real u = uabs*cos(alpha);
@@ -313,12 +333,12 @@ void run()
   iterator_feeder.addIterator(&iterator_std);
   iterator_feeder.feed(patch_grid);
 
-  vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
-  for (size_t i = 0; i < cubes.size(); ++i) {
-    runge_kutta.addPostOperation(&cubes[i]);
-  }
-  CartesianCyclicCopy<5> cyclic(&patch_grid);
-  runge_kutta.addPostOperation(&cyclic);
+  //vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
+  //for (size_t i = 0; i < cubes.size(); ++i) {
+  //  runge_kutta.addPostOperation(&cubes[i]);
+  //}
+  //CartesianCyclicCopy<5> cyclic(&patch_grid);
+  //runge_kutta.addPostOperation(&cyclic);
 
   runge_kutta.addIterator(&iterator_std);
 
@@ -326,7 +346,6 @@ void run()
   int iter = 0;
   real t = 0;
 
-  cout << "std:" << iterator_std.numPatches() << endl;
 
   SharedMemory         *shmem = NULL;
   Barrier              *barrier = NULL;
@@ -361,8 +380,9 @@ void run()
     of2dn_list->finalise(&patch_grid, coupling_patch_id);
     dn2of_list->finalise(&patch_grid, coupling_patch_id);
     coupling_patch = patch_grid.getPatch(coupling_patch_id);
-    sync(coupling_patch, of2dn_list, dn2of_list, barrier);
-    exit(-1);
+    sync(coupling_patch, of2dn_list, dn2of_list, barrier, shmem, write_flag, stop_flag, dt);
+    write_interval = MAX_REAL;
+    total_time = MAX_REAL;
   }
 
 #ifdef GPU
@@ -372,13 +392,19 @@ void run()
   startTiming();
 
 
-  while (t < total_time) {
+  while (t < total_time && !stop_flag) {
 
+    QTime step_start = QTime::currentTime();
     runge_kutta(dt);
+    int msecs_drnum = step_start.msecsTo(QTime::currentTime());
+    real dt_new;
+    sync(coupling_patch, of2dn_list, dn2of_list, barrier, shmem, write_flag, stop_flag, dt_new);
+    int msecs_total = step_start.msecsTo(QTime::currentTime());
+    real drnum_fraction = real(msecs_drnum)/real(msecs_total);
     t += dt;
     t_write += dt;
 
-    if (t_write >= write_interval) {
+    if (t_write >= write_interval || write_flag) {
 
       // Do some diagnose on patches
       real CFL_max = 0;
@@ -433,16 +459,14 @@ void run()
       printTiming();
       ++write_counter;
       if (write) {
-        patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+        patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
       }
       t_write -= write_interval;
-      if (t > 80.0) {
-        write_interval = 0.05;
-      }
     } else {
       ++iter;
-      cout << iter << " iterations,  t=" << t/time << "*L/u_oo,  dt: " << dt << endl;
+      cout << iter << " iterations,  t=" << t << ",  t=" << t/time << "*L/u_oo,  dt: " << dt << ",  DrNUM % of run-time: " << 100*drnum_fraction << endl;
     }
+    dt = dt_new;
   }
 
   stopTiming();

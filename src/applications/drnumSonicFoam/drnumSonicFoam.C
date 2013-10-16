@@ -57,7 +57,6 @@ int main(int argc, char *argv[])
 
     #include "drnumInit.h"
     #include "drnumSync.H"
-    exit(-1);
     
     Info<< "\nStarting time loop\n" << endl;
 
@@ -99,6 +98,8 @@ int main(int argc, char *argv[])
             << nl << endl;
     }
 
+    #include "drnumStop.H"
+    
     Info<< "End\n" << endl;
 
     return 0;
