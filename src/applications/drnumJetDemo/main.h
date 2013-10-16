@@ -137,8 +137,8 @@ void run()
   CartesianIterator<5, EaFlux>   iterator_std(flux_std);
   CartesianIterator<5, JetFlux>  iterator_jet(flux_jet);
 #endif
-  iterator_std.setCodeString(CodeString("fx fy fz std std std std std std"));
-  iterator_jet.setCodeString(CodeString("fx fy fz jet 0 0 0 0 0"));
+  iterator_std.setCodeString(CodeString("fx fy fz far far far far far far 0"));
+  iterator_jet.setCodeString(CodeString("fx fy fz jet 0   0   0   0   0   0"));
 
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator_std);
@@ -160,6 +160,7 @@ void run()
   real t = 0;
 
   cout << "std:" << iterator_std.numPatches() << endl;
+  cout << "jet:" << iterator_jet.numPatches() << endl;
 
   SharedMemory         *shmem = NULL;
   Barrier              *barrier = NULL;
