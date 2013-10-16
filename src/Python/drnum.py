@@ -389,7 +389,7 @@ class Mesh:
       self.patches[i].hj = min(max_h, self.patches[i].hj)
       self.patches[i].hk = min(max_h, self.patches[i].hk)
       
-  def setGrading(self, growth_factor):
+  def setGrading1(self, growth_factor):
     done = False
     while not done:
       done = True
@@ -415,7 +415,58 @@ class Mesh:
           if h < self.patches[j].hk:
             self.patches[j].hk = h
             done = False
-        
+
+  def setGrading2(self, growth_factor):
+    done = False
+    while not done:
+      done = True
+      for i in range(0, len(self.patches)):
+        h = self.patches[i].hi
+        h = min(h, self.patches[i].hj)
+        h = min(h, self.patches[i].hk)
+        h = h*growth_factor
+        neighbours1 = set([])
+        neighbours1 = neighbours1.union(self.patches[i].neighI1)
+        neighbours1 = neighbours1.union(self.patches[i].neighI2)
+        neighbours1 = neighbours1.union(self.patches[i].neighJ1)
+        neighbours1 = neighbours1.union(self.patches[i].neighJ2)
+        neighbours1 = neighbours1.union(self.patches[i].neighK1)
+        neighbours1 = neighbours1.union(self.patches[i].neighK2)
+
+        neighbours2 = set([])
+        for j in neighbours1:
+          neighbours2 = neighbours2.union(self.patches[j].neighI1)
+          neighbours2 = neighbours2.union(self.patches[j].neighI2)
+          neighbours2 = neighbours2.union(self.patches[j].neighJ1)
+          neighbours2 = neighbours2.union(self.patches[j].neighJ2)
+          neighbours2 = neighbours2.union(self.patches[j].neighK1)
+          neighbours2 = neighbours2.union(self.patches[j].neighK2)
+
+        neighbours2 = neighbours2.difference(neighbours1)
+
+        neighbours = neighbours1
+        for j in neighbours2:
+          neighbours3 = set([])
+          neighbours3 = neighbours3.union(self.patches[j].neighI1.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighI2.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighJ1.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighJ2.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighK1.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighK2.intersection(neighbours1))
+          if len(neighbours3) > 1:
+            neighbours.add(j)
+
+        for j in neighbours:
+          if h < self.patches[j].hi:
+            self.patches[j].hi = h
+            done = False
+          if h < self.patches[j].hj:
+            self.patches[j].hj = h
+            done = False
+          if h < self.patches[j].hk:
+            self.patches[j].hk = h
+            done = False
+
   def createRectGrid(self, x, y, z):
     patch = []
     for i in range(len(x) - 1):
