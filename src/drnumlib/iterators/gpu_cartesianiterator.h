@@ -217,77 +217,81 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
 
   for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
 
-    cudaMemset(this->m_GpuPatches[i_patch].getField(2), 0, this->m_GpuPatches[i_patch].fieldSize()*sizeof(real));
-    CUDA_CHECK_ERROR;
+    if (PatchIterator::patchActive(i_patch)) {
 
-    size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
-    size_t k_lines = max(size_t(1), size_t(max_num_threads/this->m_Patches[i_patch]->sizeK()));
+      cudaMemset(this->m_GpuPatches[i_patch].getField(2), 0, this->m_GpuPatches[i_patch].fieldSize()*sizeof(real));
+      CUDA_CHECK_ERROR;
 
-    {
-      dim3 blocks(this->m_Patches[i_patch]->sizeI()/2+1, this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
-      dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
-      GPU_CartesianIterator_kernelXFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-      GPU_CartesianIterator_kernelXFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-    }
+      size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
+      size_t k_lines = max(size_t(1), size_t(max_num_threads/this->m_Patches[i_patch]->sizeK()));
 
-    {
-      dim3 blocks(this->m_Patches[i_patch]->sizeI()/k_lines+1, this->m_Patches[i_patch]->sizeJ()/2+1, 1);
-      dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
-      GPU_CartesianIterator_kernelYFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-      GPU_CartesianIterator_kernelYFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-    }
+      {
+        dim3 blocks(this->m_Patches[i_patch]->sizeI()/2+1, this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
+        dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
+        GPU_CartesianIterator_kernelXFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+        GPU_CartesianIterator_kernelXFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+      }
 
-    {
-      dim3 blocks(this->m_Patches[i_patch]->sizeI(), this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
-      dim3 threads(this->m_Patches[i_patch]->sizeK()/2+1, k_lines, 1);
-      GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-      GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-    }
+      {
+        dim3 blocks(this->m_Patches[i_patch]->sizeI()/k_lines+1, this->m_Patches[i_patch]->sizeJ()/2+1, 1);
+        dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
+        GPU_CartesianIterator_kernelYFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+        GPU_CartesianIterator_kernelYFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+      }
 
-
-    {
-      dim3 blocks(this->m_Patches[i_patch]->sizeJ(), 1, 1);
-      dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
-      GPU_CartesianIterator_kernelXBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-    }
-
-    {
-      dim3 blocks(this->m_Patches[i_patch]->sizeI(), 1, 1);
-      dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
-      GPU_CartesianIterator_kernelYBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-    }
-
-    {
-      dim3 blocks(this->m_Patches[i_patch]->sizeI(), 1, 1);
-      dim3 threads(this->m_Patches[i_patch]->sizeJ(), 1, 1);
-      GPU_CartesianIterator_kernelZBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
-    }
+      {
+        dim3 blocks(this->m_Patches[i_patch]->sizeI(), this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
+        dim3 threads(this->m_Patches[i_patch]->sizeK()/2+1, k_lines, 1);
+        GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+        GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+      }
 
 
-    {
-      dim3 blocks(this->m_Patches[i_patch]->sizeI(), this->m_Patches[i_patch]->sizeJ(), 1);
-      dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
-      GPU_CartesianIterator_kernelAdvance<DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], factor);
-      CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
+      {
+        dim3 blocks(this->m_Patches[i_patch]->sizeJ(), 1, 1);
+        dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
+        GPU_CartesianIterator_kernelXBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+      }
+
+      {
+        dim3 blocks(this->m_Patches[i_patch]->sizeI(), 1, 1);
+        dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
+        GPU_CartesianIterator_kernelYBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+      }
+
+      {
+        dim3 blocks(this->m_Patches[i_patch]->sizeI(), 1, 1);
+        dim3 threads(this->m_Patches[i_patch]->sizeJ(), 1, 1);
+        GPU_CartesianIterator_kernelZBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+      }
+
+
+      {
+        dim3 blocks(this->m_Patches[i_patch]->sizeI(), this->m_Patches[i_patch]->sizeJ(), 1);
+        dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
+        GPU_CartesianIterator_kernelAdvance<DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], factor);
+        CUDA_CHECK_ERROR;
+        cudaThreadSynchronize();
+      }
+
     }
 
   }
