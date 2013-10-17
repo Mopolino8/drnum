@@ -111,11 +111,12 @@ std::vector<int> dn2of_size(mpi_comm.size(), 0);
 if (mpi_comm.rank() == 0) {
   
   Info << endl;
-  Info << "receive cells:\n";
-  Info << "--------------" << endl;
+  Info << "dn2of cells:\n";
+  Info << "----- ------" << endl;
 
   {
     int i = 0;
+    int N_total = 0;
     for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
       int N = 0;
       dn2of_start[i_rank] = i;
@@ -124,16 +125,19 @@ if (mpi_comm.rank() == 0) {
         ++dn2of_size[i_rank];
         ++i;
       }
-      Info << "rank = " << i_rank << "   " << N << " cells" << endl;
+      Info << "rank  = " << i_rank << "   " << N << " cells" << endl;
+      N_total += N;
     }
+    Info << "total = " << N_total << " cells" << endl;
   }
 
   Info << endl;
   Info << "of2dn cells:\n";
-  Info << "-----------" << endl;
+  Info << "------------" << endl;
 
   {
     int i = 0;
+    int N_total = 0;
     for (int i_rank = 0; i_rank < mpi_comm.size(); ++i_rank) {
       int N = 0;
       of2dn_start[i_rank] = i;
@@ -142,8 +146,10 @@ if (mpi_comm.rank() == 0) {
         ++of2dn_size[i_rank];
         ++i;
       }
-      Info << "rank = " << i_rank << "   " << N << " cells" << endl;
+      Info << "rank  = " << i_rank << "   " << N << " cells" << endl;
+      N_total += N;
     }
+    Info << "total = " << N_total << " cells" << endl;
   }
 
   Info << "\ntrying to connect to DrNUM ..." << endl;

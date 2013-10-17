@@ -181,6 +181,10 @@ void SharedMemory::readArray(std::string name, T *array)
 {
   int i = arrayIndex(name);
   if (i < 0) {
+    std::cout << "The following arrays exist:\n";
+    for (int j = 0; j < numArrays(); ++j) {
+      std::cout << " - \"" << arrayName(j) << "\"\n";
+    }
     error("SharedMemory::readArray: 'field \"" + name + "\" not found'");
   }
 

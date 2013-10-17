@@ -1,9 +1,5 @@
 
 mpi_comm.barrier();
-if (mpi_comm.rank() == 0) {
-  barrier->wait();
-}
-mpi_comm.barrier();
 
 // collect of2dn lists from MPI processes
 {
@@ -28,10 +24,11 @@ mpi_comm.barrier();
   }
 }
 
-mpi_comm.barrier();
-
 if (mpi_comm.rank() == 0) {
   of2dn_list.ipcSend();
+  if (mpi_comm.rank() == 0) {
+    barrier->wait();
+  }
   int write = 0;
   if (runTime.outputTime()) {
     write = 1;
@@ -44,8 +41,6 @@ if (mpi_comm.rank() == 0) {
   barrier->wait();
   dn2of_list.ipcReceive();
 }
-
-mpi_comm.barrier();
 
 // distribute dn2of lists to MPI processes
 {  

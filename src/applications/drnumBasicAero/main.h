@@ -206,7 +206,6 @@ vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
 
 void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *dn2of_list, Barrier *barrier, SharedMemory *shmem, bool &write_flag, bool &stop_flag, real &dt)
 {
-  barrier->wait();
   dim_t<5> dim;
   patch->copyFieldToHost(0);
   real var[dim()];
@@ -220,6 +219,7 @@ void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *
     dn2of_list->data(3, i) = w;
     dn2of_list->data(4, i) = T;
   }
+  barrier->wait();
   dn2of_list->ipcSend();
   barrier->wait();
   int write = 0;
