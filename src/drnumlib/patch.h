@@ -105,7 +105,6 @@ private: // attributes
 
 protected: // attributes
 
-  size_t m_MyIndex;           ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
   size_t m_mypatchtype;       ///< Type-code as defined by derived patches. Example 1001: CartesianPatch, etc...
   string m_patchcomment;      ///< Optional comment for this patch to be read/written in patchgrid files
   CodeString m_solvercodes;   ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
@@ -437,13 +436,6 @@ public: // methods
 
   /**
     * Access
-    * @return the index of the patch in sequence of PatchGrid::m_patches
-    */
-  size_t accessIndex() {return m_MyIndex;}
-
-
-  /**
-    * Access
     * @return the number of donor neighbours
     */
   size_t accessNumNeighbours() {return m_neighbours.size();}
@@ -466,7 +458,7 @@ public: // methods
     */
   size_t accessNeighbourIndex(size_t ii_n) {
     Patch* neighbour = m_neighbours[ii_n].first;
-    return neighbour->accessIndex();
+    return neighbour->getIndex();
   }
 
 
