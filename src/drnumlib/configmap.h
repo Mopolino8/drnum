@@ -70,6 +70,8 @@ public:  // methods
     return m_Map[key].value<T>();
   }
 
+  bool exists(QString key);
+
 };
 
 

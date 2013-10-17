@@ -144,3 +144,11 @@ void ConfigMap::addDirectory(QString path)
     addFile(dir.absolutePath() + "/" + file_name);
   }
 }
+
+bool ConfigMap::exists(QString key)
+{
+  if (m_Map.find(key) != m_Map.end()) {
+    return true;
+  }
+  return false;
+}
