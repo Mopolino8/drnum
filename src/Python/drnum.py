@@ -58,6 +58,7 @@ class Patch:
     self.j2_flux = "far"
     self.k1_flux = "far"
     self.k2_flux = "far"
+    self.dim_set = False
 
   def setOverlap(self, overlap):
     self.overlap = overlap  
@@ -160,7 +161,16 @@ class Patch:
       self.Nj += 1
     while self.Nk*self.hk < self.z2 - self.z1:
       self.Nk += 1
-    
+
+  def setDim(self, ni, nj, nk):
+    self.Ni = ni
+    self.Nj = nj
+    self.Nk = nk
+    self.hi = (self.x2 - self.x1)/self.Ni
+    self.hj = (self.y2 - self.y1)/self.Nj
+    self.hk = (self.z2 - self.z1)/self.Nk
+    self.dim_set = True
+
   def inflateI1(self, hn):
     #self.x1 -= self.overlap_factor*(0.5*hn + 2*self.hi)
     self.x1 -= self.neigh_overlap_factor*hn + self.overlap*self.overlap_factor*self.hi
