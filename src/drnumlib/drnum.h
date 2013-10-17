@@ -101,9 +101,10 @@ using namespace std;
  */
 #define BUG {                             \
   printf("This seems to be a bug!\n");    \
-  printf("  file: %s\n", __FILE__);         \
-  printf("  line: %d\n", __LINE__);         \
+  printf("  file: %s\n", __FILE__);       \
+  printf("  line: %d\n", __LINE__);       \
   assert(false);                          \
+  exit(EXIT_FAILURE);                     \
 }
 
 /**
@@ -116,6 +117,7 @@ using namespace std;
   printf("  file: %s\n", __FILE__);       \
   printf("  line: %d\n", __LINE__);       \
   assert(false);                          \
+  exit(EXIT_FAILURE);                     \
 }
 
 #ifdef WITH_VTK
