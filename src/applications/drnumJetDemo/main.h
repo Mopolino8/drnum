@@ -68,7 +68,7 @@ void run()
   real Ma_far         = config.getValue<real>("Ma-far");
   real Ma_jet         = config.getValue<real>("Ma-jet");
   real p_far          = config.getValue<real>("p-far");
-  real p_jet          = config.getValue<real>("p-far");
+  real p_jet          = config.getValue<real>("p-jet");
   real T_far          = config.getValue<real>("T-far");
   real T_jet          = config.getValue<real>("T-jet");
   real u_far          = Ma_far*sqrt(PerfectGas::gamma()*PerfectGas::R()*T_far);
@@ -79,7 +79,13 @@ void run()
   real t_write        = 0;
   real write_interval = config.getValue<real>("write-interval")*time;
   real total_time     = config.getValue<real>("total-time")*time;
+  int  jet_patch_id   = config.getValue<int>("jet-patch");
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
+  int  thread_limit   = 0;
+
+  if (config.exists("thread-limit")) {
+    thread_limit = config.getValue<int>("thread-limit");
+  }
 
 #ifdef GPU
   int  cuda_device    = config.getValue<int>("cuda-device");
@@ -109,7 +115,7 @@ void run()
 
   // Initialize
   real init_var[5];
-  PerfectGas::primitiveToConservative(p_far, T_far, u_far, 0, 0, init_var);
+  PerfectGas::primitiveToConservative(p_far, T_far, 0, u_far, u_far, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
   if (write) {
@@ -120,9 +126,8 @@ void run()
     exit(EXIT_SUCCESS);
   }
 
-  JetFlux flux_jet;
-  flux_jet.setup(u_jet, u_far, p_jet, p_far, T_jet, T_far, L, max(Ma_far, Ma_jet) > 1.0);
-  EaFlux flux_std(0, 0, p_far, T_far);
+  JetFlux flux;
+  flux.setup(u_jet, u_far, p_jet, p_far, T_jet, T_far, 0.5*L, jet_patch_id, max(Ma_far, Ma_jet) > 1.0);
 
   RungeKutta runge_kutta;
   runge_kutta.addAlpha(0.25);
@@ -130,19 +135,15 @@ void run()
   runge_kutta.addAlpha(1.000);
 
 #ifdef GPU
-  GPU_CartesianIterator<5, EaFlux>   iterator_std(flux_std, cuda_device);
-  GPU_CartesianIterator<5, JetFlux>  iterator_jet(flux_jet, cuda_device);
+  GPU_CartesianIterator<5, JetFlux>  iterator_std(flux, cuda_device, thread_limit);
 #else
   BUG;
-  CartesianIterator<5, EaFlux>   iterator_std(flux_std);
-  CartesianIterator<5, JetFlux>  iterator_jet(flux_jet);
+  CartesianIterator<5, JetFlux>  iterator_std(flux);
 #endif
   iterator_std.setCodeString(CodeString("fx fy fz far far far far far far 0"));
-  iterator_jet.setCodeString(CodeString("fx fy fz jet 0   0   0   0   0   0"));
 
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator_std);
-  iterator_feeder.addIterator(&iterator_jet);
   iterator_feeder.feed(patch_grid);
 
   //vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
@@ -153,21 +154,10 @@ void run()
   //runge_kutta.addPostOperation(&cyclic);
 
   runge_kutta.addIterator(&iterator_std);
-  runge_kutta.addIterator(&iterator_jet);
 
   int write_counter = 0;
   int iter = 0;
   real t = 0;
-
-  cout << "std:" << iterator_std.numPatches() << endl;
-  cout << "jet:" << iterator_jet.numPatches() << endl;
-
-  SharedMemory         *shmem = NULL;
-  Barrier              *barrier = NULL;
-  ExternalExchangeList *of2dn_list = NULL;
-  ExternalExchangeList *dn2of_list = NULL;
-  int                   coupling_patch_id = -1;
-  Patch                *coupling_patch = NULL;
 
 #ifdef GPU
   iterator_std.updateDevice();
@@ -235,6 +225,15 @@ void run()
       cout << "  max: " << max_norm_allpatches << "  L2: " << l2_norm_allpatches;
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       printTiming();
+
+      ConfigMap config;
+      config.addDirectory("control");
+      cfl_target     = config.getValue<real>("CFL");
+      write_interval = config.getValue<real>("write-interval")*time;
+      total_time     = config.getValue<real>("total-time")*time;
+
+      dt *= cfl_target/CFL_max;
+
       ++write_counter;
       if (write) {
         patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
@@ -245,7 +244,7 @@ void run()
       }
     } else {
       ++iter;
-      cout << iter << " iterations,  t=" << t/time << "*L/u_oo,  dt: " << dt << endl;
+      cout << iter << " iterations,  t=" << t << " = " << t/time << "*L/u_oo,  dt: " << dt << endl;
     }
   }
 
