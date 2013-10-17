@@ -49,6 +49,10 @@ donor_t* m_Donors;         ///< All donor data structs for this (receiver) patch
 size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_NumDonorWIConcat]
 real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_NumDonorWIConcat]
 
+protected: // attributes
+
+size_t  m_MyIndex;      ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
+
 
 public:
 
@@ -427,6 +431,13 @@ CUDA_DH void setVarDim(unsigned int dim, size_t i_field, size_t i, real *var)
 }
 
 /**
+  * Access
+  * @return the index of the patch in sequence of PatchGrid::m_patches
+  */
+CUDA_DH size_t getIndex() {return m_MyIndex;}
+
+
+/**
  * Copy simple data attributes from another object.
  * The other object can have a different type as long as the required attributes are present.
  * param obj a constant reference to the other object
@@ -443,6 +454,7 @@ CUDA_HO void copyAttributes(T* obj)
   m_NumReceivingCellsUnique = obj->getNumReceivingCellsUnique();
   m_NumDonorWIConcat        = obj->getNumDonorWIConcat();
   m_PatchGrid               = obj->getPatchGrid();
+  m_MyIndex                 = obj->getIndex();
 }
 
 
