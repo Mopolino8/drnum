@@ -42,7 +42,7 @@ protected: // attributes
 
 public:
 
-  GPU_PatchIterator(OP op, int cuda_device = 0);
+  GPU_PatchIterator(OP op, int cuda_device = 0, size_t thread_limit = 0);
 
   CUDA_HO void updateHost();
   CUDA_HO void updateDevice();
@@ -55,7 +55,7 @@ public:
 
 
 template <typename T_CPU, typename T_GPU, typename OP>
-GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device)
+GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device, size_t thread_limit)
   : TPatchIterator<T_CPU, OP>(op)
 {
   m_GpuPointersSet = false;
@@ -77,6 +77,9 @@ GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device)
   }
   cudaSetDevice(m_CudaDevice);
   m_MaxNumThreads = min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]);
+  if (thread_limit > 0) {
+    m_MaxNumThreads = min(thread_limit, m_MaxNumThreads);
+  }
 }
 
 template <typename T_CPU, typename T_GPU, typename OP>
