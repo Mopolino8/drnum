@@ -518,7 +518,15 @@ class Mesh:
   def setOverlap(self, overlap):
     for i in range(0, len(self.patches)):
       self.patches[i].setOverlap(overlap)
-      
+
+  def setAllFluxes(self, flux):
+    self.setI1Flux(flux)
+    self.setI2Flux(flux)
+    self.setJ1Flux(flux)
+    self.setJ2Flux(flux)
+    self.setK1Flux(flux)
+    self.setK2Flux(flux)
+
 
       
     
