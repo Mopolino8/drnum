@@ -55,8 +55,9 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    #include "drnumInit.h"
+    #include "drnumInit.H"
     #include "drnumSync.H"
+    #include "drnumOverwrite.H"
     
     Info<< "\nStarting time loop\n" << endl;
 
@@ -74,12 +75,15 @@ int main(int argc, char *argv[])
         while (pimple.loop())
         {
             #include "UEqn.H"
+            #include "drnumOverwrite.H"
             #include "EEqn.H"
+            #include "drnumOverwrite.H"
 
             // --- Pressure corrector loop
             while (pimple.correct())
             {
                 #include "pEqn.H"
+                #include "drnumOverwrite.H"
             }
 
             if (pimple.turbCorr())
@@ -91,6 +95,7 @@ int main(int argc, char *argv[])
         rho = thermo.rho();
 
         #include "drnumSync.H"
+        #include "drnumOverwrite.H"
         runTime.write();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"

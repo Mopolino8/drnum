@@ -87,6 +87,9 @@ for (int i_layer = 2; i_layer < 4; ++i_layer) {
 dn2of_list.sort();
 of2dn_list.sort();
 
+// create label lists in order to fix the cells during computation
+labelList fixed_cells(dn2of_list.size());
+
 if (mpi_comm.rank() == 0) {
   for (int i_rank = 1; i_rank < mpi_comm.size(); ++i_rank) {
     ExternalExchangeList add_list("tmp", 5, &mpi_comm, shmem, barrier);

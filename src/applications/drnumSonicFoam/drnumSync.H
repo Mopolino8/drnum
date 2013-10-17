@@ -56,27 +56,8 @@ mpi_comm.barrier();
   } else {
     dn2of_list.mpiReceive(0);
   }
-  if (mpi_comm.rank() == 0) {
-    for (int i_cell = dn2of_start[0]; i_cell < dn2of_start[0] + dn2of_size[0]; ++i_cell) {
-      p[dn2of_list.index(i_cell)] = dn2of_list.data(0, i_cell);
-      U[dn2of_list.index(i_cell)][0] = dn2of_list.data(1, i_cell);
-      U[dn2of_list.index(i_cell)][1] = dn2of_list.data(2, i_cell);
-      U[dn2of_list.index(i_cell)][2] = dn2of_list.data(3, i_cell);
-      thermo.T()[dn2of_list.index(i_cell)] = dn2of_list.data(4, i_cell);
-    }
-  }
-  mpi_comm.barrier();
-  if (mpi_comm.rank() != 0) {
-    for (int i_cell = 0; i_cell < dn2of_list.size(); ++i_cell) {
-      p[dn2of_list.index(i_cell)] = dn2of_list.data(0, i_cell);
-      U[dn2of_list.index(i_cell)][0] = dn2of_list.data(1, i_cell);
-      U[dn2of_list.index(i_cell)][1] = dn2of_list.data(2, i_cell);
-      U[dn2of_list.index(i_cell)][2] = dn2of_list.data(3, i_cell);
-      thermo.T()[dn2of_list.index(i_cell)] = dn2of_list.data(4, i_cell);
-    }
-  }
-  thermo.correct();
 }
+
 
 
 
