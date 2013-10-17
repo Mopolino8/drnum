@@ -7,7 +7,7 @@
 #include "reconstruction/minmod.h"
 #include "reconstruction/secondorder.h"
 #include "fluxes/knp.h"
-//#include "fluxes/vanleer.h"
+#include "fluxes/vanleer.h"
 #include "fluxes/ausmplus.h"
 //#include "fluxes/ausmdv.h"
 #include "fluxes/compressibleslipflux.h"
@@ -20,7 +20,7 @@
 class JetFlux
 {
 
-  typedef AusmPlus<reconstruction_t, PerfectGas>                 euler_t;
+  typedef VanLeer<reconstruction_t, PerfectGas>                  euler_t;
   typedef CompressibleViscFlux<5, PerfectGas>                    viscous_t;
   typedef CompressibleSlipFlux<5, reconstruction_t, PerfectGas>  wall_t;
   typedef CompressibleFarfieldFlux<5, Upwind1, PerfectGas>       farfield_t;
@@ -39,6 +39,7 @@ class JetFlux
   real   m_Tfar;
   real   m_Radius;
   bool   m_SuperSonic;
+  int    m_JetPatch;
 
 
 public: // methods
@@ -46,7 +47,7 @@ public: // methods
   JetFlux();
   JetFlux(const JetFlux& F);
 
-  void setup(real u_jet, real u_far, real p_jet, real p_far, real T_jet, real T_far, real radius, bool super_sonic);
+  void setup(real u_jet, real u_far, real p_jet, real p_far, real T_jet, real T_far, real radius, int jet_patch, bool super_sonic);
 
   template <typename PATCH> CUDA_DH void xField(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   template <typename PATCH> CUDA_DH void yField(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
@@ -76,9 +77,10 @@ JetFlux::JetFlux(const JetFlux& F)
   m_Tjet = F.m_Tjet;
   m_Radius = F.m_Radius;
   m_SuperSonic = F.m_SuperSonic;
+  m_JetPatch = F.m_JetPatch;
 }
 
-void JetFlux::setup(real u_jet, real u_far, real p_jet, real p_far, real T_jet, real T_far, real radius, bool super_sonic)
+void JetFlux::setup(real u_jet, real u_far, real p_jet, real p_far, real T_jet, real T_far, real radius, int jet_patch, bool super_sonic)
 {
   m_Ujet = u_jet;
   m_Ufar = u_far;
@@ -88,6 +90,7 @@ void JetFlux::setup(real u_jet, real u_far, real p_jet, real p_far, real T_jet, 
   m_Tjet = T_jet;
   m_Radius = radius;
   m_SuperSonic = super_sonic;
+  m_JetPatch = jet_patch;
 }
 
 
@@ -151,31 +154,37 @@ inline void JetFlux::zWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real
 template <typename PATCH>
 inline void JetFlux::xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  dim_t<5> dim;
-  real var[5];
-  real p, T, u, v, w;
-  P->getVar(dim, 0, i, j, k, var);
-  PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
-  real rr = x*x + y*y + z*z;
-  if (rr < m_Radius*m_Radius) {
-    u = m_Ujet;
-    v = 0;
-    w = 0;
-    if (m_SuperSonic) {
-      p = m_Pjet;
-    }
-    T = m_Tjet;
+  if (P->getIndex() != m_JetPatch) {
+    m_WallFlux.xWallM(P, i, j, k, x, y, z, A, flux);
   } else {
-    u = m_Ufar;
-    v = 0;
-    w = 0;
-    T = m_Tfar;
+    dim_t<5> dim;
+    real var[5];
+    real p, T, u, v, w;
+    P->getVar(dim, 0, i, j, k, var);
+    PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+    real y0 = 0.5*P->sizeJ()*P->dy();
+    real z0 = 0.5*P->sizeK()*P->dz();
+    real rr = sqr(y - y0) + sqr(z - z0);
+    if (rr < m_Radius*m_Radius) {
+      u = m_Ujet;
+      v = 0;
+      w = 0;
+      if (m_SuperSonic) {
+        p = m_Pjet;
+      }
+      T = m_Tjet;
+    } else {
+      u = m_Ufar;
+      v = 0;
+      w = 0;
+      T = m_Tfar;
+    }
+    flux[0] = A*p/(PerfectGas::R()*T)*u;
+    flux[1] = flux[0]*u + A*p;
+    flux[2] = flux[0]*v;
+    flux[3] = flux[0]*w;
+    flux[4] = flux[0]*(PerfectGas::cp()*T + 0.5*(u*u + v*v + w*w));
   }
-  flux[0] = A*p/(PerfectGas::R()*T)*u;
-  flux[1] = flux[0]*u + A*p;
-  flux[2] = flux[0]*v;
-  flux[3] = flux[0]*w;
-  flux[4] = flux[0]*(PerfectGas::cp()*T + 0.5*(u*u + v*v + w*w));
 }
 
 template <typename PATCH>
