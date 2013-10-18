@@ -756,3 +756,18 @@ int Patch::findCell(vec3_t xo)
   return id_cell;
 }
 
+void Patch::writeData(size_t i_field, QDataStream &stream)
+{
+  real *data = getField(i_field);
+  for (size_t i = 0; i < fieldSize(); ++i) {
+    stream << data[i];
+  }
+}
+
+void Patch::readData(size_t i_field, QDataStream &stream)
+{
+  real *data = getField(i_field);
+  for (size_t i = 0; i < fieldSize(); ++i) {
+    stream >> data[i];
+  }
+}

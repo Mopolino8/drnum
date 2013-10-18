@@ -59,9 +59,9 @@ class EaFlux
 protected:
 
   //typedef Upwind1 reconstruction_t;
-  typedef Upwind2<5, SecondOrder>                           reconstruction_t;
+  //typedef Upwind2<5, SecondOrder>                           reconstruction_t;
 
-  //typedef Upwind2<5, VanAlbada>                             reconstruction_t;
+  typedef Upwind2<5, VanAlbada>                             reconstruction_t;
   typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
   //typedef KNP<reconstruction_t, PerfectGas>              euler_t;
   typedef CompressibleSlipFlux<5, Upwind1, PerfectGas>     wall_t;
@@ -386,6 +386,12 @@ void run()
     iterator_std.deactivatePatch(coupling_patch_id);
   }
 
+  QString restart_file = config.getValue<QString>("restart-file");
+  if (restart_file.toLower() != "none") {
+    write_counter = restart_file.right(6).toInt();
+    t = patch_grid.readData(0, "data/" + restart_file);
+  }
+
 #ifdef GPU
   iterator_std.updateDevice();
 #endif
@@ -461,6 +467,7 @@ void run()
       ++write_counter;
       if (write) {
         patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
+        patch_grid.writeData(0, "data/step", t, write_counter);
       }
       t_write -= write_interval;
     } else {

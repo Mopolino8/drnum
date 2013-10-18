@@ -23,6 +23,8 @@
 #include <vtkMultiBlockDataSet.h>
 #include <vtkXMLMultiBlockDataWriter.h>
 
+#include <QFile>
+
 #include "patchgrid.h"
 #include "stringtools.h"
 #include "geometrytools.h"
@@ -520,19 +522,50 @@ void PatchGrid::readGrid(string gridfilename)
   cout << "done. " << endl;
 }
 
-void PatchGrid::writeData(QString base_data_filename, int count)
+void PatchGrid::writeData(size_t i_field, QString base_file_name, real time, int count)
 {
-  QString str_patch_index;
-  QString str_patch_filename;
-  // loop for patches iof patch_grid
-  for (size_t i_p = 0; i_p < getNumPatches(); i_p++) {
-    str_patch_index.setNum(i_p);
-    while (str_patch_index.size() < 6) {
-      str_patch_index = "0" + str_patch_index;
-    }
-    str_patch_filename = base_data_filename + "_ip" + str_patch_index;
-    getPatch(i_p)->writeData(str_patch_filename, count);
+
+  QString count_txt;
+  count_txt.setNum(count);
+  count_txt = count_txt.rightJustified(6, '0');
+  QString file_name = base_file_name + "_" + count_txt + ".dnd";
+  QFile file(file_name);
+  file.open(QIODevice::WriteOnly);
+  QDataStream stream(&file);
+  if (sizeof(real) == 4) {
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    stream << int(4);
+  } else {
+    stream.setFloatingPointPrecision(QDataStream::DoublePrecision);
+    stream << int(8);
   }
+  stream << time;
+  for (size_t i_p = 0; i_p < getNumPatches(); i_p++) {
+    getPatch(i_p)->writeData(i_field, stream);
+  }
+}
+
+real PatchGrid::readData(size_t i_field, QString file_name)
+{
+  if (file_name.right(4) != ".dnd") {
+    file_name += ".dnd";
+  }
+  QFile file(file_name);
+  file.open(QIODevice::ReadOnly);
+  QDataStream stream(&file);
+  int prec;
+  stream >> prec;
+  if (prec == 4) {
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+  } else {
+    stream.setFloatingPointPrecision(QDataStream::DoublePrecision);
+  }
+  real time;
+  stream >> time;
+  for (size_t i_p = 0; i_p < getNumPatches(); i_p++) {
+    getPatch(i_p)->readData(i_field, stream);
+  }
+  return time;
 }
 
 

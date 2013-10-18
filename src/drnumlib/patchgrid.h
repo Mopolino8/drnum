@@ -172,23 +172,24 @@ public: // methods
 
 
   /**
-   * Read patch data from individual files (one each per patch).
-   * Example: read from data files with base name "calc/mydata" of counter level i_t = 55. Files to read:
-   * calc/mydata_ip000000_000055.vtr ;  calc/mydata_ip000001_000055.vtr ; ...
-   * @param base data filename relative to cwd.
-   * @param discrete counter (usually time counter).
+   * This has been changed in order to have all patches in a single file.
+   * The last commit before the change is: c62f01bee34b3832b648a133353241740ea7a835
+   * @param i_field the field index of the field to be read
+   * @param file_name full file name relative to cwd.
+   * @return the last simulation time
    */
-  void readData(string, size_t) {BUG;}
+  real readData(size_t i_field, QString file_name);
 
 
   /**
-   * Write patch data to individual files (one each per patch).
-   * Example: write to data files with base name "calc/mydata" at counter level i_t = 55. Files to write:
-   * calc/mydata_ip000000_000055.vtr ;  calc/mydata_ip000001_000055.vtr ; ...
-   * @param base data filename relative to cwd.
+   * This has been changed in order to have all patches in a single file.
+   * The last commit before the change is: c62f01bee34b3832b648a133353241740ea7a835
+   * @param i_field the field index of the field to be written
+   * @param base_file_name file name relative to cwd.
+   * @param time the current simulation time
    * @param discrete counter (usually time counter).
    */
-  void writeData(QString base_data_filename, int count);
+  void writeData(size_t i_field, QString base_file_name, real time, int count);
 
 
   /**

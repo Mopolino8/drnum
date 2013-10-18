@@ -29,9 +29,9 @@
 #include <list>
 
 #include <QString>
+#include <QDataStream>
 
 #include <vtkDataSet.h>
-
 
 #include "weightedset.h"
 
@@ -375,14 +375,20 @@ public: // methods
 
 
   /**
-   * Write patch data to an individual files for this patch only.
-   * Example: Let m_myindex be 777 and write to data file with base name "calc/mydata" at counter level 55.
-   * Files to write to: calc/mydata_ip000777_000055.vtr
-   * @param base_data_filename base data filename relative to cwd.
-   * @param count discrete counter (usually time counter).
+   * Add data of this patch to an existing stream.
+   * This has been changed in order to have all patches in a single file.
+   * The last commit before the change is: c62f01bee34b3832b648a133353241740ea7a835
+   * @param i_field the field index of the field to be written
+   * @param stream a QDataStream to which the data will be written
    */
-  //virtual void writeData(QString base_data_filename, size_t count) {BUG;}
-  virtual void writeData(QString, size_t) {BUG;}
+  void writeData(size_t i_field, QDataStream &stream);
+
+  /**
+   * Read data of this patch from an existing stream.
+   * @param i_field the field index of the field to be read
+   * @param stream a QDataStream from which the data will be read
+   */
+  void readData(size_t i_field, QDataStream &stream);
 
 
   /**
