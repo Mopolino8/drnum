@@ -274,6 +274,7 @@ void ExternalExchangeList::append(int grid, int index, real x, real y, real z)
 
 void ExternalExchangeList::sort()
 {
+  BUG;
   if (m_Finalised) {
     BUG;
   }
@@ -286,18 +287,28 @@ void ExternalExchangeList::sort()
 
 void ExternalExchangeList::finalise(PatchGrid *patch_grid, int id_patch)
 {
-  sort();
-
   if (patch_grid && id_patch >= 0) {
+    vector<bool> cell_used(patch_grid->getPatch(id_patch)->variableSize(), false);
+    real max_dist = 0;
     for (int i = 0; i < m_XyzCells.size(); ++i) {
-      vec3_t xo = vec3_t(m_XyzCells[i].x, m_XyzCells[i].y, m_XyzCells[i].z);
-      int id_cell = patch_grid->getPatch(id_patch)->findCell(xo);
+      vec3_t xo_of = vec3_t(m_XyzCells[i].x, m_XyzCells[i].y, m_XyzCells[i].z);
+      int id_cell = patch_grid->getPatch(id_patch)->findCell(xo_of);
       if (id_cell < 0) {
         ERROR("unable to find coupled cell");
       }
+      vec3_t xo_dn = patch_grid->getPatch(id_patch)->xyzoCell(id_cell);
+      max_dist = max(max_dist, (xo_of - xo_dn).abs());
+      if (cell_used[id_cell]) {
+        QString msg = "cell #" + QString::number(id_cell) + " has already been used!";
+        ERROR(qPrintable(msg));
+      }
+      cell_used[id_cell] = true;
       m_XyzCells[i].index = id_cell;
       m_XyzCells[i].grid  = id_patch;
     }
+    cout << "maximal match distance : " << max_dist << endl;
+  } else {
+    //sort();
   }
 
   m_Cells.resize(m_XyzCells.size());

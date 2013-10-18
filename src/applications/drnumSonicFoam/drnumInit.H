@@ -23,6 +23,7 @@ MpiCommunicator mpi_comm(argc, argv);
 
 mpi_comm.barrier();
 
+/*
 label id_patch = mesh.boundaryMesh().findPatchID("DrNUM"); 
 const polyPatch& drnum_patch = mesh.boundaryMesh()[id_patch]; 
 
@@ -48,6 +49,7 @@ for (int i_layer = 1; i_layer < 4; ++i_layer) {
     }
   }
 } 
+*/
 
 SharedMemory *shmem   = NULL;
 Barrier      *barrier = NULL;
@@ -64,6 +66,7 @@ if (mpi_comm.rank() == 0) {
 ExternalExchangeList dn2of_list("dn2of", 5, &mpi_comm, shmem, barrier);
 ExternalExchangeList of2dn_list("of2dn", 5, &mpi_comm, shmem, barrier);
 
+/*
 for (int i_layer = 0; i_layer < 2; ++i_layer) {
   for (std::list<int>::iterator i = exchange_cells[i_layer].begin(); i != exchange_cells[i_layer].end(); ++i) {
     label id_cell = *i;
@@ -83,9 +86,25 @@ for (int i_layer = 2; i_layer < 4; ++i_layer) {
     of2dn_list.append(mpi_comm.rank(), id_cell, x, y, z);
   }
 }
+*/
 
-dn2of_list.sort();
-of2dn_list.sort();
+forAll (mesh.cells(), cell) {
+  scalar x = mesh.cellCentres()[cell][0];
+  scalar y = mesh.cellCentres()[cell][1];
+  scalar z = mesh.cellCentres()[cell][2];
+  bool box1 = inBox(-0.15, -0.15, -0.15, 0.15, 0.15, 0.15, x, y, z);
+  bool box2 = inBox(-0.14, -0.14, -0.14, 0.14, 0.14, 0.14, x, y, z);
+  bool box3 = inBox(-0.13, -0.13, -0.13, 0.13, 0.13, 0.13, x, y, z);
+  if (box1 && !box2) {
+    dn2of_list.append(mpi_comm.rank(), cell, x, y, z);
+  }
+  if (box2 && !box3) {
+    of2dn_list.append(mpi_comm.rank(), cell, x, y, z);
+  }
+}
+
+//dn2of_list.sort();
+//of2dn_list.sort();
 
 // create label lists in order to fix the cells during computation
 labelList fixed_cells(dn2of_list.size());

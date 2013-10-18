@@ -43,6 +43,16 @@ Description
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+
+bool inBox(double x1, double y1, double z1, double x2, double y2, double z2, double x, double y, double z)
+{
+  if (x < x1 || x > x2) return false;
+  if (y < y1 || y > y2) return false;
+  if (z < z1 || z > z2) return false;
+  return true;
+}
+
+
 int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
