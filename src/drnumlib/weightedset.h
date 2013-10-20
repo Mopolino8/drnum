@@ -30,6 +30,7 @@ template<class T> class WeightedSet;
 #include <vector>
 #include <iostream>
 //#include <complex>
+#include "blockcfd.h"
 
 using namespace std;
 
@@ -145,6 +146,16 @@ public:
    * @return true, if no error occured
    */
   bool adjustWeightSumShift(const T& weight_sum);
+
+  /**
+    * Transfer to fixed sized arrays for "indices" and "weights".
+    * @param n_dimension fixed size of arrays
+    * @param indices pointer on array for indices (will write onto)
+    * @param weights pointer on array for weights (will write onto)
+    * @return bool true indicatinf success
+    */
+  bool tranferToFixedArrays(size_t n_dimension,
+                            size_t* indices, T* weights);
 
 };
 
@@ -392,34 +403,6 @@ inline void WeightedSet<T>::Unify()
   sure_sorted = true;
 }
 
-// old heritage version
-//WeightedSet::Unify()
-//{
-//  sort(begin(), end());
-//  WeightedSet<T>::iterator it = begin();
-//  WeightedSet<T>::iterator hold_it;
-//  bool initial = true;
-//  while(it != end()) {
-//    if(initial) {
-//      initial = false;
-//      hold_it = it;
-//      it++;
-//    } else {
-//      if(it->first == hold_it->first) {
-//        // same address: add weights
-//        hold_it->second += it->second;
-//        /// @todo was probably wrong
-//        //		erase(it);
-//        it = erase(it);
-//      } else {
-//        // other address: go on
-//        hold_it = it;
-//        it++;
-//      };
-//    };
-//  };
-//  sure_sorted = true;
-//}
 
 template<class T>
 inline void WeightedSet<T>::Concatenate(const WeightedSet<T>& w)
@@ -634,6 +617,61 @@ inline bool WeightedSet<T>::adjustWeightSumShift(const T& weight_sum)
   }
   return success;
 }
+
+
+template<class T>
+inline bool WeightedSet<T>::tranferToFixedArrays(size_t n_dimension,
+                                                 size_t* indices, T* weights)
+{
+  // Find the n_dimension highest weights in the set and store these on
+  // fixed size arrays "indices" and "weights".
+  // However, do not alter the sequence of the remaining entries in the set
+  // Options:
+  // 0) v.size() == 0 return as error
+  // 1) matching size:
+  //    * copy 1:1 onto fixes sized arrays
+  // 2) fixed size array dimension "n_dimension" larger than v.size() :
+  //    * apply padding: fill up indices with last index in v (v[v.size()-1].first)
+  //                     fill up weights wit 0
+  // 3) fixed size array dimension "n_dimension" smaller than v.size() :
+  //    * not implemented yet, issue a BUG
+
+  // Option 0;
+  if(v.size() == 0) {
+    return false;
+  }
+
+  // Option 1: matching size
+  if(n_dimension == v.size()) {
+    for(size_t i=0; i<v.size(); i++) {
+      indices[i] = v[i].first;
+      weights[i] = v[i].second;
+    }
+  }
+
+  // Option 2: fixed size array dimension "n_dimension" larger than v.size()
+  else if(n_dimension > v.size()) {
+    //.. copy
+    for(size_t i=0; i<v.size(); i++) {
+      indices[i] = v[i].first;
+      weights[i] = v[i].second;
+    }
+    //.. apply padding
+    for(size_t i=v.size(); i<n_dimension; i++) {
+      indices[i] = v[v.size()].first;
+      weights[i] = t_zero;
+    }
+  }
+
+  // Option 3: fixed size array dimension "n_dimension" smaller than v.size()
+  else {
+    // not implemented yet, issue a BUG
+    BUG;
+  }
+
+  return true;
+}
+
 
 template<class T>
 inline T WeightedSet<T>::RealValue(T* a)

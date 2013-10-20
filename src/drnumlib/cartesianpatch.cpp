@@ -1587,6 +1587,74 @@ void CartesianPatch::cellOverNodeNeighbours (const size_t& i_c,
 }
 
 
+void CartesianPatch::computeNablaVar(const size_t& field_index, const size_t& var_index, const size_t& l_cell,
+                                     real& dvar_dx, real& dvar_dy, real& dvar_dz)
+{
+  size_t i, j, k;
+  size_t l_plus, l_minus;
+  bool skip_plus, skip_minus;
+
+  real* var = getVariable(field_index, var_index);
+
+  ijk(l_cell,
+      i, j, k);
+
+  // dvar_dx
+  l_plus  = save_index(i+1, j  , k  ,
+                       skip_plus);
+  l_minus = save_index(i-1, j  , k  ,
+                       skip_minus);
+  if (!skip_plus && !skip_minus) {  // go central
+    dvar_dx = (var[l_plus] - var[l_minus]) / (2.*m_Dx);
+  }
+  else if (skip_plus) {  // one sided i-1, i
+    dvar_dx = (var[l_cell] - var[l_minus]) / m_Dx;
+  }
+  else if (skip_minus) {  // one sided i, i+1
+    dvar_dx = (var[l_plus] - var[l_cell]) / m_Dx;
+  }
+  else {
+    BUG;
+  }
+
+  // dvar_dy
+  l_plus  = save_index(i  , j+1, k  ,
+                       skip_plus);
+  l_minus = save_index(i  , j-1, k  ,
+                       skip_minus);
+  if (!skip_plus && !skip_minus) {  // go central
+    dvar_dy = (var[l_plus] - var[l_minus]) / (2.*m_Dy);
+  }
+  else if (skip_plus) {  // one sided j-1, j
+    dvar_dy = (var[l_cell] - var[l_minus]) / m_Dy;
+  }
+  else if (skip_minus) {  // one sided j, j+1
+    dvar_dy = (var[l_plus] - var[l_cell]) / m_Dy;
+  }
+  else {
+    BUG;
+  }
+
+  // dvar_dz
+  l_plus  = save_index(i  , j  , k+1,
+                       skip_plus);
+  l_minus = save_index(i  , j  , k-1,
+                       skip_minus);
+  if (!skip_plus && !skip_minus) {  // go central
+    dvar_dz = (var[l_plus] - var[l_minus]) / (2.*m_Dz);
+  }
+  else if (skip_plus) {  // one sided k-1, k
+    dvar_dz = (var[l_cell] - var[l_minus]) / m_Dz;
+  }
+  else if (skip_minus) {  // one sided k, k+1
+    dvar_dz = (var[l_plus] - var[l_cell]) / m_Dz;
+  }
+  else {
+    BUG;
+  }
+}
+
+
 #ifdef WITH_VTK
 vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, const PostProcessingVariables &proc_vars)
 {

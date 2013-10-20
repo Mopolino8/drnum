@@ -18,22 +18,29 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef GPU
-#include "main.h"
-#endif
+#include "blockcfd.h"
 
-extern "C" void GPU_main();
+// Includes to build a geometric levelset test case
 
-int main()
-{
-#ifdef GPU
-  GPU_main();
-#else
-  int num_threads = 2;
-  omp_set_num_threads(num_threads);
-  cout << endl;
-  cout << "*** NUMBER THREADS: " << num_threads << endl;
-  cout << endl;
-  run();
-#endif
-}
+// Test case:
+// some spheres and cylinders
+SphereLevelSet obj_sph_1;
+SphereLevelSet obj_sph_2;
+SphereLevelSet obj_sph_3;
+obj_sph_1.setParams(4., 4., 4., 2.5);
+obj_sph_2.setParams(6., 6., 6., 2.5);
+obj_sph_3.setParams(4., 5., 6., 2.5);
+// some cylinders
+CylinderLevelSet obj_cyl_1;
+obj_cyl_1.setParams(1., 5., 5.,
+                    6., 0., 0.,
+                    1.);
+
+CombiLevelSetAnd object_inter1(&obj_sph_1, &obj_sph_2);
+CombiLevelSetAnd object_inter2(&obj_sph_2, &obj_sph_3);
+CombiLevelSetAnd object_inter3(&obj_sph_3, &obj_sph_1);
+CombiLevelSetOr object_inter4(&object_inter1, &object_inter2);
+CombiLevelSetOr object_inter5(&object_inter4, &object_inter3);
+CombiLevelSetAndNot object(&object_inter5, &obj_cyl_1);
+
+gridfile = "patches/standard.grid";

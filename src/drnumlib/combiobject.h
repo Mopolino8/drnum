@@ -15,7 +15,6 @@ protected: // attributes
 
   vector<ObjectDefinition*> m_Objects;
 
-
 protected: // methods
   void considerLowestObjectsOf(ObjectDefinition* object);
   void concatLowestObjects(vector<ObjectDefinition*>& other_lowest_objects);

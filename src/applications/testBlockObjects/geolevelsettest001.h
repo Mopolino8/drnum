@@ -18,22 +18,14 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef GPU
-#include "main.h"
-#endif
+#include "blockcfd.h"
 
-extern "C" void GPU_main();
+// Includes to build a geometric levelset test case
 
-int main()
-{
-#ifdef GPU
-  GPU_main();
-#else
-  int num_threads = 2;
-  omp_set_num_threads(num_threads);
-  cout << endl;
-  cout << "*** NUMBER THREADS: " << num_threads << endl;
-  cout << endl;
-  run();
-#endif
-}
+// Test case:
+// single sphere
+
+SphereLevelSet object;
+object.setParams(5., 5., 5., 2.);
+
+gridfile = "patches/standard.grid";

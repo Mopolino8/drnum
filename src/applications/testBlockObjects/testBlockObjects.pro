@@ -32,14 +32,20 @@ INSTALLS += drnum_app
 
 include (../drnum_app.pri)
 
-SOURCES      = main.cpp
+SOURCES      = main.cpp \
+    compressibleeulerlsobc.cpp \
+    compressiblesimpleswalllsobc.cpp
 HEADERS      = main.h \
     geoblockobjecttest001.h \
     geoblockobjecttest002.h \
     geoblockobjecttest003.h \
     geoblockobjecttest004.h \
     geoblockobjecttest005.h \
-    geoblockobjecttest006.h
+    geoblockobjecttest006.h \
+    geolevelsettest001.h \
+    geolevelsettest002.h \
+    compressibleeulerlsobc.h \
+    compressiblesimpleswalllsobc.h
 
 #SOURCES      = main.cpp main.cu
 #SOURCES     -= main.cu
