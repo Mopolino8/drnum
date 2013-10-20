@@ -1,22 +1,27 @@
-#include "compressibleeulerlsobc.h"
+#include "compressibleswalllsobc.h"
 
 
-CompressibleEulerLSOBC::CompressibleEulerLSOBC (size_t field, LevelSetObject* levelset_object)
+CompressibleSWallLSOBC::CompressibleSWallLSOBC(size_t field, LevelSetObject* levelset_object)
   : LevelSetObjectBC (field, levelset_object)
 {
 }
 
 
-void CompressibleEulerLSOBC::operator()()
+void CompressibleSWallLSOBC::operator()()
 {
   // ATTENTION Assume first 5 variables to make up compressible vars
   // in the sequence rho, rhou, rhov, rhow, rhoE
 
-  // Apply T-wall condition on all cells in given lists
+  // Apply:
+  //  * S-wall condition on all cells in given inner lists
+  //  * nothing outer lists
+
+  real relax = 0.5;
+
   size_t num_patches = m_PatchGrid->getNumPatches();
   for (size_t i_p = 0; i_p < num_patches; i_p++) {
     Patch* patch = m_LevelSetObject->getPatchGrid()->getPatch(i_p);
-    real* rho  = patch->getVariable(m_Field, 0);  // 0: rho
+    real* rho = patch->getVariable(m_Field, 0);  // 0: rho
     real* rhou = patch->getVariable(m_Field, 1);  // 1: rhou
     real* rhov = patch->getVariable(m_Field, 2);  // 2: rhov
     real* rhow = patch->getVariable(m_Field, 3);  // 3: rhow
@@ -26,16 +31,9 @@ void CompressibleEulerLSOBC::operator()()
     real gxn, gyn, gzn;
     real rho_uvw_n;
 
-    //    /// @todo DEBUG only
-    //    real* g = patch->getVariable(m_Field, 5);
-
-    //.. Inner cells
-    //   Note: Do all layers at once
-
+    // Inner cells
+    // Note: Do all layers at once
     llc_start = m_InnerCLStart[i_p][0];
-    //TEST llc_start = m_InnerCLStart[i_p][1];
-
-
     llc_end   = m_InnerCLStart[i_p+1][0];
     for (size_t ll_c = llc_start; ll_c < llc_end; ll_c++) {
       /** @todo Instead of excluding action via m_ExOK, it would be better to
@@ -60,42 +58,33 @@ void CompressibleEulerLSOBC::operator()()
           rhow_acc += weight * rhow[donor];
           rhoE_acc += weight * rhoE[donor];
         }
-        //.. copy onto inner cell
+        //.. copy onto inner cell.
+        //   Note: Reverse speed. Ensures linear reconstruction on boundary
+        //         would yield 0-speed there.
         rho[l_c]  = rho_acc;
-        rhou[l_c] = rhou_acc;
-        rhov[l_c] = rhov_acc;
-        rhow[l_c] = rhow_acc;
+        rhou[l_c] = relax*(-rhou_acc) + (1.-relax)*rhou[l_c];
+        rhov[l_c] = relax*(-rhov_acc) + (1.-relax)*rhov[l_c];
+        rhow[l_c] = relax*(-rhow_acc) + (1.-relax)*rhow[l_c];
         rhoE[l_c] = rhoE_acc;
 
-        //.. apply T-Wall condition (set normal speed to 0)
-        rho_uvw_n = rhou[l_c] * gxn + rhov[l_c] * gyn + rhow[l_c] * gzn;
-        rhou[l_c] -= rho_uvw_n * gxn;
-        rhov[l_c] -= rho_uvw_n * gyn;
-        rhow[l_c] -= rho_uvw_n * gzn;
+        // Note: do not apply T-Wall condition on inner cells
       }
     }
 
-    //.. Outer cells
-    //   Note: Do all layers at once
-    llc_start = m_OuterCLStart[i_p][0];
-    llc_end   = m_OuterCLStart[i_p+1][0];
-    for (size_t ll_c = llc_start; ll_c < llc_end; ll_c++) {
-      l_c = m_OuterCellsLayers[ll_c].m_Cell;
-      gxn = m_OuterCellsLayers[ll_c].m_Gx;
-      gyn = m_OuterCellsLayers[ll_c].m_Gy;
-      gzn = m_OuterCellsLayers[ll_c].m_Gz;
-      rho_uvw_n = rhou[l_c] * gxn + rhov[l_c] * gyn + rhow[l_c] * gzn;
-      rhou[l_c] -= rho_uvw_n * gxn;
-      rhov[l_c] -= rho_uvw_n * gyn;
-      rhow[l_c] -= rho_uvw_n * gzn;
+    // Outer cells:  Do nothing
+    //
+    //    llc_start = m_OuterCLStart[i_p][0];
+    //    llc_end   = m_OuterCLStart[i_p+1][0];
+    //    for (size_t ll_c = llc_start; ll_c < llc_end; ll_c++) {
+    //      l_c = m_OuterCellsLayers[ll_c].m_Cell;
+    //      gxn = m_OuterCellsLayers[ll_c].m_Gx;
+    //      gyn = m_OuterCellsLayers[ll_c].m_Gy;
+    //      gzn = m_OuterCellsLayers[ll_c].m_Gz;
+    //      rho_uvw_n = rhou[l_c] * gxn + rhov[l_c] * gyn + rhow[l_c] * gzn;
+    //      rhou[l_c] -= rho_uvw_n * gxn;
+    //      rhov[l_c] -= rho_uvw_n * gyn;
+    //      rhow[l_c] -= rho_uvw_n * gzn;
+    //    }
 
-      //      /// @todo DEBUG only
-      //      real x_c, y_c, z_c;
-      //      patch->xyzCell(l_c,
-      //                     x_c, y_c, z_c);
-      //      real gc = g[l_c];
-      //      gc = g[l_c];
-
-    }
   }
 }

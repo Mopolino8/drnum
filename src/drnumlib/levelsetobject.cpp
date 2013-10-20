@@ -121,9 +121,9 @@ void LevelSetObject::extractBCellLayers()
     // the levelset function. These are 0th layer cells.
     //.. Loop for cells of patch
     for (size_t l_c = 0; l_c < patch->variableSize(); l_c++) {
-      real xc, yc, zc;
-      patch->xyzoCell(l_c,
-                      xc, yc, zc);
+//      real xc, yc, zc;
+//      patch->xyzCell(l_c,
+//                     xc, yc, zc);
       real g = var[l_c];
       //.... check face neighbours
       patch->cellOverFaceNeighbours(l_c,
@@ -283,8 +283,8 @@ void LevelSetObject::extractBCellLayers()
         real shift_len = -2. * m_InnerCellsLayers[i_p][i_layer][ll_c].m_G;
         vec3_t mirror_shift = shift_len * g_xyz;
         real xc, yc, zc;
-        patch->xyzoCell(l_c,
-                        xc, yc, zc);
+        patch->xyzCell(l_c,
+                       xc, yc, zc);
         vec3_t xyz_c(xc, yc, zc);
         vec3_t mirror_xyz = xyz_c + mirror_shift;
         WeightedSet<real> ws;
