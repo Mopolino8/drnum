@@ -92,9 +92,9 @@ forAll (mesh.cells(), cell) {
   scalar x = mesh.cellCentres()[cell][0];
   scalar y = mesh.cellCentres()[cell][1];
   scalar z = mesh.cellCentres()[cell][2];
-  bool box1 = inBox(-0.15, -0.15, -0.15, 0.15, 0.15, 0.15, x, y, z);
-  bool box2 = inBox(-0.14, -0.14, -0.14, 0.14, 0.14, 0.14, x, y, z);
-  bool box3 = inBox(-0.13, -0.13, -0.13, 0.13, 0.13, 0.13, x, y, z);
+  bool box1 = inBox(-0.015, -0.015, -0.015, 0.015, 0.015, 0.015, x, y, z);
+  bool box2 = inBox(-0.014, -0.014, -0.014, 0.014, 0.014, 0.014, x, y, z);
+  bool box3 = inBox(-0.013, -0.013, -0.013, 0.013, 0.013, 0.013, x, y, z);
   if (box1 && !box2) {
     dn2of_list.append(mpi_comm.rank(), cell, x, y, z);
   }
