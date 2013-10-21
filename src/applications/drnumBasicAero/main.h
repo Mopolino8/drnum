@@ -27,7 +27,7 @@
 #include "reconstruction/minmod.h"
 #include "reconstruction/secondorder.h"
 #include "fluxes/knp.h"
-//#include "fluxes/vanleer.h"
+#include "fluxes/vanleer.h"
 #include "fluxes/ausmplus.h"
 //#include "fluxes/ausmdv.h"
 #include "fluxes/compressiblefarfieldflux.h"
@@ -58,15 +58,16 @@ class EaFlux
 
 protected:
 
-  //typedef Upwind1 reconstruction_t;
-  //typedef Upwind2<5, SecondOrder>                           reconstruction_t;
+  //typedef Upwind1<5> reconstruction_t;
+  typedef Upwind2<5, SecondOrder> reconstruction_t;
+  //typedef Upwind2<5, VanAlbada> reconstruction_t;
 
-  typedef Upwind2<5, VanAlbada>                             reconstruction_t;
-  typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
-  //typedef KNP<reconstruction_t, PerfectGas>              euler_t;
-  typedef CompressibleSlipFlux<5, Upwind1, PerfectGas>     wall_t;
-  typedef CompressibleViscFlux<5, PerfectGas>               viscous_t;
-  typedef CompressibleFarfieldFlux<5, Upwind1, PerfectGas>  farfield_t;
+  typedef AusmPlus<reconstruction_t, PerfectGas> euler_t;
+  //typedef VanLeer<reconstruction_t, PerfectGas> euler_t;
+
+  typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
+  typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;
+  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
@@ -275,6 +276,7 @@ void run()
   real total_time     = config.getValue<real>("total-time")*time;
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
   bool code_coupling  = config.getValue<bool>("code-coupling");
+  real scale          = config.getValue<real>("scale");
   bool write_flag     = false;
   bool stop_flag      = false;
 
@@ -291,7 +293,7 @@ void run()
   patch_grid.setInterpolateData();
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
   patch_grid.setTransferType("padded_direct");
-  patch_grid.readGrid("patches/standard.grid");
+  patch_grid.readGrid("patches/standard.grid", scale);
   //patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
 
