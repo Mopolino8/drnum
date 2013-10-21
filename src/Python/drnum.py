@@ -10,13 +10,13 @@
 # + the Free Software Foundation, either version 3 of the License, or    +
 # + (at your option) any later version.                                  +
 # +                                                                      +
-# + enGrid is distributed in the hope that it will be useful,            +
+# + DrNUM is distributed in the hope that it will be useful,             +
 # + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 # + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 # + GNU General Public License for more details.                         +
 # +                                                                      +
 # + You should have received a copy of the GNU General Public License    +
-# + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+# + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -58,6 +58,7 @@ class Patch:
     self.j2_flux = "far"
     self.k1_flux = "far"
     self.k2_flux = "far"
+    self.dim_set = False
 
   def setOverlap(self, overlap):
     self.overlap = overlap  
@@ -160,7 +161,16 @@ class Patch:
       self.Nj += 1
     while self.Nk*self.hk < self.z2 - self.z1:
       self.Nk += 1
-    
+
+  def setDim(self, ni, nj, nk):
+    self.Ni = ni
+    self.Nj = nj
+    self.Nk = nk
+    self.hi = (self.x2 - self.x1)/self.Ni
+    self.hj = (self.y2 - self.y1)/self.Nj
+    self.hk = (self.z2 - self.z1)/self.Nk
+    self.dim_set = True
+
   def inflateI1(self, hn):
     #self.x1 -= self.overlap_factor*(0.5*hn + 2*self.hi)
     self.x1 -= self.neigh_overlap_factor*hn + self.overlap*self.overlap_factor*self.hi
@@ -389,7 +399,7 @@ class Mesh:
       self.patches[i].hj = min(max_h, self.patches[i].hj)
       self.patches[i].hk = min(max_h, self.patches[i].hk)
       
-  def setGrading(self, growth_factor):
+  def setGrading1(self, growth_factor):
     done = False
     while not done:
       done = True
@@ -415,7 +425,58 @@ class Mesh:
           if h < self.patches[j].hk:
             self.patches[j].hk = h
             done = False
-        
+
+  def setGrading2(self, growth_factor):
+    done = False
+    while not done:
+      done = True
+      for i in range(0, len(self.patches)):
+        h = self.patches[i].hi
+        h = min(h, self.patches[i].hj)
+        h = min(h, self.patches[i].hk)
+        h = h*growth_factor
+        neighbours1 = set([])
+        neighbours1 = neighbours1.union(self.patches[i].neighI1)
+        neighbours1 = neighbours1.union(self.patches[i].neighI2)
+        neighbours1 = neighbours1.union(self.patches[i].neighJ1)
+        neighbours1 = neighbours1.union(self.patches[i].neighJ2)
+        neighbours1 = neighbours1.union(self.patches[i].neighK1)
+        neighbours1 = neighbours1.union(self.patches[i].neighK2)
+
+        neighbours2 = set([])
+        for j in neighbours1:
+          neighbours2 = neighbours2.union(self.patches[j].neighI1)
+          neighbours2 = neighbours2.union(self.patches[j].neighI2)
+          neighbours2 = neighbours2.union(self.patches[j].neighJ1)
+          neighbours2 = neighbours2.union(self.patches[j].neighJ2)
+          neighbours2 = neighbours2.union(self.patches[j].neighK1)
+          neighbours2 = neighbours2.union(self.patches[j].neighK2)
+
+        neighbours2 = neighbours2.difference(neighbours1)
+
+        neighbours = neighbours1
+        for j in neighbours2:
+          neighbours3 = set([])
+          neighbours3 = neighbours3.union(self.patches[j].neighI1.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighI2.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighJ1.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighJ2.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighK1.intersection(neighbours1))
+          neighbours3 = neighbours3.union(self.patches[j].neighK2.intersection(neighbours1))
+          if len(neighbours3) > 1:
+            neighbours.add(j)
+
+        for j in neighbours:
+          if h < self.patches[j].hi:
+            self.patches[j].hi = h
+            done = False
+          if h < self.patches[j].hj:
+            self.patches[j].hj = h
+            done = False
+          if h < self.patches[j].hk:
+            self.patches[j].hk = h
+            done = False
+
   def createRectGrid(self, x, y, z):
     patch = []
     for i in range(len(x) - 1):
@@ -467,7 +528,15 @@ class Mesh:
   def setOverlap(self, overlap):
     for i in range(0, len(self.patches)):
       self.patches[i].setOverlap(overlap)
-      
+
+  def setAllFluxes(self, flux):
+    self.setI1Flux(flux)
+    self.setI2Flux(flux)
+    self.setJ1Flux(flux)
+    self.setJ2Flux(flux)
+    self.setK1Flux(flux)
+    self.setK2Flux(flux)
+
 
       
     

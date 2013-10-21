@@ -9,16 +9,17 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include "blockcfd.h"
+
+#include "drnum.h"
 
 private:
 
@@ -89,10 +90,28 @@ CUDA_DH size_t nodeIndex(size3_t ijk) { return ijk.i*(m_NumJ + 1)*(m_NumK + 1) +
  * @param k third Cartesian index
  * @param var will hold the conservative variable set afterwards (needs to be allocated beforehand)
  */
-CUDA_DH void getVar(size_t i_field, size_t i, size_t j, size_t k, real* var)
+template <typename DIM>
+CUDA_DH void getVar(DIM, size_t i_field, size_t i, size_t j, size_t k, real* var)
 {
   GlobalDebug::ijk(i, j, k);
-  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+  for (size_t i_var = 0; i_var < DIM::dim; ++i_var) {
+    var[i_var] = f(i_field, i_var, i, j, k);
+  }
+}
+
+/**
+ * @brief Get a variable set at a specified (i,j,k) position. This method take the dimension (number of variables)
+ *        as real parameter and should not be used in performance critical routines.
+ * @param i_field the field index
+ * @param i first Cartesian index
+ * @param j second Cartesian index
+ * @param k third Cartesian index
+ * @param var will hold the conservative variable set afterwards (needs to be allocated beforehand)
+ */
+CUDA_DH void getVarDim(unsigned int dim, size_t i_field, size_t i, size_t j, size_t k, real* var)
+{
+  GlobalDebug::ijk(i, j, k);
+  for (size_t i_var = 0; i_var < dim; ++i_var) {
     var[i_var] = f(i_field, i_var, i, j, k);
   }
 }
@@ -105,10 +124,11 @@ CUDA_DH void getVar(size_t i_field, size_t i, size_t j, size_t k, real* var)
  * @param k third Cartesian index
  * @param the conservative variable set
  */
-CUDA_DH void setVar(size_t i_field, size_t i, size_t j, size_t k, real* var)
+template <typename DIM>
+CUDA_DH void setVar(DIM, size_t i_field, size_t i, size_t j, size_t k, real* var)
 {
   GlobalDebug::ijk(i, j, k);
-  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+  for (size_t i_var = 0; i_var < DIM::dim; ++i_var) {
     f(i_field, i_var, i, j, k) = var[i_var];
   }
 }
@@ -142,10 +162,13 @@ CUDA_DH real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k)
  * @param k third Cartesian index
  * @param grad will hold the conservative x gradient set afterwards (needs to be allocated beforehand)
  */
-CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
+template <typename DIM>
+CUDA_DH void getXGrad(DIM, size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
-  real var[10]; /// @todo possibly better done with a template parameter
-  real D = 0.5/dx();
+  DIM dim;
+
+  real var[DIM::dim];
+  real D = (real)0.5/dx();
   countFlops(1);
   size_t i1 = i - 1;
   size_t i2 = i + 1;
@@ -159,13 +182,13 @@ CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
     D *= 2;
     countFlops(1);
   }
-  getVar(i_field, i2, j, k, grad);
-  getVar(i_field, i1, j, k, var);
-  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+  getVar(dim, i_field, i2, j, k, grad);
+  getVar(dim, i_field, i1, j, k, var);
+  for (size_t i_var = 0; i_var < DIM::dim; ++i_var) {
     grad[i_var] -= var[i_var];
     grad[i_var] *= D;
   }
-  countFlops(2*numVariables());
+  countFlops(2*DIM::dim);
 }
 
 /**
@@ -177,11 +200,14 @@ CUDA_DH void getXGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
  * @param k third Cartesian index
  * @param grad will hold the conservative y gradient set afterwards (needs to be allocated beforehand)
  */
-CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
+template <typename DIM>
+CUDA_DH void getYGrad(DIM, size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
+  DIM dim;
+
   if (sizeJ() > 2) {
-    real var[10]; /// @todo possibly better done with a template parameter
-    real D = 0.5/dy();
+    real var[DIM::dim];
+    real D = (real)0.5/dy();
     countFlops(1);
     size_t j1 = j - 1;
     size_t j2 = j + 1;
@@ -195,15 +221,15 @@ CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
       D *= 2;
       countFlops(1);
     }
-    getVar(i_field, i, j2, k, grad);
-    getVar(i_field, i, j1, k, var);
-    for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    getVar(dim, i_field, i, j2, k, grad);
+    getVar(dim, i_field, i, j1, k, var);
+    for (size_t i_var = 0; i_var < DIM::dim; ++i_var) {
       grad[i_var] -= var[i_var];
       grad[i_var] *= D;
     }
-    countFlops(2*numVariables());
+    countFlops(2*DIM::dim);
   } else {
-    for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+    for (size_t i_var = 0; i_var < DIM::dim; ++i_var) {
       grad[i_var] = 0;
     }
   }
@@ -218,10 +244,13 @@ CUDA_DH void getYGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
  * @param k third Cartesian index
  * @param grad will hold the conservative z gradient set afterwards (needs to be allocated beforehand)
  */
-CUDA_DH void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
+template <typename DIM>
+CUDA_DH void getZGrad(DIM, size_t i_field, size_t i, size_t j, size_t k, real* grad)
 {
-  real var[10]; /// @todo possibly better done with a template parameter
-  real D = 0.5/dz();
+  DIM dim;
+
+  real var[DIM::dim];
+  real D = (real)0.5/dz();
   countFlops(1);
   size_t k1 = k - 1;
   size_t k2 = k + 1;
@@ -235,13 +264,13 @@ CUDA_DH void getZGrad(size_t i_field, size_t i, size_t j, size_t k, real* grad)
     D *= 2;
     countFlops(1);
   }
-  getVar(i_field, i, j, k2, grad);
-  getVar(i_field, i, j, k1, var);
-  for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
+  getVar(dim, i_field, i, j, k2, grad);
+  getVar(dim, i_field, i, j, k1, var);
+  for (size_t i_var = 0; i_var < DIM::dim; ++i_var) {
     grad[i_var] -= var[i_var];
     grad[i_var] *= D;
   }
-  countFlops(2*numVariables());
+  countFlops(2*DIM::dim);
 }
 
 /**
@@ -281,9 +310,9 @@ CUDA_HO void copyAttributes(T* obj)
   m_InvDz = obj->idz();
 }
 
-
-
-
-
+#ifdef UNDEF_DIM
+#undef DIM
+#undef UNDEF_DIM
+#endif
 
 

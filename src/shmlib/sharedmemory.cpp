@@ -9,37 +9,38 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #include "sharedmemory.h"
 
 SharedMemory::SharedMemory(int id_num, int size, bool is_owner) : IPCObject(id_num, is_owner)
 {
+#ifndef NO_IPC
   if (m_Owner) {
     m_Size = size;
     setId(shmget(key(), size, IPC_CREAT | IPC_EXCL | 0660));
     if (id() == -1) {
-      setId(shmget(key(), size, IPC_CREAT | 0660));
+      setId(shmget(key(), 1, IPC_CREAT | 0660));
       if (id() == -1) {
-        throw IpcException("unable to create sshared memory\nshmget " + errorText(errno));
+        throw IpcException("unable to create sshared memory\nA\nshmget " + errorText(errno));
       }
       SharedMemory::close();
       setId(shmget(key(), size, IPC_CREAT | IPC_EXCL | 0660));
       if (id() == -1) {
-        throw IpcException("unable to create sshared memory\nshmget " + errorText(errno));
+        throw IpcException("unable to create sshared memory\nB\nshmget " + errorText(errno));
       }
     }
   } else {
     setId(shmget(key(), size, IPC_CREAT | 0660));
     if (id() == -1) {
-      throw IpcException("unable to create sshared memory\nshmget " + errorText(errno));
+      throw IpcException("unable to create sshared memory\nC\nshmget " + errorText(errno));
     }
     struct shmid_ds buf;
     shmctl(id(), IPC_STAT, &buf);
@@ -56,6 +57,9 @@ SharedMemory::SharedMemory(int id_num, int size, bool is_owner) : IPCObject(id_n
   if (m_Owner) {
     reset();
   }
+#else
+  size = size;
+#endif
 }
 
 SharedMemory::~SharedMemory()
@@ -65,9 +69,11 @@ SharedMemory::~SharedMemory()
 
 void SharedMemory::close()
 {
+#ifndef NO_IPC
   if (isOwner()) {
     shmctl(id(), 0, IPC_RMID);
   }
+#endif
 }
 
 void SharedMemory::reset()
@@ -109,7 +115,7 @@ std::string SharedMemory::arrayName(int i)
 }
 
 int SharedMemory::arrayIndex(std::string name)
-{
+{  
   size_t i = 0;
   while (i < numArrays() && arrayName(i) != name) {
     ++i;

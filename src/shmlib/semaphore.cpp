@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #include "semaphore.h"
@@ -68,45 +68,65 @@ void Semaphore::close()
 #endif
 }
 
+#ifndef NO_IPC
 void Semaphore::decr(int sem_num)
 {
-#ifndef NO_IPC
   struct sembuf sem_decr = {sem_num, -1, 0};
   semop(id(), &sem_decr, 1);
-#endif
 }
+#else
+void Semaphore::decr(int)
+{
+}
+#endif
 
+#ifndef NO_IPC
 void Semaphore::incr(int sem_num)
 {
-#ifndef NO_IPC
   struct sembuf sem_incr_nw = {sem_num, 1, IPC_NOWAIT};
   semop(id(), &sem_incr_nw, 1);
-#endif
 }
+#else
+void Semaphore::incr(int)
+{
+}
+#endif
 
+#ifndef NO_IPC
 void Semaphore::wait(int sem_num)
 {
-#ifndef NO_IPC
   struct sembuf sem_decr = {sem_num, 0, 0};
   semop(id(), &sem_decr, 1);
-#endif
 }
+#else
+void Semaphore::wait(int)
+{
+}
+#endif
 
+#ifndef NO_IPC
 int Semaphore::get(int sem_num)
 {
-#ifndef NO_IPC
   return semctl(id(), sem_num, GETVAL, 0);
-#endif
 }
+#else
+int Semaphore::get(int)
+{
+  return 0;
+}
+#endif
 
+#ifndef NO_IPC
 void Semaphore::set(int sem_num, int value)
 {
-#ifndef NO_IPC
   union semun semopts;
   semopts.val = value;
   if (semctl(id(), sem_num, SETVAL, semopts) == -1) {
     error("semctl " + errorText(errno));
   }
-#endif
 }
-
+#else
+void Semaphore::set(int, int)
+{
+}
+#endif

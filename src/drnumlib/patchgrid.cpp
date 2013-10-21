@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #include <unistd.h>
@@ -23,8 +23,11 @@
 #include <vtkMultiBlockDataSet.h>
 #include <vtkXMLMultiBlockDataWriter.h>
 
+#include <QFile>
+
 #include "patchgrid.h"
 #include "stringtools.h"
+#include "geometrytools.h"
 
 PatchGrid::PatchGrid(size_t num_seeklayers, size_t num_addprotectlayers)
 {
@@ -435,7 +438,7 @@ void PatchGrid::setGeneralAttributes(Patch* patch)
 }
 
 
-void PatchGrid::readGrid(string gridfilename)
+void PatchGrid::readGrid(string gridfilename, real scale)
 {
   // Get file path
   /** @todo Use a better file path definition. */
@@ -504,7 +507,7 @@ void PatchGrid::readGrid(string gridfilename)
       size_t index = insertPatch(new_patch);
       new_patch->setIndex(index);
       new_patch->setPatchComment(patchcomment);
-      new_patch->readFromFile(iss);
+      new_patch->readFromFile(iss, scale);
       m_PatchGroups->insertPatch(new_patch); /// @todo better outside of reading loop?
     }
     //.... Unstructured Patch
@@ -519,19 +522,50 @@ void PatchGrid::readGrid(string gridfilename)
   cout << "done. " << endl;
 }
 
-void PatchGrid::writeData(QString base_data_filename, int count)
+void PatchGrid::writeData(size_t i_field, QString base_file_name, real time, int count)
 {
-  QString str_patch_index;
-  QString str_patch_filename;
-  // loop for patches iof patch_grid
-  for (size_t i_p = 0; i_p < getNumPatches(); i_p++) {
-    str_patch_index.setNum(i_p);
-    while (str_patch_index.size() < 6) {
-      str_patch_index = "0" + str_patch_index;
-    }
-    str_patch_filename = base_data_filename + "_ip" + str_patch_index;
-    getPatch(i_p)->writeData(str_patch_filename, count);
+
+  QString count_txt;
+  count_txt.setNum(count);
+  count_txt = count_txt.rightJustified(6, '0');
+  QString file_name = base_file_name + "_" + count_txt + ".dnd";
+  QFile file(file_name);
+  file.open(QIODevice::WriteOnly);
+  QDataStream stream(&file);
+  if (sizeof(real) == 4) {
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+    stream << int(4);
+  } else {
+    stream.setFloatingPointPrecision(QDataStream::DoublePrecision);
+    stream << int(8);
   }
+  stream << time;
+  for (size_t i_p = 0; i_p < getNumPatches(); i_p++) {
+    getPatch(i_p)->writeData(i_field, stream);
+  }
+}
+
+real PatchGrid::readData(size_t i_field, QString file_name)
+{
+  if (file_name.right(4) != ".dnd") {
+    file_name += ".dnd";
+  }
+  QFile file(file_name);
+  file.open(QIODevice::ReadOnly);
+  QDataStream stream(&file);
+  int prec;
+  stream >> prec;
+  if (prec == 4) {
+    stream.setFloatingPointPrecision(QDataStream::SinglePrecision);
+  } else {
+    stream.setFloatingPointPrecision(QDataStream::DoublePrecision);
+  }
+  real time;
+  stream >> time;
+  for (size_t i_p = 0; i_p < getNumPatches(); i_p++) {
+    getPatch(i_p)->readData(i_field, stream);
+  }
+  return time;
 }
 
 
@@ -616,4 +650,27 @@ void PatchGrid::writeToVtk(size_t i_field, string file_name, const PostProcessin
   vmb->SetInput(multi_block);
   vmb->SetFileName(file_name.c_str());
   vmb->Write();
+}
+
+bool PatchGrid::findCell(vec3_t xo, int &id_patch, int &id_cell)
+{
+  id_patch = -1;
+  id_cell = -1;
+  real min_distance = MAX_REAL;
+  for (size_t id_patch = 0; id_patch < getNumPatches(); ++id_patch) {
+    int id_cell_patch = getPatch(id_patch)->findCell(xo);
+    if (id_cell_patch) {
+      vec3_t xo_cell = getPatch(id_patch)->xyzoCell(id_cell_patch);
+      real distance = (xo - xo_cell).abs();
+      if (distance < min_distance) {
+        min_distance = distance;
+        id_patch = id_patch;
+        id_cell = id_cell_patch;
+      }
+    }
+  }
+  if (id_patch < 0) {
+    return false;
+  }
+  return true;
 }

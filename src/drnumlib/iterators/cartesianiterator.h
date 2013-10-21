@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef CARTESIANITERATOR_H
@@ -25,7 +25,7 @@
 #include "iterators/tpatchiterator.h"
 
 template <unsigned int DIM, typename OP>
-class CartesianIterator : public TPatchIterator<CartesianPatch, DIM, OP>
+class CartesianIterator : public TPatchIterator<CartesianPatch, OP>
 {
 
 protected: // attributes
@@ -47,7 +47,8 @@ protected: // methods
 
 public:
 
-  using TPatchIterator<CartesianPatch, DIM, OP>::addPatch;
+  using TPatchIterator<CartesianPatch, OP>::addPatch;
+  using PatchIterator::patchActive;
 
   CartesianIterator(OP op);
 
@@ -58,7 +59,7 @@ public:
 };
 
 template <unsigned int DIM, typename OP>
-CartesianIterator<DIM, OP>::CartesianIterator(OP op) : TPatchIterator<CartesianPatch, DIM, OP>(op)
+CartesianIterator<DIM, OP>::CartesianIterator(OP op) : TPatchIterator<CartesianPatch, OP>(op)
 {
   m_Res = NULL;
   m_ResLength = 0;
@@ -86,226 +87,229 @@ template <unsigned int DIM, typename OP>
 void CartesianIterator<DIM, OP>::compute(real factor, const vector<size_t> &patches)
 {
   for (size_t i_patch = 0; i_patch < patches.size(); ++i_patch) {
-    CartesianPatch* patch = this->m_Patches[patches[i_patch]];
 
-    checkResFieldSize(0, 0, 0, patch->sizeI(), patch->sizeJ(), patch->sizeK(), patch->numVariables());
+    if (patchActive(i_patch)) {
+      CartesianPatch* patch = this->m_Patches[patches[i_patch]];
 
-    real Ax = patch->dy()*patch->dz();
-    real Ay = patch->dx()*patch->dz();
-    real Az = patch->dx()*patch->dy();
+      checkResFieldSize(0, 0, 0, patch->sizeI(), patch->sizeJ(), patch->sizeK(), patch->numVariables());
 
-    size_t i1 = 0;
-    size_t j1 = 0;
-    size_t k1 = 0;
-    size_t i2 = patch->sizeI();
-    size_t j2 = patch->sizeJ();
-    size_t k2 = patch->sizeK();
+      real Ax = patch->dy()*patch->dz();
+      real Ay = patch->dx()*patch->dz();
+      real Az = patch->dx()*patch->dy();
 
-    real flux[5];
+      size_t i1 = 0;
+      size_t j1 = 0;
+      size_t k1 = 0;
+      size_t i2 = patch->sizeI();
+      size_t j2 = patch->sizeJ();
+      size_t k2 = patch->sizeK();
 
-    for (size_t i_res = 0; i_res < DIM*m_ResLength; ++i_res) {
-      m_Res[i_res] = 0;
-    }
-    countFlops(3);
+      real flux[5];
 
-    // compute main block
-    for (int offset = 0; offset <= 1; ++offset) {
-      #ifndef DEBUG
-      #pragma omp parallel
-      #endif
-      {
-        size_t num_threads = omp_get_num_threads();
-        size_t tid         = omp_get_thread_num();
-        size_t n           = patch->sizeI()/(2*num_threads) + 1;
-        size_t i_start     = max(i1, (offset + 2*tid)*n);
-        size_t i_stop      = min(i2, i_start + n);
+      for (size_t i_res = 0; i_res < DIM*m_ResLength; ++i_res) {
+        m_Res[i_res] = 0;
+      }
+      countFlops(3);
 
-        real flux[5];
-
-        #ifdef DEBUG
-        if (num_threads != 1) {
-          BUG;
-        }
+      // compute main block
+      for (int offset = 0; offset <= 1; ++offset) {
+        #ifndef DEBUG
+        #pragma omp parallel
         #endif
+        {
+          size_t num_threads = omp_get_num_threads();
+          size_t tid         = omp_get_thread_num();
+          size_t n           = patch->sizeI()/(2*num_threads) + 1;
+          size_t i_start     = max(i1, (offset + 2*tid)*n);
+          size_t i_stop      = min(i2, i_start + n);
 
-        real x = 0.5*patch->dx() + i_start * patch->dx();
-        for (size_t i = i_start; i < i_stop; ++i) {
+          real flux[5];
+
+          #ifdef DEBUG
+          if (num_threads != 1) {
+            BUG;
+          }
+          #endif
+
+          real x = 0.5*patch->dx() + i_start * patch->dx();
+          for (size_t i = i_start; i < i_stop; ++i) {
+            real y = 0.5*patch->dy();
+            for (size_t j = j1; j < j2; ++j) {
+              real z = 0.5*patch->dz();
+              for (size_t k = k1; k < k2; ++k) {
+
+                GlobalDebug::xyz(x,y,z);
+
+                // x direction
+                if (i > 0 && patch->sizeI() > 2) {
+                  fill(flux, 5, 0);
+                  this->m_Op.xField(patch, i, j, k, x, y, z, Ax, flux);
+                  for (size_t i_var = 0; i_var < DIM; ++i_var) {
+                    m_Res[resIndex(i_var, i-1, j, k)] -= flux[i_var];
+                    m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
+                  }
+                  countFlops(2*DIM);
+                }
+
+                // y direction
+                if (j > 0 && patch->sizeJ() > 2) {
+                  fill(flux, 5, 0);
+                  this->m_Op.yField(patch, i, j, k, x, y, z, Ay, flux);
+                  for (size_t i_var = 0; i_var < DIM; ++i_var) {
+                    m_Res[resIndex(i_var, i, j-1, k)] -= flux[i_var];
+                    m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
+                  }
+                  countFlops(2*DIM);
+                }
+
+                // z direction
+                if (k > 0 && patch->sizeK() > 2) {
+                  fill(flux, 5, 0);
+                  this->m_Op.zField(patch, i, j, k, x, y, z, Az, flux);
+                  for (size_t i_var = 0; i_var < DIM; ++i_var) {
+                    m_Res[resIndex(i_var, i, j, k-1)] -= flux[i_var];
+                    m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
+                  }
+                  countFlops(2*DIM);
+                }
+
+                z += patch->dz();
+              }
+              y += patch->dy();
+            }
+            x += patch->dx();
+          }
+        }
+      }
+
+      // compute x walls
+      //
+      // .. left wall
+      if (i1 == 0 && patch->sizeI() > 2) {
+        real x = 0.5*patch->dx();
+        real y = 0.5*patch->dy();
+        for (size_t j = j1; j < j2; ++j) {
+          real z = 0.5*patch->dz();
+          for (size_t k = k1; k < k2; ++k) {
+            fill(flux, 5, 0);
+            this->m_Op.xWallM(patch, i1, j, k, x, y, z, Ax, flux);
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              m_Res[resIndex(i_var, i1, j, k)] += flux[i_var];
+            }
+            countFlops(DIM);
+            z += patch->dz();
+          }
+          y += patch->dy();
+        }
+      }
+
+      // .. right wall
+      if (i2 == patch->sizeI() && patch->sizeI() > 2) {
+        real x = 0.5*patch->dx() + patch->sizeI()*patch->dx();
+        real y = 0.5*patch->dy();
+        for (size_t j = j1; j < j2; ++j) {
+          real z = 0.5*patch->dz();
+          for (size_t k = k1; k < k2; ++k) {
+            fill(flux, 5, 0);
+            this->m_Op.xWallP(patch, i2, j, k, x, y, z, Ax, flux);
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              m_Res[resIndex(i_var, i2-1, j, k)] -= flux[i_var];
+            }
+            countFlops(DIM);
+            z += patch->dz();
+          }
+          y += patch->dy();
+        }
+      }
+
+      // compute y walls
+      //
+      // .. front wall
+      if (j1 == 0 && patch->sizeJ() > 2) {
+        real x = 0.5*patch->dx();
+        real y = 0.5*patch->dy();
+        for (size_t i = i1; i < i2; ++i) {
+          real z = 0.5*patch->dz();
+          for (size_t k = k1; k < k2; ++k) {
+            fill(flux, 5, 0);
+            this->m_Op.yWallM(patch, i, j1, k, x, y, z, Ay, flux);
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              m_Res[resIndex(i_var, i, j1, k)] += flux[i_var];
+            }
+            countFlops(DIM);
+            z += patch->dz();
+          }
+          x += patch->dx();
+        }
+      }
+
+      // .. back wall
+      if (j2 == patch->sizeJ() && patch->sizeJ() > 2) {
+        real x = 0.5*patch->dx();
+        real y = 0.5*patch->dy() + patch->sizeJ()*patch->dy();
+        for (size_t i = i1; i < i2; ++i) {
+          real z = 0.5*patch->dz();
+          for (size_t k = k1; k < k2; ++k) {
+            fill(flux, 5, 0);
+            this->m_Op.yWallP(patch, i, j2, k, x, y, z, Ay, flux);
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              m_Res[resIndex(i_var, i, j2-1, k)] -= flux[i_var];
+            }
+            countFlops(DIM);
+            z += patch->dz();
+          }
+          x += patch->dx();
+        }
+      }
+
+      // compute z walls
+      //
+      // .. bottom wall
+      if (k1 == 0 && patch->sizeK() > 2) {
+        real x = 0.5*patch->dx();
+        real z = 0.5*patch->dz();
+        for (size_t i = i1; i < i2; ++i) {
           real y = 0.5*patch->dy();
           for (size_t j = j1; j < j2; ++j) {
-            real z = 0.5*patch->dz();
-            for (size_t k = k1; k < k2; ++k) {
-
-              GlobalDebug::xyz(x,y,z);
-
-              // x direction
-              if (i > 0 && patch->sizeI() > 2) {
-                fill(flux, 5, 0);
-                this->m_Op.xField(patch, i, j, k, x, y, z, Ax, flux);
-                for (size_t i_var = 0; i_var < DIM; ++i_var) {
-                  m_Res[resIndex(i_var, i-1, j, k)] -= flux[i_var];
-                  m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
-                }
-                countFlops(2*DIM);
-              }
-
-              // y direction
-              if (j > 0 && patch->sizeJ() > 2) {
-                fill(flux, 5, 0);
-                this->m_Op.yField(patch, i, j, k, x, y, z, Ay, flux);
-                for (size_t i_var = 0; i_var < DIM; ++i_var) {
-                  m_Res[resIndex(i_var, i, j-1, k)] -= flux[i_var];
-                  m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
-                }
-                countFlops(2*DIM);
-              }
-
-              // z direction
-              if (k > 0 && patch->sizeK() > 2) {
-                fill(flux, 5, 0);
-                this->m_Op.zField(patch, i, j, k, x, y, z, Az, flux);
-                for (size_t i_var = 0; i_var < DIM; ++i_var) {
-                  m_Res[resIndex(i_var, i, j, k-1)] -= flux[i_var];
-                  m_Res[resIndex(i_var, i, j, k)]   += flux[i_var];
-                }
-                countFlops(2*DIM);
-              }
-
-              z += patch->dz();
+            fill(flux, 5, 0);
+            this->m_Op.zWallM(patch, i, j, k1, x, y, z, Az, flux);
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              m_Res[resIndex(i_var, i, j, k1)] += flux[i_var];
             }
+            countFlops(DIM);
             y += patch->dy();
           }
           x += patch->dx();
         }
       }
-    }
 
-    // compute x walls
-    //
-    // .. left wall
-    if (i1 == 0 && patch->sizeI() > 2) {
-      real x = 0.5*patch->dx();
-      real y = 0.5*patch->dy();
-      for (size_t j = j1; j < j2; ++j) {
-        real z = 0.5*patch->dz();
-        for (size_t k = k1; k < k2; ++k) {
-          fill(flux, 5, 0);
-          this->m_Op.xWallM(patch, i1, j, k, x, y, z, Ax, flux);
-          for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i1, j, k)] += flux[i_var];
+      // .. top wall
+      if (k2 == patch->sizeK() && patch->sizeK() > 2) {
+        real x = 0.5*patch->dx();
+        real z = 0.5*patch->dz() + patch->sizeK()*patch->dz();
+        for (size_t i = i1; i < i2; ++i) {
+          real y = 0.5*patch->dy();
+          for (size_t j = j1; j < j2; ++j) {
+            fill(flux, 5, 0);
+            this->m_Op.zWallP(patch, i, j, k2, x, y, z, Az, flux);
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              m_Res[resIndex(i_var, i, j, k2-1)] -= flux[i_var];
+            }
+            countFlops(DIM);
+            y += patch->dy();
           }
-          countFlops(DIM);
-          z += patch->dz();
+          x += patch->dx();
         }
-        y += patch->dy();
       }
-    }
 
-    // .. right wall
-    if (i2 == patch->sizeI() && patch->sizeI() > 2) {
-      real x = 0.5*patch->dx() + patch->sizeI()*patch->dx();
-      real y = 0.5*patch->dy();
-      for (size_t j = j1; j < j2; ++j) {
-        real z = 0.5*patch->dz();
-        for (size_t k = k1; k < k2; ++k) {
-          fill(flux, 5, 0);
-          this->m_Op.xWallP(patch, i2, j, k, x, y, z, Ax, flux);
-          for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i2-1, j, k)] -= flux[i_var];
-          }
-          countFlops(DIM);
-          z += patch->dz();
-        }
-        y += patch->dy();
-      }
-    }
-
-    // compute y walls
-    //
-    // .. front wall
-    if (j1 == 0 && patch->sizeJ() > 2) {
-      real x = 0.5*patch->dx();
-      real y = 0.5*patch->dy();
+      // advance to next iteration level (time)
+      real patch_factor = factor/patch->dV();
       for (size_t i = i1; i < i2; ++i) {
-        real z = 0.5*patch->dz();
-        for (size_t k = k1; k < k2; ++k) {
-          fill(flux, 5, 0);
-          this->m_Op.yWallM(patch, i, j1, k, x, y, z, Ay, flux);
-          for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i, j1, k)] += flux[i_var];
-          }
-          countFlops(DIM);
-          z += patch->dz();
-        }
-        x += patch->dx();
-      }
-    }
-
-    // .. back wall
-    if (j2 == patch->sizeJ() && patch->sizeJ() > 2) {
-      real x = 0.5*patch->dx();
-      real y = 0.5*patch->dy() + patch->sizeJ()*patch->dy();
-      for (size_t i = i1; i < i2; ++i) {
-        real z = 0.5*patch->dz();
-        for (size_t k = k1; k < k2; ++k) {
-          fill(flux, 5, 0);
-          this->m_Op.yWallP(patch, i, j2, k, x, y, z, Ay, flux);
-          for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i, j2-1, k)] -= flux[i_var];
-          }
-          countFlops(DIM);
-          z += patch->dz();
-        }
-        x += patch->dx();
-      }
-    }
-
-    // compute z walls
-    //
-    // .. bottom wall
-    if (k1 == 0 && patch->sizeK() > 2) {
-      real x = 0.5*patch->dx();
-      real z = 0.5*patch->dz();
-      for (size_t i = i1; i < i2; ++i) {
-        real y = 0.5*patch->dy();
         for (size_t j = j1; j < j2; ++j) {
-          fill(flux, 5, 0);
-          this->m_Op.zWallM(patch, i, j, k1, x, y, z, Az, flux);
-          for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i, j, k1)] += flux[i_var];
-          }
-          countFlops(DIM);
-          y += patch->dy();
-        }
-        x += patch->dx();
-      }
-    }
-
-    // .. top wall
-    if (k2 == patch->sizeK() && patch->sizeK() > 2) {
-      real x = 0.5*patch->dx();
-      real z = 0.5*patch->dz() + patch->sizeK()*patch->dz();
-      for (size_t i = i1; i < i2; ++i) {
-        real y = 0.5*patch->dy();
-        for (size_t j = j1; j < j2; ++j) {
-          fill(flux, 5, 0);
-          this->m_Op.zWallP(patch, i, j, k2, x, y, z, Az, flux);
-          for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            m_Res[resIndex(i_var, i, j, k2-1)] -= flux[i_var];
-          }
-          countFlops(DIM);
-          y += patch->dy();
-        }
-        x += patch->dx();
-      }
-    }
-
-    // advance to next iteration level (time)
-    real patch_factor = factor/patch->dV();
-    for (size_t i = i1; i < i2; ++i) {
-      for (size_t j = j1; j < j2; ++j) {
-        for (size_t k = k1; k < k2; ++k) {
-          for (size_t i_var = 0; i_var < DIM; ++i_var) {
-            patch->f(0, i_var, i, j, k) = patch->f(1, i_var, i, j, k) + patch_factor*m_Res[resIndex(i_var, i, j, k)];
+          for (size_t k = k1; k < k2; ++k) {
+            for (size_t i_var = 0; i_var < DIM; ++i_var) {
+              patch->f(0, i_var, i, j, k) = patch->f(1, i_var, i, j, k) + patch_factor*m_Res[resIndex(i_var, i, j, k)];
+            }
           }
         }
       }

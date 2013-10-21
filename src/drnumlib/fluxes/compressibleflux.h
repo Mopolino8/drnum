@@ -9,19 +9,19 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef COMPRESSIBLEFLUX_H
 #define COMPRESSIBLEFLUX_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 #define COMPR_VARS \
   real r  = var[0]; \
@@ -111,32 +111,32 @@ protected: // methods
 
 #define COMPRESSIBLE_LEFT_PROJX \
   real var_l[5]; \
-  m_Reconstruction.project(patch, var_l, 0, 5, i-1, j, k, i, j, k, x - patch->dx(), y, z, x, y, z); \
+  m_Reconstruction.project(patch, var_l, 0, i-1, j, k, i, j, k, x - patch->dx(), y, z, x, y, z); \
   COMPRESSIBLE_LEFT_VARS
 
 #define COMPRESSIBLE_RIGHT_PROJX \
   real var_r[5]; \
-  m_Reconstruction.project(patch, var_r, 0, 5, i, j, k, i-1, j, k, x, y, z, x - patch->dx(), y, z); \
+  m_Reconstruction.project(patch, var_r, 0, i, j, k, i-1, j, k, x, y, z, x - patch->dx(), y, z); \
   COMPRESSIBLE_RIGHT_VARS
 
 #define COMPRESSIBLE_LEFT_PROJY \
   real var_l[5]; \
-  m_Reconstruction.project(patch, var_l, 0, 5, i, j-1, k, i, j, k, x, y - patch->dy(), z, x, y, z); \
+  m_Reconstruction.project(patch, var_l, 0, i, j-1, k, i, j, k, x, y - patch->dy(), z, x, y, z); \
   COMPRESSIBLE_LEFT_VARS
 
 #define COMPRESSIBLE_RIGHT_PROJY \
   real var_r[5]; \
-  m_Reconstruction.project(patch, var_r, 0, 5, i, j, k, i, j-1, k, x, y, z, x, y - patch->dy(), z); \
+  m_Reconstruction.project(patch, var_r, 0, i, j, k, i, j-1, k, x, y, z, x, y - patch->dy(), z); \
   COMPRESSIBLE_RIGHT_VARS
 
 #define COMPRESSIBLE_LEFT_PROJZ \
   real var_l[5]; \
-  m_Reconstruction.project(patch, var_l, 0, 5, i, j, k-1, i, j, k, x, y, z - patch->dz(), x, y, z); \
+  m_Reconstruction.project(patch, var_l, 0, i, j, k-1, i, j, k, x, y, z - patch->dz(), x, y, z); \
   COMPRESSIBLE_LEFT_VARS
 
 #define COMPRESSIBLE_RIGHT_PROJZ \
   real var_r[5]; \
-  m_Reconstruction.project(patch, var_r, 0, 5, i, j, k, i, j, k-1, x, y, z, x, y, z - patch->dz()); \
+  m_Reconstruction.project(patch, var_r, 0, i, j, k, i, j, k-1, x, y, z, x, y, z - patch->dz()); \
   COMPRESSIBLE_RIGHT_VARS
 
 

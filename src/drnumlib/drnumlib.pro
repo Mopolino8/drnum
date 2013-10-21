@@ -9,13 +9,13 @@
 # + the Free Software Foundation, either version 3 of the License, or    +
 # + (at your option) any later version.                                  +
 # +                                                                      +
-# + enGrid is distributed in the hope that it will be useful,            +
+# + DrNUM is distributed in the hope that it will be useful,             +
 # + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 # + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 # + GNU General Public License for more details.                         +
 # +                                                                      +
 # + You should have received a copy of the GNU General Public License    +
-# + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+# + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 TEMPLATE = lib
@@ -24,6 +24,25 @@ drnumlib.files = libdrnumlib.*
 INSTALLS += drnumlib
 
 include (../drnum.pri)
+
+# CUDA
+# ====
+#
+cuda {
+  USEGPU                 = -DGPU
+  LIBS                  += -L$(CUDALIBDIR)
+  LIBS                  += -lcudart
+  QMAKE_CXXFLAGS        += $$USEGPU -DCUDA
+  INCLUDEPATH           += $(CUDAINCDIR)
+}
+
+cuda_debug {
+  USEGPU                 = -DGPU
+  LIBS                  += -L$(CUDALIBDIR)
+  LIBS                  += -lcudart
+  QMAKE_CXXFLAGS        += $$USEGPU -DCUDA
+  INCLUDEPATH           += $(CUDAINCDIR)
+}
 
 SOURCES += \
     patch.cpp \
@@ -145,6 +164,8 @@ HEADERS += \
     cubeincartisianpatch.h \
     objectdefinition.h \
     cartboxobject.h \
+    cubeincartisianpatch.h \
+    cartesiancycliccopy.h \
     sphereobject.h \
     cylinderobject.h \
     combiobject.h \

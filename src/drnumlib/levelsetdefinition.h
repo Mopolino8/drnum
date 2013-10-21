@@ -3,7 +3,7 @@
 
 class LevelSetDefinition;
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 /**
   * Base class for the definition of levelset objects.

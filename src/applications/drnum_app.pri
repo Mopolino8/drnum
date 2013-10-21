@@ -9,13 +9,13 @@
 # + the Free Software Foundation, either version 3 of the License, or    +
 # + (at your option) any later version.                                  +
 # +                                                                      +
-# + enGrid is distributed in the hope that it will be useful,            +
+# + DrNUM is distributed in the hope that it will be useful,             +
 # + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 # + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 # + GNU General Public License for more details.                         +
 # +                                                                      +
 # + You should have received a copy of the GNU General Public License    +
-# + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+# + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 # +                                                                      +
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 include (../drnum.pri)
@@ -25,21 +25,21 @@ LIBS += -ldrnumlib
 
 LIBS += -L$(VTKLIBDIR)
 LIBS += -L$(CUDALIBDIR)
-LIBS += -lQVTK
 LIBS += -lvtkCommon
-LIBS += -lvtkDICOMParser
-LIBS += -lvtkexoIIc
 LIBS += -lvtkFiltering
-LIBS += -lvtkftgl
-LIBS += -lvtkGenericFiltering
-LIBS += -lvtkGraphics
-LIBS += -lvtkHybrid
 LIBS += -lvtkImaging
+LIBS += -lvtkGraphics
+LIBS += -lvtkGenericFiltering
 LIBS += -lvtkIO
 LIBS += -lvtkRendering
-LIBS += -lvtksys
 LIBS += -lvtkVolumeRendering
+LIBS += -lvtkHybrid
 LIBS += -lvtkWidgets
+LIBS += -lvtkParallel
+LIBS += -lvtkInfovis
+LIBS += -lvtkGeovis
+LIBS += -lvtkViews
+LIBS += -lvtkCharts
 LIBS += -lgomp
 
 INCLUDEPATH += ../../drnumlib

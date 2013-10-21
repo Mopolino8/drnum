@@ -18,7 +18,7 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include "blockcfd.h"
+#include "drnum.h"
 
 // Includes to build a geometric levelset test case
 

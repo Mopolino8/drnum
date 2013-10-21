@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef TPATCHITERATOR_H
@@ -26,7 +26,7 @@
 #include "patchgrid.h"
 #include "patchiterator.h"
 
-template <typename T, unsigned int DIM, typename OP>
+template <typename T, typename OP>
 class TPatchIterator : public PatchIterator
 {
 
@@ -45,15 +45,15 @@ public:
 };
 
 
-template <typename T, unsigned int DIM, typename OP>
-TPatchIterator<T, DIM, OP>::TPatchIterator(OP op) : PatchIterator()
+template <typename T, typename OP>
+TPatchIterator<T, OP>::TPatchIterator(OP op) : PatchIterator()
 {
   //m_Patches.reserve(max(size_t(100), patch_grid.getNumPatches()));
   m_Op = op;
 }
 
-template <typename T, unsigned int DIM, typename OP>
-void TPatchIterator<T, DIM, OP>::addPatch(Patch* patch)
+template <typename T, typename OP>
+void TPatchIterator<T, OP>::addPatch(Patch* patch)
 {
   /// @todo currently ugly. Find concept to avoid storing m_Patches twice. See PatchIterator.h
   PatchIterator::addPatch(patch);

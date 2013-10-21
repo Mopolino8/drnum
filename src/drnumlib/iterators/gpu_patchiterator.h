@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef GPU_PATCHITERATOR_H
@@ -28,8 +28,8 @@
 #include <set>
 
 
-template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-class GPU_PatchIterator : public TPatchIterator<T_CPU, DIM, OP>
+template <typename T_CPU, typename T_GPU, typename OP>
+class GPU_PatchIterator : public TPatchIterator<T_CPU, OP>
 {
 
 protected: // attributes
@@ -37,11 +37,12 @@ protected: // attributes
   bool          m_GpuPointersSet;
   vector<T_GPU> m_GpuPatches;
   size_t        m_MaxNumThreads;
+  int           m_CudaDevice;
 
 
 public:
 
-  GPU_PatchIterator(OP op);
+  GPU_PatchIterator(OP op, int cuda_device = 0, size_t thread_limit = 0);
 
   CUDA_HO void updateHost();
   CUDA_HO void updateDevice();
@@ -53,60 +54,66 @@ public:
 };
 
 
-template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::GPU_PatchIterator(OP op)
-  : TPatchIterator<T_CPU, DIM, OP>(op)
+template <typename T_CPU, typename T_GPU, typename OP>
+GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device, size_t thread_limit)
+  : TPatchIterator<T_CPU, OP>(op)
 {
   m_GpuPointersSet = false;
+  m_CudaDevice = cuda_device;
   int count;
   if (cudaGetDeviceCount(&count) != cudaSuccess) {
     cerr << "error detecting CUDA devices" << endl;
     exit(EXIT_FAILURE);
   }
-  if (count == 0) {
-    cerr << "no CUDA devices found" << endl;
+  if (count < m_CudaDevice + 1) {
+    CudaTools::info();
+    cerr << "specified CUDA device does not exists" << endl;
     exit(EXIT_FAILURE);
   }
   cudaDeviceProp prop;
-  if (cudaGetDeviceProperties(&prop, 0) != cudaSuccess) {
+  if (cudaGetDeviceProperties(&prop, m_CudaDevice) != cudaSuccess) {
     cerr << "error fetching device properties" << endl;
     exit(EXIT_FAILURE);
   }
+  cudaSetDevice(m_CudaDevice);
   m_MaxNumThreads = min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]);
+  if (thread_limit > 0) {
+    m_MaxNumThreads = min(thread_limit, m_MaxNumThreads);
+  }
 }
 
-template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::addPatch(Patch *patch)
+template <typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, OP>::addPatch(Patch *patch)
 {
   T_CPU* cpu_patch = dynamic_cast<T_CPU*>(patch);
   if (cpu_patch == NULL) {
     BUG;
   }
-  TPatchIterator<T_CPU, DIM, OP>::addPatch(cpu_patch);
+  TPatchIterator<T_CPU, OP>::addPatch(cpu_patch);
   T_GPU gpu_patch(cpu_patch);
   m_GpuPatches.push_back(gpu_patch);
 }
 
-template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::copyField(size_t i_src, size_t i_dst)
+template <typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, OP>::copyField(size_t i_src, size_t i_dst)
 {
   for (size_t i = 0; i < this->m_Patches.size(); ++i) {
     cudaMemcpy(m_GpuPatches[i].getField(i_dst), m_GpuPatches[i].getField(i_src), m_GpuPatches[i].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
   }
 }
 
-template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateHost()
+template <typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, OP>::updateHost()
 {
   for (size_t i = 0; i < this->m_Patches.size(); ++i) {
     m_GpuPatches[i].copyFromDevice(this->m_Patches[i]);
   }
 }
 
-template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()
+template <typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, OP>::updateDevice()
 {
-  cout << "void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::updateDevice()" << endl;
+  cout << "void GPU_PatchIterator<T_CPU, T_GPU, OP>::updateDevice()" << endl;
   if (!m_GpuPointersSet) {
     for (size_t i = 0; i < m_GpuPatches.size(); ++i) {
       m_GpuPatches[i].updateDonorPointers(PatchIterator::getPatch(i));
@@ -182,8 +189,8 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
   }
 }
 
-template <typename T_CPU, typename T_GPU, unsigned int DIM, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, DIM, OP>::copyDonorData(size_t i_field)
+template <typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<T_CPU, T_GPU, OP>::copyDonorData(size_t i_field)
 {
   // reset receiver cells
   for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {

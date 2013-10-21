@@ -9,16 +9,18 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 #include "cartesianpatch.h"
+#include "geometrytools.h"
 
 #ifdef WITH_VTK
 #include <vtkCellType.h>
@@ -93,9 +95,9 @@ void CartesianPatch::cellNeighbours (const size_t& i_cell,
 }
 
 
-bool CartesianPatch::readFromFile(istringstream& iss_input)
+bool CartesianPatch::readFromFile(istringstream& iss_input, real scale)
 {
-  bool no_error = Patch::readFromFile(iss_input);
+  bool no_error = Patch::readFromFile(iss_input, scale);
   // number of nodes in block axis directions
   size_t num_i, num_j, num_k;
   iss_input >> num_i;
@@ -115,9 +117,9 @@ bool CartesianPatch::readFromFile(istringstream& iss_input)
   iss_input >> jlength;
   iss_input >> klength;
   // scale length according to IO-scaling factor
-  ilength *= m_ioscale;
-  jlength *= m_ioscale;
-  klength *= m_ioscale;
+  ilength *= m_IOScale;
+  jlength *= m_IOScale;
+  klength *= m_IOScale;
   // apply patch modifiers
   setSeekExceptions(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
   resize(num_i, num_j, num_k);
@@ -1701,7 +1703,7 @@ vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, con
     for (size_t k = k_start; k < k_stop; ++k) {
       for (size_t j = j_start; j < j_stop; ++j) {
         for (size_t i = i_start; i < i_stop; ++i) {
-          getVar(i_field, i, j, k, raw_var);
+          getVarDim(numVariables(), i_field, i, j, k, raw_var);
           var->SetValue(id, proc_vars.getScalar(i_var, raw_var));
           ++id;
         }
@@ -1718,7 +1720,7 @@ vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, con
     for (size_t k = k_start; k < k_stop; ++k) {
       for (size_t j = j_start; j < j_stop; ++j) {
         for (size_t i = i_start; i < i_stop; ++i) {
-          getVar(i_field, i, j, k, raw_var);
+          getVarDim(numVariables(), i_field, i, j, k, raw_var);
           vec3_t v = proc_vars.getVector(i_var, raw_var);
           v = m_TransformInertial2This.transfreeReverse(v);
           float vf[3];
@@ -1818,4 +1820,16 @@ void CartesianPatch::writeData(QString base_data_filename, int count)
   BUG;
 }
 
-
+int CartesianPatch::findCell(vec3_t xo)
+{
+  vec3_t x = m_TransformInertial2This.transform(xo);
+  vec3_t x0(0, 0, 0);
+  vec3_t x1(sizeI()*dx(), sizeJ()*dy(), sizeK()*dz());
+  if (!GeometryTools::isInsideCartesianBox(x, x0, x1)) {
+    return -1;
+  }
+  int i = x[0]/dx();
+  int j = x[1]/dy();
+  int k = x[2]/dz();
+  return index(i, j, k);
+}

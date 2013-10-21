@@ -15,6 +15,7 @@ temp
 *.so
 *.so.*
 *.jar
+*.pyc
 
 # Qt generated files
 moc_*
@@ -43,6 +44,11 @@ Makefile.Debug
 Makefile.Release
 Makefile.*engrid*
 
+# CMake
+*.cmake
+build/*
+build*/*
+
 netgen_svn
 third_party
 third_party64
@@ -57,7 +63,6 @@ qtc-gdbmacros
 *.out
 *.vtu
 *.egc
-*.txt
 *.bcs
 netgen_svn_old
 *.tag
@@ -109,4 +114,12 @@ blockcfd*
 *.i
 *.ii
 main.*.o
+
+# binaries
+bin/*
+lib/*
+
+# OpenFOAM
+*linux64GccDPOpt*
+*.dep
 

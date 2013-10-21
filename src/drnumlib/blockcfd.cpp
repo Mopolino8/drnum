@@ -9,27 +9,39 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include "blockcfd.h"
+
+#include "drnum.h"
 
 unsigned long int global_flops     = 0;
 unsigned long int global_flops_x86 = 0;
 
 time_t global_start_time = time(NULL);
+time_t global_last_time  = time(NULL);
 
 void startTiming()
 {
   global_flops     = 0;
   global_flops_x86 = 0;
+  global_start_time = time(NULL);
+  global_last_time = global_start_time;
   cout << "\nTiming started.\n" << endl;
+}
+
+void printTiming()
+{
+  time_t now = time(NULL);
+  cout << now - global_start_time << " seconds since timing began" << endl;
+  cout << now - global_last_time << " seconds since last timing output" << endl;
+  global_last_time = now;
 }
 
 void stopTiming()

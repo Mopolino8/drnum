@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef EXTERNAL_AERO_H
@@ -27,7 +27,7 @@
 #include "reconstruction/minmod.h"
 #include "reconstruction/secondorder.h"
 #include "fluxes/knp.h"
-//#include "fluxes/vanleer.h"
+#include "fluxes/vanleer.h"
 #include "fluxes/ausmplus.h"
 //#include "fluxes/ausmdv.h"
 #include "fluxes/compressiblefarfieldflux.h"
@@ -36,6 +36,12 @@
 #include "perfectgas.h"
 #include "compressiblevariables.h"
 #include "rungekutta.h"
+
+#ifdef GPU
+#include "cartesiancycliccopy.h"
+#endif
+
+#include "externalexchangelist.h"
 
 #ifdef GPU
 #include "iterators/gpu_cartesianiterator.h"
@@ -47,20 +53,25 @@
 #include "iteratorfeeder.h"
 #include "cubeincartisianpatch.h"
 
+#include <QTime>
+
+#include "configmap.h"
+
 class EaFlux
 {
 
 protected:
 
-  //typedef Upwind1 reconstruction_t;
-  //typedef Upwind2<SecondOrder>                           reconstruction_t;
+  //typedef Upwind1<5> reconstruction_t;
+  typedef Upwind2<5, SecondOrder> reconstruction_t;
+  //typedef Upwind2<5, VanAlbada> reconstruction_t;
 
-  typedef Upwind2<VanAlbada>                             reconstruction_t;
-  typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
-  //typedef KNP<reconstruction_t, PerfectGas>              euler_t;
-  typedef CompressibleSlipFlux<Upwind1, PerfectGas>      wall_t;
-  typedef CompressibleViscFlux<PerfectGas>               viscous_t;
-  typedef CompressibleFarfieldFlux<Upwind1, PerfectGas>  farfield_t;
+  typedef AusmPlus<reconstruction_t, PerfectGas> euler_t;
+  //typedef VanLeer<reconstruction_t, PerfectGas> euler_t;
+
+  typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
+  typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;
+  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
@@ -145,7 +156,8 @@ inline void EaFlux::xWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real 
 template <typename PATCH>
 inline void EaFlux::yWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarfieldFlux.yWallP(P, i, j, k, x, y, z, A, flux);
+  //m_FarfieldFlux.yWallP(P, i, j, k, x, y, z, A, flux);
+  m_WallFlux.yWallP(P, i, j, k, x, y, z, A, flux);
 }
 
 template <typename PATCH>
@@ -163,7 +175,8 @@ inline void EaFlux::xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real 
 template <typename PATCH>
 inline void EaFlux::yWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarfieldFlux.yWallM(P, i, j, k, x, y, z, A, flux);
+  //m_FarfieldFlux.yWallM(P, i, j, k, x, y, z, A, flux);
+  m_WallFlux.yWallM(P, i, j, k, x, y, z, A, flux);
 }
 
 template <typename PATCH>
@@ -173,115 +186,103 @@ inline void EaFlux::zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real 
 }
 
 
-class EaWFluxZM : public EaFlux
-{
-
-public:
-
-  EaWFluxZM(real u, real v, real p, real T) : EaFlux(u, v, p, T) {}
-  EaWFluxZM() {}
-
-  template <typename PATCH>
-  CUDA_DH void zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
-  {
-    m_WallFlux.zWallM(P, i, j, k, x, y, z, A, flux);
-  }
-
-};
-
-
-
 
 vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
 {
   vector<CubeInCartisianPatch> cubes;
 
-  // Building 1
+  // plate
   {
-    vec3_t x1(-42.30365, -5, 0);
-    vec3_t x2(-13.46731, 9.07423, 14.29426);
+    real L = 0.000305298288755695;
+    real B = 0.1*L;
+    real e = 0.005*L;
+    vec3_t x1(-0.5*B, -0.5*L + e, -10*L);
+    vec3_t x2( 0.5*B,  0.5*L + e,  10*L);
     {
-      //size_t i_patch = 16;
-      size_t i_patch = 60;
+      size_t i_patch = 12;
       CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
       CubeInCartisianPatch cube(cart_patch);
       cube.setRange(x1, x2);
       cubes.push_back(cube);
     }
   }
-
-  // Bulding 2
-  {
-    vec3_t x1(-5, -5, 0);
-    vec3_t x2(5, 5, 65);
-    {
-      //size_t i_patch = 28;
-      size_t i_patch = 85;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-    {
-      //size_t i_patch = 29;
-      size_t i_patch = 86;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-  }
-
-  // Bulding 3
-  {
-    vec3_t x1(22.04841, -5, 0);
-    vec3_t x2(34.91528, 18.73290, 84.33866);
-    {
-      //size_t i_patch = 40;
-      size_t i_patch = 110;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-    {
-      //size_t i_patch = 41;
-      size_t i_patch = 111;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-    {
-      //size_t i_patch = 42;
-      size_t i_patch = 112;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-  }
-
   return cubes;
 }
 
+void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *dn2of_list, Barrier *barrier, SharedMemory *shmem, bool &write_flag, bool &stop_flag, real &dt)
+{
+  dim_t<5> dim;
+  patch->copyFieldToHost(0);
+  real var[dim()];
+  real p, T, u, v, w;
+  for (int i = 0; i < dn2of_list->size(); ++i) {
+    patch->getVar(dim, 0, dn2of_list->index(i), var);
+    PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+    dn2of_list->data(0, i) = p;
+    dn2of_list->data(1, i) = u;
+    dn2of_list->data(2, i) = v;
+    dn2of_list->data(3, i) = w;
+    dn2of_list->data(4, i) = T;
+  }
+  barrier->wait();
+  dn2of_list->ipcSend();
+  barrier->wait();
+  int write = 0;
+  int stop = 0;
+  shmem->readValue("write", &write);
+  shmem->readValue("stop", &stop);
+  shmem->readValue("dt", &dt);
+  if (write) {
+    write_flag = true;
+  } else {
+    write_flag = false;
+  }
+  if (stop) {
+    stop_flag = true;
+    cout << "Received stop signal from client." << endl;
+  } else {
+    stop_flag = false;
+  }
+  of2dn_list->ipcReceive();
+
+  for (int i = 0; i < of2dn_list->size(); ++i) {
+    real var[5];
+    p = of2dn_list->data(0, i);
+    u = of2dn_list->data(1, i);
+    v = of2dn_list->data(2, i);
+    w = of2dn_list->data(3, i);
+    T = of2dn_list->data(4, i);
+    PerfectGas::primitiveToConservative(p, T, u, v, w, var);
+    patch->setVar(dim, 0, of2dn_list->index(i), var);
+  }
+
+  patch->copyFieldToDevice(0);
+}
 
 void run()
 {
+  dim_t<5> dim;
 
-  real Ma             = 0.15;
-  real p              = 1.0e5;
-  real T              = 300;
+  // control files
+  ConfigMap config;
+  config.addDirectory("control");
+
+  real Ma             = config.getValue<real>("Mach-number");
+  real p              = config.getValue<real>("pressure");
+  real T              = config.getValue<real>("temperature");
   real uabs           = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-  real alpha          = 10.0;
-  real L              = 10.0;
+  real alpha          = 0.0;
+  real L              = config.getValue<real>("reference-length");
   real time           = L/uabs;
-  real cfl_target     = 1.0;
+  real cfl_target     = config.getValue<real>("CFL-number");
   real t_write        = 0;
-  real write_interval = 1.0*time;
-  real total_time     = 100*time;
-  bool write          = true;
-
+  real write_interval = config.getValue<real>("write-interval")*time;
+  real total_time     = config.getValue<real>("total-time")*time;
+  bool mesh_preview   = config.getValue<bool>("mesh-preview");
+  bool code_coupling  = config.getValue<bool>("code-coupling");
+  real scale          = config.getValue<real>("scale");
+  bool write_flag     = false;
+  bool stop_flag      = false;
 
   alpha = M_PI*alpha/180.0;
   real u = uabs*cos(alpha);
@@ -296,7 +297,7 @@ void run()
   patch_grid.setInterpolateData();
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
   patch_grid.setTransferType("padded_direct");
-  patch_grid.readGrid("patches/standard.grid");
+  patch_grid.readGrid("patches/standard.grid", scale);
   //patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
 
@@ -309,16 +310,18 @@ void run()
 
   // Initialize
   real init_var[5];
-  PerfectGas::primitiveToConservative(p, T, u, v, 0, init_var);
+  PerfectGas::primitiveToConservative(p, T, u, v, 0.01*u, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
   if (write) {
     patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
   }
-  //  exit(-1); /// meshing!!!
+
+  if (mesh_preview) {
+    exit(EXIT_SUCCESS);
+  }
 
   EaFlux    flux_std(u, v, p, T);
-  EaWFluxZM flux_wzm(u, v, p, T);
 
   RungeKutta runge_kutta;
   runge_kutta.addAlpha(0.25);
@@ -327,48 +330,94 @@ void run()
 
 #ifdef GPU
   GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_std);
-  GPU_CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
 #else
   CartesianIterator<5, EaFlux>    iterator_std(flux_std);
-  CartesianIterator<5, EaWFluxZM> iterator_wzm(flux_wzm);
 #endif
   iterator_std.setCodeString(CodeString("fx fy fz far far far far far  far 0"));
-  iterator_wzm.setCodeString(CodeString("fx fy fz far far far far wall far 0"));
 
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator_std);
-  iterator_feeder.addIterator(&iterator_wzm);
   iterator_feeder.feed(patch_grid);
 
-  vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
-  for (size_t i = 0; i < cubes.size(); ++i) {
-    runge_kutta.addPostOperation(&cubes[i]);
-  }
+  //vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
+  //for (size_t i = 0; i < cubes.size(); ++i) {
+  //  runge_kutta.addPostOperation(&cubes[i]);
+  //}
+  //CartesianCyclicCopy<5> cyclic(&patch_grid);
+  //runge_kutta.addPostOperation(&cyclic);
 
   runge_kutta.addIterator(&iterator_std);
-  runge_kutta.addIterator(&iterator_wzm);
 
   int write_counter = 0;
   int iter = 0;
   real t = 0;
 
-  cout << "std:" << iterator_std.numPatches() << endl;
-  cout << "wzm:" << iterator_wzm.numPatches() << endl;
+
+  SharedMemory         *shmem = NULL;
+  Barrier              *barrier = NULL;
+  ExternalExchangeList *of2dn_list = NULL;
+  ExternalExchangeList *dn2of_list = NULL;
+  int                   coupling_patch_id = -1;
+  Patch                *coupling_patch = NULL;
+
+  if (code_coupling) {
+    try {
+      shmem = new SharedMemory(1, 32*1024*1024, true);
+      barrier = new Barrier(2, true);
+    } catch (IpcException E) {
+      E.print();
+    }
+    of2dn_list = new ExternalExchangeList("of2dn", 5, NULL, shmem, barrier);
+    dn2of_list = new ExternalExchangeList("dn2of", 5, NULL, shmem, barrier);
+    int client_ready = 0;
+    shmem->writeValue("client-ready", &client_ready);
+    cout << "External code coupling has been enabled." << endl;
+    cout << "waiting for client to connect ..." << endl;
+    while (!client_ready) {
+      shmem->readValue("client-ready", &client_ready);
+    }
+    barrier->wait();
+    cout << "The client connection has been established." << endl;
+    barrier->wait();
+    of2dn_list->ipcReceive();
+    dn2of_list->ipcReceive();
+    barrier->wait();
+    coupling_patch_id = config.getValue<int>("coupling-patch");
+    of2dn_list->finalise(&patch_grid, coupling_patch_id);
+    dn2of_list->finalise(&patch_grid, coupling_patch_id);
+    coupling_patch = patch_grid.getPatch(coupling_patch_id);
+    sync(coupling_patch, of2dn_list, dn2of_list, barrier, shmem, write_flag, stop_flag, dt);
+    write_interval = MAX_REAL;
+    total_time = MAX_REAL;
+    iterator_std.deactivatePatch(coupling_patch_id);
+  }
+
+  QString restart_file = config.getValue<QString>("restart-file");
+  if (restart_file.toLower() != "none") {
+    write_counter = restart_file.right(6).toInt();
+    t = patch_grid.readData(0, "data/" + restart_file);
+  }
 
 #ifdef GPU
   iterator_std.updateDevice();
-  iterator_wzm.updateDevice();
 #endif
 
   startTiming();
 
-  while (t < total_time) {
 
+  while (t < total_time && !stop_flag) {
+
+    QTime step_start = QTime::currentTime();
     runge_kutta(dt);
+    int msecs_drnum = step_start.msecsTo(QTime::currentTime());
+    real dt_new;
+    sync(coupling_patch, of2dn_list, dn2of_list, barrier, shmem, write_flag, stop_flag, dt_new);
+    int msecs_total = step_start.msecsTo(QTime::currentTime());
+    real drnum_fraction = real(msecs_drnum)/real(msecs_total);
     t += dt;
     t_write += dt;
 
-    if (t_write >= write_interval) {
+    if (t_write >= write_interval || write_flag) {
 
       // Do some diagnose on patches
       real CFL_max = 0;
@@ -381,7 +430,6 @@ void run()
 #ifdef GPU
       runge_kutta.copyDonorData(0);
       iterator_std.updateHost();
-      iterator_wzm.updateHost();
 #endif
 
       for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
@@ -394,7 +442,7 @@ void run()
           for (size_t j = 0; j < NJ; ++j) {
             for (size_t k = 0; k < NK; ++k) {
               real p, u, v, w, T, var[5];
-              patch.getVar(0, i, j, k, var);
+              patch.getVar(dim, 0, i, j, k, var);
               rho_min = min(var[0], rho_min);
               rho_max = max(var[0], rho_max);
               PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
@@ -421,18 +469,18 @@ void run()
       cout << "  CFL: " << CFL_max;
       cout << "  max: " << max_norm_allpatches << "  L2: " << l2_norm_allpatches;
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
+      printTiming();
       ++write_counter;
       if (write) {
-        patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+        patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
+        patch_grid.writeData(0, "data/step", t, write_counter);
       }
       t_write -= write_interval;
-      if (t > 80.0) {
-        write_interval = 0.05;
-      }
     } else {
       ++iter;
-      cout << iter << " iterations,  t=" << t/time << "*L/u_oo,  dt: " << dt << endl;
+      cout << iter << " iterations,  t=" << t << ",  t=" << t/time << "*L/u_oo,  dt: " << dt << ",  DrNUM % of run-time: " << 100*drnum_fraction << endl;
     }
+    dt = dt_new;
   }
 
   stopTiming();
@@ -441,7 +489,6 @@ void run()
 #ifdef GPU
   runge_kutta.copyDonorData(0);
   iterator_std.updateHost();
-  iterator_wzm.updateHost();
 #endif
 
   if (write) {

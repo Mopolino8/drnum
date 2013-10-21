@@ -9,16 +9,17 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include "blockcfd.h"
+
+#include "drnum.h"
 
 private: // attributes
 
@@ -47,6 +48,10 @@ donor_t* m_Donors;         ///< All donor data structs for this (receiver) patch
 
 size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_NumDonorWIConcat]
 real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_NumDonorWIConcat]
+
+protected: // attributes
+
+size_t  m_MyIndex;      ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
 
 
 public:
@@ -367,6 +372,70 @@ CUDA_DH real* getVarsubset(size_t i_field, size_t l_c, real* ret_varset,
   }
 }
 
+/**
+ * @brief Get a variable set at a specified index.
+ * @param i_field the field index
+ * @param i the cell index
+ * @param var will hold the conservative variable set afterwards (needs to be allocated beforehand)
+ */
+template <typename DIM>
+CUDA_DH void getVar(DIM, size_t i_field, size_t i, real *var)
+{
+  for (size_t i_var = 0; i_var < DIM::dim; ++i_var) {
+    var[i_var] = getVariable(i_field, i_var)[i];
+  }
+}
+
+/**
+ * @brief Get a variable set at a specified index. This method take the dimension (number of variables)
+ *        as a real parameter and should not be used in performance critical routines.
+ * @param dim the number of variables
+ * @param i_field the field index
+ * @param i the cell index
+ * @param var will hold the conservative variable set afterwards (needs to be allocated beforehand)
+ */
+CUDA_DH void getVarDim(unsigned int dim, size_t i_field, size_t i, real *var)
+{
+  for (size_t i_var = 0; i_var < dim; ++i_var) {
+    var[i_var] = getVariable(i_field, i_var)[i];
+  }
+}
+
+/**
+ * @brief Set a variable set at a specified index.
+ * @param i_field the field index
+ * @param i the cell index
+ * @param the conservative variable set
+ */
+template <typename DIM>
+CUDA_DH void setVar(DIM, size_t i_field, size_t i, real* var)
+{
+  for (size_t i_var = 0; i_var < DIM::dim; ++i_var) {
+    getVariable(i_field, i_var)[i] = var[i_var];
+  }
+}
+
+/**
+ * @brief Set a variable set at a specified index. This method take the dimension (number of variables)
+ *        as a real parameter and should not be used in performance critical routines.
+ * @param dim the number of variables
+ * @param i_field the field index
+ * @param i the cell index
+ * @param the conservative variable set
+ */
+CUDA_DH void setVarDim(unsigned int dim, size_t i_field, size_t i, real *var)
+{
+  for (size_t i_var = 0; i_var < dim; ++i_var) {
+    getVariable(i_field, i_var)[i] = var[i_var];
+  }
+}
+
+/**
+  * Access
+  * @return the index of the patch in sequence of PatchGrid::m_patches
+  */
+CUDA_DH size_t getIndex() {return m_MyIndex;}
+
 
 /**
  * Copy simple data attributes from another object.
@@ -385,6 +454,7 @@ CUDA_HO void copyAttributes(T* obj)
   m_NumReceivingCellsUnique = obj->getNumReceivingCellsUnique();
   m_NumDonorWIConcat        = obj->getNumDonorWIConcat();
   m_PatchGrid               = obj->getPatchGrid();
+  m_MyIndex                 = obj->getIndex();
 }
 
 

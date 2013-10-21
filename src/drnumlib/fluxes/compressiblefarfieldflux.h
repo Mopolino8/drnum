@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef COMPRESSIBLEFARFIELDFLUX_H
@@ -64,7 +64,7 @@
     } \
   }
 
-template <typename TReconstruction, typename TGas>
+template <unsigned int DIM, typename TReconstruction, typename TGas>
 class CompressibleFarfieldFlux
 {
 
@@ -93,7 +93,7 @@ public:
   template <typename PATCH> CUDA_DH void xWallP(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
     real var1[5];
-    m_Reconstruction.project(patch, var1, 0, 5, i-1, j, k, i, j, k, x - patch->dx(), y, z, x, y, z);
+    m_Reconstruction.project(patch, var1, 0, i-1, j, k, i, j, k, x - patch->dx(), y, z, x, y, z);
     FARFIELD_VARS
     real M0 = -CHECKED_REAL(u0/a0);
     real M1 = -CHECKED_REAL(u1/a1);
@@ -108,7 +108,7 @@ public:
   template <typename PATCH> CUDA_DH void xWallM(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
     real var1[5];
-    m_Reconstruction.project(patch, var1, 0, 5, i, j, k, i-1, j, k, x, y, z, x - patch->dx(), y, z);
+    m_Reconstruction.project(patch, var1, 0, i, j, k, i-1, j, k, x, y, z, x - patch->dx(), y, z);
     FARFIELD_VARS
     real M0 = CHECKED_REAL(u0/a0);
     real M1 = CHECKED_REAL(u1/a1);
@@ -123,7 +123,7 @@ public:
   template <typename PATCH> CUDA_DH void yWallP(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
     real var1[5];
-    m_Reconstruction.project(patch, var1, 0, 5, i, j-1, k, i, j, k, x, y - patch->dy(), z, x, y, z);
+    m_Reconstruction.project(patch, var1, 0, i, j-1, k, i, j, k, x, y - patch->dy(), z, x, y, z);
     FARFIELD_VARS
     real M0 = -CHECKED_REAL(v0/a0);
     real M1 = -CHECKED_REAL(v1/a1);
@@ -138,7 +138,7 @@ public:
   template <typename PATCH> CUDA_DH void yWallM(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
     real var1[5];
-    m_Reconstruction.project(patch, var1, 0, 5, i, j, k, i, j-1, k, x, y, z, x, y - patch->dy(), z);
+    m_Reconstruction.project(patch, var1, 0, i, j, k, i, j-1, k, x, y, z, x, y - patch->dy(), z);
     FARFIELD_VARS
     real M0 = CHECKED_REAL(v0/a0);
     real M1 = CHECKED_REAL(v1/a1);
@@ -153,7 +153,7 @@ public:
   template <typename PATCH> CUDA_DH void zWallP(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
     real var1[5];
-    m_Reconstruction.project(patch, var1, 0, 5, i, j, k-1, i, j, k, x, y, z - patch->dz(), x, y, z);
+    m_Reconstruction.project(patch, var1, 0, i, j, k-1, i, j, k, x, y, z - patch->dz(), x, y, z);
     FARFIELD_VARS
     real M0 = -CHECKED_REAL(w0/a0);
     real M1 = -CHECKED_REAL(w1/a1);
@@ -168,7 +168,7 @@ public:
   template <typename PATCH> CUDA_DH void zWallM(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
     real var1[5];
-    m_Reconstruction.project(patch, var1, 0, 5, i, j, k, i, j, k-1, x, y, z, x, y, z - patch->dz());
+    m_Reconstruction.project(patch, var1, 0, i, j, k, i, j, k-1, x, y, z, x, y, z - patch->dz());
     FARFIELD_VARS
     real M0 = CHECKED_REAL(w0/a0);
     real M1 = CHECKED_REAL(w1/a1);

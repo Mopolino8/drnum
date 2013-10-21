@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + DrNUM is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef TESTBLOCKOBJECTS_H
@@ -79,12 +79,12 @@ protected:
   //typedef Upwind1 reconstruction_t;
   //typedef Upwind2<SecondOrder>                           reconstruction_t;
 
-  typedef Upwind2<VanAlbada>                             reconstruction_t;
-  typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
-  //typedef KNP<reconstruction_t, PerfectGas>              euler_t;
-  typedef CompressibleSlipFlux<Upwind1, PerfectGas>      wall_t;
-  typedef CompressibleViscFlux<PerfectGas>               viscous_t;
-  typedef CompressibleFarfieldFlux<Upwind1, PerfectGas>  farfield_t;
+  typedef Upwind2<5,VanAlbada>                              reconstruction_t;
+  typedef AusmPlus<reconstruction_t, PerfectGas>            euler_t;
+  //typedef KNP<reconstruction_t, PerfectGas>               euler_t;
+  typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>      wall_t;
+  typedef CompressibleViscFlux<5, PerfectGas>                  viscous_t;
+  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas>  farfield_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
@@ -292,6 +292,7 @@ public:
 
 void run()
 {
+  dim_t<5> dim;
 
   real Ma             = 0.15;
   real p              = 1.0e5;
@@ -490,7 +491,7 @@ void run()
           for (size_t j = 0; j < NJ; ++j) {
             for (size_t k = 0; k < NK; ++k) {
               real p, u, v, w, T, var[5];
-              patch.getVar(0, i, j, k, var);
+              patch.getVar(dim, 0, i, j, k, var);
               rho_min = min(var[0], rho_min);
               rho_max = max(var[0], rho_max);
               PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);

@@ -9,54 +9,32 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// 
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// +                                                                      +
-// + This file is part of enGrid.                                         +
-// +                                                                      +
-// + Copyright 2008-2011 enGits GmbH                                     +
-// +                                                                      +
-// + enGrid is free software: you can redistribute it and/or modify       +
-// + it under the terms of the GNU General Public License as published by +
-// + the Free Software Foundation, either version 3 of the License, or    +
-// + (at your option) any later version.                                  +
-// +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
-// + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
-// + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
-// + GNU General Public License for more details.                         +
-// +                                                                      +
-// + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
-// +                                                                      +
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// 
 
 #ifndef SmallSquareMatrix_HH
 #define SmallSquareMatrix_HH
 
-#include "mathvector.h"
+#include "math/mathvector.h"
 
-template <class T, uint_t N> class SmallSquareMatrix;
+template <class T, unsigned int N> class SmallSquareMatrix;
 
 #include <vector>
 #include <cstdarg>
 #include <cstdlib>
 
-template <class T, uint_t N>
-class SmallSquareMatrix : public MathVector<StaticVector<MathVector<StaticVector<double,N> >,N> >
+template <class T, unsigned int N>
+class SmallSquareMatrix : public MathVector<StaticVector<MathVector<StaticVector<real,N> >,N> >
 {
   typedef StaticVector<T,N> svec_t;
-  typedef MathVector<StaticVector<double,N> > rvec_t;
+  typedef MathVector<StaticVector<real,N> > rvec_t;
 
 protected:
 
@@ -72,54 +50,54 @@ public:
    *  @param column the column of the component
    *  @return the component M[row,column]
    */
-  T comp(uint_t row, uint_t column) const { return (*this)[row][column]; }
+  T comp(unsigned int row, unsigned int column) const { return (*this)[row][column]; }
 
   /** Empty Constructor I */
   SmallSquareMatrix<T,N>(T a_limit = 1e-20)
-    : MathVector<StaticVector<MathVector<StaticVector<double,N> >,N> >() { prec_safe = false; a_limit = a_limit; }
+    : MathVector<StaticVector<MathVector<StaticVector<real,N> >,N> >() { prec_safe = false; a_limit = a_limit; }
 
   /** Copy Constructor */
   SmallSquareMatrix<T,N>(const SmallSquareMatrix<T,N> &M)
-    : MathVector<StaticVector<MathVector<StaticVector<double,N> >,N> >(M) {prec_safe = false;}
+    : MathVector<StaticVector<MathVector<StaticVector<real,N> >,N> >(M) {prec_safe = false;}
 
   /** Constructor upon an open set of vectors
    *  @param row_col_type string indicating "row" or "column" type setting
    *         (only these two key-words allowed)
-   *  @param col_vects an stl-type vector of double vectors
+   *  @param col_vects an stl-type vector of real vectors
    */
-  SmallSquareMatrix<T,N>(string row_col_type, vector<svec_t*> col_vects);
+  SmallSquareMatrix<T,N>(std::string row_col_type, std::vector<svec_t*> col_vects);
 
-  /** Constructor upon an open set of vectors containing doubles [T = double]
+  /** Constructor upon an open set of vectors containing reals [T = real]
    *  @param row_col_type string indicating "row" or "column" type setting
    *         (only these two key-words allowed)
-   *  @param col_vects an stl-type vector of double vectors
+   *  @param col_vects an stl-type vector of real vectors
    */
-  SmallSquareMatrix<T,N>(string row_col_type, vector<rvec_t*> col_vects);
+  SmallSquareMatrix<T,N>(std::string row_col_type, std::vector<rvec_t*> col_vects);
 
   /** Set a row vector
    *  @param row the row number to be set
-   *  @param row_vec a double vector to set
+   *  @param row_vec a real vector to set
    */
   template<class Tvec>
-  void row(uint_t row, Tvec row_vec)
+  void row(unsigned int row, Tvec row_vec)
   {
     (*this)[row] = row_vec;
   }
 
   /** Set a column vector
    *  @param column the column number to be set
-   *  @param col_vec a double vector to set
+   *  @param col_vec a real vector to set
    */
   template<class Tvec>
-  void column(uint_t column, Tvec col_vec)
+  void column(unsigned int column, Tvec col_vec)
   {
-    for(uint_t k_row = 0; k_row<N; k_row++) {
+    for(unsigned int k_row = 0; k_row<N; k_row++) {
       (*this)[k_row][column] = col_vec[k_row];
     }
   }
 
   /** Set safe mode. Safe mode throws a Precision_error in
-   *  case of a precision limit (e.g. floating exception for "double")
+   *  case of a precision limit (e.g. floating exception for "real")
    *  @param a_prec_limit precision limit
    */
   void setSafe(T a_prec_limit) {
@@ -128,21 +106,21 @@ public:
   }
 
   /** Set unsafe mode. Safe mode throws a Precision_error in
-   *  case of a precision limit (e.g. floating exception for "double")
+   *  case of a precision limit (e.g. floating exception for "real")
    */
   void setUnSafe() {
     prec_safe = false;
   }
 
   /** Access safe mode. Safe mode throws a Precision_error in
-   *  case of a precision limit (e.g. floating exception for "double")
+   *  case of a precision limit (e.g. floating exception for "real")
    */
   bool isSafe() {
     return prec_safe;
   }
 
   /** Access safe limit. Safe mode throws a Precision_error in
-   *  case of a precision limit (e.g. floating exception for "double")
+   *  case of a precision limit (e.g. floating exception for "real")
    */
   T safeLimit() {
     return prec_limit;
@@ -155,7 +133,7 @@ public:
   void precisionHandling(T det, T ele_max) {
     T qdet, compare_det;
     qdet = det * det;
-    double expo = 0.5 / N;
+    real expo = 0.5 / N;
     compare_det = pow(qdet, expo);
     //.... Compare the det^(1/N) with ele_max
     if(compare_det < safeLimit() * ele_max) {
@@ -169,7 +147,7 @@ public:
    *  @param ele_max a linear norm
    */
   T linNorm_0() {
-    uint_t i,j;
+    unsigned int i,j;
     T ele_max, qq;
     ele_max = (*this)[0][0] * (*this)[0][0];
     for(i=0;i<N;i++) {
@@ -206,7 +184,7 @@ public:
    *  @param column the column to exclude
    *  @return the sub-matrix
    */
-  SmallSquareMatrix<T,N-1> subMatrix(uint_t row, uint_t column);
+  SmallSquareMatrix<T,N-1> subMatrix(unsigned int row, unsigned int column);
 
   /** get the transposed matrix.
    *  @return the transposed matrix
@@ -222,47 +200,47 @@ public:
   /** Initialize all matrix elements with initvalue
    *  @param initvalue a value
    */
-  void initAll(double initvalue);
+  void initAll(real initvalue);
 
 };
 
-template <class T, uint_t N>
+template <class T, unsigned int N>
 inline MathVector<StaticVector<T,N> > 
 SmallSquareMatrix<T,N>::operator* (const MathVector<StaticVector<T,N> > &vec) const 
 {
   MathVector<StaticVector<T,N> > result_vec;
-  for (uint_t i = 0; i < N; i++) {
+  for (unsigned int i = 0; i < N; i++) {
     result_vec[i] = 0;
-    for (uint_t j = 0; j < N; j++)
+    for (unsigned int j = 0; j < N; j++)
       result_vec[i] += comp(i,j) * vec[j];
   }
   return result_vec;
 }
 
-template <class T, uint_t N>
+template <class T, unsigned int N>
 inline SmallSquareMatrix<T,N> SmallSquareMatrix<T,N>::operator* (const SmallSquareMatrix<T,N> &mat) const 
 {
   SmallSquareMatrix<T,N> result_mat;
-  for (uint_t i = 0; i < N; ++i) {
-    for (uint_t j = 0; j < N; ++j) {
+  for (unsigned int i = 0; i < N; ++i) {
+    for (unsigned int j = 0; j < N; ++j) {
       result_mat[i][j] = 0;
-      for (uint_t k = 0; k < N; ++k) result_mat[i][j] += this->comp(i,k)*mat[k][j];
+      for (unsigned int k = 0; k < N; ++k) result_mat[i][j] += this->comp(i,k)*mat[k][j];
     }
   }
   return result_mat;
 }
 
-template <class T, uint_t N>
-inline void SmallSquareMatrix<T,N>::initAll(double initvalue)
+template <class T, unsigned int N>
+inline void SmallSquareMatrix<T,N>::initAll(real initvalue)
 {
-  for (uint_t i = 0; i < N; i++) {
-    for (uint_t j = 0; j < N; j++) {
+  for (unsigned int i = 0; i < N; i++) {
+    for (unsigned int j = 0; j < N; j++) {
       (*this)[i][j] = initvalue;
     }
   }
 }
 
-template <class T, uint_t N>
+template <class T, unsigned int N>
 inline T SmallSquareMatrix<T,N>::det()
 {
   // Determinant of the matrix
@@ -272,7 +250,7 @@ inline T SmallSquareMatrix<T,N>::det()
   int n;
   n=N;
   int k,i,j;
-  vector<int> p(n);
+  std::vector<int> p(n);
   T q,s,max,h,det;
 
   det=1;
@@ -318,7 +296,7 @@ inline T SmallSquareMatrix<T,N>::det()
 }
 
 // Rainers inverter
-template <class T, uint_t N>
+template <class T, unsigned int N>
 class InvSmallSquareMatrix
 {
 protected:
@@ -338,7 +316,7 @@ public:
     int n;
     n=N;
     int k,i,j,l;
-    vector<int> p(n);
+    std::vector<int> p(n);
     T q,s,max,h,det;
     T ele_max = 0;
 
@@ -562,10 +540,9 @@ typedef SmallSquareMatrix<real,3> mat3_t;
 typedef SmallSquareMatrix<real,4> mat4_t;
 typedef SmallSquareMatrix<real,5> mat5_t;
 
-template <class T, uint_t N>
-SmallSquareMatrix<T,N>::SmallSquareMatrix(string row_col_type,
-					  vector<svec_t*> col_vects)
-  : MathVector<StaticVector<double,N> >()
+template <class T, unsigned int N>
+SmallSquareMatrix<T,N>::SmallSquareMatrix(std::string row_col_type, std::vector<svec_t*> col_vects)
+  : MathVector<StaticVector<real,N> >()
 {
   if(N < col_vects.size()) {
     cout
@@ -573,26 +550,20 @@ SmallSquareMatrix<T,N>::SmallSquareMatrix(string row_col_type,
       << "\n"
       << "too many input vectors" << endl;
   }
-  uint_t direct_it = 0;
+  unsigned int direct_it = 0;
   if(row_col_type == "Column") {
-    for(typename vector<svec_t*>::iterator kk = col_vects.begin();
-	kk != col_vects.end();
-	kk++)
-      {
-	(*this).Column(direct_it, *(*kk));
-	direct_it++;
-      }
+    for(typename std::vector<svec_t*>::iterator kk = col_vects.begin();	kk != col_vects.end(); kk++) {
+      (*this).Column(direct_it, *(*kk));
+      direct_it++;
+    }
   } else if(row_col_type == "Row") {
-    for(typename vector<svec_t*>::iterator kk = col_vects.begin();
-	kk != col_vects.end();
-	kk++)
-      {
-	(*this).Row(direct_it, *(*kk));
-	direct_it++;
-      }
+    for(typename std::vector<svec_t*>::iterator kk = col_vects.begin(); kk != col_vects.end(); kk++) {
+      (*this).Row(direct_it, *(*kk));
+      direct_it++;
+    }
   } else {
     cout
-      << "SmallSquareMatrix<T,N>(string row_col_type, uint_t num_smvects, ...)"
+      << "SmallSquareMatrix<T,N>(string row_col_type, unsigned int num_smvects, ...)"
       << "\n"
       << "Only Row or Column allowed as first argument" << endl;
     exit(EXIT_FAILURE);
@@ -600,10 +571,9 @@ SmallSquareMatrix<T,N>::SmallSquareMatrix(string row_col_type,
   prec_safe = false;
 }
 
-template <class T, uint_t N>
-SmallSquareMatrix<T,N>::SmallSquareMatrix(string row_col_type,
-					  vector<rvec_t*> col_vects)
-  : MathVector<StaticVector<MathVector<StaticVector<double,N> >,N> >()
+template <class T, unsigned int N>
+SmallSquareMatrix<T,N>::SmallSquareMatrix(std::string row_col_type, std::vector<rvec_t*> col_vects)
+  : MathVector<StaticVector<MathVector<StaticVector<real,N> >,N> >()
 {
   if(N < col_vects.size()) {
     cout
@@ -611,23 +581,17 @@ SmallSquareMatrix<T,N>::SmallSquareMatrix(string row_col_type,
       << "\n"
       << "too many input vectors" << endl;
   }
-  uint_t direct_it = 0;
-  if(row_col_type == "Column") {
-    for(typename vector<rvec_t*>::iterator kk = col_vects.begin();
-	kk != col_vects.end();
-	kk++)
-      {
-	(*this).Column(direct_it, *(*kk));
-	direct_it++;
-      }
-  } else if(row_col_type == "Row") {
-    for(typename vector<rvec_t*>::iterator kk = col_vects.begin();
-	kk != col_vects.end();
-	kk++)
-      {
-	(*this).Row(direct_it, *(*kk));
-	direct_it++;
-      }
+  unsigned int direct_it = 0;
+  if (row_col_type == "Column") {
+    for (typename std::vector<rvec_t*>::iterator kk = col_vects.begin(); kk != col_vects.end(); kk++) {
+      (*this).Column(direct_it, *(*kk));
+      direct_it++;
+    }
+  } else if (row_col_type == "Row") {
+    for (typename std::vector<rvec_t*>::iterator kk = col_vects.begin(); kk != col_vects.end(); kk++) {
+      (*this).Row(direct_it, *(*kk));
+      direct_it++;
+    }
   } else {
     cout
       <<  "SmallSquareMatrix<real,N>(string row_col_type, vector<rvec_t*> col_vects)"
@@ -638,12 +602,12 @@ SmallSquareMatrix<T,N>::SmallSquareMatrix(string row_col_type,
   prec_safe = false;
 }
 
-template <class T, uint_t N>
+template <class T, unsigned int N>
 SmallSquareMatrix<T, N> SmallSquareMatrix<T, N>::identity()
 {
   SmallSquareMatrix<T, N> I;
-  for (uint_t i = 0; i < N; i++) {
-    for (uint_t j = 0; j < N; j++) {
+  for (unsigned int i = 0; i < N; i++) {
+    for (unsigned int j = 0; j < N; j++) {
       if (i==j) I[i][j] = 1;
       else I[i][j] = 0;
     }
@@ -652,7 +616,7 @@ SmallSquareMatrix<T, N> SmallSquareMatrix<T, N>::identity()
 }
 
 /*
-template <class T, uint_t N>
+template <class T, unsigned int N>
 T SmallSquareMatrix<T,N>::Det()
 {
   // This construction is required, since a prtioal specializations on a
@@ -663,35 +627,35 @@ T SmallSquareMatrix<T,N>::Det()
 }
 */
 
-template <class T, uint_t N>
+template <class T, unsigned int N>
 SmallSquareMatrix<T,N> SmallSquareMatrix<T,N>::transp()
 {
  SmallSquareMatrix<T,N> M_t;
-  for (uint_t i = 0; i < N; i++) {
-    for (uint_t j = 0; j < N; j++) {
+  for (unsigned int i = 0; i < N; i++) {
+    for (unsigned int j = 0; j < N; j++) {
       M_t[i][j] = comp(j,i);
     }
   }
   return M_t;
 }
 
-template <class T, uint_t N>
+template <class T, unsigned int N>
 SmallSquareMatrix<T,N> SmallSquareMatrix<T,N>::inverse()
 {
   InvSmallSquareMatrix<T,N> INV(*this, isSafe(), prec_limit);
   return INV.inverse();
 }
 
-template <class T, uint_t N>
-SmallSquareMatrix<T,N-1> SmallSquareMatrix<T,N>::subMatrix(uint_t row, uint_t column)
+template <class T, unsigned int N>
+SmallSquareMatrix<T,N-1> SmallSquareMatrix<T,N>::subMatrix(unsigned int row, unsigned int column)
 {
-  uint_t i_new, j_new;
+  unsigned int i_new, j_new;
   i_new = 0;
   SmallSquareMatrix<T,N-1> M;
-  for (uint_t i = 0; i < N; i++) {
+  for (unsigned int i = 0; i < N; i++) {
     if (i == row) continue;
     j_new = 0;
-    for (uint_t j = 0; j < N; j++) {
+    for (unsigned int j = 0; j < N; j++) {
       if (j == column) continue;
       M[i_new][j_new] = comp(i,j);
       j_new++;

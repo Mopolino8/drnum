@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef PATCHITERATOR_H
@@ -31,6 +31,7 @@ class PatchIterator
 private: // attributes
 
   vector<Patch*> m_Patches;
+  vector<bool>   m_PatchActive;
 
   CodeString m_SolverCodes;
 
@@ -43,11 +44,15 @@ public:
   Patch* getPatch(size_t i) { return m_Patches[i]; }
   void   computeAll(real factor);
 
-  virtual void addPatch(Patch* patch) { m_Patches.push_back(patch); }
+  virtual void addPatch(Patch* patch);
 
   virtual void compute(real factor, const vector<size_t>& patches) = 0;
   virtual void copyField(size_t i_src, size_t i_dst);
   virtual void copyDonorData(size_t i_field);
+
+  void activatePatch(size_t i_patch);
+  void deactivatePatch(size_t i_patch);
+  bool patchActive(size_t i_patch) { return m_PatchActive[i_patch]; }
 
   /**
     * Set a CodeString as operation identifier.
@@ -101,6 +106,28 @@ inline void PatchIterator::copyDonorData(size_t i_field)
   for (size_t i_patch = 0; i_patch < m_Patches.size(); ++i_patch) {
     m_Patches[i_patch]->accessDonorDataDirect(i_field);
   }
+}
+
+inline void PatchIterator::addPatch(Patch *patch)
+{
+  m_Patches.push_back(patch);
+  m_PatchActive.push_back(true);
+}
+
+inline void PatchIterator::activatePatch(size_t i_patch)
+{
+  if (i_patch >= m_Patches.size()) {
+    BUG;
+  }
+  m_PatchActive[i_patch] = true;
+}
+
+inline void PatchIterator::deactivatePatch(size_t i_patch)
+{
+  if (i_patch >= m_Patches.size()) {
+    BUG;
+  }
+  m_PatchActive[i_patch] = false;
 }
 
 #endif // PATCHITERATOR_H

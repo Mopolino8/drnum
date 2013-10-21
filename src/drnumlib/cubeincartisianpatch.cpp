@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #include "cubeincartisianpatch.h"
@@ -82,10 +82,24 @@ void CubeInCartisianPatch::setRange(vec3_t x1, vec3_t x2)
       }
     }
   }
+  if (m_Patch->sizeI() == 1) {
+    m_Start.i = 0;
+    m_Stop.i = 1;
+  }
+  if (m_Patch->sizeJ() == 1) {
+    m_Start.j = 0;
+    m_Stop.j = 1;
+  }
+  if (m_Patch->sizeK() == 1) {
+    m_Start.k = 0;
+    m_Stop.k = 1;
+  }
 }
 
 void CubeInCartisianPatch::operator ()()
 {
+  dim_t<5> dim;
+
   m_Patch->copyFieldToHost(0);
 
   real p0 = 0;
@@ -99,7 +113,7 @@ void CubeInCartisianPatch::operator ()()
   for (size_t i = m_Start.i; i < m_Stop.i; ++i) {
     for (size_t j = m_Start.j; j < m_Stop.j; ++j) {
       for (size_t k = m_Start.k; k < m_Stop.k; ++k) {
-        m_Patch->setVar(0, i, j, k, var1);
+        m_Patch->setVar(dim, 0, i, j, k, var1);
       }
     }
   }
@@ -133,15 +147,15 @@ void CubeInCartisianPatch::operator ()()
     for (size_t i = start.i; i < stop.i; ++i) {
       for (size_t j = start.j; j < stop.j; ++j) {
         if (m_Start.k > 0) {
-          m_Patch->getVar(0, i, j, start.k - 1, var1);
-          m_Patch->getVar(0, i, j, start.k, var2);
+          m_Patch->getVar(dim, 0, i, j, start.k - 1, var1);
+          m_Patch->getVar(dim, 0, i, j, start.k, var2);
           PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
           PerfectGas::primitiveToConservative(p, T, 0, 0, 0, var1);
           for (int i_var = 0; i_var < 5; ++i_var) {
             var2[i_var] += var1[i_var];
           }
           count(i, j, start.k);
-          m_Patch->setVar(0, i, j, start.k, var2);
+          m_Patch->setVar(dim, 0, i, j, start.k, var2);
           if (layer == 0) {
             ++N;
             p0 += p;
@@ -150,15 +164,15 @@ void CubeInCartisianPatch::operator ()()
         }
 
         if (m_Stop.k < m_Patch->sizeK() - 1) {
-          m_Patch->getVar(0, i, j, stop.k, var1);
-          m_Patch->getVar(0, i, j, stop.k - 1, var2);
+          m_Patch->getVar(dim, 0, i, j, stop.k, var1);
+          m_Patch->getVar(dim, 0, i, j, stop.k - 1, var2);
           PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
           PerfectGas::primitiveToConservative(p, T, 0, 0, 0, var1);
           for (int i_var = 0; i_var < 5; ++i_var) {
             var2[i_var] += var1[i_var];
           }
           count(i, j, stop.k - 1);
-          m_Patch->setVar(0, i, j, stop.k - 1, var2);
+          m_Patch->setVar(dim, 0, i, j, stop.k - 1, var2);
           if (layer == 0) {
             ++N;
             p0 += p;
@@ -172,15 +186,15 @@ void CubeInCartisianPatch::operator ()()
     for (size_t j = start.j; j < stop.j; ++j) {
       for (size_t k = start.k; k < stop.k; ++k) {
         if (m_Start.i > 0) {
-          m_Patch->getVar(0, start.i - 1, j, k, var1);
-          m_Patch->getVar(0, start.i, j, k, var2);
+          m_Patch->getVar(dim, 0, start.i - 1, j, k, var1);
+          m_Patch->getVar(dim, 0, start.i, j, k, var2);
           PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
           PerfectGas::primitiveToConservative(p, T, 0, 0, 0, var1);
           for (int i_var = 0; i_var < 5; ++i_var) {
             var2[i_var] += var1[i_var];
           }
           count(start.i, j, k);
-          m_Patch->setVar(0, start.i, j, k, var2);
+          m_Patch->setVar(dim, 0, start.i, j, k, var2);
           if (layer == 0) {
             ++N;
             p0 += p;
@@ -189,15 +203,15 @@ void CubeInCartisianPatch::operator ()()
         }
 
         if (m_Stop.i < m_Patch->sizeI() - 1) {
-          m_Patch->getVar(0, stop.i, j, k, var1);
-          m_Patch->getVar(0, stop.i - 1, j, k, var2);
+          m_Patch->getVar(dim, 0, stop.i, j, k, var1);
+          m_Patch->getVar(dim, 0, stop.i - 1, j, k, var2);
           PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
           PerfectGas::primitiveToConservative(p, T, 0, 0, 0, var1);
           for (int i_var = 0; i_var < 5; ++i_var) {
             var2[i_var] += var1[i_var];
           }
           count(stop.i - 1, j, k);
-          m_Patch->setVar(0, stop.i - 1, j, k, var2);
+          m_Patch->setVar(dim, 0, stop.i - 1, j, k, var2);
           if (layer == 0) {
             ++N;
             p0 += p;
@@ -211,15 +225,15 @@ void CubeInCartisianPatch::operator ()()
     for (size_t i = start.i; i < stop.i; ++i) {
       for (size_t k = start.k; k < stop.k; ++k) {
         if (m_Start.j > 0) {
-          m_Patch->getVar(0, i, start.j - 1, k, var1);
-          m_Patch->getVar(0, i, start.j, k, var2);
+          m_Patch->getVar(dim, 0, i, start.j - 1, k, var1);
+          m_Patch->getVar(dim, 0, i, start.j, k, var2);
           PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
           PerfectGas::primitiveToConservative(p, T, 0, 0, 0, var1);
           for (int i_var = 0; i_var < 5; ++i_var) {
             var2[i_var] += var1[i_var];
           }
           count(i, start.j, k);
-          m_Patch->setVar(0, i, start.j, k, var2);
+          m_Patch->setVar(dim, 0, i, start.j, k, var2);
           if (layer == 0) {
             ++N;
             p0 += p;
@@ -228,15 +242,15 @@ void CubeInCartisianPatch::operator ()()
         }
 
         if (m_Stop.j < m_Patch->sizeJ() - 1) {
-          m_Patch->getVar(0, i, stop.j, k, var1);
-          m_Patch->getVar(0, i, stop.j - 1, k, var2);
+          m_Patch->getVar(dim, 0, i, stop.j, k, var1);
+          m_Patch->getVar(dim, 0, i, stop.j - 1, k, var2);
           PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
           PerfectGas::primitiveToConservative(p, T, 0, 0, 0, var1);
           for (int i_var = 0; i_var < 5; ++i_var) {
             var2[i_var] += var1[i_var];
           }
           count(i, stop.j - 1, k);
-          m_Patch->setVar(0, i, stop.j - 1, k, var2);
+          m_Patch->setVar(dim, 0, i, stop.j - 1, k, var2);
           if (layer == 0) {
             ++N;
             p0 += p;
@@ -250,11 +264,11 @@ void CubeInCartisianPatch::operator ()()
       for (size_t j = 0; j < m_Patch->sizeJ(); ++j) {
         for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
           if (getCount(i, j, k) > 0) {
-            m_Patch->getVar(0, i, j, k, var1);
+            m_Patch->getVar(dim, 0, i, j, k, var1);
             for (int i_var = 0; i_var < 5; ++i_var) {
               var1[i_var] /= getCount(i, j, k);
             }
-            m_Patch->setVar(0, i, j, k, var1);
+            m_Patch->setVar(dim, 0, i, j, k, var1);
           }
         }
       }
@@ -286,10 +300,11 @@ void CubeInCartisianPatch::operator ()()
       stop.k -= m_NumLayers;
     }
     PerfectGas::primitiveToConservative(p0, T0, 0, 0, 0, var1);
+    PerfectGas::primitiveToConservative(1e5, 300, 0, 0, 0, var1);
     for (size_t i = start.i; i < stop.i; ++i) {
       for (size_t j = start.j; j < stop.j; ++j) {
         for (size_t k = start.k; k < stop.k; ++k) {
-          m_Patch->setVar(0, i, j, k, var1);
+          m_Patch->setVar(dim, 0, i, j, k, var1);
         }
       }
     }

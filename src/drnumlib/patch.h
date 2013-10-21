@@ -9,19 +9,19 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef PATCH_H
 #define PATCH_H
 
-#include "blockcfd.h"
+#include "drnum.h"
 
 #include <iostream>
 #include <sstream>
@@ -29,9 +29,9 @@
 #include <list>
 
 #include <QString>
+#include <QDataStream>
 
 #include <vtkDataSet.h>
-
 
 #include "weightedset.h"
 
@@ -85,6 +85,8 @@ class GPU_Patch;
 class Patch
 {
 
+  friend class GPU_Patch;
+
 #include "patch_common.h"
 
   void  allocateData();
@@ -92,13 +94,17 @@ class Patch
 
 private: // attributes
 
-  real* m_GpuData;
-  bool  m_GpuDataSet;
+  real*    m_GpuData;
+  size_t*  m_GpuReceivingCellIndicesConcat;
+  size_t*  m_GpuReceivingCellIndicesUnique;
+  donor_t* m_GpuDonors;
+  size_t*  m_GpuDonorIndexConcat;
+  real*    m_GpuDonorWeightConcat;
+  bool     m_GpuDataSet;
 
 
 protected: // attributes
 
-  size_t m_MyIndex;           ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
   size_t m_mypatchtype;       ///< Type-code as defined by derived patches. Example 1001: CartesianPatch, etc...
   string m_patchcomment;      ///< Optional comment for this patch to be read/written in patchgrid files
   CodeString m_solvercodes;   ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
@@ -117,7 +123,7 @@ protected: // attributes
   size_t m_NumAddProtectLayers; ///< additional number of boundary protected layers, in which no interpol access from other patches is allowed
 
   // IO-scaling, position, orientation
-  real m_ioscale;                            ///< general scale factor of mesh related to io-values
+  real m_IOScale;                            ///< general scale factor of mesh related to io-values
   CoordTransformVV m_TransformInertial2This; ///< transformation matrix to transform intertial coords into system of "this"
 
   // bounding box
@@ -234,13 +240,20 @@ public: // methods
 
   /**
     * Access coordinates of a cell in inertial xyzo-system.
-    * @param l_cell index of cell
+    * @param l_cell index of the cell
     * @param xo_cell xo-coord. of cell center (return reference)
     * @param yo_cell yo-coord. of cell center (return reference)
     * @param zo_cell zo-coord. of cell center (return reference)
     */
   void xyzoCell(const size_t& l_cell,
                 real& xo_cell, real& yo_cell, real& zo_cell);
+
+  /**
+   * @brief Access coordinates of a cell in inertial xyzo-system.
+   * @param l_cell index of the cell
+   * @return the coordinates of the cell in inertial xyzo-system
+   */
+  vec3_t xyzoCell(const size_t& l_cell);
 
 
   /**
@@ -342,7 +355,7 @@ public: // methods
     * @param iss_input the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(istringstream& iss_input);
+  virtual bool readFromFile(istringstream& iss_input, real scale = 1.0);
 
 
   /**
@@ -362,14 +375,20 @@ public: // methods
 
 
   /**
-   * Write patch data to an individual files for this patch only.
-   * Example: Let m_myindex be 777 and write to data file with base name "calc/mydata" at counter level 55.
-   * Files to write to: calc/mydata_ip000777_000055.vtr
-   * @param base_data_filename base data filename relative to cwd.
-   * @param count discrete counter (usually time counter).
+   * Add data of this patch to an existing stream.
+   * This has been changed in order to have all patches in a single file.
+   * The last commit before the change is: c62f01bee34b3832b648a133353241740ea7a835
+   * @param i_field the field index of the field to be written
+   * @param stream a QDataStream to which the data will be written
    */
-  //virtual void writeData(QString base_data_filename, size_t count) {BUG;}
-  virtual void writeData(QString, size_t) {BUG;}
+  void writeData(size_t i_field, QDataStream &stream);
+
+  /**
+   * Read data of this patch from an existing stream.
+   * @param i_field the field index of the field to be read
+   * @param stream a QDataStream from which the data will be read
+   */
+  void readData(size_t i_field, QDataStream &stream);
 
 
   /**
@@ -423,13 +442,6 @@ public: // methods
 
   /**
     * Access
-    * @return the index of the patch in sequence of PatchGrid::m_patches
-    */
-  size_t accessIndex() {return m_MyIndex;}
-
-
-  /**
-    * Access
     * @return the number of donor neighbours
     */
   size_t accessNumNeighbours() {return m_neighbours.size();}
@@ -452,7 +464,7 @@ public: // methods
     */
   size_t accessNeighbourIndex(size_t ii_n) {
     Patch* neighbour = m_neighbours[ii_n].first;
-    return neighbour->accessIndex();
+    return neighbour->getIndex();
   }
 
 
@@ -668,10 +680,10 @@ public: // methods
   virtual real computeMinChLength() { BUG; return 0; }
 
   /**
-   * @brief set the corresponding GPU patch data pointer
-   * @param data the pointer to the corresponding GPU patch adat
+   * @brief check if the GPU data pointer has been set already
+   * @return true if the GPU data pointer has been set already
    */
-  void setGpuData(real* gpu_data);
+  bool gpuDataSet() { return m_GpuDataSet; }
 
   /**
    * @brief get the GPU data pointer for pointer translation
@@ -742,6 +754,9 @@ public: // methods
     computeNablaVar(field_index, var_index, l_cell,
                     var_dxyz[0], var_dxyz[1], var_dxyz[2]);
   }
+
+  virtual int findCell(vec3_t xo);
+
 
   /// @todo destructor
   virtual ~Patch();

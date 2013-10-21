@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // 
@@ -44,8 +44,8 @@
 #define linsolve_H
 
 struct LinSolveError {
-  double det;
-  LinSolveError(double d) { det = d; };
+  real det;
+  LinSolveError(real d) { det = d; }
 };
 
 // Rainers full matrix solver
@@ -60,8 +60,8 @@ void linsolve(const M &Ain, const V &rsv, V &b)
   
   int n = A.size();
   int k,i,j,p[n];
-  double q,s,max,h,det;
-  double ele_max = 0;
+  real q,s,max,h,det;
+  real ele_max = 0;
   
   // Find maximum element to get a relative value
   for (int i = 0; i < A.size(); ++i) {
@@ -128,6 +128,6 @@ void linsolve(const M &Ain, const V &rsv, V &b)
   if (fabs(det) < 1e-20) {
     throw LinSolveError(det);
   };
-};
+}
 
 #endif

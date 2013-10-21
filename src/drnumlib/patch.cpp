@@ -9,18 +9,19 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #include "patch.h"
 #include "patchgrid.h"
 #include "stringtools.h"
+#include "geometrytools.h"
 
 #ifdef WITH_VTK
 #include <vtkXMLUnstructuredGridWriter.h>
@@ -56,7 +57,7 @@ Patch::~Patch()
   deleteData();
 }
 
-bool Patch::readFromFile(istringstream& iss_input)
+bool Patch::readFromFile(istringstream& iss_input, real scale)
 {
   vec3_t xyzoref;        // reference point in parental coords
   vec3_t base_i, base_j; // base vectors of bloc orientation in parental coords.
@@ -69,9 +70,10 @@ bool Patch::readFromFile(istringstream& iss_input)
   iss_input >> base_j[0];
   iss_input >> base_j[1];
   iss_input >> base_j[2];
-  iss_input >> m_ioscale;
-  setupTransformation(xyzoref,
-                      base_i, base_j);
+  iss_input >> m_IOScale;
+  m_IOScale *= scale;
+  xyzoref *= m_IOScale;
+  setupTransformation(xyzoref, base_i, base_j);
   /// @todo check before returning "true"
   return true;
 }
@@ -88,6 +90,13 @@ void Patch::xyzoCell(const size_t& l_cell,
           x_cell, y_cell, z_cell);
   m_TransformInertial2This.transformReverse(x_cell, y_cell, z_cell,
                                             xo_cell, yo_cell, zo_cell);
+}
+
+vec3_t Patch::xyzoCell(const size_t &l_cell)
+{
+  vec3_t xo;
+  xyzoCell(l_cell, xo[0], xo[1], xo[2]);
+  return xo;
 }
 
 
@@ -720,12 +729,6 @@ void Patch::computeVariableDifference(size_t i_field1, size_t i_var1, size_t i_f
   l2_norm  = sqrt(l2_norm);
 }
 
-void Patch::setGpuData(real* gpu_data)
-{
-  m_GpuData = gpu_data;
-  m_GpuDataSet = true;
-}
-
 real* Patch::getGpuData()
 {
   if (!m_GpuDataSet) {
@@ -734,3 +737,38 @@ real* Patch::getGpuData()
   return m_GpuData;
 }
 
+int Patch::findCell(vec3_t xo)
+{
+  int id_cell = -1;
+  real min_distance = MAX_REAL;
+  vec3_t xo1 = accessBBoxXYZoMin();
+  vec3_t xo2 = accessBBoxXYZoMax();
+  if (GeometryTools::isInsideCartesianBox(xo, xo1, xo2)) {
+    for (size_t i = 0; i < variableSize(); ++i) {
+      vec3_t xo_cell;
+      xyzoCell(i, xo_cell[0], xo_cell[1], xo_cell[2]);
+      real distance = (xo - xo_cell).abs();
+      if (distance < min_distance) {
+        min_distance = distance;
+        id_cell = i;
+      }
+    }
+  }
+  return id_cell;
+}
+
+void Patch::writeData(size_t i_field, QDataStream &stream)
+{
+  real *data = getField(i_field);
+  for (size_t i = 0; i < fieldSize(); ++i) {
+    stream << data[i];
+  }
+}
+
+void Patch::readData(size_t i_field, QDataStream &stream)
+{
+  real *data = getField(i_field);
+  for (size_t i = 0; i < fieldSize(); ++i) {
+    stream >> data[i];
+  }
+}

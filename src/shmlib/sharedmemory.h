@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef SHAREDMEMORY_H
@@ -40,11 +40,11 @@ private:
   size_t  m_ArrayDescrLength;
   size_t  m_Offset;
 
-  template <class T1, class T2> bool TypeMatch() { T1 t1; T2 t2; return typeid(t1) == typeid(t2); }
+  template <typename T1, typename T2> bool TypeMatch() { T1 t1; T2 t2; return typeid(t1) == typeid(t2); }
 
 public:
 
-  enum DataType { Unknown, Real, Integer, Character };
+  enum DataType { Unknown, Real4, Real8, Integer, Character };
 
 protected:
 
@@ -55,7 +55,7 @@ protected:
   int    arrayStart(int i)           { return *((int*) (&m_Buffer[indexOfArrayStart(i)])); }
   size_t dataIndex();
 
-  template <class T> void get_pointer(int i, T *&t) { t = (T*)(&m_Buffer[i]); }
+  template <typename T> void get_pointer(int i, T *&t) { t = (T*)(&m_Buffer[i]); }
 
 public:
 
@@ -73,16 +73,16 @@ public:
   std::string arrayName(int i);
   size_t      numArrays();
 
-  template <class T> void writeArray(std::string name, int length, T *array);
-  template <class T> void readArray(std::string name, T *&array);
-  template <class T> void writeValue(std::string name, T *value) { writeArray(name, 1, value); }
-  template <class T> void readValue(std::string name, T &value);
+  template <typename T> void writeArray(std::string name, int length, T *array);
+  template <typename T> void readArray(std::string name, T *array);
+  template <typename T> void writeValue(std::string name, T *value) { writeArray(name, 1, value); }
+  template <typename T> void readValue(std::string name, T *value);
 
   std::string readString(std::string name);
 
 };
 
-template <class T>
+template <typename T>
 void SharedMemory::writeArray(std::string name, int length, T *array)
 {
   if (name.size() >= m_MaxNameLength) {
@@ -96,7 +96,8 @@ void SharedMemory::writeArray(std::string name, int length, T *array)
 
     // compare the data type
     DataType data_type = Unknown;
-    if (TypeMatch<T,double>()) data_type = Real;
+    if (TypeMatch<T,float>())  data_type = Real4;
+    if (TypeMatch<T,double>()) data_type = Real8;
     if (TypeMatch<T,int>())    data_type = Integer;
     if (TypeMatch<T,char>())   data_type = Character;
     if (data_type != arrayDataType(i_array)) {
@@ -138,7 +139,8 @@ void SharedMemory::writeArray(std::string name, int length, T *array)
 
     // write the data type
     DataType data_type = Unknown;
-    if (TypeMatch<T,double>()) data_type = Real;
+    if (TypeMatch<T,float>())  data_type = Real4;
+    if (TypeMatch<T,double>()) data_type = Real8;
     if (TypeMatch<T,int>())    data_type = Integer;
     if (TypeMatch<T,char>())   data_type = Character;
     DataType *DT;
@@ -174,17 +176,22 @@ void SharedMemory::writeArray(std::string name, int length, T *array)
   }
 }
 
-template <class T>
-void SharedMemory::readArray(std::string name, T *&array)
+template <typename T>
+void SharedMemory::readArray(std::string name, T *array)
 {
   int i = arrayIndex(name);
   if (i < 0) {
+    std::cout << "The following arrays exist:\n";
+    for (int j = 0; j < numArrays(); ++j) {
+      std::cout << " - \"" << arrayName(j) << "\"\n";
+    }
     error("SharedMemory::readArray: 'field \"" + name + "\" not found'");
   }
 
   // compare the data type
   DataType data_type = Unknown;
-  if (TypeMatch<T,double>()) data_type = Real;
+  if (TypeMatch<T,float>())  data_type = Real4;
+  if (TypeMatch<T,double>()) data_type = Real8;
   if (TypeMatch<T,int>())    data_type = Integer;
   if (TypeMatch<T,char>())   data_type = Character;
   if (data_type != arrayDataType(i)) {
@@ -193,7 +200,6 @@ void SharedMemory::readArray(std::string name, T *&array)
 
 
   int L = arrayLength(i);
-  array = new T[L];
   T *shm_array = 0;
   get_pointer(arrayStart(i), shm_array);
   for (int j = 0; j < L; ++j) {
@@ -202,13 +208,10 @@ void SharedMemory::readArray(std::string name, T *&array)
 
 }
 
-template <class T>
-void SharedMemory::readValue(std::string name, T &value)
+template <typename T>
+void SharedMemory::readValue(std::string name, T *value)
 {
-  T *pointer;
-  readArray(name, pointer);
-  value = *pointer;
-  delete [] pointer;
+  readArray(name, value);
 }
 
 #endif // SHAREDMEMORY_H

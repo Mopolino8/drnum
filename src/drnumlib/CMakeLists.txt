@@ -1,0 +1,92 @@
+SET(drnumlib_SOURCES
+    blockcfd.cpp
+    blockobjectbc.cpp
+    blockobject.cpp
+    cartboxobject.cpp
+    cartesiancycliccopy.h
+    cartesianpatch.cpp
+    cartesianpatch_common.h
+    cartesianraster.cpp
+    codestring.cpp
+    combiobjectand.cpp
+    combiobjectandnot.cpp
+    combiobject.cpp
+    combiobjector.cpp
+    compressibleeulerbobc.cpp
+    compressiblesolidwallbobc.cpp
+    coneobject.cpp
+    configmap.cpp
+    containertricks.h
+    cubeincartisianpatch.cpp
+    cudatools.h
+    cylinderobject.cpp
+    debug.cpp
+    drnum.h
+    externalexchangelist.cpp
+    geometrytools.cpp
+    gpu_patch.h
+    gpu_cartesianpatch.h
+    iteratorfeeder.cpp
+    levelsetdefinition.cpp
+    levelsetobject.cpp
+    levelsetobjectbc.cpp
+    mpicommunicator.cpp
+    objectdefinition.cpp
+    patch.cpp
+    patch_common.h
+    patchgrid.cpp
+    patchgroups.cpp
+    perfectgas.h
+    prismaticlayerpatch.cpp
+    raster.cpp
+    rungekutta.cpp
+    sphereobject.cpp
+    spherelevelset.cpp
+    stringtools.h
+    structuredhexraster.cpp
+    utilities.cpp
+    timeintegration.cpp
+    transformation.cpp
+    iterators/cartesianiterator.h
+    iterators/gpu_cartesianiterator.h
+    iterators/gpu_patchiterator.h
+    iterators/patchiterator.h
+    iterators/tpatchiterator.h
+    fluxes/ausmdv.h
+    fluxes/ausm.h
+    fluxes/ausmplus.h
+    fluxes/compressiblefarfieldflux.h
+    fluxes/compressibleflux.h
+    fluxes/compressibleslipflux.h
+    fluxes/compressibleviscflux.h
+    fluxes/compressiblewallflux.h
+    fluxes/knp.h
+    fluxes/kt.h
+    fluxes/ktmod.h
+    fluxes/roe.h
+    fluxes/vanleer.h
+    math/coordtransform.cpp
+    math/coordtransformvv.cpp
+    math/linsolve.h
+    math/mathvector.h
+    math/mathvector_methods.h
+    math/mathvector_operators.h
+    math/mathvector_structs.h
+    math/smallsquarematrix.h
+    reconstruction/minmod.h
+    reconstruction/roelim.h
+    reconstruction/secondorder.h
+    reconstruction/upwind1.h
+    reconstruction/upwind2.h
+    reconstruction/upwindcentral.h
+    reconstruction/vanalbada.h
+    reconstruction/vanleerlim.h
+)
+
+ADD_LIBRARY(drnumlib SHARED ${drnumlib_SOURCES})
+
+SET_TARGET_PROPERTIES(drnumlib PROPERTIES VERSION ${DRNUM_VERSION})
+SET_TARGET_PROPERTIES(drnumlib PROPERTIES COMPILE_FLAGS "-Wno-deprecated")
+
+INSTALL(TARGETS drnumlib LIBRARY DESTINATION lib)
+

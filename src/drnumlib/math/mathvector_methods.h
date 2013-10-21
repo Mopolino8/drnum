@@ -9,44 +9,22 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// 
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// +                                                                      +
-// + This file is part of enGrid.                                         +
-// +                                                                      +
-// + Copyright 2008-2011 enGits GmbH                                     +
-// +                                                                      +
-// + enGrid is free software: you can redistribute it and/or modify       +
-// + it under the terms of the GNU General Public License as published by +
-// + the Free Software Foundation, either version 3 of the License, or    +
-// + (at your option) any later version.                                  +
-// +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
-// + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
-// + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
-// + GNU General Public License for more details.                         +
-// +                                                                      +
-// + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
-// +                                                                      +
-// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// 
 
 // MathVector<V>(const MathVector<V>&)
 // -----------------------------------
 template <class V>
 inline MathVector<V>::MathVector(const MathVector<V>& vec) : V()
 {
-  for (uint_t i = 0; i < this->size(); ++i) (*this)[i] = vec[i]; 
+  for (unsigned int i = 0; i < this->size(); ++i) (*this)[i] = vec[i];
 };
 
 // MathVector<V>(const ParseNode<L,O,R>&)
@@ -55,7 +33,7 @@ template <class V>
 template <class L, class O, class R>
 inline MathVector<V>::MathVector(const ParseNode<L,O,R> &expr) : V()
 {
-  for (uint_t i = 0; i < this->size(); ++i) (*this)[i] = expr[i]; 
+  for (unsigned int i = 0; i < this->size(); ++i) (*this)[i] = expr[i];
 };
 
 // MathVector<V>(const value_type *v)
@@ -63,7 +41,7 @@ inline MathVector<V>::MathVector(const ParseNode<L,O,R> &expr) : V()
 template <class V>
 inline MathVector<V>::MathVector(const value_type *v) : V()
 {
-  for (uint_t i = 0; i < this->size(); ++i) (*this)[i] = v[i]; 
+  for (unsigned int i = 0; i < this->size(); ++i) (*this)[i] = v[i];
 };
 
 // MathVector<V>(const value_type v1, const value_type v2, const value_type v3, const value_type v4)
@@ -119,7 +97,7 @@ inline MathVector<V> MathVector<V>::cross(const MathVector<V> &vec) const
 template <class V>
 inline void MathVector<V>::maximisePerCoord(const MathVector<V>& vec)
 {
-  for (uint_t i = 0; i < this->size(); ++i) {
+  for (unsigned int i = 0; i < this->size(); ++i) {
     if( (*this)[i] < vec[i] ) {
       (*this)[i] = vec[i];
     }
@@ -131,7 +109,7 @@ inline void MathVector<V>::maximisePerCoord(const MathVector<V>& vec)
 template <class V>
 inline void MathVector<V>::minimisePerCoord(const MathVector<V>& vec)
 {
-  for (uint_t i = 0; i < this->size(); ++i) {
+  for (unsigned int i = 0; i < this->size(); ++i) {
     if( (*this)[i] > vec[i] ) {
       (*this)[i] = vec[i];
     }
@@ -144,7 +122,7 @@ template <class V>
 inline typename MathVector<V>::scalar_t MathVector<V>::abs() const
 {
   scalar_t l = 0;
-  for (uint_t i = 0; i < this->size(); ++i) l += (*this)[i]*(*this)[i];
+  for (unsigned int i = 0; i < this->size(); ++i) l += (*this)[i]*(*this)[i];
   return sqrt(l);
 };
 
@@ -154,7 +132,7 @@ template <class V>
 inline typename MathVector<V>::scalar_t MathVector<V>::abs2() const
 {
   scalar_t l = 0;
-  for (uint_t i = 0; i < this->size(); ++i) l += (*this)[i]*(*this)[i];
+  for (unsigned int i = 0; i < this->size(); ++i) l += (*this)[i]*(*this)[i];
   return l;
 };
 
@@ -164,15 +142,15 @@ template <class L, class O, class R>
 inline typename ParseNode<L,O,R>::value_type ParseNode<L,O,R>::abs() const
 {
   value_type abs_value = 0;
-  for (uint_t i = 0; i < this->size(); ++i) abs_value += (*this)[i]*(*this)[i];
+  for (unsigned int i = 0; i < this->size(); ++i) abs_value += (*this)[i]*(*this)[i];
   return sqrt(abs_value);
 };
 
 template <class O, class R>
-inline typename ParseNode<double,O,R>::value_type ParseNode<double,O,R>::abs() const
+inline typename ParseNode<real,O,R>::value_type ParseNode<real,O,R>::abs() const
 {
   value_type abs_value = 0;
-  for (uint_t i = 0; i < this->size(); ++i) abs_value += (*this)[i]*(*this)[i];
+  for (unsigned int i = 0; i < this->size(); ++i) abs_value += (*this)[i]*(*this)[i];
   return sqrt(abs_value);
 };
 
@@ -182,15 +160,15 @@ template <class L, class O, class R>
 inline typename ParseNode<L,O,R>::value_type ParseNode<L,O,R>::abs2() const
 {
   value_type abs_value = 0;
-  for (uint_t i = 0; i < this->size(); ++i) abs_value += (*this)[i]*(*this)[i];
+  for (unsigned int i = 0; i < this->size(); ++i) abs_value += (*this)[i]*(*this)[i];
   return abs_value;
 };
 
 template <class O, class R>
-inline typename ParseNode<double,O,R>::value_type ParseNode<double,O,R>::abs2() const
+inline typename ParseNode<real,O,R>::value_type ParseNode<real,O,R>::abs2() const
 {
   value_type abs_value = 0;
-  for (uint_t i = 0; i < this->size(); ++i) abs_value += (*this)[i]*(*this)[i];
+  for (unsigned int i = 0; i < this->size(); ++i) abs_value += (*this)[i]*(*this)[i];
   return abs_value;
 };
 
@@ -200,7 +178,7 @@ template <class V>
 inline MathVector<V> MathVector<V>::normalise()
 {
   scalar_t l = abs();
-  for (uint_t i = 0; i < this->size(); ++i) (*this)[i] /= l;
+  for (unsigned int i = 0; i < this->size(); ++i) (*this)[i] /= l;
   return(*this);
 };
 
@@ -210,7 +188,7 @@ template <class V>
 typename MathVector<V>::scalar_t* MathVector<V>::c_array() const 
 {
   scalar_t *t = new scalar_t[this->size()];
-  for (uint_t i = 0; i < this->size(); ++i) t[i] = (*this)[i];
+  for (unsigned int i = 0; i < this->size(); ++i) t[i] = (*this)[i];
   return t;
 };
 

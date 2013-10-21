@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef BLOCKCFD_H
@@ -28,6 +28,7 @@
 #include <cassert>
 #include <cstdio>
 #include <omp.h>
+#include <limits>
 
 using namespace std;
 
@@ -54,8 +55,12 @@ using namespace std;
 
 typedef float real;
 
+#define MAX_REAL numeric_limits<real>::max()
+#define MIN_REAL numeric_limits<real>::min()
+
 #define FR12 real(0.5)
 #define FR13 real(0.3333333)
+#define FR14 real(0.25)
 #define FR23 real(0.6666666)
 
 #define GLOBAL_EPS real(1e-10)
@@ -96,15 +101,31 @@ using namespace std;
  */
 #define BUG {                             \
   printf("This seems to be a bug!\n");    \
-  printf("  file: %s\n", __FILE__);         \
-  printf("  line: %d\n", __LINE__);         \
+  printf("  file: %s\n", __FILE__);       \
+  printf("  line: %d\n", __LINE__);       \
   assert(false);                          \
+  exit(EXIT_FAILURE);                     \
+}
+
+/**
+ * Issue an error message and stop the program.
+ * Additionally this macro will print the line number and the file
+ * where the error occurred.
+ */
+#define ERROR(msg) {                      \
+  printf("An error occured: %s\n", msg);  \
+  printf("  file: %s\n", __FILE__);       \
+  printf("  line: %d\n", __LINE__);       \
+  assert(false);                          \
+  exit(EXIT_FAILURE);                     \
 }
 
 #ifdef WITH_VTK
-  #include <Qt>
+  #include <QtCore/Qt>
   #ifdef QT_DEBUG
-    #define DEBUG
+    #ifndef DEBUG
+      #define DEBUG
+    #endif
   #endif
 #endif
 
@@ -211,6 +232,7 @@ inline CUDA_DH void fill(real* var, size_t num_vars, real value)
 
 extern void startTiming();
 extern void stopTiming();
+extern void printTiming();
 
 
 inline CUDA_DH real sqr(const real x)
@@ -241,6 +263,13 @@ struct size3_t
   CUDA_DH size3_t()                             { i = 0; j = 0; k = 0; }
   CUDA_DH size3_t(size_t i, size_t j, size_t k) { this->i = i; this->j = j; this->k = k; }
   CUDA_DH bool operator==(const size3_t& s)     { return i == s.i && j == s.j && k == s.k; }
+};
+
+template <unsigned int DIM>
+struct dim_t
+{
+  static const unsigned int dim = DIM;
+  unsigned int operator() () { return DIM; }
 };
 
 

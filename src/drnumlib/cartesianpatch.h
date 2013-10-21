@@ -9,13 +9,13 @@
 // + the Free Software Foundation, either version 3 of the License, or    +
 // + (at your option) any later version.                                  +
 // +                                                                      +
-// + enGrid is distributed in the hope that it will be useful,            +
+// + DrNUM is distributed in the hope that it will be useful,             +
 // + but WITHOUT ANY WARRANTY; without even the implied warranty of       +
 // + MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        +
 // + GNU General Public License for more details.                         +
 // +                                                                      +
 // + You should have received a copy of the GNU General Public License    +
-// + along with enGrid. If not, see <http://www.gnu.org/licenses/>.       +
+// + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #ifndef CARTESIANPATCH_H
@@ -133,7 +133,7 @@ public: // methods
     * @param s_mesh the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(istringstream& iss_input);
+  virtual bool readFromFile(istringstream& iss_input, real scale);
 
 
   /**
@@ -551,6 +551,7 @@ public: // methods
                               const size_t& k_c,
                               vector<size_t>& l_cell_neighbours);
 
+
   /**
     * Compute gradients. Attention: slow, not intended for use in numerical
     * core modules.
@@ -563,6 +564,9 @@ public: // methods
     */
   virtual void computeNablaVar(const size_t& field_index, const size_t& var_index, const size_t& l_cell,
                                real& dvar_dx, real& dvar_dy, real& dvar_dz);
+
+
+  virtual int findCell(vec3_t xo);
 
 
 #ifdef WITH_VTK
