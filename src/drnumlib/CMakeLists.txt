@@ -33,6 +33,7 @@ SET(drnumlib_SOURCES
     patch_common.h
     patchgrid.cpp
     patchgroups.cpp
+    perfectgas.h
     prismaticlayerpatch.cpp
     raster.cpp
     rungekutta.cpp
