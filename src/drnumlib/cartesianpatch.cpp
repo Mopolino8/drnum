@@ -95,9 +95,9 @@ void CartesianPatch::cellNeighbours (const size_t& i_cell,
 }
 
 
-bool CartesianPatch::readFromFile(istringstream& iss_input)
+bool CartesianPatch::readFromFile(istringstream& iss_input, real scale)
 {
-  bool no_error = Patch::readFromFile(iss_input);
+  bool no_error = Patch::readFromFile(iss_input, scale);
   // number of nodes in block axis directions
   size_t num_i, num_j, num_k;
   iss_input >> num_i;
@@ -117,9 +117,9 @@ bool CartesianPatch::readFromFile(istringstream& iss_input)
   iss_input >> jlength;
   iss_input >> klength;
   // scale length according to IO-scaling factor
-  ilength *= m_ioscale;
-  jlength *= m_ioscale;
-  klength *= m_ioscale;
+  ilength *= m_IOScale;
+  jlength *= m_IOScale;
+  klength *= m_IOScale;
   // apply patch modifiers
   setSeekExceptions(numProtXmin, numProtXmax, numProtYmin, numProtYmax, numProtZmin, numProtZmax);
   resize(num_i, num_j, num_k);

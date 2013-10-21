@@ -133,7 +133,7 @@ public: // methods
     * @param s_mesh the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(istringstream& iss_input);
+  virtual bool readFromFile(istringstream& iss_input, real scale);
 
 
   /**

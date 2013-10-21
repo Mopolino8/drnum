@@ -81,6 +81,7 @@ void run()
   real total_time     = config.getValue<real>("total-time")*time;
   int  jet_patch_id   = config.getValue<int>("jet-patch");
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
+  real scale          = config.getValue<real>("scale");
   int  thread_limit   = 0;
 
   if (config.exists("thread-limit")) {
@@ -100,7 +101,7 @@ void run()
   patch_grid.setInterpolateData();
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
   patch_grid.setTransferType("padded_direct");
-  patch_grid.readGrid("patches/standard.grid");
+  patch_grid.readGrid("patches/standard.grid", scale);
   //patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
 

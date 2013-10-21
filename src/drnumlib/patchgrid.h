@@ -161,7 +161,7 @@ public: // methods
    * Read patch list from file.
    * @param gridfilename filename of grid file relative to cwd.
    */
-  void readGrid(string gridfilename = "/grid/patches");
+  void readGrid(string gridfilename = "/grid/patches", real scale = 1.0);
 
 
   /// @todo not implemented

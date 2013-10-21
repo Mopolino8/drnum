@@ -123,7 +123,7 @@ protected: // attributes
   size_t m_NumAddProtectLayers; ///< additional number of boundary protected layers, in which no interpol access from other patches is allowed
 
   // IO-scaling, position, orientation
-  real m_ioscale;                            ///< general scale factor of mesh related to io-values
+  real m_IOScale;                            ///< general scale factor of mesh related to io-values
   CoordTransformVV m_TransformInertial2This; ///< transformation matrix to transform intertial coords into system of "this"
 
   // bounding box
@@ -355,7 +355,7 @@ public: // methods
     * @param iss_input the stream to read from
     * @return true, if successful
     */
-  virtual bool readFromFile(istringstream& iss_input);
+  virtual bool readFromFile(istringstream& iss_input, real scale = 1.0);
 
 
   /**

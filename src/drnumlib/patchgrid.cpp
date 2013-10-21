@@ -438,7 +438,7 @@ void PatchGrid::setGeneralAttributes(Patch* patch)
 }
 
 
-void PatchGrid::readGrid(string gridfilename)
+void PatchGrid::readGrid(string gridfilename, real scale)
 {
   // Get file path
   /** @todo Use a better file path definition. */
@@ -507,7 +507,7 @@ void PatchGrid::readGrid(string gridfilename)
       size_t index = insertPatch(new_patch);
       new_patch->setIndex(index);
       new_patch->setPatchComment(patchcomment);
-      new_patch->readFromFile(iss);
+      new_patch->readFromFile(iss, scale);
       m_PatchGroups->insertPatch(new_patch); /// @todo better outside of reading loop?
     }
     //.... Unstructured Patch

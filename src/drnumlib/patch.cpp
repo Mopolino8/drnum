@@ -57,7 +57,7 @@ Patch::~Patch()
   deleteData();
 }
 
-bool Patch::readFromFile(istringstream& iss_input)
+bool Patch::readFromFile(istringstream& iss_input, real scale)
 {
   vec3_t xyzoref;        // reference point in parental coords
   vec3_t base_i, base_j; // base vectors of bloc orientation in parental coords.
@@ -70,9 +70,10 @@ bool Patch::readFromFile(istringstream& iss_input)
   iss_input >> base_j[0];
   iss_input >> base_j[1];
   iss_input >> base_j[2];
-  iss_input >> m_ioscale;
-  setupTransformation(xyzoref,
-                      base_i, base_j);
+  iss_input >> m_IOScale;
+  m_IOScale *= scale;
+  xyzoref *= m_IOScale;
+  setupTransformation(xyzoref, base_i, base_j);
   /// @todo check before returning "true"
   return true;
 }
