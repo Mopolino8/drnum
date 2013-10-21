@@ -3,10 +3,10 @@ class EaFlux
 
 protected:
 
-  typedef AusmPlus<reconstruction_t, PerfectGas>            euler_t;
-  typedef CompressibleSlipFlux<5, Upwind1, PerfectGas>      wall_t;
-  typedef CompressibleViscFlux<5, PerfectGas>               viscous_t;
-  typedef CompressibleFarfieldFlux<5, Upwind1, PerfectGas>  farfield_t;
+  typedef AusmPlus<reconstruction_t, PerfectGas>              euler_t;
+  typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
+  typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;
+  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;

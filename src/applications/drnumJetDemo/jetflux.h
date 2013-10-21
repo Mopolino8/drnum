@@ -20,10 +20,10 @@
 class JetFlux
 {
 
-  typedef VanLeer<reconstruction_t, PerfectGas>                  euler_t;
-  typedef CompressibleViscFlux<5, PerfectGas>                    viscous_t;
-  typedef CompressibleSlipFlux<5, reconstruction_t, PerfectGas>  wall_t;
-  typedef CompressibleFarfieldFlux<5, Upwind1, PerfectGas>       farfield_t;
+  typedef VanLeer<reconstruction_t, PerfectGas>                 euler_t;
+  typedef CompressibleViscFlux<5, PerfectGas>                   viscous_t;
+  typedef CompressibleSlipFlux<5, reconstruction_t, PerfectGas> wall_t;
+  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas>   farfield_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
