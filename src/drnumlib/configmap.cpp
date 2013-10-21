@@ -106,14 +106,14 @@ void ConfigMap::addFile(QString file_name)
   QStringList items = buffer.split(";");
   foreach (QString item, items) {
     if (item.split("=").size() == 2) {
-      QString left_side = item.split("=")[0].trimmed();
-      QString value     = item.split("=")[1].trimmed();
-      if (left_side.split(" ", QString::SkipEmptyParts).size() != 2) {
+      QStringList left_side = (item.split("=")[0].trimmed()).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+      QString value = item.split("=")[1].trimmed();
+      if (left_side.size() != 2) {
         QString msg = "Syntax error : \"" + item + "\"";
         ERROR(qPrintable(msg));
       }
-      QString type = left_side.split(" ", QString::SkipEmptyParts)[0].trimmed();
-      QString key  = left_side.split(" ", QString::SkipEmptyParts)[1].trimmed();
+      QString type = left_side[0].trimmed();
+      QString key  = left_side[1].trimmed();
       if (!assign(key, type, value)) {
         QString msg = "Syntax error : \"" + item + "\"";
         ERROR(qPrintable(msg));
