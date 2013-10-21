@@ -115,4 +115,8 @@ void LevelSetObjectBC::transferCellLayerData ()
   for (size_t i_layer = 0; i_layer <= m_NumOuterLayers; i_layer++) {
     m_OuterCLStart[num_patches][i_layer] = count_index;  // note same setting for all layers for num_patches
   }
+
+  //.. Set 1D pointers (m_InnerCLStartAll and m_OuterCLStartAll)
+  // m_InnerCLStartAll
+
 }

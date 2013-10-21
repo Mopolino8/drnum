@@ -62,6 +62,11 @@ protected: // attributes
     * 2nd dim: layer index (direct: 0, 1, 2, ...) */
   size_t** m_InnerCLStart;
 
+  /** Patch-Layer starting index in m_InnerCellsLayers.
+    * 1D setting: pointers for all inner layers in patch (num_patches)
+    * 1st dim: patch id (direct: 0, 1, 2, ...) */
+  size_t* m_InnerCLStartAll;
+
   /** Number of outer layers on boundaries */
   size_t m_NumOuterLayers;
 
@@ -79,6 +84,11 @@ protected: // attributes
     * 1st dim: patch id (direct: 0, 1, 2, ...)
     * 2nd dim: layer index (direct: 0, 1, 2, ...) */
   size_t** m_OuterCLStart;
+
+  /** Patch-Layer starting index in m_OuterCellsLayers.
+    * 1D setting: pointers for all outer layers in patch (num_patches)
+    * 1st dim: patch id (direct: 0, 1, 2, ...) */
+  size_t* m_OuterCLStartAll;
 
 
 public:

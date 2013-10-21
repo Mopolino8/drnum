@@ -438,9 +438,9 @@ void run()
   // BLOCKOBJECT CompressibleEulerBOBC c_euler_bobc(0, &block_object);
   // BLOCKOBJECT runge_kutta.addPostOperation(&c_euler_bobc);
 
-  // CompressibleEulerLSOBC lsobc(0, &levelset_object);
+  CompressibleEulerLSOBC lsobc(0, &levelset_object);
   // CompressibleSimpleSWallLSOBC lsobc(0, &levelset_object);
-  CompressibleSWallLSOBC lsobc(0, &levelset_object);
+  // CompressibleSWallLSOBC lsobc(0, &levelset_object);
   lsobc.transferCellLayerData();
   runge_kutta.addPostOperation(&lsobc);
 
