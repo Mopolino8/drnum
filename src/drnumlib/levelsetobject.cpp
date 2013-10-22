@@ -121,9 +121,6 @@ void LevelSetObject::extractBCellLayers()
     // the levelset function. These are 0th layer cells.
     //.. Loop for cells of patch
     for (size_t l_c = 0; l_c < patch->variableSize(); l_c++) {
-//      real xc, yc, zc;
-//      patch->xyzCell(l_c,
-//                     xc, yc, zc);
       real g = var[l_c];
       //.... check face neighbours
       patch->cellOverFaceNeighbours(l_c,
@@ -141,9 +138,13 @@ void LevelSetObject::extractBCellLayers()
       }
       if (any_other_sign) {
         if (g < 0.) {
-          m_InnerCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_c, g));
+          if(m_NumInnerLayers > 0) { // only if al least a 0th layer is requested
+            m_InnerCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_c, g));
+          }
         } else {
-          m_OuterCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_c, g));
+          if(m_NumOuterLayers > 0) { // only if al least a 0th layer is requested
+            m_OuterCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_c, g));
+          }
         }
       }
     }
@@ -151,6 +152,9 @@ void LevelSetObject::extractBCellLayers()
     // Correct 0th inner layer, if distance from boundary is not sufficient
     // In case of insufficient distance:
     //  => replace cell by all non marked neighbour cells with sufficient distance
+    /** @todo When a cell is excluded due to a too short distance to the surface, neighbour cells
+      * with higher distance are push_backed at the end of the list. This may cause bad memory
+      * access sequences. */
     if(m_MinInnerRelDist > 0.) {
       bool go_on = true;
 
@@ -160,7 +164,6 @@ void LevelSetObject::extractBCellLayers()
       //        go_on = false;
       size_t ll_c = 0;
       while(ll_c < m_InnerCellsLayers[i_p][0].size()) {
-        bool increment = true;
         //        for(size_t ll_c = 0; ll_c < m_InnerCellsLayers[i_p][0].size(); ll_c++) {
         size_t l_c = m_InnerCellsLayers[i_p][0][ll_c].m_Cell;
         //.. find min and max g-values in neighbourship as reference and
@@ -204,6 +207,9 @@ void LevelSetObject::extractBCellLayers()
       cout << "cell replacements: " << count << endl;
       // }
     }
+    // Improve memory access sequence
+    /** @todo Why sort will not work on LSLayerDataExtrapol::operator< ? */
+    //sort(m_InnerCellsLayers[i_p][0].begin(), m_InnerCellsLayers[i_p][0].end());
 
     // Correct 0th outer layer, if distance from boundary is not sufficient
     // In case of insufficient distance:

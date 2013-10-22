@@ -1,8 +1,10 @@
 #include "compressiblesimpleswalllsobc.h"
 
 
-CompressibleSimpleSWallLSOBC::CompressibleSimpleSWallLSOBC (size_t field, LevelSetObject* levelset_object)
-  : LevelSetObjectBC (field, levelset_object)
+CompressibleSimpleSWallLSOBC::CompressibleSimpleSWallLSOBC (size_t field,
+                                                            LevelSetObject* levelset_object,
+                                                            size_t abuse_field)
+  : LevelSetObjectBC (field, levelset_object, abuse_field)
 {
 }
 

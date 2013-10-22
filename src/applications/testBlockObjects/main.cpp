@@ -29,6 +29,15 @@ int main()
 #ifdef GPU
   GPU_main();
 #else
+
+  cout << "hi" << endl;
+ #ifdef DEBUG
+  cout << endl;
+  cout << "DEBUG-MODE !!" << endl;
+#else
+  cout << "RELEASE-MODE !!" << endl;
+#endif
+
   int num_threads = 2;
   omp_set_num_threads(num_threads);
   cout << endl;

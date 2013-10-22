@@ -9,7 +9,9 @@ class CompressibleSWallLSOBC : public LevelSetObjectBC
 {
 public:
 
-    CompressibleSWallLSOBC(size_t field, LevelSetObject* levelset_object);
+    CompressibleSWallLSOBC(size_t field,
+                           LevelSetObject* levelset_object,
+                           size_t abuse_field);
 
     virtual void operator()();
 };

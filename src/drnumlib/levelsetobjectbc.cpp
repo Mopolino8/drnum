@@ -21,10 +21,13 @@
 #include "levelsetobjectbc.h"
 
 
-LevelSetObjectBC::LevelSetObjectBC (size_t field, LevelSetObject* levelset_object)
+LevelSetObjectBC::LevelSetObjectBC (size_t field,
+                                    LevelSetObject* levelset_object,
+                                    size_t abuse_field)
 {
-  m_Field = field;
+  m_Field          = field;
   m_LevelSetObject = levelset_object;
+  m_AbuseField     = abuse_field;
   m_NumInnerLayers = levelset_object->getNumInnerLayers();
   m_NumOuterLayers = levelset_object->getNumOuterLayers();
   m_PatchGrid      = levelset_object->getPatchGrid();
@@ -117,6 +120,11 @@ void LevelSetObjectBC::transferCellLayerData ()
   }
 
   //.. Set 1D pointers (m_InnerCLStartAll and m_OuterCLStartAll)
-  // m_InnerCLStartAll
-
+  m_InnerCLStartAll = new size_t[m_NumInnerLayers + 1]; // Note: end index for last layers needed
+  m_OuterCLStartAll = new size_t[m_NumOuterLayers + 1]; // Note: end index for last layers needed
+  //.... Transfer start pointers per patch (inner)
+  for (size_t i_p = 0; i_p <= num_patches; i_p++) {  // Note: <=
+    m_InnerCLStartAll[i_p] =  m_InnerCLStart[i_p][0];
+    m_OuterCLStartAll[i_p] =  m_OuterCLStart[i_p][0];
+  }
 }

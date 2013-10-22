@@ -58,6 +58,10 @@ struct LSLayerDataExtrapol
     }
   }
 
+  bool operator< (const LSLayerDataExtrapol& other_ls_layer_data) {
+    return (m_Cell < other_ls_layer_data.m_Cell);
+  }
+
   real accessInterpolate(real* var) {
     return (
           m_MirrorWeight[0] * var[m_MirrorDonor[0]] +

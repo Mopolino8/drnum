@@ -41,6 +41,7 @@ class LevelSetObjectBC : public GenericOperation
 protected: // attributes
   size_t m_Field;                   /// the variable field to work on
   LevelSetObject* m_LevelSetObject; /// the LevelSet object to work on
+  size_t m_AbuseField;              /// abused field to avoid recursion
   PatchGrid* m_PatchGrid;           /// the PatchGrid to work on
 //  size_t m_NumPatches;              /// number of patches
 
@@ -93,7 +94,14 @@ protected: // attributes
 
 public:
 
-  LevelSetObjectBC (size_t field, LevelSetObject* levelset_object);
+  /** Constructor.
+    * @param field the variable field to work on
+    * @param levelset_object the LevelSet object to work on
+    * @param abuse_field abused variable field, needed to avoid recursion. Must be free.
+    */
+  LevelSetObjectBC (size_t field,
+                    LevelSetObject* levelset_object,
+                    size_t abuse_field);
 
   // void setLevelSetObject (LevelSetObject* levelset_object) {m_LevelSetObject = levelset_object;}
 
