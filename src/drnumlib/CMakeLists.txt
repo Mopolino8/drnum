@@ -81,6 +81,8 @@ SET(drnumlib_SOURCES
     reconstruction/upwindcentral.h
     reconstruction/vanalbada.h
     reconstruction/vanleerlim.h
+    cpu_levelsetobjectbc.h
+    lsobccompressibleswallop.h
 )
 
 ADD_LIBRARY(drnumlib SHARED ${drnumlib_SOURCES})

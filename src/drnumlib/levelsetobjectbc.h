@@ -38,24 +38,25 @@ class LevelSetObjectBC;
 class LevelSetObjectBC : public GenericOperation
 {
 
+  #include "levelsetobjectbc_common.h"
+
 protected: // attributes
-  size_t m_Field;                   /// the variable field to work on
+//  size_t m_Field;                   /// the variable field to work on
   LevelSetObject* m_LevelSetObject; /// the LevelSet object to work on
-  size_t m_AbuseField;              /// abused field to avoid recursion
+//  size_t m_AbuseField;              /// abused field to avoid recursion
   PatchGrid* m_PatchGrid;           /// the PatchGrid to work on
-//  size_t m_NumPatches;              /// number of patches
 
   /** Number of inner layers on boundaries */
   size_t m_NumInnerLayers;
 
-  /** Storage of levelset layer data for inner cells
-    * Data alignment (all with actual length, no padding)
-    * 1st dim: patch id (direct; 0, 1, 2, ...)
-    * 2nd dim: layer:
-    *       0 :  has at least one face neighbour with negative G-value (inside)
-    *       1 .. m_NumOuterLayers : furter layers farther outside
-    * 3rd dim: cell indices in layer */
-  LSLayerDataExtrapol* m_InnerCellsLayers;
+//  /** Storage of levelset layer data for inner cells
+//    * Data alignment (all with actual length, no padding)
+//    * 1st dim: patch id (direct; 0, 1, 2, ...)
+//    * 2nd dim: layer:
+//    *       0 :  has at least one face neighbour with negative G-value (inside)
+//    *       1 .. m_NumOuterLayers : furter layers farther outside
+//    * 3rd dim: cell indices in layer */
+//  LSLayerDataExtrapol* m_InnerCellsLayers;
 
   /** Patch-Layer starting index in m_InnerCellsLayers.
     * Data alignment (num_ptches * num_inner_layers)
@@ -71,14 +72,14 @@ protected: // attributes
   /** Number of outer layers on boundaries */
   size_t m_NumOuterLayers;
 
-  /** Storage of levelset layer data for outer cells
-    * Data alignment (all with actual length, no padding)
-    * 1st dim: patch id (direct; 0, 1, 2, ...)
-    * 2nd dim: layer:
-    *       0 :  has at least one face neighbour with negative G-value (inside)
-    *       1 .. m_NumOuterLayers : furter layers farther outside
-    * 3rd dim: cell indices in layer */
-  LSLayerDataExtrapol* m_OuterCellsLayers;
+//  /** Storage of levelset layer data for outer cells
+//    * Data alignment (all with actual length, no padding)
+//    * 1st dim: patch id (direct; 0, 1, 2, ...)
+//    * 2nd dim: layer:
+//    *       0 :  has at least one face neighbour with negative G-value (inside)
+//    *       1 .. m_NumOuterLayers : furter layers farther outside
+//    * 3rd dim: cell indices in layer */
+//  LSLayerDataExtrapol* m_OuterCellsLayers;
 
   /** Patch-Layer starting index in m_OuterCellsLayers.
     * Data alignment (num_ptches * num_outer_layers)

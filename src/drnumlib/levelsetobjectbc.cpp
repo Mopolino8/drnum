@@ -127,4 +127,8 @@ void LevelSetObjectBC::transferCellLayerData ()
     m_InnerCLStartAll[i_p] =  m_InnerCLStart[i_p][0];
     m_OuterCLStartAll[i_p] =  m_OuterCLStart[i_p][0];
   }
+
+  //.. Total number of cells in inner and outer lists
+  m_NumInnerLayerCells = m_InnerCLStartAll[num_patches];
+  m_NumOuterLayerCells = m_OuterCLStartAll[num_patches];
 }

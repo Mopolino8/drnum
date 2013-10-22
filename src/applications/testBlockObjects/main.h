@@ -71,6 +71,10 @@
 #include "compressiblesimpleswalllsobc.h"
 #include "compressibleswalllsobc.h"
 
+#include "cpu_levelsetobjectbc.h"
+#include "lsobccompressibleswallop.h"
+#include "lsobccompressibleeulerop.h"
+
 class EaFlux
 {
 
@@ -441,7 +445,13 @@ void run()
 
   // CompressibleEulerLSOBC lsobc(0, &levelset_object, 2);
   // CompressibleSimpleSWallLSOBC lsobc(0, &levelset_object, 2);
-  CompressibleSWallLSOBC lsobc(0, &levelset_object, 2);
+  // CompressibleSWallLSOBC lsobc(0, &levelset_object, 2);
+
+  // LSOBCCompressibleSWallOp lslbc_op;
+  // CPU_LevelSetObjectBC<LSOBCCompressibleSWallOp> lsobc(0, &levelset_object, 2, lslbc_op);
+
+  LSOBCCompressibleEulerOp lslbc_op;
+  CPU_LevelSetObjectBC<LSOBCCompressibleEulerOp> lsobc(0, &levelset_object, 2, lslbc_op);
   lsobc.transferCellLayerData();
   runge_kutta.addPostOperation(&lsobc);
 

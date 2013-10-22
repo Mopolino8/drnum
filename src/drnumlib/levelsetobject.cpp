@@ -105,7 +105,6 @@ void LevelSetObject::extractBCellLayers()
     vector<size_t> ind_cell_neighbours;
     vector<bool> cell_marker;
     cell_marker.resize(patch->variableSize(), false);
-    //bool cell_marker[patch->variableSize()];
 
     // Need an Eps for g to prevent precision hazards
     /// @todo better Eps handling needed (efficiency)
@@ -137,13 +136,20 @@ void LevelSetObject::extractBCellLayers()
         }
       }
       if (any_other_sign) {
+        LSLayerDataExtrapol lslde_h;
+        lslde_h.m_Data = patch->getData();
+        lslde_h.m_FieldSize = patch->fieldSize();
+        lslde_h.m_VariableSize = patch->variableSize();
+        lslde_h.m_Cell = l_c;
+        lslde_h.m_G = g;
         if (g < 0.) {
           if(m_NumInnerLayers > 0) { // only if al least a 0th layer is requested
-            m_InnerCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_c, g));
+            // m_InnerCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_c, g));
+            m_InnerCellsLayers[i_p][0].push_back(lslde_h);
           }
         } else {
           if(m_NumOuterLayers > 0) { // only if al least a 0th layer is requested
-            m_OuterCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_c, g));
+            m_OuterCellsLayers[i_p][0].push_back(lslde_h);
           }
         }
       }
@@ -194,7 +200,14 @@ void LevelSetObject::extractBCellLayers()
             size_t l_cn = ind_cell_neighbours[ll_cn];
             if(!cell_marker[l_cn]) {
               if(var[l_cn] < var[l_c]) {
-                m_InnerCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_cn, var[l_cn]));
+                LSLayerDataExtrapol lslde_h;
+                lslde_h.m_Data = patch->getData();
+                lslde_h.m_FieldSize = patch->fieldSize();
+                lslde_h.m_VariableSize = patch->variableSize();
+                lslde_h.m_Cell = l_cn;
+                lslde_h.m_G = var[l_cn];
+                // m_InnerCellsLayers[i_p][0].push_back(LSLayerDataExtrapol(l_cn, var[l_cn]));
+                m_InnerCellsLayers[i_p][0].push_back(lslde_h);
                 cell_marker[l_cn] = true;
                 go_on = true;  // must recheck, in case it is recursively to close to g=0
               }
@@ -234,8 +247,15 @@ void LevelSetObject::extractBCellLayers()
           size_t l_cn = ind_cell_neighbours[ll_cn];
           if (!cell_marker[l_cn]) {
             if (var[l_cn] < 0.) { // eventually false due to the eps
-              real g_n = var[l_cn];
-              m_InnerCellsLayers[i_p][i_layer].push_back(LSLayerDataExtrapol(l_cn, g_n));
+              // real g_n = var[l_cn];
+              // m_InnerCellsLayers[i_p][i_layer].push_back(LSLayerDataExtrapol(l_cn, g_n));
+              LSLayerDataExtrapol lslde_h;
+              lslde_h.m_Data = patch->getData();
+              lslde_h.m_FieldSize = patch->fieldSize();
+              lslde_h.m_VariableSize = patch->variableSize();
+              lslde_h.m_Cell = l_cn;
+              lslde_h.m_G = var[l_cn];
+              m_InnerCellsLayers[i_p][i_layer].push_back(lslde_h);
               cell_marker[l_cn] = true;
             }
           }
@@ -255,8 +275,15 @@ void LevelSetObject::extractBCellLayers()
           size_t l_cn = ind_cell_neighbours[ll_cn];
           if (!cell_marker[l_cn]) {
             if (var[l_cn] > 0.) { // eventually false due to the eps
-              real g_n = var[l_cn];
-              m_OuterCellsLayers[i_p][i_layer].push_back(LSLayerDataExtrapol(l_cn, g_n));
+//              real g_n = var[l_cn];
+//              m_OuterCellsLayers[i_p][i_layer].push_back(LSLayerDataExtrapol(l_cn, g_n));
+              LSLayerDataExtrapol lslde_h;
+              lslde_h.m_Data = patch->getData();
+              lslde_h.m_FieldSize = patch->fieldSize();
+              lslde_h.m_VariableSize = patch->variableSize();
+              lslde_h.m_Cell = l_cn;
+              lslde_h.m_G = var[l_cn];
+              m_OuterCellsLayers[i_p][i_layer].push_back(lslde_h);
               cell_marker[l_cn] = true;
             }
           }
