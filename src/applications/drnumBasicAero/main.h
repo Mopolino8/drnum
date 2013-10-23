@@ -29,7 +29,8 @@
 #include "fluxes/knp.h"
 #include "fluxes/vanleer.h"
 #include "fluxes/ausmplus.h"
-//#include "fluxes/ausmdv.h"
+#include "fluxes/ausmdv.h"
+#include "fluxes/roe.h"
 #include "fluxes/compressiblefarfieldflux.h"
 #include "fluxes/compressibleviscflux.h"
 #include "fluxes/compressibleslipflux.h"
@@ -62,8 +63,7 @@ protected:
   typedef Upwind2<5, SecondOrder> reconstruction_t;
   //typedef Upwind2<5, VanAlbada> reconstruction_t;
 
-  typedef AusmPlus<reconstruction_t, PerfectGas> euler_t;
-  //typedef VanLeer<reconstruction_t, PerfectGas> euler_t;
+  typedef AusmDV<reconstruction_t, PerfectGas> euler_t;
 
   typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
   typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;
@@ -277,8 +277,14 @@ void run()
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
   bool code_coupling  = config.getValue<bool>("code-coupling");
   real scale          = config.getValue<real>("scale");
+
   bool write_flag     = false;
   bool stop_flag      = false;
+
+  bool start_from_zero = false;
+  if (config.exists("start-from-zero")) {
+    start_from_zero = config.getValue<bool>("start-from-zero");
+  }
 
   alpha = M_PI*alpha/180.0;
   real u = uabs*cos(alpha);
@@ -392,6 +398,9 @@ void run()
   if (restart_file.toLower() != "none") {
     write_counter = restart_file.right(6).toInt();
     t = patch_grid.readData(0, "data/" + restart_file);
+    if (start_from_zero) {
+      t = 0;
+    }
   }
 
 #ifdef GPU
