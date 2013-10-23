@@ -27,6 +27,9 @@ SET(drnumlib_SOURCES
     gpu_patch.h
     gpu_cartesianpatch.h
     iteratorfeeder.cpp
+    levelsetdefinition.cpp
+    levelsetobject.cpp
+    levelsetobjectbc.cpp
     mpicommunicator.cpp
     objectdefinition.cpp
     patch.cpp
@@ -38,6 +41,7 @@ SET(drnumlib_SOURCES
     raster.cpp
     rungekutta.cpp
     sphereobject.cpp
+    spherelevelset.cpp
     stringtools.h
     structuredhexraster.cpp
     utilities.cpp
@@ -77,6 +81,8 @@ SET(drnumlib_SOURCES
     reconstruction/upwindcentral.h
     reconstruction/vanalbada.h
     reconstruction/vanleerlim.h
+    cpu_levelsetobjectbc.h
+    lsobccompressibleswallop.h
 )
 
 ADD_LIBRARY(drnumlib SHARED ${drnumlib_SOURCES})

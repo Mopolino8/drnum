@@ -25,8 +25,8 @@
 // single cylinder
 CylinderObject object;
 object.setParams(2., 5., 5.,
-                   6., 0., 0.,
-                   1.);
+                 6., 0., 0.,
+                 1.);
 
 gridfile = "patches/standard.grid";
 

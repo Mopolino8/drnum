@@ -728,6 +728,32 @@ public: // methods
   virtual void cellOverNodeNeighbours(const size_t& l_c,
                                       vector<size_t>& l_cell_neighbours) = 0;
 
+  /**
+    * Compute gradients. Attention: slow, not intended for use in numerical
+    * core modules.
+    * @param m_FieldIndex
+    * @param m_VarIndex
+    * @param l_cell 1D-cell-index in patch
+    * @param dvar_dx x-coord of gradient (return reference)
+    * @param dvar_dy y-coord of gradient (return reference)
+    * @param dvar_dz z-coord of gradient (return reference)
+    */
+  virtual void computeNablaVar(const size_t& field_index, const size_t& var_index, const size_t& l_cell,
+                               real& var_dx, real& dvar_dy, real& dvar_dz) = 0;
+
+  /**
+    * Compute gradients. Attention: slow, not intended for use in numerical
+    * core modules.
+    * @param m_FieldIndex
+    * @param m_VarIndex
+    * @param l_cell 1D-cell-index in patch
+    * @param dvar_dxyz gradient vector (return reference)
+    */
+  void computeNablaVar(const size_t& field_index, const size_t& var_index, const size_t& l_cell,
+                       vec3_t& var_dxyz) {
+    computeNablaVar(field_index, var_index, l_cell,
+                    var_dxyz[0], var_dxyz[1], var_dxyz[2]);
+  }
 
   virtual int findCell(vec3_t xo);
 

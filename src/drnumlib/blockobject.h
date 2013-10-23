@@ -106,11 +106,7 @@ protected: // data
   vector<vector<greycell_t> > m_GreyCells;
 
   /**
-    * Indirect indexing of patches affected by this BC.
-    * mem structure:
-    *   Indexing corresponds to
-    *     2nd dimension of m_BlackCells
-    *     1st dimension of m_GreyCells */
+    * Indirect indexing of patches affected by this BlockObject */
   vector<size_t> m_AffectedPatchIDs;
 
   /**

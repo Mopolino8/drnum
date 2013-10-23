@@ -18,35 +18,25 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef COMBIOBJECT_H
-#define COMBIOBJECT_H
+#include "blockcfd.h"
 
-class CombiObject;
+// Includes to build a geometric levelset test case
 
-#include "objectdefinition.h"
+// Test case:
+// cone-cylinder
 
-class CombiObject : public ObjectDefinition
-{
+ConeLevelSet     obj_nose;
+CylinderLevelSet obj_body;
 
-protected: // attributes
-  vector<ObjectDefinition*> m_LowestObjects;
-  ObjectDefinition* m_ObjectA;
-  ObjectDefinition* m_ObjectB;
+obj_nose.setParams(2., 5., 5.,
+                   3., 0., 0.,
+                   0., 2.);
+obj_body.setParams(5., 5., 5.,
+                   3., 0., 0.,
+                   2.);
 
-  vector<ObjectDefinition*> m_Objects;
 
-protected: // methods
-  void considerLowestObjectsOf(ObjectDefinition* object);
-  void concatLowestObjects(vector<ObjectDefinition*>& other_lowest_objects);
-  void findLowestObjects();
+CombiLevelSetOr object(&obj_nose);
+object.includeLevelSet (&obj_body);
 
-public:
-  CombiObject(ObjectDefinition* object_a, ObjectDefinition* object_b);
-  CombiObject(ObjectDefinition* object_a);
-  void includeObject(ObjectDefinition* object);
-  virtual bool isInside(const real& xo, const real& yo, const real& zo);
-  virtual bool evalBool() = 0;
-
-};
-
-#endif // COMBIOBJECT_H
+gridfile = "patches/standard.grid";

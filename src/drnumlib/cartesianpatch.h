@@ -551,7 +551,23 @@ public: // methods
                               const size_t& k_c,
                               vector<size_t>& l_cell_neighbours);
 
+
+  /**
+    * Compute gradients. Attention: slow, not intended for use in numerical
+    * core modules.
+    * @param m_FieldIndex
+    * @param m_VarIndex
+    * @param l_cell 1D-cell-index in patch
+    * @param dvar_dx x-coord of gradient
+    * @param dvar_dy y-coord of gradient
+    * @param dvar_dz z-coord of gradient
+    */
+  virtual void computeNablaVar(const size_t& field_index, const size_t& var_index, const size_t& l_cell,
+                               real& dvar_dx, real& dvar_dy, real& dvar_dz);
+
+
   virtual int findCell(vec3_t xo);
+
 
 #ifdef WITH_VTK
   virtual vtkSmartPointer<vtkDataSet> createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);

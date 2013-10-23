@@ -18,35 +18,29 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef COMBIOBJECT_H
-#define COMBIOBJECT_H
+#include "blockcfd.h"
 
-class CombiObject;
+// Includes to build a geometric levelset test case
 
-#include "objectdefinition.h"
+// Test case:
+// some spheres and cylinders
+SphereLevelSet obj_sph_1;
+SphereLevelSet obj_sph_2;
+SphereLevelSet obj_sph_3;
+obj_sph_1.setParams(4., 4., 4., 2.5);
+obj_sph_2.setParams(6., 6., 6., 2.5);
+obj_sph_3.setParams(4., 5., 6., 2.5);
+// some cylinders
+CylinderLevelSet obj_cyl_1;
+obj_cyl_1.setParams(1., 5., 5.,
+                    6., 0., 0.,
+                    1.);
 
-class CombiObject : public ObjectDefinition
-{
+CombiLevelSetAnd object_inter1(&obj_sph_1, &obj_sph_2);
+CombiLevelSetAnd object_inter2(&obj_sph_2, &obj_sph_3);
+CombiLevelSetAnd object_inter3(&obj_sph_3, &obj_sph_1);
+CombiLevelSetOr object_inter4(&object_inter1, &object_inter2);
+CombiLevelSetOr object_inter5(&object_inter4, &object_inter3);
+CombiLevelSetAndNot object(&object_inter5, &obj_cyl_1);
 
-protected: // attributes
-  vector<ObjectDefinition*> m_LowestObjects;
-  ObjectDefinition* m_ObjectA;
-  ObjectDefinition* m_ObjectB;
-
-  vector<ObjectDefinition*> m_Objects;
-
-protected: // methods
-  void considerLowestObjectsOf(ObjectDefinition* object);
-  void concatLowestObjects(vector<ObjectDefinition*>& other_lowest_objects);
-  void findLowestObjects();
-
-public:
-  CombiObject(ObjectDefinition* object_a, ObjectDefinition* object_b);
-  CombiObject(ObjectDefinition* object_a);
-  void includeObject(ObjectDefinition* object);
-  virtual bool isInside(const real& xo, const real& yo, const real& zo);
-  virtual bool evalBool() = 0;
-
-};
-
-#endif // COMBIOBJECT_H
+gridfile = "patches/standard.grid";

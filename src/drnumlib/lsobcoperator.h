@@ -18,35 +18,23 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef COMBIOBJECT_H
-#define COMBIOBJECT_H
+#ifndef LSOBCOPERATOR_H
+#define LSOBCOPERATOR_H
 
-class CombiObject;
+class LSOBCOperator;
 
-#include "objectdefinition.h"
+#include "lslayerdataextrapol.h"
 
-class CombiObject : public ObjectDefinition
+/** @todo Maybe this class is suitable to hold access(const LSLayerdataExtrapol&)
+  *       later. Then introduce template DIM .  */
+
+/** Operator base class for LevelSetobject boundary conditions. */
+class LSOBCOperator
 {
-
-protected: // attributes
-  vector<ObjectDefinition*> m_LowestObjects;
-  ObjectDefinition* m_ObjectA;
-  ObjectDefinition* m_ObjectB;
-
-  vector<ObjectDefinition*> m_Objects;
-
-protected: // methods
-  void considerLowestObjectsOf(ObjectDefinition* object);
-  void concatLowestObjects(vector<ObjectDefinition*>& other_lowest_objects);
-  void findLowestObjects();
-
 public:
-  CombiObject(ObjectDefinition* object_a, ObjectDefinition* object_b);
-  CombiObject(ObjectDefinition* object_a);
-  void includeObject(ObjectDefinition* object);
-  virtual bool isInside(const real& xo, const real& yo, const real& zo);
-  virtual bool evalBool() = 0;
-
+  LSOBCOperator();
 };
 
-#endif // COMBIOBJECT_H
+LSOBCOperator::LSOBCOperator() {}
+
+#endif // LSOBCOPERATOR_H

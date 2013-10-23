@@ -37,7 +37,6 @@
 #include "perfectgas.h"
 #include "compressiblevariables.h"
 #include "rungekutta.h"
-#include "cartesiancycliccopy.h"
 #include "externalexchangelist.h"
 
 #ifdef GPU

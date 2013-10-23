@@ -76,7 +76,18 @@ SOURCES += \
     blockobjectbc.cpp \
     compressibleeulerbobc.cpp \
     coneobject.cpp \
-    compressiblesolidwallbobc.cpp
+    compressiblesolidwallbobc.cpp \
+    levelsetdefinition.cpp \
+    combilevelset.cpp \
+    combilevelsetor.cpp \
+    combilevelsetand.cpp \
+    combilevelsetandnot.cpp \
+    cartboxlevelset.cpp \
+    cylinderlevelset.cpp \
+    conelevelset.cpp \
+    spherelevelset.cpp \
+    levelsetobject.cpp \
+    levelsetobjectbc.cpp
 
 HEADERS += \
     blockcfd.h \
@@ -166,4 +177,17 @@ HEADERS += \
     compressibleeulerbobc.h \
     coneobject.h \
     compressiblesolidwallbobc.h \
-    compressiblevariablesandg.h
+    compressiblevariablesandg.h \
+    levelsetdefinition.h \
+    combilevelset.h \
+    combilevelsetor.h \
+    combilevelsetand.h \
+    combilevelsetandnot.h \
+    cartboxlevelset.h \
+    cylinderlevelset.h \
+    conelevelset.h \
+    spherelevelset.h \
+    levelsetobject.h \
+    levelsetobjectbc.h \
+    LSLayerData.h \
+    lslayerdataextrapol.h

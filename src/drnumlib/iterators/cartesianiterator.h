@@ -25,7 +25,7 @@
 #include "iterators/tpatchiterator.h"
 
 template <unsigned int DIM, typename OP>
-class CartesianIterator : public TPatchIterator<CartesianPatch, DIM, OP>
+class CartesianIterator : public TPatchIterator<CartesianPatch, OP>
 {
 
 protected: // attributes
@@ -47,7 +47,8 @@ protected: // methods
 
 public:
 
-  using TPatchIterator<CartesianPatch, DIM, OP>::addPatch;
+  using TPatchIterator<CartesianPatch, OP>::addPatch;
+  using PatchIterator::patchActive;
 
   CartesianIterator(OP op);
 
@@ -58,7 +59,7 @@ public:
 };
 
 template <unsigned int DIM, typename OP>
-CartesianIterator<DIM, OP>::CartesianIterator(OP op) : TPatchIterator<CartesianPatch, DIM, OP>(op)
+CartesianIterator<DIM, OP>::CartesianIterator(OP op) : TPatchIterator<CartesianPatch, OP>(op)
 {
   m_Res = NULL;
   m_ResLength = 0;

@@ -18,35 +18,31 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef COMBIOBJECT_H
-#define COMBIOBJECT_H
 
-class CombiObject;
-
-#include "objectdefinition.h"
-
-class CombiObject : public ObjectDefinition
-{
+#include "drnum.h"
 
 protected: // attributes
-  vector<ObjectDefinition*> m_LowestObjects;
-  ObjectDefinition* m_ObjectA;
-  ObjectDefinition* m_ObjectB;
 
-  vector<ObjectDefinition*> m_Objects;
+size_t m_Field;                   /// the variable field to work on
+size_t m_AbuseField;              /// abused field to avoid recursion
 
-protected: // methods
-  void considerLowestObjectsOf(ObjectDefinition* object);
-  void concatLowestObjects(vector<ObjectDefinition*>& other_lowest_objects);
-  void findLowestObjects();
+size_t m_NumInnerLayerCells;      /// total number of cells in inner layers
+size_t m_NumOuterLayerCells;      /// total number of cells in outer layers
 
-public:
-  CombiObject(ObjectDefinition* object_a, ObjectDefinition* object_b);
-  CombiObject(ObjectDefinition* object_a);
-  void includeObject(ObjectDefinition* object);
-  virtual bool isInside(const real& xo, const real& yo, const real& zo);
-  virtual bool evalBool() = 0;
+/** Storage of levelset layer data for inner cells
+  * Data alignment (all with actual length, no padding)
+  * 1st dim: patch id (direct; 0, 1, 2, ...)
+  * 2nd dim: layer:
+  *       0 :  has at least one face neighbour with negative G-value (inside)
+  *       1 .. m_NumOuterLayers : furter layers farther outside
+  * 3rd dim: cell indices in layer */
+LSLayerDataExtrapol* m_InnerCellsLayers;
 
-};
-
-#endif // COMBIOBJECT_H
+/** Storage of levelset layer data for outer cells
+  * Data alignment (all with actual length, no padding)
+  * 1st dim: patch id (direct; 0, 1, 2, ...)
+  * 2nd dim: layer:
+  *       0 :  has at least one face neighbour with negative G-value (inside)
+  *       1 .. m_NumOuterLayers : furter layers farther outside
+  * 3rd dim: cell indices in layer */
+LSLayerDataExtrapol* m_OuterCellsLayers;

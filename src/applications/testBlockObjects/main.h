@@ -56,9 +56,24 @@
 #include "combiobjectand.h"
 #include "combiobjector.h"
 #include "combiobjectandnot.h"
-
 #include "compressibleeulerbobc.h"
 
+#include "levelsetobject.h"
+#include "cartboxlevelset.h"
+#include "spherelevelset.h"
+#include "cylinderlevelset.h"
+#include "conelevelset.h"
+#include "combilevelsetand.h"
+#include "combilevelsetor.h"
+#include "combilevelsetandnot.h"
+#include "levelsetobjectbc.h"
+#include "compressibleeulerlsobc.h"
+#include "compressiblesimpleswalllsobc.h"
+#include "compressibleswalllsobc.h"
+
+#include "cpu_levelsetobjectbc.h"
+#include "lsobccompressibleswallop.h"
+#include "lsobccompressibleeulerop.h"
 
 class EaFlux
 {
@@ -68,12 +83,12 @@ protected:
   //typedef Upwind1 reconstruction_t;
   //typedef Upwind2<SecondOrder>                           reconstruction_t;
 
-  typedef Upwind2<VanAlbada>                             reconstruction_t;
-  typedef AusmPlus<reconstruction_t, PerfectGas>         euler_t;
-  //typedef KNP<reconstruction_t, PerfectGas>              euler_t;
-  typedef CompressibleSlipFlux<Upwind1, PerfectGas>      wall_t;
-  typedef CompressibleViscFlux<PerfectGas>               viscous_t;
-  typedef CompressibleFarfieldFlux<Upwind1, PerfectGas>  farfield_t;
+  typedef Upwind2<5,VanAlbada>                              reconstruction_t;
+  typedef AusmPlus<reconstruction_t, PerfectGas>            euler_t;
+  //typedef KNP<reconstruction_t, PerfectGas>               euler_t;
+  typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>      wall_t;
+  typedef CompressibleViscFlux<5, PerfectGas>                  viscous_t;
+  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas>  farfield_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
@@ -120,7 +135,7 @@ inline void EaFlux::xField
   )
 {
   m_EulerFlux.xField(patch, i, j, k, x, y, z, A, flux);
-  m_ViscFlux.xField(patch, i, j, k, x, y, z, A, flux);
+  //EULER m_ViscFlux.xField(patch, i, j, k, x, y, z, A, flux);
 }
 
 template <typename PATCH>
@@ -133,7 +148,7 @@ inline void EaFlux::yField
   )
 {
   m_EulerFlux.yField(patch, i, j, k, x, y, z, A, flux);
-  m_ViscFlux.yField(patch, i, j, k, x, y, z, A, flux);
+  //EULER m_ViscFlux.yField(patch, i, j, k, x, y, z, A, flux);
 }
 
 template <typename PATCH>
@@ -146,7 +161,7 @@ inline void EaFlux::zField
   )
 {
   m_EulerFlux.zField(patch, i, j, k, x, y, z, A, flux);
-  m_ViscFlux.zField(patch, i, j, k, x, y, z, A, flux);
+  //EULER m_ViscFlux.zField(patch, i, j, k, x, y, z, A, flux);
 }
 
 template <typename PATCH>
@@ -281,18 +296,27 @@ public:
 
 void run()
 {
+  dim_t<5> dim;
 
   real Ma             = 0.15;
   real p              = 1.0e5;
   real T              = 300;
   real uabs           = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
-  real alpha          = 10.0;
+  // real alpha          = 10.0;
+  real alpha          =  0.0;
   real L              = 10.0;
   real time           = L/uabs;
   real cfl_target     = 1.0;
   real t_write        = 0;
-  real write_interval = 1.0*time;
-  real total_time     = 100*time;
+
+  //real write_interval = 1.0*time;
+  real write_interval = 0.02*time;
+  //real write_interval = 0.001*time;
+
+  //real total_time     = 100*time;
+  //real total_time = 10.0*time;
+  real total_time = 1.0*time;
+
   bool write          = true;
   bool write_blockobj = true;
 
@@ -304,19 +328,27 @@ void run()
   // Geometric block object test case selection
   string gridfile = "must_overwrite_this";
 
-#include "geoblockobjecttest001.h"   // Test 1: single sphere
+// #include "geoblockobjecttest001.h"   // Test 1: single sphere
 // #include "geoblockobjecttest002.h"   // Test 2: some spheres
 // #include "geoblockobjecttest003.h"   // Test 3: desk and vase
 // #include "geoblockobjecttest004.h"   // Test 4: a cone with some cross drillings
 // #include "geoblockobjecttest005.h"   // Test 5: single cylinder (??)
 // #include "geoblockobjecttest006.h"   // Test 6: rocket (model of a launcher)
 
+#include "geolevelsettest001.h"   // Test 1: single sphere
+// #include "geolevelsettest002.h"   // Test 2: some spheres
+// #include "geolevelsettest003.h"   // Test 3: desk and vase
+// #include "geolevelsettest004.h"   // Test 4: a cone with some cross drillings
+// #include "geolevelsettest005.h"   // Test 5: single cylinder (??)
+// #include "geolevelsettest006.h"   // Test 6: rocket (model of a launcher)
+// #include "geolevelsettest007.h"   // Test 1: a cone and a cylinder
+
   // Patch grid
   PatchGrid patch_grid;
   //.. general settings (apply to all subsequent patches)
   patch_grid.setNumberOfFields(3);
 
-  patch_grid.setNumberOfVariables(5);
+  patch_grid.setNumberOfVariables(6);
   // problem? patch_grid.setNumberOfVariables(6);
 
 
@@ -343,27 +375,39 @@ void run()
   init_var[5] = 0.;  // this is preliminary setting for the G-variable
   patch_grid.setFieldToConst(0, init_var);
 
-  // Transform in block object on patch_grid
-  BlockObject block_object(&patch_grid);
-  block_object.setGreyResolution(10); // overwrite default
-  block_object.update(&object);
+//  // Transform in block object on patch_grid
+//  BlockObject block_object(&patch_grid);
+//  block_object.setGreyResolution(5); // overwrite default
+//  block_object.update(&object);
+
+  // Transform in levelset object on patch_grid
+  LevelSetObject levelset_object(&object,
+                                 &patch_grid,
+                                 0, 5,
+                                 3, 0,
+                                 0.1, -1.);
+  // block_object.setGreyResolution(5); // overwrite default
+  // block_object.update(&object);
+  levelset_object.update();
+
+
 
   // Produce output of block object for visualization (abuse field 0 , variable 5)
-  // problem? block_object.setLayerIndexToVar(0, 5);  // abusing dfensity was ...(0, 0);
+  // problem?
+  // block_object.setLayerIndexToVar(0, 5);  // abusing density was ...(0, 0);
 
   // Write plotteable output
   if (write_blockobj) {
-    /// @todo Abuse field=0, var=0 to write file with blockobjects. Define other write method later.
-    //patch_grid.writeToVtk(0, "VTK/blockobjects", CompressibleVariablesAndG<PerfectGas>(), 0);
-    patch_grid.writeToVtk(0, "VTK/blockobjects", CompressibleVariables<PerfectGas>(), 0);
+    patch_grid.writeToVtk(0, "VTK/blockobjects", CompressibleVariablesAndG<PerfectGas>(), 0);
+    //patch_grid.writeToVtk(0, "VTK/blockobjects", CompressibleVariables<PerfectGas>(), 0);
   }
 
   if (write) {
-    //patch_grid.writeToVtk(0, "VTK/step", CompressibleVariablesAndG<PerfectGas>(), 0);
-    patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
+    patch_grid.writeToVtk(0, "VTK/step", CompressibleVariablesAndG<PerfectGas>(), 0);
+    //patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
   }
 
-  //exit(0); /// stop here by now
+  // exit(0); /// stop here by now
 
   EaFlux    flux_std(u, v, p, T);
 //  EaWFluxZM flux_wzm(u, v, p, T);
@@ -396,8 +440,21 @@ void run()
   runge_kutta.addIterator(&iterator_std);
 //  runge_kutta.addIterator(&iterator_wzm);
 
-  CompressibleEulerBOBC c_euler_bobc(0, &block_object);
-  runge_kutta.addPostOperation(&c_euler_bobc);
+  // BLOCKOBJECT CompressibleEulerBOBC c_euler_bobc(0, &block_object);
+  // BLOCKOBJECT runge_kutta.addPostOperation(&c_euler_bobc);
+
+  // CompressibleEulerLSOBC lsobc(0, &levelset_object, 2);
+  // CompressibleSimpleSWallLSOBC lsobc(0, &levelset_object, 2);
+  // CompressibleSWallLSOBC lsobc(0, &levelset_object, 2);
+
+  LSOBCCompressibleSWallOp lslbc_op;
+  CPU_LevelSetObjectBC<LSOBCCompressibleSWallOp> lsobc(0, &levelset_object, 2, lslbc_op);
+
+  // LSOBCCompressibleEulerOp lslbc_op;
+  // CPU_LevelSetObjectBC<LSOBCCompressibleEulerOp> lsobc(0, &levelset_object, 2, lslbc_op);
+
+  lsobc.transferCellLayerData();
+  runge_kutta.addPostOperation(&lsobc);
 
   int write_counter = 0;
   int iter = 0;
@@ -445,7 +502,7 @@ void run()
           for (size_t j = 0; j < NJ; ++j) {
             for (size_t k = 0; k < NK; ++k) {
               real p, u, v, w, T, var[5];
-              patch.getVar(0, i, j, k, var);
+              patch.getVar(dim, 0, i, j, k, var);
               rho_min = min(var[0], rho_min);
               rho_max = max(var[0], rho_max);
               PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
@@ -474,8 +531,8 @@ void run()
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       ++write_counter;
       if (write) {
-        //patch_grid.writeToVtk(0, "VTK/step", CompressibleVariablesAndG<PerfectGas>(), write_counter);
-        patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
+        patch_grid.writeToVtk(0, "VTK/step", CompressibleVariablesAndG<PerfectGas>(), write_counter);
+        //patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
       }
       t_write -= write_interval;
       if (t > 80.0) {
@@ -497,8 +554,8 @@ void run()
 #endif
 
   if (write) {
-    //patch_grid.writeToVtk(0, "VTK/final", CompressibleVariablesAndG<PerfectGas>(), -1);
-    patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
+    patch_grid.writeToVtk(0, "VTK/final", CompressibleVariablesAndG<PerfectGas>(), -1);
+    //patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
 
   }
 }
