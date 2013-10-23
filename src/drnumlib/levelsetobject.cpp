@@ -330,8 +330,42 @@ void LevelSetObject::extractBCellLayers()
         } else {
           m_InnerCellsLayers[i_p][i_layer][ll_c].m_ExOK = false;
         }
-
       }
+      //.. Clean up m_InnerCellsLayers: Eliminate all entries with
+      //   m_InnerCellsLayers[i_p][i_layer][ll_c].m_ExOK == false
+      //   These are nodes that extrapolate to "outside" of the core patch bounds. The
+      //   variables in these cells will later be overwritten by overlap transfer.
+      //   On oblique surfaces crossing patch borders, the extrapolation access may
+      //   fail and the cell will suffer from not getting the adequate boundary condition.
+      /** Interpolate on total patch grid and not solely on the patch being to avoid the above
+        * safety issue.
+        * Postpone this operation until having the common data pointer. Then access
+        * neighbour patch info directly.*/
+      vector<size_t> shift_down;
+      shift_down.resize(m_InnerCellsLayers[i_p][i_layer].size());
+      size_t all_shift_down = 0;
+      for (size_t ll_c = 0; ll_c < m_InnerCellsLayers[i_p][i_layer].size(); ll_c++) {
+        shift_down[ll_c] = all_shift_down;
+        if (!m_InnerCellsLayers[i_p][i_layer][ll_c].m_ExOK) {
+          all_shift_down++;
+        }
+      }
+      for (size_t ll_c = 0; ll_c < m_InnerCellsLayers[i_p][i_layer].size(); ll_c++) {
+        size_t ll_c_down = ll_c - shift_down[ll_c];
+        m_InnerCellsLayers[i_p][i_layer][ll_c_down] = m_InnerCellsLayers[i_p][i_layer][ll_c];
+      }
+      size_t old_size = m_InnerCellsLayers[i_p][i_layer].size();
+      size_t new_size = old_size - all_shift_down;
+      m_InnerCellsLayers[i_p][i_layer].resize(new_size);
+#ifdef DEBUG
+      bool error = false;
+      for (size_t ll_c = 0; ll_c < m_InnerCellsLayers[i_p][i_layer].size(); ll_c++) {
+        if (!m_InnerCellsLayers[i_p][i_layer][ll_c].m_ExOK) {
+          error = true;
+        }
+      }
+      if(error){BUG;}
+#endif
     }
 
     //.. Outside

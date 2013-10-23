@@ -385,7 +385,7 @@ void run()
                                  &patch_grid,
                                  0, 5,
                                  3, 0,
-                                 0.5, -1.);
+                                 0.1, -1.);
   // block_object.setGreyResolution(5); // overwrite default
   // block_object.update(&object);
   levelset_object.update();
@@ -447,11 +447,12 @@ void run()
   // CompressibleSimpleSWallLSOBC lsobc(0, &levelset_object, 2);
   // CompressibleSWallLSOBC lsobc(0, &levelset_object, 2);
 
-  // LSOBCCompressibleSWallOp lslbc_op;
-  // CPU_LevelSetObjectBC<LSOBCCompressibleSWallOp> lsobc(0, &levelset_object, 2, lslbc_op);
+  LSOBCCompressibleSWallOp lslbc_op;
+  CPU_LevelSetObjectBC<LSOBCCompressibleSWallOp> lsobc(0, &levelset_object, 2, lslbc_op);
 
-  LSOBCCompressibleEulerOp lslbc_op;
-  CPU_LevelSetObjectBC<LSOBCCompressibleEulerOp> lsobc(0, &levelset_object, 2, lslbc_op);
+  // LSOBCCompressibleEulerOp lslbc_op;
+  // CPU_LevelSetObjectBC<LSOBCCompressibleEulerOp> lsobc(0, &levelset_object, 2, lslbc_op);
+
   lsobc.transferCellLayerData();
   runge_kutta.addPostOperation(&lsobc);
 
