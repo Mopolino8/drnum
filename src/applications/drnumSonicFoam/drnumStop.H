@@ -25,6 +25,4 @@ if (mpi_comm.rank() == 0) {
   shmem->writeValue("write", &write);
   int stop = 1;
   shmem->writeValue("stop", &stop);
-  dn2of_list.ipcReceive();
-  barrier->wait();
 }
