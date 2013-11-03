@@ -21,6 +21,7 @@ SET(drnumlib_SOURCES
     cudatools.h
     cylinderobject.cpp
     debug.cpp
+    donor_t.h
     drnum.h
     externalexchangelist.cpp
     geometrytools.cpp
@@ -42,6 +43,7 @@ SET(drnumlib_SOURCES
     rungekutta.cpp
     sphereobject.cpp
     spherelevelset.cpp
+    splitface_t.h
     stringtools.h
     structuredhexraster.cpp
     utilities.cpp
