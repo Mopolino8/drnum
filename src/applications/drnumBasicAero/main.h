@@ -345,6 +345,10 @@ void run()
   iterator_feeder.addIterator(&iterator_std);
   iterator_feeder.feed(patch_grid);
 
+#ifdef GPU
+  iterator_std.buildSplitFaces();
+#endif
+
   //vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
   //for (size_t i = 0; i < cubes.size(); ++i) {
   //  runge_kutta.addPostOperation(&cubes[i]);
