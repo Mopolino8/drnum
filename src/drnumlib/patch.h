@@ -46,6 +46,7 @@ class GPU_Patch;
 #include "codestring.h"
 #include "postprocessingvariables.h"
 #include "donor_t.h"
+#include "splitface_t.h"
 
 #ifdef CUDA
 #include "cudatools.h"
@@ -94,13 +95,14 @@ class Patch
 
 private: // attributes
 
-  real*    m_GpuData;
-  size_t*  m_GpuReceivingCellIndicesConcat;
-  size_t*  m_GpuReceivingCellIndicesUnique;
-  donor_t* m_GpuDonors;
-  size_t*  m_GpuDonorIndexConcat;
-  real*    m_GpuDonorWeightConcat;
-  bool     m_GpuDataSet;
+  real        *m_GpuData;
+  size_t      *m_GpuReceivingCellIndicesConcat;
+  size_t      *m_GpuReceivingCellIndicesUnique;
+  donor_t     *m_GpuDonors;
+  size_t      *m_GpuDonorIndexConcat;
+  real        *m_GpuDonorWeightConcat;
+  splitface_t *m_GpuSplitFaces;
+  bool         m_GpuDataSet;
 
 
 protected: // attributes
@@ -702,6 +704,18 @@ public: // methods
    * @param i_field the index of the field to copy
    */
   void copyFieldToDevice(size_t i_field);
+
+  /**
+   * @brief Get the total number of split faces for the immersed boundaries.
+   * @return number of split faces
+   */
+  size_t getNumSplitFaces() { return m_NumSplitFaces; }
+
+  /**
+   * @brief Get the pointer to the split faces field
+   * @return the pointer to the split faces field
+   */
+  splitface_t* getSplitFaces() { return m_SplitFaces; }
 
   /**
    * @brief Copy one field from GPU (device) memory to host memory

@@ -49,6 +49,11 @@ donor_t* m_Donors;         ///< All donor data structs for this (receiver) patch
 size_t* m_DonorIndexConcat;  ///< Concatenated donor cell indicees [m_NumDonorWIConcat]
 real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_NumDonorWIConcat]
 
+
+// data for split faces (immersed boundary method)
+size_t       m_NumSplitFaces;
+splitface_t *m_SplitFaces;
+
 protected: // attributes
 
 size_t  m_MyIndex;      ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
@@ -455,6 +460,7 @@ CUDA_HO void copyAttributes(T* obj)
   m_NumDonorWIConcat        = obj->getNumDonorWIConcat();
   m_PatchGrid               = obj->getPatchGrid();
   m_MyIndex                 = obj->getIndex();
+  m_NumSplitFaces           = obj->getNumSplitFaces();
 }
 
 

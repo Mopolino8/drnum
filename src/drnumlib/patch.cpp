@@ -35,6 +35,7 @@ Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotect
   m_NumVariables = 0;
   m_VariableSize = 0;
   m_FieldSize = 0;
+  m_NumSplitFaces = 0;
   m_SeekExceptions = false;
   m_NumAddProtectLayers = num_addprotectlayers;
   m_NumSeekLayers = num_seeklayers;
