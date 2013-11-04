@@ -24,13 +24,17 @@
 #include "fluxes/compressibleflux.h"
 #include "cartesianpatch.h"
 
-template <typename TReconstruction, typename TGas>
-class AusmDV : public CompressibleFlux
+template <unsigned int DIM, typename TReconstruction, typename TGas>
+class AusmDV : public CompressibleFlux<DIM, TGas>
 {
 
   TReconstruction m_Reconstruction;
 
 public: // methods
+
+  using CompressibleFlux<DIM, TGas>::M1;
+  using CompressibleFlux<DIM, TGas>::M2;
+  using CompressibleFlux<DIM, TGas>::P5;
 
   template <typename PATCH> CUDA_DH void xField(PATCH *patch,
                                                 size_t i, size_t j, size_t k,

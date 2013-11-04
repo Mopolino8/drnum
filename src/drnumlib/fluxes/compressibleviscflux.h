@@ -25,7 +25,7 @@
 #include "cartesianpatch.h"
 
 template <unsigned int DIM, typename TGas>
-class CompressibleViscFlux : public CompressibleFlux
+class CompressibleViscFlux : public CompressibleFlux<DIM, TGas>
 {
 
 public: // methods

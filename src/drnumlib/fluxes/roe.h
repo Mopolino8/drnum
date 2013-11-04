@@ -24,8 +24,8 @@
 #include "fluxes/compressibleflux.h"
 #include "cartesianpatch.h"
 
-template <typename TReconstruction, typename TGas>
-class Roe : public CompressibleFlux
+template <unsigned int DIM, typename TReconstruction, typename TGas>
+class Roe : public CompressibleFlux<DIM, TGas>
 {
 
   TReconstruction m_Reconstruction;

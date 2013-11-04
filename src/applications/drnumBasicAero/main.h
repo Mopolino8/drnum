@@ -67,7 +67,7 @@ protected:
   typedef Upwind2<5, SecondOrder> reconstruction_t;
   //typedef Upwind2<5, VanAlbada> reconstruction_t;
 
-  typedef AusmDV<reconstruction_t, PerfectGas> euler_t;
+  typedef AusmDV<5, reconstruction_t, PerfectGas> euler_t;
 
   typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
   typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;

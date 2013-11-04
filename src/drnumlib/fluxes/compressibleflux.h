@@ -37,6 +37,7 @@
   real p  = r*TGas::R(var)*T; \
   countFlops(15);
 
+template <unsigned int DIM, typename TGas>
 class CompressibleFlux
 {
 
@@ -71,6 +72,17 @@ protected: // methods
     }
     countFlops(6);
     return M2(M, s)*((2*s - M) - 3*s*M*M2(M, -s));
+  }
+
+
+public: // methods
+
+  template <typename PATCH> CUDA_DH void xSplit(PATCH *patch,
+                                                size_t i, size_t j, size_t k,
+                                                real x, real y, real z,
+                                                real A, real* flux)
+  {
+
   }
 
 };
@@ -110,32 +122,32 @@ protected: // methods
   countSqrts(1);
 
 #define COMPRESSIBLE_LEFT_PROJX \
-  real var_l[5]; \
+  real var_l[DIM]; \
   m_Reconstruction.project(patch, var_l, 0, i-1, j, k, i, j, k, x - patch->dx(), y, z, x, y, z); \
   COMPRESSIBLE_LEFT_VARS
 
 #define COMPRESSIBLE_RIGHT_PROJX \
-  real var_r[5]; \
+  real var_r[DIM]; \
   m_Reconstruction.project(patch, var_r, 0, i, j, k, i-1, j, k, x, y, z, x - patch->dx(), y, z); \
   COMPRESSIBLE_RIGHT_VARS
 
 #define COMPRESSIBLE_LEFT_PROJY \
-  real var_l[5]; \
+  real var_l[DIM]; \
   m_Reconstruction.project(patch, var_l, 0, i, j-1, k, i, j, k, x, y - patch->dy(), z, x, y, z); \
   COMPRESSIBLE_LEFT_VARS
 
 #define COMPRESSIBLE_RIGHT_PROJY \
-  real var_r[5]; \
+  real var_r[DIM]; \
   m_Reconstruction.project(patch, var_r, 0, i, j, k, i, j-1, k, x, y, z, x, y - patch->dy(), z); \
   COMPRESSIBLE_RIGHT_VARS
 
 #define COMPRESSIBLE_LEFT_PROJZ \
-  real var_l[5]; \
+  real var_l[DIM]; \
   m_Reconstruction.project(patch, var_l, 0, i, j, k-1, i, j, k, x, y, z - patch->dz(), x, y, z); \
   COMPRESSIBLE_LEFT_VARS
 
 #define COMPRESSIBLE_RIGHT_PROJZ \
-  real var_r[5]; \
+  real var_r[DIM]; \
   m_Reconstruction.project(patch, var_r, 0, i, j, k, i, j, k-1, x, y, z, x, y, z - patch->dz()); \
   COMPRESSIBLE_RIGHT_VARS
 
