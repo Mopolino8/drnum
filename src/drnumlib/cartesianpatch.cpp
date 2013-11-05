@@ -1833,3 +1833,29 @@ int CartesianPatch::findCell(vec3_t xo)
   int k = x[2]/dz();
   return index(i, j, k);
 }
+
+list<size_t> CartesianPatch::getNeighbours(size_t idx)
+{
+  list<size_t> neigh;
+  size_t i, j, k;
+  ijk(idx, i, j, k);
+  if (checkRange(i-1, j, k)) {
+    neigh.push_back(index(i-1, j, k));
+  }
+  if (checkRange(i+1, j, k)) {
+    neigh.push_back(index(i+1, j, k));
+  }
+  if (checkRange(i, j-1, k)) {
+    neigh.push_back(index(i, j-1, k));
+  }
+  if (checkRange(i, j+1, k)) {
+    neigh.push_back(index(i, j+1, k));
+  }
+  if (checkRange(i, j, k-1)) {
+    neigh.push_back(index(i, j, k-1));
+  }
+  if (checkRange(i, j, k+1)) {
+    neigh.push_back(index(i, j, k+1));
+  }
+  return neigh;
+}

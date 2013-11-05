@@ -51,6 +51,7 @@ public:
       m_ReceivingCellIndicesConcat = patch->m_GpuReceivingCellIndicesConcat;
       m_ReceivingCellIndicesUnique = patch->m_GpuReceivingCellIndicesUnique;
       m_SplitFaces                 = patch->m_GpuSplitFaces;
+      m_IsInsideCell                = patch->m_GpuIsSplitCell;
     } else {
       if (cudaMalloc(&m_Data, sizeof(real)*patch->dataSize()) != cudaSuccess) {
         BUG;
@@ -90,6 +91,11 @@ public:
       cudaMemcpy(m_VectorVarIndices, &vector_indices[0], m_NumVectorVars*sizeof(size_t), cudaMemcpyHostToDevice);
       CUDA_CHECK_ERROR;
 
+      cudaMalloc(&m_IsInsideCell, sizeof(bool)*m_VariableSize);
+      CUDA_CHECK_ERROR;
+      cudaMemcpy(m_IsInsideCell, patch->getIsSplitCell(), m_VariableSize*sizeof(bool), cudaMemcpyHostToDevice);
+      CUDA_CHECK_ERROR;
+
       cudaMalloc(&m_SplitFaces, sizeof(splitface_t)*m_NumSplitFaces);
       CUDA_CHECK_ERROR;
       cudaMemcpy(m_SplitFaces, patch->getSplitFaces(), m_NumSplitFaces*sizeof(splitface_t), cudaMemcpyHostToDevice);
@@ -102,6 +108,7 @@ public:
       patch->m_GpuReceivingCellIndicesConcat = m_ReceivingCellIndicesConcat;
       patch->m_GpuReceivingCellIndicesUnique = m_ReceivingCellIndicesUnique;
       patch->m_GpuSplitFaces                 = m_SplitFaces;
+      patch->m_GpuIsSplitCell                = m_IsInsideCell;
       patch->m_GpuDataSet = true;
     }
   }

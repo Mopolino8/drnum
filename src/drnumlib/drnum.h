@@ -272,5 +272,10 @@ struct dim_t
   unsigned int operator() () { return DIM; }
 };
 
+inline CUDA_DH bool logicalXor(bool a, bool b)
+{
+  return (a && !b) || (!a && b);
+}
+
 
 #endif // BLOCKCFD_H

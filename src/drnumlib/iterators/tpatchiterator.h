@@ -56,10 +56,8 @@ template <typename T, typename OP>
 void TPatchIterator<T, OP>::addPatch(Patch* patch)
 {
   /// @todo currently ugly. Find concept to avoid storing m_Patches twice. See PatchIterator.h
-  PatchIterator::addPatch(patch);
-
   m_Patches.push_back(dynamic_cast<T*>(patch));
-  //m_Patches.push_back(patch);
+  PatchIterator::addPatch(patch);
 }
 
 

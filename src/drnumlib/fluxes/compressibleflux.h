@@ -77,12 +77,51 @@ protected: // methods
 
 public: // methods
 
-  template <typename PATCH> CUDA_DH void xSplit(PATCH *patch,
-                                                size_t i, size_t j, size_t k,
-                                                real x, real y, real z,
-                                                real A, real* flux)
+  template <typename PATCH> CUDA_DH void splitFlux(PATCH *patch, splitface_t sf, real* flux)
   {
+    real var[DIM];
+    dim_t<DIM> dim;
+    patch->getVar(dim, 0, sf.idx, var);
+    real p, u, v, w, T;
+    TGas::conservativeToPrimitive(var, p, T, u, v, w);
+    real scal = u*sf.wnx + v*sf.wny + w*sf.wnz;
+    u -= scal*sf.wnx;
+    v -= scal*sf.wny;
+    w -= scal*sf.wnz;
 
+    /*
+    u = 0;
+    v = 0;
+    w = 0;
+    */
+
+    //TGas::primitiveToConservative(p, T, u, v, w, var);
+    real r  = var[0];
+    real rE = var[4];
+
+    real h = (rE + p)/r;
+    real flux_0;
+
+    flux_0   = r*u*sf.nx + r*v*sf.ny + r*w*sf.nz;
+    flux[0] += flux_0;
+    flux[1] += (r*u*r*u + p)*sf.nx +         r*u*v*sf.ny +         r*u*w*sf.nz;
+    flux[2] +=         r*u*v*sf.nx + (r*v*r*v + p)*sf.ny +         r*v*w*sf.nz;
+    flux[3] +=         r*u*w*sf.nx +         r*v*w*sf.ny + (r*w*r*w + p)*sf.nz;
+    flux[4] += h*flux_0;
+
+    /*
+    if (dbg) {
+      printf("\ndebug flux:\n");
+      printf("idx = %d\n", sf.idx);
+      printf("n   = (%f, %f, %f)\n", sf.nx, sf.ny, sf.nz);
+      printf("wn  = (%f, %f, %f)\n", sf.wnx, sf.wny, sf.wnz);
+      printf("F0  = %f\n", flux[0]);
+      printf("F1  = %f\n", flux[1]);
+      printf("F2  = %f\n", flux[2]);
+      printf("F3  = %f\n", flux[3]);
+      printf("F4  = %f\n", flux[4]);
+    }
+    */
   }
 
 };

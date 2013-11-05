@@ -24,12 +24,14 @@ class JetFlux
   typedef CompressibleViscFlux<5, PerfectGas>                   viscous_t;
   typedef CompressibleSlipFlux<5, reconstruction_t, PerfectGas> wall_t;
   typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas>   farfield_t;
+  typedef CompressibleFlux<5, PerfectGas>                       split_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
   viscous_t        m_ViscFlux;
   wall_t           m_WallFlux;
   farfield_t       m_FarfieldFlux;
+  split_t          m_SplitFlux;
 
   real   m_Ujet;
   real   m_Ufar;
@@ -59,6 +61,8 @@ public: // methods
   template <typename PATCH> CUDA_DH void xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   template <typename PATCH> CUDA_DH void yWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   template <typename PATCH> CUDA_DH void zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+
+  template <typename PATCH> CUDA_DH void splitFlux(PATCH *P, splitface_t sf, real* flux);
 
 };
 
@@ -198,5 +202,12 @@ inline void JetFlux::zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real
 {
   m_FarfieldFlux.zWallM(P, i, j, k, x, y, z, A, flux);
 }
+
+template <typename PATCH>
+inline void JetFlux::splitFlux(PATCH *P, splitface_t sf, real* flux)
+{
+  m_SplitFlux.splitFlux(P, sf, flux);
+}
+
 
 #endif // JETFLUX_H

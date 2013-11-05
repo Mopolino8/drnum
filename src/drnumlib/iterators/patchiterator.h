@@ -66,6 +66,7 @@ public:
     */
   CodeString getCodeString();
 
+  virtual void buildSplitFaces(size_t i_patch) { BUG; }
 
 };
 
@@ -112,6 +113,7 @@ inline void PatchIterator::addPatch(Patch *patch)
 {
   m_Patches.push_back(patch);
   m_PatchActive.push_back(true);
+  buildSplitFaces(m_Patches.size() - 1);
 }
 
 inline void PatchIterator::activatePatch(size_t i_patch)

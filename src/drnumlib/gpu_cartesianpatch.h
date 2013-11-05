@@ -34,6 +34,8 @@ class GPU_CartesianPatch : public GPU_Patch
 
 public:
 
+  using GPU_Patch::getVar;
+
   CUDA_HO GPU_CartesianPatch(CartesianPatch* patch) : GPU_Patch(patch)
   {
     copyAttributes(patch);

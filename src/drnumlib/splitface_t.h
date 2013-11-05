@@ -23,18 +23,15 @@
 
 struct splitface_t
 {
-  size_t idx_from;
-  size_t idx_to;
-  size_t i_from;
-  size_t j_from;
-  size_t k_from;
-  size_t i_to;
-  size_t j_to;
-  size_t k_to;
+  size_t idx;
   real nx;
   real ny;
   real nz;
-  real weight;
+  real wnx;
+  real wny;
+  real wnz;
+  real dist;
+  bool inside;
 };
 
 #endif // SPLITFACE_T_H

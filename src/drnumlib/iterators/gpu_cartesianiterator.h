@@ -30,9 +30,10 @@ template <unsigned int DIM, typename OP>
 class GPU_CartesianIterator : public GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>
 {
 
-  vector<size_t> m_GroupStart;
+  CUDA_HO bool ibIntersection(vec3_t xo1, vec3_t xo2, splitface_t &sf); ///< @todo move this to an abstract interface!!
+  CUDA_HO void computeFluxes(real factor, size_t i_patch);
+  CUDA_HO void computeSplitFluxes(size_t i_patch);
 
-  bool ibIntersection(vec3_t xo1, vec3_t xo2, vec3_t &n, real &weight); ///< @todo move this to an abstract interface!!
 
 public:
 
@@ -42,7 +43,7 @@ public:
 
   CUDA_HO virtual void compute(real factor, const vector<size_t>& patches);
 
-  CUDA_HO void buildSplitFaces();
+  CUDA_HO void buildSplitFaces(size_t i_patch);
 
 };
 
@@ -62,16 +63,18 @@ __global__ void GPU_CartesianIterator_kernelXFieldFluxes(GPU_CartesianPatch patc
   size_t k = threadIdx.x;
   if (i >= patch.sizeI() || j >= patch.sizeJ()) return;
 
-  real A = patch.dy()*patch.dz();
-  real x = (real)0.5*patch.dx() + i*patch.dx();
-  real y = (real)0.5*patch.dy() + j*patch.dy();
-  real z = (real)0.5*patch.dz() + k*patch.dz();
-  real flux[DIM];
-  fill(flux, DIM, 0);
-  op.xField(&patch, i, j, k, x, y, z, A, flux);
-  for (size_t i_var = 0; i_var < DIM; ++i_var) {
-    patch.f(2, i_var, i-1, j, k) -= flux[i_var];
-    patch.f(2, i_var, i,   j, k) += flux[i_var];
+  if (!patch.isSplitFace(patch.index(i-1, j, k), patch.index(i, j, k))) {
+    real A = patch.dy()*patch.dz();
+    real x = (real)0.5*patch.dx() + i*patch.dx();
+    real y = (real)0.5*patch.dy() + j*patch.dy();
+    real z = (real)0.5*patch.dz() + k*patch.dz();
+    real flux[DIM];
+    fill(flux, DIM, 0);
+    op.xField(&patch, i, j, k, x, y, z, A, flux);
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      patch.f(2, i_var, i-1, j, k) -= flux[i_var];
+      patch.f(2, i_var, i,   j, k) += flux[i_var];
+    }
   }
 }
 
@@ -84,15 +87,17 @@ __global__ void GPU_CartesianIterator_kernelYFieldFluxes(GPU_CartesianPatch patc
   if (j >= patch.sizeJ() || i >= patch.sizeI()) return;
 
   real A = patch.dx()*patch.dz();
-  real x = (real)0.5*patch.dx() + i*patch.dx();
-  real y = (real)0.5*patch.dy() + j*patch.dy();
-  real z = (real)0.5*patch.dz() + k*patch.dz();
-  real flux[DIM];
-  fill(flux, DIM, 0);
-  op.yField(&patch, i, j, k, x, y, z, A, flux);
-  for (size_t i_var = 0; i_var < DIM; ++i_var) {
-    patch.f(2, i_var, i, j-1, k) -= flux[i_var];
-    patch.f(2, i_var, i, j,   k) += flux[i_var];
+  if (!patch.isSplitFace(patch.index(i, j-1, k), patch.index(i, j, k))) {
+    real x = (real)0.5*patch.dx() + i*patch.dx();
+    real y = (real)0.5*patch.dy() + j*patch.dy();
+    real z = (real)0.5*patch.dz() + k*patch.dz();
+    real flux[DIM];
+    fill(flux, DIM, 0);
+    op.yField(&patch, i, j, k, x, y, z, A, flux);
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      patch.f(2, i_var, i, j-1, k) -= flux[i_var];
+      patch.f(2, i_var, i, j,   k) += flux[i_var];
+    }
   }
 }
 
@@ -104,16 +109,18 @@ __global__ void GPU_CartesianIterator_kernelZFieldFluxes(GPU_CartesianPatch patc
   size_t k = 2*threadIdx.x + offset;
   if (k >= patch.sizeK() || j >= patch.sizeJ()) return;
 
-  real A = patch.dx()*patch.dy();
-  real x = (real)0.5*patch.dx() + i*patch.dx();
-  real y = (real)0.5*patch.dy() + j*patch.dy();
-  real z = (real)0.5*patch.dz() + k*patch.dz();
-  real flux[DIM];
-  fill(flux, DIM, 0);
-  op.zField(&patch, i, j, k, x, y, z, A, flux);
-  for (size_t i_var = 0; i_var < DIM; ++i_var) {
-    patch.f(2, i_var, i, j, k-1) -= flux[i_var];
-    patch.f(2, i_var, i, j, k  ) += flux[i_var];
+  if (!patch.isSplitFace(patch.index(i, j, k-1), patch.index(i, j, k))) {
+    real A = patch.dx()*patch.dy();
+    real x = (real)0.5*patch.dx() + i*patch.dx();
+    real y = (real)0.5*patch.dy() + j*patch.dy();
+    real z = (real)0.5*patch.dz() + k*patch.dz();
+    real flux[DIM];
+    fill(flux, DIM, 0);
+    op.zField(&patch, i, j, k, x, y, z, A, flux);
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      patch.f(2, i_var, i, j, k-1) -= flux[i_var];
+      patch.f(2, i_var, i, j, k  ) += flux[i_var];
+    }
   }
 }
 
@@ -189,28 +196,6 @@ __global__ void GPU_CartesianIterator_kernelZBoundaryFluxes(GPU_CartesianPatch p
   }
 }
 
-template <unsigned int DIM, typename OP>
-__global__ void GPU_CartesianIterator_kernelXSplitFluxes(GPU_CartesianPatch patch, OP op, size_t begin, size_t end, bool forward)
-{
-  /*
-  size_t i = 2*blockIdx.x + offset;
-  size_t j = blockDim.y*blockIdx.y + threadIdx.y;
-  size_t k = threadIdx.x;
-  if (i >= patch.sizeI() || j >= patch.sizeJ()) return;
-
-  real A = patch.dy()*patch.dz();
-  real x = (real)0.5*patch.dx() + i*patch.dx();
-  real y = (real)0.5*patch.dy() + j*patch.dy();
-  real z = (real)0.5*patch.dz() + k*patch.dz();
-  real flux[DIM];
-  fill(flux, DIM, 0);
-  op.xField(&patch, i, j, k, x, y, z, A, flux);
-  for (size_t i_var = 0; i_var < DIM; ++i_var) {
-    patch.f(2, i_var, i-1, j, k) -= flux[i_var];
-    patch.f(2, i_var, i,   j, k) += flux[i_var];
-  }
-  */
-}
 
 
 
@@ -233,6 +218,80 @@ __global__ void GPU_CartesianIterator_kernelAdvance(GPU_CartesianPatch patch, re
 
 
 template <unsigned int DIM, typename OP>
+void GPU_CartesianIterator<DIM,OP>::computeFluxes(real factor, size_t i_patch)
+{
+  cudaMemset(this->m_GpuPatches[i_patch].getField(2), 0, this->m_GpuPatches[i_patch].fieldSize()*sizeof(real));
+  CUDA_CHECK_ERROR;
+
+  size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
+  size_t k_lines = max(size_t(1), size_t(max_num_threads/this->m_Patches[i_patch]->sizeK()));
+
+  // X field fluxes
+  {
+    dim3 blocks(this->m_Patches[i_patch]->sizeI()/2+1, this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
+    dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
+    GPU_CartesianIterator_kernelXFieldFluxes<DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch], this->m_Op, 1);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+    GPU_CartesianIterator_kernelXFieldFluxes<DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch], this->m_Op, 2);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+  }
+
+  // Y field fluxes
+  {
+    dim3 blocks(this->m_Patches[i_patch]->sizeI()/k_lines+1, this->m_Patches[i_patch]->sizeJ()/2+1, 1);
+    dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
+    GPU_CartesianIterator_kernelYFieldFluxes<DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch], this->m_Op, 1);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+    GPU_CartesianIterator_kernelYFieldFluxes<DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch], this->m_Op, 2);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+  }
+
+  // Z field fluxes
+  {
+    dim3 blocks(this->m_Patches[i_patch]->sizeI(), this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
+    dim3 threads(this->m_Patches[i_patch]->sizeK()/2+1, k_lines, 1);
+    GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch], this->m_Op, 1);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+    GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch], this->m_Op, 2);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+  }
+
+  // X boundary fluxes
+  {
+    dim3 blocks(this->m_Patches[i_patch]->sizeJ(), 1, 1);
+    dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
+    GPU_CartesianIterator_kernelXBoundaryFluxes <DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch], this->m_Op);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+  }
+
+  // Y boundary fluxes
+  {
+    dim3 blocks(this->m_Patches[i_patch]->sizeI(), 1, 1);
+    dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
+    GPU_CartesianIterator_kernelYBoundaryFluxes <DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch], this->m_Op);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+  }
+
+  // Z boundary fluxes
+  {
+    dim3 blocks(this->m_Patches[i_patch]->sizeI(), 1, 1);
+    dim3 threads(this->m_Patches[i_patch]->sizeJ(), 1, 1);
+    GPU_CartesianIterator_kernelZBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+  }
+
+}
+
+template <unsigned int DIM, typename OP>
 void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &patches)
 {
   cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
@@ -242,86 +301,11 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
 
     if (PatchIterator::patchActive(i_patch)) {
 
-      cudaMemset(this->m_GpuPatches[i_patch].getField(2), 0, this->m_GpuPatches[i_patch].fieldSize()*sizeof(real));
-      CUDA_CHECK_ERROR;
+      computeFluxes(factor, i_patch);
 
-      size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
-      size_t k_lines = max(size_t(1), size_t(max_num_threads/this->m_Patches[i_patch]->sizeK()));
-
-      // X field fluxes
-      {
-        dim3 blocks(this->m_Patches[i_patch]->sizeI()/2+1, this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
-        dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
-        GPU_CartesianIterator_kernelXFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-        GPU_CartesianIterator_kernelXFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-      }
-
-      // Y field fluxes
-      {
-        dim3 blocks(this->m_Patches[i_patch]->sizeI()/k_lines+1, this->m_Patches[i_patch]->sizeJ()/2+1, 1);
-        dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
-        GPU_CartesianIterator_kernelYFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-        GPU_CartesianIterator_kernelYFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-      }
-
-      // Z field fluxes
-      {
-        dim3 blocks(this->m_Patches[i_patch]->sizeI(), this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
-        dim3 threads(this->m_Patches[i_patch]->sizeK()/2+1, k_lines, 1);
-        GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 1);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-        GPU_CartesianIterator_kernelZFieldFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, 2);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-      }
-
-      // X split fluxes
-      {
-        size_t num_faces = m_GroupStart[1] - m_GroupStart[0];
-        dim3 blocks(int(num_faces/m_MaxNumThreads) + 1);
-        dim3 threads(min(m_MaxNumThreads, num_faces));
-        GPU_CartesianIterator_kernelXSplitFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, m_GroupStart[0], m_GroupStart[1], true);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-        GPU_CartesianIterator_kernelXSplitFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op, m_GroupStart[0], m_GroupStart[1], false);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-      }
-
-      // X boundary fluxes
-      {
-        dim3 blocks(this->m_Patches[i_patch]->sizeJ(), 1, 1);
-        dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
-        GPU_CartesianIterator_kernelXBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-      }
-
-      // Y boundary fluxes
-      {
-        dim3 blocks(this->m_Patches[i_patch]->sizeI(), 1, 1);
-        dim3 threads(this->m_Patches[i_patch]->sizeK(), 1, 1);
-        GPU_CartesianIterator_kernelYBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
-      }
-
-      // Z boundary fluxes
-      {
-        dim3 blocks(this->m_Patches[i_patch]->sizeI(), 1, 1);
-        dim3 threads(this->m_Patches[i_patch]->sizeJ(), 1, 1);
-        GPU_CartesianIterator_kernelZBoundaryFluxes <DIM> <<<blocks, threads>>>(this->m_GpuPatches[i_patch], this->m_Op);
-        CUDA_CHECK_ERROR;
-        cudaThreadSynchronize();
+      // immersed boundaries
+      if (this->m_Patches[i_patch]->getNumSplitFaces() > 0) {
+        computeSplitFluxes(i_patch);
       }
 
       // advance iteration
@@ -339,115 +323,120 @@ void GPU_CartesianIterator<DIM,OP>::compute(real factor, const vector<size_t> &p
 }
 
 template <unsigned int DIM, typename OP>
-bool GPU_CartesianIterator<DIM,OP>::ibIntersection(vec3_t xo1, vec3_t xo2, vec3_t &n, real &weight)
+bool GPU_CartesianIterator<DIM,OP>::ibIntersection(vec3_t xo1, vec3_t xo2, splitface_t &sf)
 {
   real r1 = xo1.abs();
   real r2 = xo2.abs();
-  if ((r1 <= 1 && r2 > 1) || (r1 > 1 && r2 <= 1)) {
-    real w1 = fabs((1 - r1)/(r2 - r1));
-    real w2 = 1 - w1;
+  real R  = 0.5;
+  if ((r1 <= R && r2 > R) || (r1 > R && r2 <= R)) {
+    sf.dist = fabs(R - r1);
+    real w = sf.dist/fabs(r2 - r1);
     vec3_t v = (xo2 - xo1);
     v.normalise();
     xo1.normalise();
     xo2.normalise();
-    n = w1*xo1 + w2*xo2;
+    vec3_t n = w*xo1 + (1-w)*xo2;
     n.normalise();
-    weight = fabs(n*v);
+    sf.wnx = n[0];
+    sf.wny = n[1];
+    sf.wnz = n[2];
+    if (r1 > R) {
+      sf.inside = false;
+    } else {
+      sf.inside = true;
+    }
     return true;
   }
   return false;
 }
 
 template <unsigned int DIM, typename OP>
-void GPU_CartesianIterator<DIM,OP>::buildSplitFaces()
+void GPU_CartesianIterator<DIM,OP>::buildSplitFaces(size_t i_patch)
 {
-
-  Compute weights!!
-
-  m_GroupStart.resize(4);
   list<splitface_t> split_faces;
-  splitface_t sf;
-  for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
-    CartesianPatch *P = this->m_Patches[i_patch];
-    for (size_t i = 0; i < P->sizeI(); ++i) {
-      for (size_t j = 0; j < P->sizeJ(); ++j) {
-        for (size_t k = 0; k < P->sizeK(); ++k) {
+  CartesianPatch *P = this->m_Patches[i_patch];
+  vector<vec3_t> dirs;
+  dirs.push_back(vec3_t( 1, 0, 0));
+  dirs.push_back(vec3_t(-1, 0, 0));
+  dirs.push_back(vec3_t( 0, 1, 0));
+  dirs.push_back(vec3_t( 0,-1, 0));
+  dirs.push_back(vec3_t( 0, 0, 1));
+  dirs.push_back(vec3_t( 0, 0,-1));
 
-          // x-direction
-          m_GroupStart[0] = 0;
-          if (i > 0) {
-            sf.idx_from = P->index(i-1, j, k);
-            sf.idx_to   = P->index(i, j, k);
-            vec3_t xo_from  = P->xyzoCell(sf.idx_from);
-            vec3_t xo_to    = P->xyzoCell(sf.idx_to);
-            vec3_t n;
-            if (ibIntersection(xo_from, xo_to, n)) {
-              sf.i_from = i-1;
-              sf.j_from = j;
-              sf.k_from = k;
-              sf.i_to = i;
-              sf.j_to = j;
-              sf.k_to = k;
-              sf.nx = n[0];
-              sf.ny = n[1];
-              sf.nz = n[2];
+  for (size_t i = 0; i < P->sizeI(); ++i) {
+    for (size_t j = 0; j < P->sizeJ(); ++j) {
+      for (size_t k = 0; k < P->sizeK(); ++k) {
+        /*
+        if (i == 12 && j == 25 && k == 22 && i_patch == 171) {
+          cout << "break-point" << endl;
+        }
+        */
+        size_t from = P->index(i, j, k);
+        vec3_t xo_from = P->xyzoCell(from);
+
+        for (int i_dir = 0; i_dir < dirs.size(); ++i_dir) {
+          vec3_t d = dirs[i_dir];
+          size_t i_to = i + int(d[0]);
+          size_t j_to = j + int(d[1]);
+          size_t k_to = k + int(d[2]);
+          if (P->checkRange(i_to, j_to, k_to)) {
+            size_t to = P->index(i_to, j_to, k_to);
+            vec3_t xo_to = P->xyzoCell(to);
+            splitface_t sf;
+            sf.idx = from;
+            vec3_t n = vec3_t(d[0]*P->dy()*P->dz(), d[1]*P->dx()*P->dz(), d[2]*P->dx()*P->dy());
+            sf.nx = n[0];
+            sf.ny = n[1];
+            sf.nz = n[2];
+            if (ibIntersection(xo_from, xo_to, sf)) {
               split_faces.push_back(sf);
-              ++m_GroupStart[0];
             }
           }
-
-          // y-direction
-          m_GroupStart[1] = m_GroupStart[0];
-          if (j > 0) {
-            sf.idx_from = P->index(i, j-1, k);
-            sf.idx_to   = P->index(i, j, k);
-            vec3_t xo_from  = P->xyzoCell(sf.idx_from);
-            vec3_t xo_to    = P->xyzoCell(sf.idx_to);
-            vec3_t n;
-            if (ibIntersection(xo_from, xo_to, n)) {
-              sf.i_from = i;
-              sf.j_from = j-1;
-              sf.k_from = k;
-              sf.i_to = i;
-              sf.j_to = j;
-              sf.k_to = k;
-              sf.nx = n[0];
-              sf.ny = n[1];
-              sf.nz = n[2];
-              split_faces.push_back(sf);
-              ++m_GroupStart[1];
-            }
-          }
-
-          // z-direction
-          m_GroupStart[2] = m_GroupStart[1];
-          if (k > 0) {
-            sf.idx_from = P->index(i, j, k-1);
-            sf.idx_to   = P->index(i, j, k);
-            vec3_t xo_from  = P->xyzoCell(sf.idx_from);
-            vec3_t xo_to    = P->xyzoCell(sf.idx_to);
-            vec3_t n;
-            if (ibIntersection(xo_from, xo_to, n)) {
-              sf.i_from = i;
-              sf.j_from = j;
-              sf.k_from = k-1;
-              sf.i_to = i;
-              sf.j_to = j;
-              sf.k_to = k;
-              sf.nx = n[0];
-              sf.ny = n[1];
-              sf.nz = n[2];
-              split_faces.push_back(sf);
-              ++m_GroupStart[2];
-            }
-          }
-
-          m_GroupStart[3] = m_GroupStart[2];
-
         }
       }
     }
   }
+  P->setSplitFaces(split_faces);
 }
+
+
+
+template <unsigned int DIM, typename OP>
+__global__ void GPU_CartesianIterator_kernelSplitFluxes(GPU_CartesianPatch patch, OP op, size_t begin, size_t end)
+{  
+  size_t i = blockDim.x*blockIdx.x + threadIdx.x + begin;
+  if (i < begin || i >= end) {
+    return;
+  }
+  splitface_t sf = patch.getSplitFaces()[i];
+  real flux[DIM];
+  fill(flux, DIM, 0);
+
+  op.splitFlux(&patch, sf, flux);
+  for (size_t i_var = 0; i_var < DIM; ++i_var) {
+    patch.getVariable(2, i_var)[sf.idx] -= flux[i_var];
+  }
+}
+
+template <unsigned int DIM, typename OP>
+void GPU_CartesianIterator<DIM,OP>::computeSplitFluxes(size_t i_patch)
+{
+  size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
+  vector<size_t> group_limits = this->m_Patches[i_patch]->getSplitGroupLimits();
+
+  for (int i_group = 0; i_group < group_limits.size() - 1; ++i_group) {
+    size_t num_faces = group_limits[i_group + 1] - group_limits[i_group];
+    int blocks = num_faces/max_num_threads + 1;
+    int threads = min(max_num_threads, num_faces);
+    GPU_CartesianIterator_kernelSplitFluxes <DIM> <<<blocks, threads>>> (this->m_GpuPatches[i_patch],
+                                                                         this->m_Op,
+                                                                         group_limits[i_group],
+                                                                         group_limits[i_group + 1]);
+    CUDA_CHECK_ERROR;
+    cudaThreadSynchronize();
+  }
+}
+
+
 
 #endif // GPU_CARTESIANITERATOR_H

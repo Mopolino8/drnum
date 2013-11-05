@@ -67,17 +67,20 @@ protected:
   typedef Upwind2<5, SecondOrder> reconstruction_t;
   //typedef Upwind2<5, VanAlbada> reconstruction_t;
 
-  typedef AusmDV<5, reconstruction_t, PerfectGas> euler_t;
+  //typedef AusmDV<5, reconstruction_t, PerfectGas> euler_t;
+  typedef VanLeer<5, reconstruction_t, PerfectGas> euler_t;
 
   typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
   typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;
   typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
+  typedef CompressibleFlux<5, PerfectGas>                     split_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
   viscous_t        m_ViscFlux;
   farfield_t       m_FarfieldFlux;
   wall_t           m_WallFlux;
+  split_t          m_SplitFlux;
 
 
 public: // methods
@@ -95,6 +98,8 @@ public: // methods
   template <typename PATCH> CUDA_DH void xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   template <typename PATCH> CUDA_DH void yWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   template <typename PATCH> CUDA_DH void zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
+
+  template <typename PATCH> CUDA_DH void splitFlux(PATCH *P, splitface_t sf, real* flux);
 
 };
 
@@ -118,7 +123,7 @@ inline void EaFlux::xField
 )
 {
   m_EulerFlux.xField(patch, i, j, k, x, y, z, A, flux);
-  m_ViscFlux.xField(patch, i, j, k, x, y, z, A, flux);
+  //m_ViscFlux.xField(patch, i, j, k, x, y, z, A, flux);
 }
 
 template <typename PATCH>
@@ -131,7 +136,7 @@ inline void EaFlux::yField
 )
 {
   m_EulerFlux.yField(patch, i, j, k, x, y, z, A, flux);
-  m_ViscFlux.yField(patch, i, j, k, x, y, z, A, flux);
+  //m_ViscFlux.yField(patch, i, j, k, x, y, z, A, flux);
 }
 
 template <typename PATCH>
@@ -144,7 +149,7 @@ inline void EaFlux::zField
 )
 {
   m_EulerFlux.zField(patch, i, j, k, x, y, z, A, flux);
-  m_ViscFlux.zField(patch, i, j, k, x, y, z, A, flux);
+  //m_ViscFlux.zField(patch, i, j, k, x, y, z, A, flux);
 }
 
 template <typename PATCH>
@@ -185,28 +190,10 @@ inline void EaFlux::zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real 
   m_FarfieldFlux.zWallM(P, i, j, k, x, y, z, A, flux);
 }
 
-
-
-vector<CubeInCartisianPatch> setupCubes(PatchGrid patch_grid)
+template <typename PATCH>
+inline void EaFlux::splitFlux(PATCH *P, splitface_t sf, real* flux)
 {
-  vector<CubeInCartisianPatch> cubes;
-
-  // plate
-  {
-    real L = 0.000305298288755695;
-    real B = 0.1*L;
-    real e = 0.005*L;
-    vec3_t x1(-0.5*B, -0.5*L + e, -10*L);
-    vec3_t x2( 0.5*B,  0.5*L + e,  10*L);
-    {
-      size_t i_patch = 12;
-      CartesianPatch* cart_patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(i_patch));
-      CubeInCartisianPatch cube(cart_patch);
-      cube.setRange(x1, x2);
-      cubes.push_back(cube);
-    }
-  }
-  return cubes;
+  m_SplitFlux.splitFlux(P, sf, flux);
 }
 
 void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *dn2of_list, Barrier *barrier, SharedMemory *shmem, bool &write_flag, bool &stop_flag, real &dt)
@@ -282,6 +269,14 @@ void run()
   bool code_coupling  = config.getValue<bool>("code-coupling");
   real scale          = config.getValue<real>("scale");
 
+  int thread_limit   = 0;
+  if (config.exists("thread-limit")) {
+    thread_limit = config.getValue<int>("thread-limit");
+  }
+#ifdef GPU
+  int  cuda_device    = config.getValue<int>("cuda-device");
+#endif
+
   bool write_flag     = false;
   bool stop_flag      = false;
 
@@ -320,7 +315,7 @@ void run()
   patch_grid.setFieldToConst(0, init_var);
 
   if (write) {
-    patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
+    patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), 0);
   }
 
   if (mesh_preview) {
@@ -335,7 +330,7 @@ void run()
   runge_kutta.addAlpha(1.000);
 
 #ifdef GPU
-  GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_std);
+  GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_std, cuda_device, thread_limit);
 #else
   CartesianIterator<5, EaFlux>    iterator_std(flux_std);
 #endif
@@ -344,10 +339,6 @@ void run()
   IteratorFeeder iterator_feeder;
   iterator_feeder.addIterator(&iterator_std);
   iterator_feeder.feed(patch_grid);
-
-#ifdef GPU
-  iterator_std.buildSplitFaces();
-#endif
 
   //vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
   //for (size_t i = 0; i < cubes.size(); ++i) {
@@ -423,8 +414,10 @@ void run()
     QTime step_start = QTime::currentTime();
     runge_kutta(dt);
     int msecs_drnum = step_start.msecsTo(QTime::currentTime());
-    real dt_new;
-    sync(coupling_patch, of2dn_list, dn2of_list, barrier, shmem, write_flag, stop_flag, dt_new);
+    real dt_new = dt;
+    if (coupling_patch) {
+      sync(coupling_patch, of2dn_list, dn2of_list, barrier, shmem, write_flag, stop_flag, dt_new);
+    }
     int msecs_total = step_start.msecsTo(QTime::currentTime());
     real drnum_fraction = real(msecs_drnum)/real(msecs_total);
     t += dt;
@@ -483,8 +476,31 @@ void run()
       cout << "  max: " << max_norm_allpatches << "  L2: " << l2_norm_allpatches;
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       printTiming();
+
+      ConfigMap config;
+      config.addDirectory("control");
+      cfl_target     = config.getValue<real>("CFL-number");
+      write_interval = config.getValue<real>("write-interval")*time;
+      total_time     = config.getValue<real>("total-time")*time;
+      dt *= cfl_target/CFL_max;
+
       ++write_counter;
       if (write) {
+
+        // DEBUG stuff here ...
+
+        /*
+        for (size_t idx = 0; idx < patch_grid.getPatch(171)->variableSize(); ++idx) {
+          if (patch_grid.getPatch(171)->isInsideCell(idx)) {
+            patch_grid.getPatch(171)->getVariable(0, 0)[idx] = -1;
+          } else {
+            patch_grid.getPatch(171)->getVariable(0, 0)[idx] = 1;
+          }
+        }
+        */
+
+        // end of DEBUG stuff
+
         patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
         patch_grid.writeData(0, "data/step", t, write_counter);
       }
@@ -505,7 +521,7 @@ void run()
 #endif
 
   if (write) {
-    patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
+    patch_grid.writeToVtk(0, "VTK-drnum/final", CompressibleVariables<PerfectGas>(), -1);
   }
 }
 

@@ -101,6 +101,7 @@ private: // attributes
   donor_t     *m_GpuDonors;
   size_t      *m_GpuDonorIndexConcat;
   real        *m_GpuDonorWeightConcat;
+  bool        *m_GpuIsSplitCell;
   splitface_t *m_GpuSplitFaces;
   bool         m_GpuDataSet;
 
@@ -150,6 +151,8 @@ protected: // attributes
   // postponed  vector<InterCoeff*> m_InterCoeffGrad2N;    ///< Interpolation coefficient lists for 2nd directed gradients
 
   vector<size_t> m_VectorVarIndices; ///< array containing the starting indices of all vectorial variables (e.g. velocity, momentum, ...)
+  vector<size_t> m_SplitGroupLimits; ///< limits for the groups of split faces
+
 
 
 protected: // methods
@@ -706,16 +709,16 @@ public: // methods
   void copyFieldToDevice(size_t i_field);
 
   /**
-   * @brief Get the total number of split faces for the immersed boundaries.
-   * @return number of split faces
+   * @brief set the split interfaces of this patch
+   * @param split_faces any STL container containing the split interfaces of the patch.
    */
-  size_t getNumSplitFaces() { return m_NumSplitFaces; }
+  template <typename C> void setSplitFaces(const C &split_faces);
 
   /**
-   * @brief Get the pointer to the split faces field
-   * @return the pointer to the split faces field
+   * @brief Get the pointer to the split cells field
+   * @return the pointer to the split cells field
    */
-  splitface_t* getSplitFaces() { return m_SplitFaces; }
+  size_t* getSplitCells() { return m_SplitCells; }
 
   /**
    * @brief Copy one field from GPU (device) memory to host memory
@@ -770,6 +773,11 @@ public: // methods
   }
 
   virtual int findCell(vec3_t xo);
+
+  virtual list<size_t> getNeighbours(size_t idx) = 0;
+
+  size_t getSplitGroupLimit(size_t i) { return m_SplitGroupLimits[i]; }
+  vector<size_t> getSplitGroupLimits() { return m_SplitGroupLimits; }
 
 
   /// @todo destructor
@@ -891,6 +899,74 @@ inline void Patch::copyFieldToHost(size_t i_field)
   real *gpu_pointer = m_GpuData + i_field*fieldSize();
   cudaMemcpy(cpu_pointer, gpu_pointer, fieldSize()*sizeof(real), cudaMemcpyDeviceToHost);
 #endif
+}
+
+template <typename C>
+void Patch::setSplitFaces(const C &split_faces)
+{
+  m_NumSplitFaces = split_faces.size();
+  m_SplitFaces = new splitface_t[m_NumSplitFaces];
+  list<splitface_t> remaining_faces;
+  list<splitface_t> group_faces;
+  vector<bool> is_split_cell(variableSize(), false);
+
+  list<size_t> remaining_cells;
+
+  // mark split cells
+  {
+    typename C::const_iterator i;
+    for (i = split_faces.begin(); i != split_faces.end(); ++i) {
+      is_split_cell[i->idx] = true;
+      if (i->inside) {
+        m_IsInsideCell[i->idx] = true;
+        remaining_cells.push_back(i->idx);
+      }
+      remaining_faces.push_back(*i);
+    }
+  }
+
+  // "fill" inside with marker field
+  while (remaining_cells.size() > 0) {
+    list<size_t> cells = remaining_cells;
+    remaining_cells.clear();
+    for (list<size_t>::iterator i = cells.begin(); i != cells.end(); ++i) {
+      list<size_t> neighbours = getNeighbours(*i);
+      for (list<size_t>::iterator j = neighbours.begin(); j != neighbours.end(); ++j) {
+        if (!is_split_cell[*j] && !m_IsInsideCell[*j]) {
+          m_IsInsideCell[*j] = true;
+          remaining_cells.push_back(*j);
+        }
+      }
+    }
+  }
+
+  // construct independent groups for parallel execution
+  size_t counter = 0;
+  m_SplitGroupLimits.clear();
+  m_SplitGroupLimits.push_back(counter);
+
+  while (remaining_faces.size() > 0) {
+    list<splitface_t> faces = remaining_faces;
+    remaining_faces.clear();
+    group_faces.clear();
+    vector<bool> cell_used(variableSize(), false);
+    for (list<splitface_t>::iterator i = faces.begin(); i != faces.end(); ++i) {
+      if (!cell_used[i->idx]) {
+        group_faces.push_back(*i);
+        cell_used[i->idx] = true;
+      } else {
+        remaining_faces.push_back(*i);
+      }
+    }
+    if (group_faces.size() == 0) {
+      BUG;
+    }
+    for (list<splitface_t>::iterator i = group_faces.begin(); i != group_faces.end(); ++i) {
+      m_SplitFaces[counter] = *i;
+      ++counter;
+    }
+    m_SplitGroupLimits.push_back(counter);
+  }
 }
 
 

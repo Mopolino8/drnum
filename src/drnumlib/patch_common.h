@@ -52,6 +52,8 @@ real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_NumDonorWIC
 
 // data for split faces (immersed boundary method)
 size_t       m_NumSplitFaces;
+size_t      *m_SplitCells;
+bool        *m_IsInsideCell;
 splitface_t *m_SplitFaces;
 
 protected: // attributes
@@ -441,6 +443,43 @@ CUDA_DH void setVarDim(unsigned int dim, size_t i_field, size_t i, real *var)
   */
 CUDA_DH size_t getIndex() {return m_MyIndex;}
 
+
+/**
+ * @brief Get the total number of split faces for the immersed boundaries.
+ * @return number of split faces
+ */
+CUDA_DH size_t getNumSplitFaces()
+{
+  return m_NumSplitFaces;
+}
+
+/**
+ * @brief Get the pointer to the split faces field
+ * @return the pointer to the split faces field
+ */
+CUDA_DH splitface_t* getSplitFaces()
+{
+  return m_SplitFaces;
+}
+
+/**
+ * @brief Get the pointer to the marker field for split faces
+ * @return the pointer to the marker field for split faces
+ */
+CUDA_DH bool* getIsSplitCell()
+{
+  return m_IsInsideCell;
+}
+
+CUDA_DH bool isInsideCell(size_t idx)
+{
+  return m_IsInsideCell[idx];
+}
+
+CUDA_DH bool isSplitFace(size_t idx1, size_t idx2)
+{
+  return logicalXor(m_IsInsideCell[idx1], m_IsInsideCell[idx2]);
+}
 
 /**
  * Copy simple data attributes from another object.
