@@ -43,7 +43,7 @@ public:
 
   CUDA_HO virtual void compute(real factor, const vector<size_t>& patches);
 
-  CUDA_HO void buildSplitFaces(size_t i_patch);
+  CUDA_HO virtual void buildSplitFaces(size_t i_patch);
 
 };
 
@@ -384,6 +384,7 @@ void GPU_CartesianIterator<DIM,OP>::buildSplitFaces(size_t i_patch)
             vec3_t xo_to = P->xyzoCell(to);
             splitface_t sf;
             sf.idx = from;
+            sf.idx_neigh = to;
             vec3_t n = vec3_t(d[0]*P->dy()*P->dz(), d[1]*P->dx()*P->dz(), d[2]*P->dx()*P->dy());
             sf.nx = n[0];
             sf.ny = n[1];
