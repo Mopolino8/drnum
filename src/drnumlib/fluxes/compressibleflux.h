@@ -74,6 +74,54 @@ protected: // methods
     return M2(M, s)*((2*s - M) - 3*s*M*M2(M, -s));
   }
 
+  template <typename PATCH> static CUDA_DH void averageVar(PATCH *patch, size_t i_field, size_t idx, real *var)
+  {
+    dim_t<DIM> dim;
+    //patch->getVar(dim, i_field, idx, var);
+
+    size_t i, j, k;
+    patch->ijk(idx, i, j, k);
+
+    size_t idx1 = patch->index(i-1, j, k);
+    size_t idx2 = patch->index(i+1, j, k);
+    size_t idx3 = patch->index(i, j-1, k);
+    size_t idx4 = patch->index(i, j+1, k);
+    size_t idx5 = patch->index(i, j, k-1);
+    size_t idx6 = patch->index(i, j, k+1);
+    real   wgt1 = real(patch->isSplitFace(idx, idx1));
+    real   wgt2 = real(patch->isSplitFace(idx, idx2));
+    real   wgt3 = real(patch->isSplitFace(idx, idx3));
+    real   wgt4 = real(patch->isSplitFace(idx, idx4));
+    real   wgt5 = real(patch->isSplitFace(idx, idx5));
+    real   wgt6 = real(patch->isSplitFace(idx, idx6));
+
+    real iwgt = 1.0/(wgt1 + wgt2 + wgt3 + wgt4 + wgt5 + wgt6);
+
+    real var1[DIM];
+    real var2[DIM];
+    real var3[DIM];
+    real var4[DIM];
+    real var5[DIM];
+    real var6[DIM];
+
+    patch->getVar(dim, i_field, idx1, var1);
+    patch->getVar(dim, i_field, idx2, var2);
+    patch->getVar(dim, i_field, idx3, var3);
+    patch->getVar(dim, i_field, idx4, var4);
+    patch->getVar(dim, i_field, idx5, var5);
+    patch->getVar(dim, i_field, idx6, var6);
+
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var]  = wgt1*var1[i_var];
+      var[i_var] += wgt2*var2[i_var];
+      var[i_var] += wgt3*var3[i_var];
+      var[i_var] += wgt4*var4[i_var];
+      var[i_var] += wgt5*var5[i_var];
+      var[i_var] += wgt6*var6[i_var];
+      var[i_var] *= iwgt;
+    }
+  }
+
 
 public: // methods
 
@@ -81,21 +129,16 @@ public: // methods
   {
     real var[DIM];
     dim_t<DIM> dim;
-    patch->getVar(dim, 0, sf.idx, var);
+    //patch->getVar(dim, 0, sf.idx, var);
+    averageVar(patch, 0, sf.idx_neigh, var);
+    real scal = var[1]*sf.wnx + var[2]*sf.wny + var[3]*sf.wnz;
+    var[1] -= scal*sf.wnx;
+    var[2] -= scal*sf.wny;
+    var[3] -= scal*sf.wnz;
+
     real p, u, v, w, T;
     TGas::conservativeToPrimitive(var, p, T, u, v, w);
-    real scal = u*sf.wnx + v*sf.wny + w*sf.wnz;
-    u -= scal*sf.wnx;
-    v -= scal*sf.wny;
-    w -= scal*sf.wnz;
 
-    /*
-    u = 0;
-    v = 0;
-    w = 0;
-    */
-
-    //TGas::primitiveToConservative(p, T, u, v, w, var);
     real r  = var[0];
     real rE = var[4];
 
@@ -108,20 +151,6 @@ public: // methods
     flux[2] +=         r*u*v*sf.nx + (r*v*r*v + p)*sf.ny +         r*v*w*sf.nz;
     flux[3] +=         r*u*w*sf.nx +         r*v*w*sf.ny + (r*w*r*w + p)*sf.nz;
     flux[4] += h*flux_0;
-
-    /*
-    if (dbg) {
-      printf("\ndebug flux:\n");
-      printf("idx = %d\n", sf.idx);
-      printf("n   = (%f, %f, %f)\n", sf.nx, sf.ny, sf.nz);
-      printf("wn  = (%f, %f, %f)\n", sf.wnx, sf.wny, sf.wnz);
-      printf("F0  = %f\n", flux[0]);
-      printf("F1  = %f\n", flux[1]);
-      printf("F2  = %f\n", flux[2]);
-      printf("F3  = %f\n", flux[3]);
-      printf("F4  = %f\n", flux[4]);
-    }
-    */
   }
 
 };
