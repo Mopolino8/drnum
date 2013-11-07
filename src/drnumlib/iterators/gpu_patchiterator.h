@@ -44,8 +44,8 @@ public:
 
   GPU_PatchIterator(OP op, int cuda_device = 0, size_t thread_limit = 0);
 
-  CUDA_HO void updateHost();
-  CUDA_HO void updateDevice();
+  CUDA_HO virtual void updateHost();
+  CUDA_HO virtual void updateDevice();
 
   virtual void addPatch(Patch *patch);
   virtual void copyField(size_t i_src, size_t i_dst);
