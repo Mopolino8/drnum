@@ -40,6 +40,9 @@ public:
 
   PatchIterator();
 
+  virtual void updateHost() { BUG; }
+  virtual void updateDevice() { BUG; }
+
   size_t numPatches() { return m_Patches.size(); }
   Patch* getPatch(size_t i) { return m_Patches[i]; }
   void   computeAll(real factor);
