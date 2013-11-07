@@ -26,6 +26,7 @@
 #include "reconstruction/vanalbada.h"
 #include "reconstruction/minmod.h"
 #include "reconstruction/secondorder.h"
+#include "fluxes/kt.h"
 #include "fluxes/knp.h"
 #include "fluxes/vanleer.h"
 #include "fluxes/ausmplus.h"
@@ -58,34 +59,36 @@
 
 #include "configmap.h"
 
+template <typename TReconstruction>
 class EaFlux
 {
 
 protected:
 
-  //typedef Upwind1<5> reconstruction_t;
-  typedef Upwind2<5, SecondOrder> reconstruction_t;
-  //typedef Upwind2<5, VanAlbada> reconstruction_t;
-
   //typedef AusmDV<5, reconstruction_t, PerfectGas> euler_t;
-  typedef VanLeer<5, reconstruction_t, PerfectGas> euler_t;
+  //typedef VanLeer<5, TReconstruction, PerfectGas> euler_t;
+  typedef Roe<5, TReconstruction, PerfectGas> euler_t;
+  //typedef AusmPlus<5, TReconstruction, PerfectGas> euler_t;
+  //typedef KT<5, 10000, TReconstruction, PerfectGas> euler_t;
+  //typedef KNP<5, TReconstruction, PerfectGas> euler_t;
 
   typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
   typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;
   typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
   typedef CompressibleFlux<5, PerfectGas>                     split_t;
 
-  reconstruction_t m_Reconstruction;
+  TReconstruction m_Reconstruction;
   euler_t          m_EulerFlux;
   viscous_t        m_ViscFlux;
   farfield_t       m_FarfieldFlux;
   wall_t           m_WallFlux;
   split_t          m_SplitFlux;
+  bool             m_Inviscid;
 
 
 public: // methods
 
-  EaFlux(real u, real v, real p, real T);
+  EaFlux(real u, real v, real p, real T, bool inviscid);
   EaFlux();
 
   template <typename PATCH> CUDA_DH void xField(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
@@ -104,17 +107,21 @@ public: // methods
 };
 
 
-EaFlux::EaFlux(real u, real v, real p, real T)
+template <typename TReconstruction>
+EaFlux<TReconstruction>::EaFlux(real u, real v, real p, real T, bool inviscid)
 {
   m_FarfieldFlux.setFarfield(p, T, u, v, 0);
+  m_Inviscid = inviscid;
 }
 
-EaFlux::EaFlux()
+template <typename TReconstruction>
+EaFlux<TReconstruction>::EaFlux()
 {
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::xField
+inline void EaFlux<TReconstruction>::xField
 (
   PATCH *patch,
   size_t i, size_t j, size_t k,
@@ -123,11 +130,12 @@ inline void EaFlux::xField
 )
 {
   m_EulerFlux.xField(patch, i, j, k, x, y, z, A, flux);
-  //m_ViscFlux.xField(patch, i, j, k, x, y, z, A, flux);
+  if (!m_Inviscid) m_ViscFlux.xField(patch, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::yField
+inline void EaFlux<TReconstruction>::yField
 (
   PATCH *patch,
   size_t i, size_t j, size_t k,
@@ -136,11 +144,12 @@ inline void EaFlux::yField
 )
 {
   m_EulerFlux.yField(patch, i, j, k, x, y, z, A, flux);
-  //m_ViscFlux.yField(patch, i, j, k, x, y, z, A, flux);
+  if (!m_Inviscid) m_ViscFlux.yField(patch, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::zField
+inline void EaFlux<TReconstruction>::zField
 (
   PATCH *patch,
   size_t i, size_t j, size_t k,
@@ -149,49 +158,56 @@ inline void EaFlux::zField
 )
 {
   m_EulerFlux.zField(patch, i, j, k, x, y, z, A, flux);
-  //m_ViscFlux.zField(patch, i, j, k, x, y, z, A, flux);
+  if (!m_Inviscid) m_ViscFlux.zField(patch, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::xWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
+inline void EaFlux<TReconstruction>::xWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
   m_FarfieldFlux.xWallP(P, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::yWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
+inline void EaFlux<TReconstruction>::yWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
   //m_FarfieldFlux.yWallP(P, i, j, k, x, y, z, A, flux);
   m_WallFlux.yWallP(P, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::zWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
+inline void EaFlux<TReconstruction>::zWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
   m_FarfieldFlux.zWallP(P, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
+inline void EaFlux<TReconstruction>::xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
   m_FarfieldFlux.xWallM(P, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::yWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
+inline void EaFlux<TReconstruction>::yWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
   //m_FarfieldFlux.yWallM(P, i, j, k, x, y, z, A, flux);
   m_WallFlux.yWallM(P, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
+inline void EaFlux<TReconstruction>::zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
   m_FarfieldFlux.zWallM(P, i, j, k, x, y, z, A, flux);
 }
 
+template <typename TReconstruction>
 template <typename PATCH>
-inline void EaFlux::splitFlux(PATCH *P, splitface_t sf, real* flux)
+inline void EaFlux<TReconstruction>::splitFlux(PATCH *P, splitface_t sf, real* flux)
 {
   m_SplitFlux.splitFlux(P, sf, flux);
 }
@@ -322,32 +338,59 @@ void run()
     exit(EXIT_SUCCESS);
   }
 
-  EaFlux    flux_std(u, v, p, T);
 
   RungeKutta runge_kutta;
-  runge_kutta.addAlpha(0.25);
-  runge_kutta.addAlpha(0.5);
-  runge_kutta.addAlpha(1.000);
+  {
+    int num_rk_steps = config.getValue<int>("num-rk-steps");
+    list<real> alpha;
+    real coeff = 1.0;
+    for (int i = 0; i < num_rk_steps; ++i) {
+      alpha.push_front(coeff);
+      coeff *= 0.5;
+    }
+    for (list<real>::iterator i = alpha.begin(); i != alpha.end(); ++i) {
+      runge_kutta.addAlpha(*i);
+    }
+  }
 
+  QString reconstruction = config.getValue<QString>("reconstruction");
+
+  PatchIterator *iterator;
+
+  bool inviscid = config.getValue<bool>("inviscid");
+
+  if (reconstruction == "second-order") {
+    EaFlux<Upwind2<5, SecondOrder> > flux(u, v, p, T, inviscid);
 #ifdef GPU
-  GPU_CartesianIterator<5, EaFlux>    iterator_std(flux_std, cuda_device, thread_limit);
+    iterator = new GPU_CartesianIterator<5, EaFlux<Upwind2<5, SecondOrder> > >(flux, cuda_device, thread_limit);
 #else
-  CartesianIterator<5, EaFlux>    iterator_std(flux_std);
+    iterator = new CartesianIterator<5, EaFlux<Upwind2<SecondOrder> > >(flux);
 #endif
-  iterator_std.setCodeString(CodeString("fx fy fz far far far far far  far 0"));
+
+  } else if (reconstruction == "minmod") {
+    EaFlux<Upwind2<5, MinMod> > flux(u, v, p, T, inviscid);
+#ifdef GPU
+    iterator = new GPU_CartesianIterator<5, EaFlux<Upwind2<5, MinMod> > >(flux, cuda_device, thread_limit);
+#else
+    iterator = new CartesianIterator<5, EaFlux<Upwind2<MinMod> > >(flux);
+#endif
+
+  } else {
+    EaFlux<Upwind1<5> > flux(u, v, p, T, inviscid);
+#ifdef GPU
+    iterator = new GPU_CartesianIterator<5, EaFlux<Upwind1<5> > >(flux, cuda_device, thread_limit);
+#else
+    iterator = new CartesianIterator<5, EaFlux<Upwind1<5> > >(flux);
+#endif
+  }
+
+  iterator->setCodeString(CodeString("fx fy fz far far far far far  far 0"));
 
   IteratorFeeder iterator_feeder;
-  iterator_feeder.addIterator(&iterator_std);
+  iterator_feeder.addIterator(iterator);
   iterator_feeder.feed(patch_grid);
 
-  //vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
-  //for (size_t i = 0; i < cubes.size(); ++i) {
-  //  runge_kutta.addPostOperation(&cubes[i]);
-  //}
-  //CartesianCyclicCopy<5> cyclic(&patch_grid);
-  //runge_kutta.addPostOperation(&cyclic);
-
-  runge_kutta.addIterator(&iterator_std);
+  runge_kutta.addIterator(iterator);
 
   int write_counter = 0;
   int iter = 0;
@@ -390,7 +433,7 @@ void run()
     sync(coupling_patch, of2dn_list, dn2of_list, barrier, shmem, write_flag, stop_flag, dt);
     write_interval = MAX_REAL;
     total_time = MAX_REAL;
-    iterator_std.deactivatePatch(coupling_patch_id);
+    iterator->deactivatePatch(coupling_patch_id);
   }
 
   QString restart_file = config.getValue<QString>("restart-file");
@@ -402,12 +445,26 @@ void run()
     }
   }
 
+  // set inside of bodies at rest (if requested)
+  bool inside_at_rest = config.getValue<bool>("inside-at-rest");
+  if (inside_at_rest) {
+    for (size_t i_patch = 0; i_patch < patch_grid.getNumPatches(); ++i_patch) {
+      Patch *P = patch_grid.getPatch(i_patch);
+      for (size_t idx = 0; idx < P->variableSize(); ++idx) {
+        if (P->isInsideCell(idx)) {
+          P->getVariable(0, 1)[idx] = 0;
+          P->getVariable(0, 2)[idx] = 0;
+          P->getVariable(0, 3)[idx] = 0;
+        }
+      }
+    }
+  }
+
 #ifdef GPU
-  iterator_std.updateDevice();
+  iterator->updateDevice();
 #endif
 
   startTiming();
-
 
   while (t < total_time && !stop_flag) {
 
@@ -435,7 +492,7 @@ void run()
 
 #ifdef GPU
       runge_kutta.copyDonorData(0);
-      iterator_std.updateHost();
+      iterator->updateHost();
 #endif
 
       for (size_t i_p = 0; i_p < patch_grid.getNumPatches(); i_p++) {
@@ -486,21 +543,6 @@ void run()
 
       ++write_counter;
       if (write) {
-
-        // DEBUG stuff here ...
-
-        /*
-        for (size_t idx = 0; idx < patch_grid.getPatch(171)->variableSize(); ++idx) {
-          if (patch_grid.getPatch(171)->isInsideCell(idx)) {
-            patch_grid.getPatch(171)->getVariable(0, 0)[idx] = -1;
-          } else {
-            patch_grid.getPatch(171)->getVariable(0, 0)[idx] = 1;
-          }
-        }
-        */
-
-        // end of DEBUG stuff
-
         patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
         patch_grid.writeData(0, "data/step", t, write_counter);
       }
@@ -517,7 +559,7 @@ void run()
 
 #ifdef GPU
   runge_kutta.copyDonorData(0);
-  iterator_std.updateHost();
+  iterator->updateHost();
 #endif
 
   if (write) {
