@@ -24,6 +24,7 @@
 struct splitface_t
 {
   size_t idx;
+  size_t idx_neigh;
   real nx;
   real ny;
   real nz;
