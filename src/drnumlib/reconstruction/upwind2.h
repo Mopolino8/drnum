@@ -40,11 +40,13 @@ struct Upwind2
     size_t j0 = 2*j1 - j2;
     size_t k0 = 2*k1 - k2;
     if (patch->checkRange(i0, j0, k0) && patch->checkRange(i2, j2, k2)) {
-      for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        real delta01 = (patch->f(i_field, i_var, i1, j1, k1) - patch->f(i_field, i_var, i0, j0, k0));
-        real delta12 = (patch->f(i_field, i_var, i2, j2, k2) - patch->f(i_field, i_var, i1, j1, k1));
-        var[i_var] += real(0.5)*TLimiter::lim(delta01, delta12)*delta01;
-        countFlops(4);
+      if (!patch->isSplitFace(patch->index(i0, j0, k0), patch->index(i1, j1, k1))) {
+        for (size_t i_var = 0; i_var < DIM; ++i_var) {
+          real delta01 = (patch->f(i_field, i_var, i1, j1, k1) - patch->f(i_field, i_var, i0, j0, k0));
+          real delta12 = (patch->f(i_field, i_var, i2, j2, k2) - patch->f(i_field, i_var, i1, j1, k1));
+          var[i_var] += real(0.5)*TLimiter::lim(delta01, delta12)*delta01;
+          countFlops(4);
+        }
       }
     }
   }
