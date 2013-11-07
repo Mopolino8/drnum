@@ -701,8 +701,10 @@ void Patch::allocateData()
   m_FieldSize = m_NumVariables * m_VariableSize;
   m_Data = new real [m_NumFields*m_FieldSize];
   m_IsInsideCell = new bool [m_VariableSize];
+  m_IsSplitCell = new bool [m_VariableSize];
   for (size_t i = 0; i < m_VariableSize; ++i) {
     m_IsInsideCell[i] = false;
+    m_IsSplitCell[i] = false;
   }
 }
 

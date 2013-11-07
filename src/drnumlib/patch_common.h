@@ -52,8 +52,8 @@ real*  m_DonorWeightConcat;  ///< Concatenated donor cell weights [m_NumDonorWIC
 
 // data for split faces (immersed boundary method)
 size_t       m_NumSplitFaces;
-size_t      *m_SplitCells;
 bool        *m_IsInsideCell;
+bool        *m_IsSplitCell;
 splitface_t *m_SplitFaces;
 
 protected: // attributes
@@ -462,16 +462,22 @@ CUDA_DH splitface_t* getSplitFaces()
   return m_SplitFaces;
 }
 
-/**
- * @brief Get the pointer to the marker field for split faces
- * @return the pointer to the marker field for split faces
- */
-CUDA_DH bool* getIsSplitCell()
+CUDA_DH bool* getIsInsideCell()
 {
   return m_IsInsideCell;
 }
 
 CUDA_DH bool isInsideCell(size_t idx)
+{
+  return m_IsInsideCell[idx];
+}
+
+CUDA_DH bool* getIsSplitCell()
+{
+  return m_IsInsideCell;
+}
+
+CUDA_DH bool isSplitCell(size_t idx)
 {
   return m_IsInsideCell[idx];
 }

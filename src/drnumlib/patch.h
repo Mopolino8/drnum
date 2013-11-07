@@ -101,6 +101,7 @@ private: // attributes
   donor_t     *m_GpuDonors;
   size_t      *m_GpuDonorIndexConcat;
   real        *m_GpuDonorWeightConcat;
+  bool        *m_GpuIsInsideCell;
   bool        *m_GpuIsSplitCell;
   splitface_t *m_GpuSplitFaces;
   bool         m_GpuDataSet;
@@ -715,12 +716,6 @@ public: // methods
   template <typename C> void setSplitFaces(const C &split_faces);
 
   /**
-   * @brief Get the pointer to the split cells field
-   * @return the pointer to the split cells field
-   */
-  size_t* getSplitCells() { return m_SplitCells; }
-
-  /**
    * @brief Copy one field from GPU (device) memory to host memory
    * @param i_field the index of the field to copy
    */
@@ -908,7 +903,6 @@ void Patch::setSplitFaces(const C &split_faces)
   m_SplitFaces = new splitface_t[m_NumSplitFaces];
   list<splitface_t> remaining_faces;
   list<splitface_t> group_faces;
-  vector<bool> is_split_cell(variableSize(), false);
 
   list<size_t> remaining_cells;
 
@@ -916,7 +910,7 @@ void Patch::setSplitFaces(const C &split_faces)
   {
     typename C::const_iterator i;
     for (i = split_faces.begin(); i != split_faces.end(); ++i) {
-      is_split_cell[i->idx] = true;
+      m_IsSplitCell[i->idx] = true;
       if (i->inside) {
         m_IsInsideCell[i->idx] = true;
         remaining_cells.push_back(i->idx);
@@ -932,7 +926,7 @@ void Patch::setSplitFaces(const C &split_faces)
     for (list<size_t>::iterator i = cells.begin(); i != cells.end(); ++i) {
       list<size_t> neighbours = getNeighbours(*i);
       for (list<size_t>::iterator j = neighbours.begin(); j != neighbours.end(); ++j) {
-        if (!is_split_cell[*j] && !m_IsInsideCell[*j]) {
+        if (!m_IsSplitCell[*j] && !m_IsInsideCell[*j]) {
           m_IsInsideCell[*j] = true;
           remaining_cells.push_back(*j);
         }
