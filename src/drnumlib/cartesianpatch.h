@@ -235,29 +235,6 @@ public: // methods
   /// @todo shift all addressing stuff into StructuredPatch and inherite CartesianPatch from it
   /// @todo check, if the int - size_t conversion may cause performance issues
 
-  /**
-   * @brief Get the indicees (i, j, k) from field index/
-   * @param l the field index
-   * @param i first Cartesian index  (return reference)
-   * @param j second Cartesian index (return reference)
-   * @param k third Cartesian index  (return reference)
-   * @return the index in the one dimensional data field
-   */
-  inline void ijk(const size_t& l,
-                  size_t& i, size_t& j, size_t& k) const {
-    //    div_t divresult;
-    //    divresult = div (l, m_NumJ*m_NumK);  // causes compile error (ambiguous)
-    //    i = divresult.quot;
-    //    divresult = div (divresult.rem, m_NumK);
-    //    j = divresult.quot;
-    //    k = divresult.rem;
-    size_t rest;
-    i = l / (m_NumJ*m_NumK);
-    rest = l - i*(m_NumJ*m_NumK);
-    j = rest / m_NumK;
-    k = rest - j*m_NumK;
-  }
-
   /// @todo too many xyzCell methods. Clean up here.
   inline vec3_t xyzCell(const size_t& l) const
   {

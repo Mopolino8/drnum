@@ -154,6 +154,28 @@ CUDA_DH real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k)
 }
 
 /**
+ * @brief Get the indicees (i, j, k) from field index/
+ * @param l the field index
+ * @param i first Cartesian index  (return reference)
+ * @param j second Cartesian index (return reference)
+ * @param k third Cartesian index  (return reference)
+ * @return the index in the one dimensional data field
+ */
+CUDA_DH void ijk(const size_t& l, size_t& i, size_t& j, size_t& k) const {
+  //    div_t divresult;
+  //    divresult = div (l, m_NumJ*m_NumK);  // causes compile error (ambiguous)
+  //    i = divresult.quot;
+  //    divresult = div (divresult.rem, m_NumK);
+  //    j = divresult.quot;
+  //    k = divresult.rem;
+  size_t rest;
+  i = l / (m_NumJ*m_NumK);
+  rest = l - i*(m_NumJ*m_NumK);
+  j = rest / m_NumK;
+  k = rest - j*m_NumK;
+}
+
+/**
  * Get the gradient in x direction at a specifed (i,j,k) position.
  * This method will automaitically respect domain borders (one sided gradient)
  * @param i_field the field index
