@@ -28,7 +28,7 @@
 #include <set>
 
 
-template <typename T_CPU, typename T_GPU, typename OP>
+template <unsigned int DIM, typename T_CPU, typename T_GPU, typename OP>
 class GPU_PatchIterator : public TPatchIterator<T_CPU, OP>
 {
 
@@ -54,8 +54,8 @@ public:
 };
 
 
-template <typename T_CPU, typename T_GPU, typename OP>
-GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device, size_t thread_limit)
+template <unsigned int DIM, typename T_CPU, typename T_GPU, typename OP>
+GPU_PatchIterator<DIM, T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device, size_t thread_limit)
   : TPatchIterator<T_CPU, OP>(op)
 {
   m_GpuPointersSet = false;
@@ -82,8 +82,8 @@ GPU_PatchIterator<T_CPU, T_GPU, OP>::GPU_PatchIterator(OP op, int cuda_device, s
   }
 }
 
-template <typename T_CPU, typename T_GPU, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, OP>::addPatch(Patch *patch)
+template <unsigned int DIM, typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<DIM, T_CPU, T_GPU, OP>::addPatch(Patch *patch)
 {
   T_CPU* cpu_patch = dynamic_cast<T_CPU*>(patch);
   if (cpu_patch == NULL) {
@@ -94,24 +94,24 @@ void GPU_PatchIterator<T_CPU, T_GPU, OP>::addPatch(Patch *patch)
   m_GpuPatches.push_back(gpu_patch);
 }
 
-template <typename T_CPU, typename T_GPU, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, OP>::copyField(size_t i_src, size_t i_dst)
+template <unsigned int DIM, typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<DIM, T_CPU, T_GPU, OP>::copyField(size_t i_src, size_t i_dst)
 {
   for (size_t i = 0; i < this->m_Patches.size(); ++i) {
     cudaMemcpy(m_GpuPatches[i].getField(i_dst), m_GpuPatches[i].getField(i_src), m_GpuPatches[i].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
   }
 }
 
-template <typename T_CPU, typename T_GPU, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, OP>::updateHost()
+template <unsigned int DIM, typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<DIM, T_CPU, T_GPU, OP>::updateHost()
 {
   for (size_t i = 0; i < this->m_Patches.size(); ++i) {
     m_GpuPatches[i].copyFromDevice(this->m_Patches[i]);
   }
 }
 
-template <typename T_CPU, typename T_GPU, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, OP>::updateDevice()
+template <unsigned int DIM, typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<DIM, T_CPU, T_GPU, OP>::updateDevice()
 {
   cout << "void GPU_PatchIterator<T_CPU, T_GPU, OP>::updateDevice()" << endl;
   if (!m_GpuPointersSet) {
@@ -125,19 +125,19 @@ void GPU_PatchIterator<T_CPU, T_GPU, OP>::updateDevice()
   }
 }
 
-template <typename T_GPU>
+template <unsigned int DIM, typename T_GPU>
 __global__ void GPU_PatchIterator_kernelResetReceiverData(T_GPU patch, size_t i_field)
 {
   size_t i = blockDim.x*blockIdx.x + threadIdx.x;
   if (i < patch.getNumReceivingCellsUnique()) {
     size_t i_rec = patch.getReceivingCellIndicesUnique()[i];
-    for (size_t i_var = 0; i_var < patch.numVariables(); ++i_var) {
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
       patch.getVariable(i_field, i_var)[i_rec] = 0;
     }
   }
 }
 
-template <typename T_GPU>
+template <unsigned int DIM, unsigned int STRIDE, typename T_GPU>
 __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_field, size_t i_donor)
 {
   size_t i = blockDim.x*blockIdx.x + threadIdx.x;
@@ -151,7 +151,7 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
     size_t i_donor_cells_start = donor.donor_wi_field_start + i*donor.stride;
 
     // loop for contributing cells
-    for (size_t i_contrib = 0; i_contrib < donor.stride; ++i_contrib) {
+    for (size_t i_contrib = 0; i_contrib < STRIDE; ++i_contrib) {
 
       size_t i_wi              = i_donor_cells_start + i_contrib;      // index of donor cell in concatenated lists
       size_t donor_cell_index  = patch.getDonorIndexConcat()[i_wi];
@@ -159,7 +159,7 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
 
       //real* donated_var = new real [patch.numVariables()];
 
-      for (size_t i_var = 0; i_var < patch.numVariables(); ++i_var) {
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
         real* dvar = donor.data + i_var*donor.variable_size;
         //donated_var[i_var] = dvar[donor_cell_index];
         patch.getVariable(i_field, i_var)[i_rec] += donor_cell_weight*dvar[donor_cell_index];
@@ -189,27 +189,46 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
   }
 }
 
-template <typename T_CPU, typename T_GPU, typename OP>
-void GPU_PatchIterator<T_CPU, T_GPU, OP>::copyDonorData(size_t i_field)
+template <unsigned int DIM, typename T_CPU, typename T_GPU, typename OP>
+void GPU_PatchIterator<DIM, T_CPU, T_GPU, OP>::copyDonorData(size_t i_field)
 {
   // reset receiver cells
   for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
     int N = PatchIterator::getPatch(i_patch)->getNumReceivingCellsUnique();
     int blocks  = N/m_MaxNumThreads + 1;
-    GPU_PatchIterator_kernelResetReceiverData<<<blocks, m_MaxNumThreads>>>(m_GpuPatches[i_patch], i_field);
+    GPU_PatchIterator_kernelResetReceiverData <DIM, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>>(m_GpuPatches[i_patch], i_field);
     CUDA_CHECK_ERROR
   }
 
   cudaThreadSynchronize();
-  CUDA_CHECK_ERROR
+  CUDA_CHECK_ERROR;
 
   // compute interpolated data
   for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
     for (size_t i_donor = 0; i_donor < m_GpuPatches[i_patch].getNumDonorPatches(); ++i_donor) {
       int N = PatchIterator::getPatch(i_patch)->getDonors()[i_donor].num_receiver_cells;
+      int stride = PatchIterator::getPatch(i_patch)->getDonors()[i_donor].stride;
       int blocks  = N/m_MaxNumThreads + 1;
-      GPU_PatchIterator_kernelCopyDonorData<<<blocks, m_MaxNumThreads>>>(m_GpuPatches[i_patch], i_field, i_donor);
-      CUDA_CHECK_ERROR
+      if        (stride == 1) {
+        GPU_PatchIterator_kernelCopyDonorData <DIM, 1, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>> (m_GpuPatches[i_patch], i_field, i_donor);
+      } else if (stride == 2) {
+        GPU_PatchIterator_kernelCopyDonorData <DIM, 2, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>> (m_GpuPatches[i_patch], i_field, i_donor);
+      } else if (stride == 3) {
+        GPU_PatchIterator_kernelCopyDonorData <DIM, 3, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>> (m_GpuPatches[i_patch], i_field, i_donor);
+      } else if (stride == 4) {
+        GPU_PatchIterator_kernelCopyDonorData <DIM, 4, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>> (m_GpuPatches[i_patch], i_field, i_donor);
+      } else if (stride == 5) {
+        GPU_PatchIterator_kernelCopyDonorData <DIM, 5, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>> (m_GpuPatches[i_patch], i_field, i_donor);
+      } else if (stride == 6) {
+        GPU_PatchIterator_kernelCopyDonorData <DIM, 6, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>> (m_GpuPatches[i_patch], i_field, i_donor);
+      } else if (stride == 7) {
+        GPU_PatchIterator_kernelCopyDonorData <DIM, 7, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>> (m_GpuPatches[i_patch], i_field, i_donor);
+      } else if (stride == 8) {
+        GPU_PatchIterator_kernelCopyDonorData <DIM, 8, GPU_CartesianPatch> <<<blocks, m_MaxNumThreads>>> (m_GpuPatches[i_patch], i_field, i_donor);
+      } else {
+        BUG;
+      }
+      CUDA_CHECK_ERROR;
       cudaThreadSynchronize();
     }
   }

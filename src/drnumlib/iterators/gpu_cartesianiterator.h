@@ -27,7 +27,7 @@
 #include "gpu_patchiterator.h"
 
 template <unsigned int DIM, typename OP>
-class GPU_CartesianIterator : public GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>
+class GPU_CartesianIterator : public GPU_PatchIterator<DIM, CartesianPatch, GPU_CartesianPatch, OP>
 {
 
   CUDA_HO bool ibIntersection(vec3_t xo1, vec3_t xo2, splitface_t &sf); ///< @todo move this to an abstract interface!!
@@ -37,7 +37,7 @@ class GPU_CartesianIterator : public GPU_PatchIterator<CartesianPatch, GPU_Carte
 
 public:
 
-  using GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::addPatch;
+  using GPU_PatchIterator<DIM, CartesianPatch, GPU_CartesianPatch, OP>::addPatch;
 
   CUDA_HO GPU_CartesianIterator(OP op, int cuda_device = 0, size_t thread_limit = 0);
 
@@ -49,7 +49,7 @@ public:
 
 template <unsigned int DIM, typename OP>
 GPU_CartesianIterator<DIM,OP>::GPU_CartesianIterator(OP op, int cuda_device, size_t thread_limit)
-  : GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>(op, cuda_device, thread_limit)
+  : GPU_PatchIterator<DIM, CartesianPatch, GPU_CartesianPatch, OP>(op, cuda_device, thread_limit)
 {
 }
 
@@ -223,7 +223,7 @@ void GPU_CartesianIterator<DIM,OP>::computeFluxes(real factor, size_t i_patch)
   cudaMemset(this->m_GpuPatches[i_patch].getField(2), 0, this->m_GpuPatches[i_patch].fieldSize()*sizeof(real));
   CUDA_CHECK_ERROR;
 
-  size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
+  size_t max_num_threads = GPU_PatchIterator<DIM, CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
   size_t k_lines = max(size_t(1), size_t(max_num_threads/this->m_Patches[i_patch]->sizeK()));
 
   // X field fluxes
@@ -422,7 +422,7 @@ __global__ void GPU_CartesianIterator_kernelSplitFluxes(GPU_CartesianPatch patch
 template <unsigned int DIM, typename OP>
 void GPU_CartesianIterator<DIM,OP>::computeSplitFluxes(size_t i_patch)
 {
-  size_t max_num_threads = GPU_PatchIterator<CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
+  size_t max_num_threads = GPU_PatchIterator<DIM, CartesianPatch, GPU_CartesianPatch, OP>::m_MaxNumThreads;
   vector<size_t> group_limits = this->m_Patches[i_patch]->getSplitGroupLimits();
 
   for (int i_group = 0; i_group < group_limits.size() - 1; ++i_group) {
