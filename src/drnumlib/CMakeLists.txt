@@ -60,6 +60,7 @@ SET(drnumlib_SOURCES
     fluxes/compressiblefarfieldflux.h
     fluxes/compressibleflux.h
     fluxes/compressibleslipflux.h
+    fluxes/compressiblesmagorinskyflux.h
     fluxes/compressibleviscflux.h
     fluxes/compressiblewallflux.h
     fluxes/knp.h

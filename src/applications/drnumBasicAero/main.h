@@ -33,7 +33,7 @@
 #include "fluxes/ausmdv.h"
 #include "fluxes/roe.h"
 #include "fluxes/compressiblefarfieldflux.h"
-#include "fluxes/compressibleviscflux.h"
+#include "fluxes/compressiblesmagorinskyflux.h"
 #include "fluxes/compressibleslipflux.h"
 #include "perfectgas.h"
 #include "compressiblevariables.h"
@@ -73,7 +73,7 @@ protected:
   //typedef KNP<5, TReconstruction, PerfectGas> euler_t;
 
   typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
-  typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;
+  typedef CompressibleSmagorinskyFlux<5, 2000, PerfectGas>    viscous_t;
   typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
   typedef CompressibleFlux<5, PerfectGas>                     split_t;
 
@@ -210,6 +210,7 @@ template <typename PATCH>
 inline void EaFlux<TReconstruction>::splitFlux(PATCH *P, splitface_t sf, real* flux)
 {
   m_SplitFlux.splitFlux(P, sf, flux);
+  if (!m_Inviscid) m_ViscFlux.splitFlux(P, sf, flux);
 }
 
 void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *dn2of_list, Barrier *barrier, SharedMemory *shmem, bool &write_flag, bool &stop_flag, real &dt)
@@ -543,15 +544,19 @@ void run()
 
       ++write_counter;
       if (write) {
-        patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
-        patch_grid.writeData(0, "data/step", t, write_counter);
+        if (config.getValue<bool>("file-output")) {
+          patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
+          patch_grid.writeData(0, "data/step", t, write_counter);
+        }
       }
       t_write -= write_interval;
     } else {
       ++iter;
       cout << iter << " iterations,  t=" << t << ",  t=" << t/time << "*L/u_oo,  dt: " << dt << ",  DrNUM % of run-time: " << 100*drnum_fraction << endl;
     }
-    dt = dt_new;
+    if (coupling_patch) {
+      dt = dt_new;
+    }
   }
 
   stopTiming();
