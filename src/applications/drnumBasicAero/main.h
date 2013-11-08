@@ -331,11 +331,8 @@ void run()
   PerfectGas::primitiveToConservative(p, T, u, v, 0.01*u, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
-  if (write) {
-    patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), 0);
-  }
-
   if (mesh_preview) {
+    patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), 0);
     exit(EXIT_SUCCESS);
   }
 
@@ -543,11 +540,9 @@ void run()
       dt *= cfl_target/CFL_max;
 
       ++write_counter;
-      if (write) {
-        if (config.getValue<bool>("file-output")) {
-          patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
-          patch_grid.writeData(0, "data/step", t, write_counter);
-        }
+      if (config.getValue<bool>("file-output")) {
+        patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
+        patch_grid.writeData(0, "data/step", t, write_counter);
       }
       t_write -= write_interval;
     } else {
@@ -567,8 +562,12 @@ void run()
   iterator->updateHost();
 #endif
 
-  if (write) {
-    patch_grid.writeToVtk(0, "VTK-drnum/final", CompressibleVariables<PerfectGas>(), -1);
+  {
+    ConfigMap config;
+    config.addDirectory("control");
+    if (config.getValue<bool>("file-output")) {
+      patch_grid.writeToVtk(0, "VTK-drnum/final", CompressibleVariables<PerfectGas>(), -1);
+    }
   }
 }
 
