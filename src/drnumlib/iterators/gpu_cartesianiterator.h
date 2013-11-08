@@ -327,7 +327,7 @@ bool GPU_CartesianIterator<DIM,OP>::ibIntersection(vec3_t xo1, vec3_t xo2, split
 {
   real r1 = xo1.abs();
   real r2 = xo2.abs();
-  real R  = 0.5;
+  real R  = 0.05;
   if ((r1 <= R && r2 > R) || (r1 > R && r2 <= R)) {
     sf.dist = fabs(R - r1);
     real w = sf.dist/fabs(r2 - r1);
