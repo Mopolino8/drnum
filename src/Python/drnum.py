@@ -364,7 +364,25 @@ class Mesh:
     for patch in self.patches:
       N += patch.numOverlapCells()
     return N
-      
+    
+  def minCoreSize(self):
+    N = self.numCoreCells()
+    for patch in self.patches:
+      N = min(N, patch.numCells() - patch.numOverlapCells())
+    return N
+    
+  def averageCoreSize(self):
+    N = self.numCoreCells()
+    for patch in self.patches:
+      N = N + patch.numCells() - patch.numOverlapCells()
+    return N/len(self.patches)
+    
+  def maxCoreSize(self):
+    N = 0
+    for patch in self.patches:
+      N = max(N, patch.numCells() - patch.numOverlapCells())
+    return N
+    
   def numCells(self):
     return self.numCoreCells() + self.numOverlapCells()
     
@@ -381,7 +399,7 @@ class Mesh:
   def setNeighbourOverlapFactor(self, of):
     for i in range(0, len(self.patches)):
       self.patches[i].neigh_overlap_factor = of
-    
+      
   def printInfo(self):
     print "\n"
     print "number of patches       : %d" % len(self.patches)
@@ -392,6 +410,9 @@ class Mesh:
     print "number of overlap cells : %.2f*10^6" % (1e-6*self.numOverlapCells())
     print "                        : %d" % self.numOverlapCells()
     print "overlap ratio in %%      : %.2f" % (100*float(self.numOverlapCells())/float(self.numCoreCells()))
+    print "smallest core size      : %d" % self.minCoreSize()
+    print "largest core size       : %d" % self.maxCoreSize()
+    print "average core size       : %d" % self.averageCoreSize()
 
   def setMaxRes(self, max_h):
     for i in range(0, len(self.patches)):
@@ -477,7 +498,14 @@ class Mesh:
             self.patches[j].hk = h
             done = False
 
-  def createRectGrid(self, x, y, z):
+  def createRectGrid(self, x, y, z, h_snap = -1):
+    if h_snap > 0:
+      for i in range(len(x)):
+        x[i] = int(x[i]/h_snap)*h_snap
+      for i in range(len(y)):
+        y[i] = int(y[i]/h_snap)*h_snap
+      for i in range(len(y)):
+        z[i] = int(z[i]/h_snap)*h_snap
     patch = []
     for i in range(len(x) - 1):
       patch.append([])
