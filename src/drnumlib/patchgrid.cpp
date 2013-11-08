@@ -277,29 +277,62 @@ void PatchGrid::finalizeDependencies()
 
 void PatchGrid::writeDependenciesLog(string dependencies_log)
 {
-  ofstream log(dependencies_log.c_str());
+  QFile log_file(dependencies_log.c_str());
+  log_file.open(QIODevice::WriteOnly);
+  QTextStream log(&log_file);
+  log.setFieldWidth(0);
 
   // Number of patches
   log << "Number patches: " <<  m_Patches.size() << endl;
 
   // Transfer type
-  log << "Transfer type:  " << m_TransferType << endl;
+  log << "Transfer type:  " << m_TransferType.c_str() << endl;
 
   log << endl;
 
-  // Loop for patches
+  // averaging loop over patches
+  real total_stride = 0;
+  int num_total = 0;
   for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
     Patch* patch = m_Patches[i_p];
+    for (size_t ii_n = 0; ii_n < patch->accessNumNeighbours(); ii_n++) {
+      Patch* neighbour = patch->accessNeighbour(ii_n);
+
+      //.. Number of cells to receive and serve (vice versa)
+      bool vice_exists;
+      size_t num_receiving;
+      size_t receive_stride;
+      bool versa_exists;
+      size_t num_serving;
+      size_t serve_stride;
+      if (m_TransferType == "padded_direct") {
+        patch->diagnoseViceVersaDependencies(neighbour,
+                                             vice_exists, num_receiving, receive_stride,
+                                             versa_exists, num_serving, serve_stride,
+                                             true);
+        total_stride += num_receiving*receive_stride;
+        num_total += num_receiving;
+      }
+    }
+  }
+  log << num_total << " cell transfers in total\n";
+  log << "average strid is " << total_stride/num_total << "\n" << endl;
+
+  // output loop over patches
+  for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
+    Patch* patch = m_Patches[i_p];
+    log.setFieldWidth(0);
     log << "Patch " << i_p << ",  type: " << patch->accessPatchType() << endl;
     log << "  Number of neighbours: " << patch->accessNumNeighbours() << endl;
 
-    log << "  Neighbour "
-        << "  ID "
-        << "  type"
-        << "  receiving"
-        << "  stride"
-        << "  serving"
-        << "  stride"
+    log.setFieldWidth(10);
+    log << "Neighbour"
+        << "ID"
+        << "type"
+        << "receiving"
+        << "stride"
+        << "serving"
+        << "stride"
         << endl;
 
     for (size_t ii_n = 0; ii_n < patch->accessNumNeighbours(); ii_n++) {
@@ -319,18 +352,14 @@ void PatchGrid::writeDependenciesLog(string dependencies_log)
                                              versa_exists, num_seving, serve_stride,
                                              true);
       }
-      log << "      " << ii_n
-          << "    " << n_id
-          << "    " << neighbour->accessPatchType()
-          << "    " << num_receiving
-          << "     " << receive_stride
-          << "     " << num_seving
-          << "     " << serve_stride
+      log << ii_n
+          << n_id
+          << neighbour->accessPatchType()
+          << num_receiving
+          << receive_stride
+          << num_seving
+          << serve_stride
           << endl;
-      //      log << "  Neighbour: " << ii_n
-      //          << ",  ID: " << n_id
-      //          << ",  type: " << neighbour->accessPatchType()
-      //          << endl;
     }
     log << endl;
   }
