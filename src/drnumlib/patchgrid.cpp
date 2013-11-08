@@ -292,7 +292,10 @@ void PatchGrid::writeDependenciesLog(string dependencies_log)
 
   // averaging loop over patches
   real total_stride = 0;
-  int num_total = 0;
+  size_t num_total = 0;
+  size_t max_exchange = 0;
+  size_t min_exchange = 10000000;
+  size_t num_exchange = 0;
   for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
     Patch* patch = m_Patches[i_p];
     for (size_t ii_n = 0; ii_n < patch->accessNumNeighbours(); ii_n++) {
@@ -312,11 +315,17 @@ void PatchGrid::writeDependenciesLog(string dependencies_log)
                                              true);
         total_stride += num_receiving*receive_stride;
         num_total += num_receiving;
+        min_exchange = min(min_exchange, num_receiving);
+        max_exchange = max(max_exchange, num_receiving);
+        ++num_exchange;
       }
     }
   }
-  log << num_total << " cell transfers in total\n";
-  log << "average strid is " << total_stride/num_total << "\n" << endl;
+  log << "total number of cell transfers : " << num_total << endl;
+  log << "average strid                  : " << total_stride/num_total << endl;
+  log << "smallest exchange list         : " << min_exchange << endl;
+  log << "longest exchange list          : " << max_exchange << endl;
+  log << "average exchange list length   : " << num_total/num_exchange << endl << endl;
 
   // output loop over patches
   for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
