@@ -387,7 +387,7 @@ public: // methods
     real y_plus = 20;
     real u_tau = 0;
     real mu = TGas::mu(var);
-    real y_wall = sf.wnx*patch->dx() + sf.wny*patch->dy() + sf.wnz*patch->dx();
+    real y_wall = sf.dist;//sf.wnx*patch->dx() + sf.wny*patch->dy() + sf.wnz*patch->dx();
     for (int iter = 0; iter < 10; ++iter) {
       y_plus = max(20.0, u_tau*y_wall*var[0]/mu);
       u_tau  = u_tgt/(log(y_plus)/0.41 + 5.0);
