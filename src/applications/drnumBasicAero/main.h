@@ -172,8 +172,8 @@ template <typename TReconstruction>
 template <typename PATCH>
 inline void EaFlux<TReconstruction>::yWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  //m_FarfieldFlux.yWallP(P, i, j, k, x, y, z, A, flux);
-  m_WallFlux.yWallP(P, i, j, k, x, y, z, A, flux);
+  m_FarfieldFlux.yWallP(P, i, j, k, x, y, z, A, flux);
+  //m_WallFlux.yWallP(P, i, j, k, x, y, z, A, flux);
 }
 
 template <typename TReconstruction>
@@ -194,8 +194,8 @@ template <typename TReconstruction>
 template <typename PATCH>
 inline void EaFlux<TReconstruction>::yWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  //m_FarfieldFlux.yWallM(P, i, j, k, x, y, z, A, flux);
-  m_WallFlux.yWallM(P, i, j, k, x, y, z, A, flux);
+  m_FarfieldFlux.yWallM(P, i, j, k, x, y, z, A, flux);
+  //m_WallFlux.yWallM(P, i, j, k, x, y, z, A, flux);
 }
 
 template <typename TReconstruction>
@@ -328,7 +328,7 @@ void run()
 
   // Initialize
   real init_var[5];
-  PerfectGas::primitiveToConservative(p, T, u, v, 0.01*u, init_var);
+  PerfectGas::primitiveToConservative(p, T, u, v, 0.00*u, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
   if (mesh_preview) {
@@ -532,6 +532,8 @@ void run()
       cout << "  min(rho): " << rho_min << "  max(rho): " << rho_max << endl;
       printTiming();
 
+      t_write -= write_interval;
+
       ConfigMap config;
       config.addDirectory("control");
       cfl_target     = config.getValue<real>("CFL-number");
@@ -544,7 +546,6 @@ void run()
         patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
         patch_grid.writeData(0, "data/step", t, write_counter);
       }
-      t_write -= write_interval;
     } else {
       ++iter;
       cout << iter << " iterations,  t=" << t << ",  t=" << t/time << "*L/u_oo,  dt: " << dt << ",  DrNUM % of run-time: " << 100*drnum_fraction << endl;
@@ -552,6 +553,20 @@ void run()
     if (coupling_patch) {
       dt = dt_new;
     }
+
+    {
+      ConfigMap config;
+      config.addDirectory("control");
+      if (config.exists("single-iteration")) {
+        if (config.getValue<bool>("single-iteration")) {
+          if (config.getValue<bool>("file-output")) {
+            patch_grid.writeToVtk(0, "VTK-drnum/final", CompressibleVariables<PerfectGas>(), -1);
+          }
+          exit(0);
+        }
+      }
+    }
+
   }
 
   stopTiming();

@@ -325,7 +325,7 @@ void PatchGrid::writeDependenciesLog(string dependencies_log)
   log << "average strid                  : " << total_stride/num_total << endl;
   log << "smallest exchange list         : " << min_exchange << endl;
   log << "longest exchange list          : " << max_exchange << endl;
-  log << "average exchange list length   : " << num_total/num_exchange << endl << endl;
+  log << "average exchange list length   : " << num_total/max(size_t(1), num_exchange) << endl << endl;
 
   // output loop over patches
   for (size_t i_p = 0; i_p < m_Patches.size(); i_p++) {
