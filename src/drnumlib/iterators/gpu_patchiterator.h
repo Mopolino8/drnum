@@ -157,8 +157,6 @@ __global__ void GPU_PatchIterator_kernelCopyDonorData(T_GPU patch, size_t i_fiel
       size_t donor_cell_index  = patch.getDonorIndexConcat()[i_wi];
       real   donor_cell_weight = patch.getDonorWeightConcat()[i_wi];
 
-      //real* donated_var = new real [patch.numVariables()];
-
       for (size_t i_var = 0; i_var < DIM; ++i_var) {
         real* dvar = donor.data + i_var*donor.variable_size;
         //donated_var[i_var] = dvar[donor_cell_index];
@@ -229,7 +227,7 @@ void GPU_PatchIterator<DIM, T_CPU, T_GPU, OP>::copyDonorData(size_t i_field)
         BUG;
       }
       CUDA_CHECK_ERROR;
-      cudaThreadSynchronize();
+      //cudaThreadSynchronize();
     }
   }
 }
