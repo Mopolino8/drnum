@@ -32,6 +32,8 @@ struct splitface_t
   real wny;
   real wnz;
   real dist;
+  real h1;
+  real h2;
   bool inside;
 };
 
