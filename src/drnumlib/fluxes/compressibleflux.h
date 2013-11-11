@@ -74,13 +74,13 @@ protected: // methods
     return M2(M, s)*((2*s - M) - 3*s*M*M2(M, -s));
   }
 
-  template <typename PATCH> static CUDA_DH void averageVar(PATCH *patch, size_t i_field, size_t idx, real *var)
+  template <typename PATCH> static CUDA_DH bool averageVar(PATCH *patch, size_t i_field, size_t idx, size_t idx_neigh, real *var)
   {
     dim_t<DIM> dim;
     //patch->getVar(dim, i_field, idx, var);
 
     size_t i, j, k;
-    patch->ijk(idx, i, j, k);
+    patch->ijk(idx_neigh, i, j, k);
 
     size_t idx1 = patch->index(i-1, j, k);
     size_t idx2 = patch->index(i+1, j, k);
@@ -88,14 +88,18 @@ protected: // methods
     size_t idx4 = patch->index(i, j+1, k);
     size_t idx5 = patch->index(i, j, k-1);
     size_t idx6 = patch->index(i, j, k+1);
-    real   wgt1 = real(patch->isSplitFace(idx, idx1));
-    real   wgt2 = real(patch->isSplitFace(idx, idx2));
-    real   wgt3 = real(patch->isSplitFace(idx, idx3));
-    real   wgt4 = real(patch->isSplitFace(idx, idx4));
-    real   wgt5 = real(patch->isSplitFace(idx, idx5));
-    real   wgt6 = real(patch->isSplitFace(idx, idx6));
+    real   wgt1 = real(patch->isSplitFace(idx_neigh, idx1));
+    real   wgt2 = real(patch->isSplitFace(idx_neigh, idx2));
+    real   wgt3 = real(patch->isSplitFace(idx_neigh, idx3));
+    real   wgt4 = real(patch->isSplitFace(idx_neigh, idx4));
+    real   wgt5 = real(patch->isSplitFace(idx_neigh, idx5));
+    real   wgt6 = real(patch->isSplitFace(idx_neigh, idx6));
 
-    real iwgt = 1.0/(wgt1 + wgt2 + wgt3 + wgt4 + wgt5 + wgt6);
+    real wgt = wgt1 + wgt2 + wgt3 + wgt4 + wgt5 + wgt6;
+
+    if (wgt < 0.5) {
+      return false;
+    }
 
     real var1[DIM];
     real var2[DIM];
@@ -118,8 +122,36 @@ protected: // methods
       var[i_var] += wgt4*var4[i_var];
       var[i_var] += wgt5*var5[i_var];
       var[i_var] += wgt6*var6[i_var];
-      var[i_var] *= iwgt;
+      var[i_var] /= wgt;
     }
+    return true;
+  }
+
+  template <typename PATCH> static CUDA_DH bool fieldVar(PATCH *patch, size_t i_field, size_t idx, size_t idx_neigh, real *var)
+  {
+    dim_t<DIM> dim;
+
+    size_t i1, j1, k1;
+    size_t i2, j2, k2;
+    patch->ijk(idx, i1, j1, k1);
+    patch->ijk(idx_neigh, i2, j2, k2);
+    size_t i0 = 2*i1 - i2;
+    size_t j0 = 2*j1 - j2;
+    size_t k0 = 2*k1 - k2;
+    if (!patch->checkRange(i0, j0, k0)) {
+      i0 = i1;
+      j0 = j1;
+      k0 = k1;
+    }
+    size_t idx0 = patch->index(i0, j0, k0);
+    if (patch->isSplitFace(idx0, idx)) {
+      i0 = i1;
+      j0 = j1;
+      k0 = k1;
+      idx0 = idx;
+    }
+
+    patch->getVar(dim, i_field, idx0, var);
   }
 
 
@@ -127,30 +159,76 @@ public: // methods
 
   template <typename PATCH> CUDA_DH void splitFlux(PATCH *patch, splitface_t sf, real* flux)
   {
-    real var[DIM];
+    /*
+    real var_field[DIM];
+    real var_cell[DIM];
+    real var_face[DIM];
     dim_t<DIM> dim;
-    //patch->getVar(dim, 0, sf.idx, var);
-    averageVar(patch, 0, sf.idx_neigh, var);
-    real scal = var[1]*sf.wnx + var[2]*sf.wny + var[3]*sf.wnz;
-    var[1] -= scal*sf.wnx;
-    var[2] -= scal*sf.wny;
-    var[3] -= scal*sf.wnz;
+    fieldVar(patch, 0, sf.idx, sf.idx_neigh, var_field);
+    patch->getVar(dim, 0, sf.idx, var_cell);
 
-    real p, u, v, w, T;
-    TGas::conservativeToPrimitive(var, p, T, u, v, w);
+    real p_field, u_field, v_field, w_field, T_field;
+    real p_cell, u_cell, v_cell, w_cell, T_cell;
+    TGas::conservativeToPrimitive(var_field, p_field, T_field, u_field, v_field, w_field);
+    TGas::conservativeToPrimitive(var_cell, p_cell, T_cell, u_cell, v_cell, w_cell);
 
-    real r  = var[0];
-    real rE = var[4];
+    //real u_abs_field  = sqrt(sqr(u_field) + sqr(v_field) + sqr(w_field));
+    //real u_abs_cell   = sqrt(sqr(u_cell) + sqr(v_cell) + sqr(w_cell));
+    //real u_norm_field = u_field*sf.wnx + v_field*sf.wny + w_field*sf.wnz;
+    //real u_norm_cell  = u_cell*sf.wnx + v_cell*sf.wny + w_cell*sf.wnz;
+    //real u_tang_field = sqrt(sqr(u_abs_field) - sqr(u_norm_field));
+    //real u_tang_cell  = sqrt(sqr(u_abs_cell) - sqr(u_norm_cell));
 
-    real h = (rE + p)/r;
+    real A = sqrt(sqr(sf.nx) + sqr(sf.ny) + sqr(sf.nz));
+    real nx0 = sf.nx/A;
+    real ny0 = sf.ny/A;
+    real nz0 = sf.nz/A;
+    real wgt  = 0.0;
+
+    real Fwgt = 1.0;
+    real F_field = var_field[0]*sqr(u_field*nx0 + v_field*ny0 + w_field*nz0) + p_field;
+    real F_cell = var_cell[0]*sqr(u_cell*nx0 + v_cell*ny0 + w_cell*nz0) + p_cell;
+    real F = Fwgt*F_cell + (1.0 - Fwgt)*F_field;
+
+    //real u_norm_face = FR13*(1.0 - sf.h1)*u_norm_field;
+    real p_face = wgt*p_field + (1.0 - wgt)*p_cell;
+    real T_face = wgt*T_field + (1.0 - wgt)*T_cell;
+    real u_face = wgt*u_field + (1.0 - wgt)*u_cell;
+    real v_face = wgt*v_field + (1.0 - wgt)*v_cell;
+    real w_face = wgt*w_field + (1.0 - wgt)*w_cell;
+    real scal = u_face*sf.wnx + v_face*sf.wny + w_face*sf.wnz;
+    u_face -= scal*sf.wnx;
+    v_face -= scal*sf.wny;
+    w_face -= scal*sf.wnz;
+    real un_face = u_face*nx0 + v_face*ny0 + w_face*nz0;
+    real RT = TGas::R(var_cell)*T_face;
+    real pwgt = fabs(nx0*sf.wnx + ny0*sf.wny + nz0*sf.wnz);
+    p_face = pwgt*p_face + (1.0 - pwgt)*F*RT/(sqr(un_face) + RT);
+    //u_face += u_norm_face*sf.wnx;
+    //v_face += u_norm_face*sf.wny;
+    //w_face += u_norm_face*sf.wnz;
+
+    TGas::primitiveToConservative(p_face, T_face, u_face, v_face, w_face, var_face);
+
+    real r_face  = var_face[0];
+    real rE_face = var_face[4];
+
+    real h_face = (rE_face + p_face)/r_face;
     real flux_0;
 
-    flux_0   = r*u*sf.nx + r*v*sf.ny + r*w*sf.nz;
+    flux_0   = r_face*u_face*sf.nx + r_face*v_face*sf.ny + r_face*w_face*sf.nz;
     flux[0] += flux_0;
-    flux[1] += (r*u*r*u + p)*sf.nx +         r*u*v*sf.ny +         r*u*w*sf.nz;
-    flux[2] +=         r*u*v*sf.nx + (r*v*r*v + p)*sf.ny +         r*v*w*sf.nz;
-    flux[3] +=         r*u*w*sf.nx +         r*v*w*sf.ny + (r*w*r*w + p)*sf.nz;
-    flux[4] += h*flux_0;
+    flux[1] += (r_face*u_face*r_face*u_face + p_face)*sf.nx +                   r_face*u_face*v_face*sf.ny +                   r_face*u_face*w_face*sf.nz;
+    flux[2] +=                   r_face*u_face*v_face*sf.nx + (r_face*v_face*r_face*v_face + p_face)*sf.ny +                   r_face*v_face*w_face*sf.nz;
+    flux[3] +=                   r_face*u_face*w_face*sf.nx +                   r_face*v_face*w_face*sf.ny + (r_face*w_face*r_face*w_face + p_face)*sf.nz;
+    flux[4] += h_face*flux_0;
+    */
+    real var_field[DIM];
+    real var_cell[DIM];
+    real var_face[DIM];
+    dim_t<DIM> dim;
+    fieldVar(patch, 0, sf.idx, sf.idx_neigh, var_field);
+    patch->getVar(dim, 0, sf.idx, var_cell);
   }
 
 };
