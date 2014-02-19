@@ -685,7 +685,7 @@ void PatchGrid::writeToVtk(size_t i_field, string file_name, const PostProcessin
   }
   file_name += ".vtm";
   vtkSmartPointer<vtkXMLMultiBlockDataWriter> vmb = vtkSmartPointer<vtkXMLMultiBlockDataWriter>::New();
-  vmb->SetInput(multi_block);
+  vmb->SetInputData(multi_block);
   vmb->SetFileName(file_name.c_str());
   vmb->Write();
 }

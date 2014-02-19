@@ -1,3 +1,5 @@
+include(${VTK_USE_FILE})
+
 SET(drnumlib_SOURCES
     blockcfd.cpp
     blockobjectbc.cpp

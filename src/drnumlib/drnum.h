@@ -36,7 +36,7 @@ using namespace std;
 // configuration macros
 //
 //#define DEBUG
-#define SINGLE_PRECISION
+#define DRNUM_SINGLE_PRECISION
 
 
 #ifdef __CUDACC__
@@ -51,7 +51,7 @@ using namespace std;
 
 
 #define WITH_VTK
-#ifdef SINGLE_PRECISION
+#ifdef DRNUM_SINGLE_PRECISION
 
 typedef float real;
 

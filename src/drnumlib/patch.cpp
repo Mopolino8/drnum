@@ -371,7 +371,7 @@ void Patch::finalizeDependencies()
 
     vtkSmartPointer<vtkUnstructuredGrid> grid = createVtkGridForCells(cells_without_donor);
     vtkSmartPointer<vtkXMLUnstructuredGridWriter> vtu = vtkXMLUnstructuredGridWriter::New();
-    vtu->SetInput(grid);
+    vtu->SetInputData(grid);
     string file_name = "VTK/";
     file_name += "no_donor_cells_patchID_";
     file_name += leftFill(toString(m_MyIndex), '0', 3);
