@@ -50,8 +50,10 @@
 #include "cubeincartisianpatch.h"
 
 #include "configmap.h"
+#include "timeaverage.h"
 
 typedef Upwind2<5, VanAlbada> reconstruction_t;
+//typedef Upwind1<5> reconstruction_t;
 
 #include "baseflowflux.h"
 
@@ -70,11 +72,11 @@ void run()
   real L              = 2*config.getValue<real>("radius");
   real time           = L/u;
   real cfl_target     = config.getValue<real>("CFL-number");
-  real t_write        = 0;
   real write_interval = config.getValue<real>("write-interval")*time;
   real total_time     = config.getValue<real>("total-time")*time;
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
   real scale          = config.getValue<real>("scale");
+  real sample_rate    = config.getValue<real>("sample-rate");
   int  thread_limit   = 0;
   int  base_patch_id  = config.getValue<int>("base-patch");
 
@@ -86,6 +88,11 @@ void run()
 #ifdef GPU
   int  cuda_device    = config.getValue<int>("cuda-device");
 #endif
+
+  bool start_from_zero = false;
+  if (config.exists("start-from-zero")) {
+    start_from_zero = config.getValue<bool>("start-from-zero");
+  }
 
   // Patch grid
   PatchGrid patch_grid;
@@ -109,7 +116,7 @@ void run()
 
   // Initialize
   real init_var[5];
-  PerfectGas::primitiveToConservative(p, T, 0, 1e-3*u, 1e-3*u, init_var);
+  PerfectGas::primitiveToConservative(0.1*p, T, 0, 1e-3*u, 1e-3*u, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
   patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
@@ -138,33 +145,111 @@ void run()
   iterator_feeder.addIterator(&iterator_std);
   iterator_feeder.feed(patch_grid);
 
-  //vector<CubeInCartisianPatch> cubes = setupCubes(patch_grid);
-  //for (size_t i = 0; i < cubes.size(); ++i) {
-  //  runge_kutta.addPostOperation(&cubes[i]);
-  //}
-  //CartesianCyclicCopy<5> cyclic(&patch_grid);
-  //runge_kutta.addPostOperation(&cyclic);
-
   runge_kutta.addIterator(&iterator_std);
 
   int write_counter = 0;
   int iter = 0;
   real t = 0;
 
+  QString restart_file = config.getValue<QString>("restart-file");
+  if (restart_file.toLower() != "none") {
+    write_counter = restart_file.right(6).toInt();
+    t = patch_grid.readData(0, "data/" + restart_file);
+    if (start_from_zero) {
+      t = 0;
+    }
+  }
+
 #ifdef GPU
   iterator_std.updateDevice();
 #endif
 
-  startTiming();
+  QVector<TimeAverage> centre_averages, vertical_averages;
 
+  startTiming();
+  real next_write_time = t + write_interval;
 
   while (t < total_time) {
 
+#ifdef GPU
+
+    {
+      CartesianPatch *patch = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(base_patch_id));
+      if (!patch) {
+        BUG;
+      }
+      GPU_CartesianPatch gpu_patch(patch);
+
+      size_t j_centre = patch->sizeJ()/2;
+      size_t k_centre = patch->sizeK()/2;
+      //gpu_patch.partialCopyFromDevice<5>(patch, 0, 0, patch->sizeI(), j_centre, j_centre + 1, k_centre, k_centre + 1); // centre line for velocity
+      //gpu_patch.partialCopyFromDevice<5>(patch, 0, 0, 1, j_centre, j_centre + 1, 0, patch->sizeK());                   // vertical line for pressure
+      gpu_patch.copyFromDevice(patch);
+
+      if (vertical_averages.size() == 0) {
+        vertical_averages.fill(TimeAverage(time/sample_rate), patch->sizeK());
+      }
+      if (centre_averages.size() == 0) {
+        centre_averages.fill(TimeAverage(time/sample_rate), patch->sizeI());
+      }
+
+      real t_old = t;
+
+      omp_set_num_threads(2);
+      #pragma omp parallel
+      {
+        if (omp_get_num_threads() != 2) {
+          BUG;
+        }
+        if (omp_get_thread_num() == 0) {
+          runge_kutta(dt);
+          t += dt;
+        } else {
+          for (size_t i = 0; i < patch->sizeI(); ++i) {
+            real var[5], p, T, u, v, w;
+            patch->getVarDim(5, 0, i, j_centre, k_centre, var);
+            PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+            centre_averages[i].add(t_old, u);
+          }
+          for (size_t k = 0; k < patch->sizeK(); ++k) {
+            real var[5], p_base, T;
+            patch->getVarDim(5, 0, 0, j_centre, k, var);
+            PerfectGas::conservativeToPrimitive(var, p_base, T);
+            real cp = 2*(p_base/p - 1)/(PerfectGas::gamma()*Ma*Ma);
+            vertical_averages[k].add(t_old, cp);
+          }
+          if (vertical_averages[0].valid()) {
+            ofstream f("cp.csv", std::ios_base::out);
+            f << "r/R, cp\n";
+            for (size_t k = 0; k < patch->sizeK(); ++k) {
+              real kr = real(k);
+              real krc = real(k_centre);
+              real r = (kr - krc)*patch->dz();
+              f << 2*r/L << ", " << vertical_averages[k].value() << "\n";
+            }
+            f.flush();
+          }
+          if (centre_averages[0].valid()) {
+            ofstream f("u.csv", std::ios_base::out);
+            f << "x/R, u\n";
+            for (size_t i = 0; i < patch->sizeI(); ++i) {
+              real x = i*patch->dx();
+              f << 2*x/L << ", " << centre_averages[i].value()/u << "\n";
+            }
+            f.flush();
+          }
+        }
+      }
+    }
+
+#else
+
     runge_kutta(dt);
     t += dt;
-    t_write += dt;
 
-    if (t_write >= write_interval) {
+#endif
+
+    if (t >= next_write_time) {
 
       // Do some diagnose on patches
       real CFL_max = 0;
@@ -224,14 +309,14 @@ void run()
       write_interval = config.getValue<real>("write-interval")*time;
       total_time     = config.getValue<real>("total-time")*time;
 
+      next_write_time = (int(t/write_interval) + 1)*write_interval;
+      cout << "next output is at t=" << next_write_time/time << "*L/u_oo" << endl;
+
       dt *= cfl_target/CFL_max;
 
       ++write_counter;
       patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
-      t_write -= write_interval;
-      if (t > 80.0) {
-        write_interval = 0.05;
-      }
+      patch_grid.writeData(0, "data/step", t, write_counter);
     } else {
       ++iter;
       cout << iter << " iterations,  t=" << t << " = " << t/time << "*L/u_oo,  dt: " << dt << endl;
