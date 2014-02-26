@@ -118,9 +118,7 @@ void run()
   PerfectGas::primitiveToConservative(p_far, T_far, 0, u_far, u_far, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
-  if (write) {
-    patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
-  }
+  patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), 0);
 
   if (mesh_preview) {
     exit(EXIT_SUCCESS);
@@ -235,9 +233,7 @@ void run()
       dt *= cfl_target/CFL_max;
 
       ++write_counter;
-      if (write) {
-        patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
-      }
+      patch_grid.writeToVtk(0, "VTK/step", CompressibleVariables<PerfectGas>(), write_counter);
       t_write -= write_interval;
       if (t > 80.0) {
         write_interval = 0.05;
@@ -256,9 +252,7 @@ void run()
   iterator_std.updateHost();
 #endif
 
-  if (write) {
-    patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
-  }
+  patch_grid.writeToVtk(0, "VTK/final", CompressibleVariables<PerfectGas>(), -1);
 }
 
 #endif // EXTERNAL_AERO_H
