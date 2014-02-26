@@ -588,6 +588,7 @@ real PatchGrid::readData(size_t i_field, QString file_name)
   if (file_name.right(4) != ".dnd") {
     file_name += ".dnd";
   }
+  cout << "Reading restart data from file\"" << qPrintable(file_name) << "\"" << endl;
   QFile file(file_name);
   file.open(QIODevice::ReadOnly);
   QDataStream stream(&file);
@@ -600,9 +601,11 @@ real PatchGrid::readData(size_t i_field, QString file_name)
   }
   real time;
   stream >> time;
+  cout << "  t = " << time << endl;
   for (size_t i_p = 0; i_p < getNumPatches(); i_p++) {
     getPatch(i_p)->readData(i_field, stream);
   }
+  cout << "done." << endl;
   return time;
 }
 
