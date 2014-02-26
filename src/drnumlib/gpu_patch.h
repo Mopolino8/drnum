@@ -55,7 +55,8 @@ public:
       m_IsSplitCell                = patch->m_GpuIsSplitCell;
     } else {
       if (cudaMalloc(&m_Data, sizeof(real)*patch->dataSize()) != cudaSuccess) {
-        BUG;
+        QString msg = "Unable to allocate memory on the GPU";
+        ERROR(qPrintable(msg));
       }
       copyToDevice(patch);
 
