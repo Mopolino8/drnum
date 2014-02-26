@@ -88,6 +88,8 @@ SET(drnumlib_SOURCES
     reconstruction/vanleerlim.h
     cpu_levelsetobjectbc.h
     lsobccompressibleswallop.h
+    timeaverage.h
+    timeaverage.cpp
 )
 
 ADD_LIBRARY(drnumlib SHARED ${drnumlib_SOURCES})
