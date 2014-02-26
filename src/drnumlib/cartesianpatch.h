@@ -43,7 +43,6 @@ class CartesianPatch;
 class CartesianPatch : public Patch
 {
 
-
 #include "cartesianpatch_common.h"
 
 private:
@@ -546,7 +545,6 @@ public: // methods
   virtual int findCell(vec3_t xo);
 
   virtual list<size_t> getNeighbours(size_t idx);
-
 
 #ifdef WITH_VTK
   virtual vtkSmartPointer<vtkDataSet> createVtkDataSet(size_t i_field, const PostProcessingVariables& proc_vars);
