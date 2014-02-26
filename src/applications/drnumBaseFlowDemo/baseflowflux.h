@@ -10,9 +10,12 @@
 #include "fluxes/vanleer.h"
 #include "fluxes/ausmplus.h"
 #include "fluxes/ausmdv.h"
+//#include "fluxes/ausm.h"
+#include "fluxes/roe.h"
 #include "fluxes/compressibleslipflux.h"
 #include "fluxes/compressiblefarfieldflux.h"
 #include "fluxes/compressibleviscflux.h"
+#include "fluxes/compressiblesmagorinskyflux.h"
 #include "perfectgas.h"
 #include "compressiblevariables.h"
 #include "rungekutta.h"
@@ -20,11 +23,10 @@
 class BaseFlowFlux
 {
 
-  typedef KNP<5, reconstruction_t, PerfectGas> euler_t;
-
-  typedef CompressibleViscFlux<5, PerfectGas>                   viscous_t;
+  typedef Roe<5, reconstruction_t, PerfectGas> euler_t;
+  typedef CompressibleSmagorinskyFlux<5, 2400, PerfectGas> viscous_t;
   typedef CompressibleSlipFlux<5, reconstruction_t, PerfectGas> wall_t;
-  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas>   farfield_t;
+  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
 
   reconstruction_t m_Reconstruction;
   euler_t          m_EulerFlux;
@@ -145,34 +147,30 @@ inline void BaseFlowFlux::zWallP(PATCH *P, size_t i, size_t j, size_t k, real x,
 template <typename PATCH>
 inline void BaseFlowFlux::xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  if (P->getIndex() != m_BasePatch) {
-    m_WallFlux.xWallM(P, i, j, k, x, y, z, A, flux);
+  dim_t<5> dim;
+  real var[5];
+  real p, T, u, v, w;
+  P->getVar(dim, 0, i, j, k, var);
+  PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
+  real y0 = 0.5*P->sizeJ()*P->dy();
+  real z0 = 0.5*P->sizeK()*P->dz();
+  real rr = sqr(y - y0) + sqr(z - z0);
+  if (rr < m_Radius*m_Radius && P->getIndex() == m_BasePatch) {
+    u = 0;
+    v = 0;
+    w = 0;
   } else {
-    dim_t<5> dim;
-    real var[5];
-    real p, T, u, v, w;
-    P->getVar(dim, 0, i, j, k, var);
-    PerfectGas::conservativeToPrimitive(var, p, T, u, v, w);
-    real y0 = 0.5*P->sizeJ()*P->dy();
-    real z0 = 0.5*P->sizeK()*P->dz();
-    real rr = sqr(y - y0) + sqr(z - z0);
-    if (rr < m_Radius*m_Radius) {
-      u = 0;
-      v = 0;
-      w = 0;
-    } else {
-      u = m_U;
-      v = 0;
-      w = 0;
-      T = m_T;
-      p = m_P;
-    }
-    flux[0] = A*p/(PerfectGas::R()*T)*u;
-    flux[1] = flux[0]*u + A*p;
-    flux[2] = flux[0]*v;
-    flux[3] = flux[0]*w;
-    flux[4] = flux[0]*(PerfectGas::cp()*T + 0.5*(u*u + v*v + w*w));
+    u = m_U;
+    v = 0;
+    w = 0;
+    T = m_T;
+    p = m_P;
   }
+  flux[0] = A*p/(PerfectGas::R()*T)*u;
+  flux[1] = flux[0]*u + A*p;
+  flux[2] = flux[0]*v;
+  flux[3] = flux[0]*w;
+  flux[4] = flux[0]*(PerfectGas::cp()*T + 0.5*(u*u + v*v + w*w));
 }
 
 template <typename PATCH>
