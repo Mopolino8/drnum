@@ -20,6 +20,7 @@ FIND_PACKAGE(VTK 6.0 NO_MODULE REQUIRED)
 #include(${VTK_USE_FILE})
 INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
 
+FIND_PACKAGE(OpenMP REQUIRED)
 
 FIND_PACKAGE(MPI REQUIRED)
 INCLUDE_DIRECTORIES(${MPI_CXX_INCLUDE_PATH})
@@ -47,6 +48,7 @@ IF(USE_GPU)
     LIST(APPEND CUDA_NVCC_FLAGS "-gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_30,code=compute_30")
     #LIST(APPEND CUDA_NVCC_FLAGS "-gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_35,code=compute_35")
     LIST(APPEND CUDA_NVCC_FLAGS "-Xcompiler -Wno-deprecated")
+    LIST(APPEND CUDA_NVCC_FLAGS "-Xcompiler ${OpenMP_CXX_FLAGS}")
 
     ADD_DEFINITIONS(-DGPU -DCUDA)
 ENDIF(USE_GPU)
