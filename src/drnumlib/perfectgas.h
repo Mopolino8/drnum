@@ -28,11 +28,11 @@ class PerfectGas
 
 public: // static methods
 
-  static CUDA_DH real R(real* = NULL)     { return 287; }       ///< @todo find a concept for this
+  static CUDA_DH real R(real* = NULL)     { return 287.2; }       ///< @todo find a concept for this
   static CUDA_DH real gamma(real* = NULL) { return 1.4; }       ///< @todo find a concept for this
   static CUDA_DH real cp(real* = NULL)    { return 1004.5; }    ///< @todo find a concept for this
   static CUDA_DH real cv(real* = NULL)    { return 717.5; }     ///< @todo find a concept for this
-  static CUDA_DH real mu(real* = NULL)    { return 1.8e-5; }    ///< @todo find a concept for this
+  static CUDA_DH real mu(real *var);//    { return 1.8e-5; }    ///< @todo find a concept for this
   static CUDA_DH real Pr(real* = NULL)    { return 0.7; }       ///< @todo find a concept for this
 
   static CUDA_DH void primitiveToConservative(real p, real T, real* var);
@@ -96,5 +96,21 @@ inline void PerfectGas::conservativeToPrimitive(real *var, real &p, real &T, vec
 {
   conservativeToPrimitive(var, p, T, U[0], U[1], U[2]);
 }
+
+inline real PerfectGas::mu(real *var)
+{
+  const real T0_suth = 300.55;
+  const real C_suth = 111.00;
+  const real mu0_suth = 1.781e-5;
+  real p, T;
+  conservativeToPrimitive(var, p, T);
+#ifdef DRNUM_SINGLE_PRECISION
+  return mu0_suth*powf(T/T0_suth, 1.5)*(T0_suth + C_suth)/(T + C_suth);
+#else
+  return mu0_suth*pow(T/T0_suth, 1.5)*(T0_suth + C_suth)/(T + C_suth);
+#endif
+}
+
+
 
 #endif // PERFECTGAS_H
