@@ -6,7 +6,7 @@ SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited config" FORC
 PROJECT(DRNUM)
 OPTION(USE_GPU "Use GPU for computation" ON)
 
-SET(CMAKE_VERBOSE_MAKEFILE off)
+SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
 SET(DRNUM_MAJOR_VERSION 0)
 SET(DRNUM_MINOR_VERSION 1)
@@ -15,7 +15,7 @@ SET(DRNUM_VERSION ${DRNUM_MAJOR_VERSION}.${DRNUM_MINOR_VERSION}.${DRNUM_PATCH_VE
 SET(DRNUM_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 SET(DRNUM_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-FIND_PACKAGE(VTK 6.0 NO_MODULE REQUIRED)
+FIND_PACKAGE(VTK 6.1 NO_MODULE REQUIRED)
 #FIND_PACKAGE(VTK 6.0 COMPONENTS vtkRenderingCore vtkChartsCore vtkCommonExecutionModel NO_MODULE REQUIRED)
 #include(${VTK_USE_FILE})
 INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
@@ -46,6 +46,7 @@ IF(USE_GPU)
     LIST(APPEND CUDA_NVCC_FLAGS "-gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_20,code=compute_20")
     LIST(APPEND CUDA_NVCC_FLAGS "-gencode=arch=compute_20,code=sm_21")
     LIST(APPEND CUDA_NVCC_FLAGS "-gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_30,code=compute_30")
+    #LIST(APPEND CUDA_NVCC_FLAGS "-Xptxas -dlcm=ca")
     #LIST(APPEND CUDA_NVCC_FLAGS "-gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_35,code=compute_35")
     LIST(APPEND CUDA_NVCC_FLAGS "-Xcompiler -Wno-deprecated")
     LIST(APPEND CUDA_NVCC_FLAGS "-Xcompiler ${OpenMP_CXX_FLAGS}")

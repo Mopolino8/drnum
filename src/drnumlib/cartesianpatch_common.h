@@ -177,7 +177,7 @@ CUDA_DH void ijk(const size_t& l, size_t& i, size_t& j, size_t& k) const {
 
 /**
  * Get the gradient in x direction at a specifed (i,j,k) position.
- * This method will automaitically respect domain borders (one sided gradient)
+ * This method will automatically respect domain borders (one sided gradient)
  * @param i_field the field index
  * @param i first Cartesian index
  * @param j second Cartesian index
@@ -215,7 +215,7 @@ CUDA_DH void getXGrad(DIM, size_t i_field, size_t i, size_t j, size_t k, real* g
 
 /**
  * Get the gradient in y direction at a specifed (i,j,k) position.
- * This method will automaitically respect domain borders (one sided gradient)
+ * This method will automatically respect domain borders (one sided gradient)
  * @param i_field the field index
  * @param i first Cartesian index
  * @param j second Cartesian index
@@ -259,7 +259,7 @@ CUDA_DH void getYGrad(DIM, size_t i_field, size_t i, size_t j, size_t k, real* g
 
 /**
  * Get the gradient in z direction at a specifed (i,j,k) position.
- * This method will automaitically respect domain borders (one sided gradient)
+ * This method will automatically respect domain borders (one sided gradient)
  * @param i_field the field index
  * @param i first Cartesian index
  * @param j second Cartesian index

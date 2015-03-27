@@ -20,6 +20,7 @@ SET(drnumlib_SOURCES
     configmap.cpp
     containertricks.h
     cubeincartisianpatch.cpp
+    cylinderincartisianpatch.cpp
     cudatools.h
     cylinderobject.cpp
     debug.cpp
@@ -29,6 +30,7 @@ SET(drnumlib_SOURCES
     geometrytools.cpp
     gpu_patch.h
     gpu_cartesianpatch.h
+    gpu_cylinderincartisianpatch.h
     iteratorfeeder.cpp
     levelsetdefinition.cpp
     levelsetobject.cpp
