@@ -27,7 +27,11 @@
 #include <ctime>
 #include <cassert>
 #include <cstdio>
+
+#ifdef OPEN_MP
 #include <omp.h>
+#endif
+
 #include <limits>
 
 using namespace std;
@@ -87,10 +91,13 @@ inline int posReal2Int(real v)
 using namespace std;
 
 
-
+#ifdef MAC_OSX
+#define RESTRICT
+#else
 #define RESTRICT __restrict__
+#endif
+
 #define REGREAL real
-//register real
 
 #define VTK_USE_ANSI_STDLIB
 

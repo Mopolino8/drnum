@@ -117,8 +117,13 @@ void CartesianIterator<DIM, OP>::compute(real factor, const vector<size_t> &patc
         #pragma omp parallel
         #endif
         {
+          #ifdef OPEN_MP
           size_t num_threads = omp_get_num_threads();
           size_t tid         = omp_get_thread_num();
+          #else
+          size_t num_threads = 1;
+          size_t tid         = 0;
+          #endif
           size_t n           = patch->sizeI()/(2*num_threads) + 1;
           size_t i_start     = max(i1, (offset + 2*tid)*n);
           size_t i_stop      = min(i2, i_start + n);

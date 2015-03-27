@@ -137,7 +137,7 @@ void run()
   GPU_CartesianIterator<5, BaseFlowFlux>  iterator_std(flux, cuda_device, thread_limit);
 #else
   BUG;
-  CartesianIterator<5, JetFlux>  iterator_std(flux);
+  CartesianIterator<5, BaseFlowFlux>  iterator_std(flux);
 #endif
   iterator_std.setCodeString(CodeString("fx fy fz far far far far far far 0"));
 

@@ -28,7 +28,7 @@
 #include <QStringList>
 #include <QDir>
 
-#include "error.h"
+//#include "error.h"
 #include "math/mathvector.h"
 #include "math/smallsquarematrix.h"
 #include "math/linsolve.h"

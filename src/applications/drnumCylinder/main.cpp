@@ -29,8 +29,12 @@ int main()
 #ifdef GPU
   GPU_main();
 #else
+#ifdef OPEN_MP
   int num_threads = 2;
   omp_set_num_threads(num_threads);
+#else
+  int num_threads = 1;
+#endif
   cout << endl;
   cout << "*** NUMBER THREADS: " << num_threads << endl;
   cout << endl;
