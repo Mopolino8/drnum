@@ -4,6 +4,23 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited config" FORCE)
 
 PROJECT(DRNUM)
+
+set(A_DEBUG_BUILD OFF CACHE BOOL "Build a debug version?")
+if (${A_DEBUG_BUILD})
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+else()
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
+
+if (NOT INITIAL_CONFIG)
+  set(INITIAL_CONFIG "..." CACHE INTERNAL "hidden flag...")
+  set(CMAKE_INSTALL_PREFIX $ENV{HOME}/local CACHE STRING "Install path prefix, prepended onto install directories." FORCE)
+endif()
+
+
+
 OPTION(USE_GPU "Use GPU for computation" ON)
 
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
