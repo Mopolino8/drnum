@@ -24,6 +24,7 @@ SET(drnumlib_SOURCES
     cudatools.h
     cylinderobject.cpp
     debug.cpp
+    discretelevelset.cpp
     donor_t.h
     drnum.h
     externalexchangelist.cpp

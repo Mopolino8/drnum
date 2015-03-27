@@ -38,6 +38,7 @@
 #include "perfectgas.h"
 #include "compressiblevariables.h"
 #include "rungekutta.h"
+#include "discretelevelset.h"
 
 #ifdef GPU
 #include "cartesiancycliccopy.h"
@@ -59,23 +60,25 @@
 
 #include "configmap.h"
 
+#define NUM_VARS 6
+
 template <typename TReconstruction>
 class EaFlux
 {
 
 protected:
 
-  //typedef AusmDV<5, reconstruction_t, PerfectGas> euler_t;
-  //typedef VanLeer<5, TReconstruction, PerfectGas> euler_t;
-  typedef Roe<5, TReconstruction, PerfectGas> euler_t;
-  //typedef AusmPlus<5, TReconstruction, PerfectGas> euler_t;
-  //typedef KT<5, 10000, TReconstruction, PerfectGas> euler_t;
-  //typedef KNP<5, TReconstruction, PerfectGas> euler_t;
+  //typedef AusmDV<NUM_VARS, reconstruction_t, PerfectGas> euler_t;
+  //typedef VanLeer<NUM_VARS, TReconstruction, PerfectGas> euler_t;
+  typedef Roe<NUM_VARS, TReconstruction, PerfectGas> euler_t;
+  //typedef AusmPlus<NUM_VARS, TReconstruction, PerfectGas> euler_t;
+  //typedef KT<NUM_VARS, 10000, TReconstruction, PerfectGas> euler_t;
+  //typedef KNP<NUM_VARS, TReconstruction, PerfectGas> euler_t;
 
-  typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
-  typedef CompressibleSmagorinskyFlux<5, 2000, PerfectGas>    viscous_t;
-  typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
-  typedef CompressibleFlux<5, PerfectGas>                     split_t;
+  typedef CompressibleSlipFlux<NUM_VARS, Upwind1<NUM_VARS>, PerfectGas>     wall_t;
+  typedef CompressibleSmagorinskyFlux<NUM_VARS, 2000, PerfectGas>    viscous_t;
+  typedef CompressibleFarfieldFlux<NUM_VARS, Upwind1<NUM_VARS>, PerfectGas> farfield_t;
+  typedef CompressibleFlux<NUM_VARS, PerfectGas>                     split_t;
 
   TReconstruction m_Reconstruction;
   euler_t          m_EulerFlux;
@@ -215,7 +218,7 @@ inline void EaFlux<TReconstruction>::splitFlux(PATCH *P, splitface_t sf, real* f
 
 void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *dn2of_list, Barrier *barrier, SharedMemory *shmem, bool &write_flag, bool &stop_flag, real &dt)
 {
-  dim_t<5> dim;
+  dim_t<NUM_VARS> dim;
   patch->copyFieldToHost(0);
   real var[dim()];
   real p, T, u, v, w;
@@ -250,7 +253,7 @@ void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *
   of2dn_list->ipcReceive();
 
   for (int i = 0; i < of2dn_list->size(); ++i) {
-    real var[5];
+    real var[NUM_VARS];
     p = of2dn_list->data(0, i);
     u = of2dn_list->data(1, i);
     v = of2dn_list->data(2, i);
@@ -265,7 +268,7 @@ void sync(Patch *patch, ExternalExchangeList *of2dn_list, ExternalExchangeList *
 
 void run()
 {
-  dim_t<5> dim;
+  dim_t<NUM_VARS> dim;
 
   // control files
   ConfigMap config;
@@ -310,7 +313,7 @@ void run()
   PatchGrid patch_grid;
   //.. general settings (apply to all subsequent patches)
   patch_grid.setNumberOfFields(3);
-  patch_grid.setNumberOfVariables(5);
+  patch_grid.setNumberOfVariables(NUM_VARS);
   patch_grid.defineVectorVar(1);
   patch_grid.setInterpolateData();
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
@@ -327,12 +330,22 @@ void run()
   cout << " dt  =  " << dt << endl;
 
   // Initialize
-  real init_var[5];
+  real init_var[NUM_VARS];
   PerfectGas::primitiveToConservative(p, T, u, v, 0.00*u, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
+  DiscreteLevelSet* level_set = NULL;
+  if (config.exists("geometry")) {
+    QString stl_file_name = config.getValue<QString>("geometry");
+    level_set = new DiscreteLevelSet(&patch_grid, 5, stl_file_name);
+
+  }
+
   if (mesh_preview) {
     patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), 0);
+    if (level_set) {
+      patch_grid.writeToVtk(0, "VTK-drnum/levelset", DiscreteLevelSet::PlotVars<5>(), -1);
+    }
     exit(EXIT_SUCCESS);
   }
 
@@ -358,27 +371,27 @@ void run()
   bool inviscid = config.getValue<bool>("inviscid");
 
   if (reconstruction == "second-order") {
-    EaFlux<Upwind2<5, SecondOrder> > flux(u, v, p, T, inviscid);
+    EaFlux<Upwind2<NUM_VARS, SecondOrder> > flux(u, v, p, T, inviscid);
 #ifdef GPU
-    iterator = new GPU_CartesianIterator<5, EaFlux<Upwind2<5, SecondOrder> > >(flux, cuda_device, thread_limit);
+    iterator = new GPU_CartesianIterator<NUM_VARS, EaFlux<Upwind2<NUM_VARS, SecondOrder> > >(flux, cuda_device, thread_limit);
 #else
-    iterator = new CartesianIterator<5, EaFlux<Upwind2<5, SecondOrder> > >(flux);
+    iterator = new CartesianIterator<NUM_VARS, EaFlux<Upwind2<NUM_VARS, SecondOrder> > >(flux);
 #endif
 
   } else if (reconstruction == "minmod") {
-    EaFlux<Upwind2<5, MinMod> > flux(u, v, p, T, inviscid);
+    EaFlux<Upwind2<NUM_VARS, MinMod> > flux(u, v, p, T, inviscid);
 #ifdef GPU
-    iterator = new GPU_CartesianIterator<5, EaFlux<Upwind2<5, MinMod> > >(flux, cuda_device, thread_limit);
+    iterator = new GPU_CartesianIterator<NUM_VARS, EaFlux<Upwind2<NUM_VARS, MinMod> > >(flux, cuda_device, thread_limit);
 #else
-    iterator = new CartesianIterator<5, EaFlux<Upwind2<5, MinMod> > >(flux);
+    iterator = new CartesianIterator<NUM_VARS, EaFlux<Upwind2<NUM_VARS, MinMod> > >(flux);
 #endif
 
   } else {
-    EaFlux<Upwind1<5> > flux(u, v, p, T, inviscid);
+    EaFlux<Upwind1<NUM_VARS> > flux(u, v, p, T, inviscid);
 #ifdef GPU
-    iterator = new GPU_CartesianIterator<5, EaFlux<Upwind1<5> > >(flux, cuda_device, thread_limit);
+    iterator = new GPU_CartesianIterator<NUM_VARS, EaFlux<Upwind1<NUM_VARS> > >(flux, cuda_device, thread_limit);
 #else
-    iterator = new CartesianIterator<5, EaFlux<Upwind1<5> > >(flux);
+    iterator = new CartesianIterator<NUM_VARS, EaFlux<Upwind1<NUM_VARS> > >(flux);
 #endif
   }
 
@@ -394,7 +407,6 @@ void run()
   int iter = 0;
   real t = 0;
 
-
   SharedMemory         *shmem = NULL;
   Barrier              *barrier = NULL;
   ExternalExchangeList *of2dn_list = NULL;
@@ -409,8 +421,8 @@ void run()
     } catch (IpcException E) {
       E.print();
     }
-    of2dn_list = new ExternalExchangeList("of2dn", 5, NULL, shmem, barrier);
-    dn2of_list = new ExternalExchangeList("dn2of", 5, NULL, shmem, barrier);
+    of2dn_list = new ExternalExchangeList("of2dn", NUM_VARS, NULL, shmem, barrier);
+    dn2of_list = new ExternalExchangeList("dn2of", NUM_VARS, NULL, shmem, barrier);
     int client_ready = 0;
     shmem->writeValue("client-ready", &client_ready);
     cout << "External code coupling has been enabled." << endl;
@@ -502,7 +514,7 @@ void run()
         for (size_t i = 0; i < NI; ++i) {
           for (size_t j = 0; j < NJ; ++j) {
             for (size_t k = 0; k < NK; ++k) {
-              real p, u, v, w, T, var[5];
+              real p, u, v, w, T, var[NUM_VARS];
               patch.getVar(dim, 0, i, j, k, var);
               rho_min = min(var[0], rho_min);
               rho_max = max(var[0], rho_max);

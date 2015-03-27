@@ -349,7 +349,7 @@ CUDA_DH void multVarsubsetScalar(const size_t& i_field, const size_t& l_c, const
  * @param l_c the cell index (in 1D-alignment, e.g. unstructured)
  * @param ret_varset the conservative variable set (return: write after pointer)
  */
-CUDA_DH real* getVarset(size_t i_field, size_t l_c, real* ret_varset)
+CUDA_DH void getVarset(size_t i_field, size_t l_c, real* ret_varset)
 {
   real* start_p = m_Data + i_field*m_FieldSize + l_c; // for i_var = 0;
   for (size_t i_var = 0; i_var < numVariables(); ++i_var) {
@@ -368,7 +368,7 @@ CUDA_DH real* getVarset(size_t i_field, size_t l_c, real* ret_varset)
  * @param after_last_iv after last var-index (example: 2 for rho_v, etc...)
  * @param start_ivss starting subset var-index (e.g. 0 for var[0])
  */
-CUDA_DH real* getVarsubset(size_t i_field, size_t l_c, real* ret_varset,
+CUDA_DH void getVarsubset(size_t i_field, size_t l_c, real* ret_varset,
                            size_t start_iv, size_t after_last_iv,
                            size_t start_ivss = 0)
 {
