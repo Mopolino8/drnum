@@ -4,6 +4,23 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 SET(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited config" FORCE)
 
 PROJECT(DRNUM)
+
+set(A_DEBUG_BUILD OFF CACHE BOOL "Build a debug version?")
+if (${A_DEBUG_BUILD})
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+else()
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
+endif()
+
+if (NOT INITIAL_CONFIG)
+  set(INITIAL_CONFIG "..." CACHE INTERNAL "hidden flag...")
+  set(CMAKE_INSTALL_PREFIX $ENV{HOME}/local CACHE STRING "Install path prefix, prepended onto install directories." FORCE)
+endif()
+
+
+
 OPTION(USE_GPU "Use GPU for computation" ON)
 
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
@@ -20,7 +37,16 @@ FIND_PACKAGE(VTK 6.1 NO_MODULE REQUIRED)
 #include(${VTK_USE_FILE})
 INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
 
-FIND_PACKAGE(OpenMP REQUIRED)
+set(OPENMP_LIBS, "")
+find_package(OpenMP)
+if(OpenMP_FOUND)
+    add_definitions(-DOPEN_MP)
+    set(OPENMP_LIBS, "-lgomp")
+endif(OpenMP_FOUND)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  add_definitions(-DMAC_OSX)
+endif()
 
 FIND_PACKAGE(MPI REQUIRED)
 INCLUDE_DIRECTORIES(${MPI_CXX_INCLUDE_PATH})
@@ -34,6 +60,10 @@ INCLUDE_DIRECTORIES(${MPI_INCLUDE_PATH})
 # Qt4
 FIND_PACKAGE(Qt4 COMPONENTS QtCore REQUIRED)
 INCLUDE(${QT_USE_FILE})
+
+# CGAL
+FIND_PACKAGE(CGAL REQUIRED)
+include(${CGAL_USE_FILE})
 
 IF(USE_GPU)
     FIND_PACKAGE(CUDA)
@@ -62,7 +92,7 @@ INCLUDE_DIRECTORIES(
     ${CMAKE_CURRENT_SOURCE_DIR}/shmlib
     ${CMAKE_CURRENT_BINARY_DIR}/shmlib)
 
-ADD_SUBDIRECTORY(applications)
-ADD_SUBDIRECTORY(drnumlib)
 ADD_SUBDIRECTORY(shmlib)
+ADD_SUBDIRECTORY(drnumlib)
+ADD_SUBDIRECTORY(applications)
 

@@ -24,6 +24,7 @@ SET(drnumlib_SOURCES
     cudatools.h
     cylinderobject.cpp
     debug.cpp
+    discretelevelset.cpp
     donor_t.h
     drnum.h
     externalexchangelist.cpp
@@ -99,5 +100,12 @@ ADD_LIBRARY(drnumlib SHARED ${drnumlib_SOURCES})
 SET_TARGET_PROPERTIES(drnumlib PROPERTIES VERSION ${DRNUM_VERSION})
 SET_TARGET_PROPERTIES(drnumlib PROPERTIES COMPILE_FLAGS "-Wno-deprecated")
 
+TARGET_LINK_LIBRARIES(drnumlib ${DRNUM_USED_LIBS} ${QT_LIBRARIES} ${VTK_LIBRARIES} ${MPI_LIBRARIES} ${OPENMP_LIBS} shmlib)
+
 INSTALL(TARGETS drnumlib LIBRARY DESTINATION lib)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  SET_TARGET_PROPERTIES(drnumlib PROPERTIES MACOSX_RPATH 1)
+endif()
+
 

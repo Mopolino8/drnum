@@ -308,7 +308,7 @@ void run()
 #ifdef GPU
     iterator = new GPU_CartesianIterator<5, EaFlux<Upwind2<5, SecondOrder> > >(flux, cuda_device, thread_limit);
 #else
-    iterator = new CartesianIterator<5, EaFlux<Upwind2<SecondOrder> > >(flux);
+    iterator = new CartesianIterator<5, EaFlux<Upwind2<5, SecondOrder> > >(flux);
 #endif
 
   } else if (reconstruction == "minmod") {
@@ -316,7 +316,7 @@ void run()
 #ifdef GPU
     iterator = new GPU_CartesianIterator<5, EaFlux<Upwind2<5, MinMod> > >(flux, cuda_device, thread_limit);
 #else
-    iterator = new CartesianIterator<5, EaFlux<Upwind2<MinMod> > >(flux);
+    iterator = new CartesianIterator<5, EaFlux<Upwind2<5, MinMod> > >(flux);
 #endif
 
   } else {
@@ -492,9 +492,5 @@ void run()
     }
   }
 }
-
-#ifdef DEBUG
-Boink
-#endif
 
 #endif // EXTERNAL_AERO_H
