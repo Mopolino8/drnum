@@ -18,8 +18,8 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef CYLINDERINCARTISIANPATCH_H
-#define CYLINDERINCARTISIANPATCH_H
+#ifndef GPU_CYLINDERINCARTISIANPATCH_H
+#define GPU_CYLINDERINCARTISIANPATCH_H
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
@@ -34,23 +34,16 @@ class GPU_CylinderInCartisianPatch;
 
 class GPU_CylinderInCartisianPatch : public GenericOperation
 {
-  GPU_CartesianPatch *m_Patch;
+  GPU_CartesianPatch m_Patch;
 
-  real    m_Tinf;
-  real    m_Pinf;
-  real    m_Rad;
-  real    m_Rad2;
-  real    m_Omega;
-  vec3_t  m_Xo;
-  vec3_t  m_Po;
-
-  real   dot(vec3_t x1 , vec3_t x2);
-  real   norm(vec3_t x);
-  real   norm(real x, real y, real z);
-  real   radiusSquare(vec3_t x1);
-  real   scalarProduct(vec3_t x1 , vec3_t x2);
-  vec3_t normalize(vec3_t x);
-  vec3_t normalize(real x, real y, real z);
+  real   m_Tinf;
+  real   m_Pinf;
+  real   m_Rad;
+  real   m_Omega;
+  real   m_Height;
+  vec3_t m_Xo;
+  vec3_t m_Po;
+  size_t m_MaxNumThreads;
 
 public:
 
@@ -58,512 +51,260 @@ public:
    * This class sets two layers outside a cylinder of diameter m_Rad to a given pressure and velocity.
    * For storage during the computation of the layer data the residual field is abused.
    * The 5 storage indices per point are used as followed:
-   *  - 1 cell type: 3-> in cylinder, 2-> layer 1, 1-> layer 2, 0-> outside, set to zero.
-   *  - 2 total weight, w1 + w2 + w3.., accounting for the contribution of the cylinder edge cells to the "bc"
-   *  - 3 weighted pressure, w1*p1 + w2*p2..
-   *  - 4 u
-   *  - 5 v
+   *  - index 1 : cell type => 3-> in cylinder, 2-> layer 1, 1-> layer 2, 0-> outside, set to zero.
    */
 
-  GPU_CylinderInCartisianPatch(GPU_CartesianPatch* patch);
+  GPU_CylinderInCartisianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit);
 
   virtual void operator()();
 
 };
 
-GPU_CylinderInCartisianPatch::GPU_CylinderInCartisianPatch(GPU_CartesianPatch *patch)
+GPU_CylinderInCartisianPatch::GPU_CylinderInCartisianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit) : m_Patch(patch)
 {
-  m_Patch = patch;
-  m_Tinf  = 300.0;
-  m_Pinf  = 1e5;
-  m_Xo    = vec3_t(0.0, 0.0, 0.0);
-  m_Rad   = 2.0;
-  m_Rad2  = m_Rad*m_Rad;
+  m_Tinf   = 300.0;
+  m_Pinf   = 1e5;
+  m_Xo     = vec3_t(0.0, 0.0, 0.0);
+  m_Rad    = 1.0;
+  m_Height = 0.5;
   //m_Omega  = -1.04719775;
   m_Omega  = 17.3594;
-  m_Po[0] = 0.5*m_Patch->dx();
-  m_Po[1] = 0.5*m_Patch->dy();
-  m_Po[2] = 0.5*m_Patch->dz();
-  m_Po = m_Patch->getTransformInertial2This().transformReverse(m_Po);
+  m_Po[0] = 0.5*patch->dx();
+  m_Po[1] = 0.5*patch->dy();
+  m_Po[2] = 0.5*patch->dz();
+  m_Po    = patch->getTransformInertial2This().transformReverse(m_Po);
+
+  int count;
+  if (cudaGetDeviceCount(&count) != cudaSuccess) {
+    cerr << "error detecting CUDA devices" << endl;
+    exit(EXIT_FAILURE);
+  }
+  if (count < cuda_device + 1) {
+    CudaTools::info();
+    cerr << "specified CUDA device does not exists" << endl;
+    exit(EXIT_FAILURE);
+  }
+  cudaDeviceProp prop;
+  if (cudaGetDeviceProperties(&prop, cuda_device) != cudaSuccess) {
+    cerr << "error fetching device properties" << endl;
+    exit(EXIT_FAILURE);
+  }
+  cudaSetDevice(cuda_device);
+  m_MaxNumThreads = min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]);
+  if (thread_limit > 0) {
+    m_MaxNumThreads = min(thread_limit, m_MaxNumThreads);
+  }
+  //cudaDeviceSetLimit( cudaLimitPrintfFifoSize, 32 * 1024 * 1024 );
 }
 
-inline real GPU_CylinderInCartisianPatch::norm(vec3_t x)
-{
-  return sqrt(x[0]*x[0] + x[1]*x[1] +x[2]*x[2]);
-}
-
-inline real GPU_CylinderInCartisianPatch::norm(real x, real y, real z)
-{
-  return sqrt(x*x + y*y + z*z);
-}
-
-inline vec3_t GPU_CylinderInCartisianPatch::normalize(real x, real y, real z)
-{
-  vec3_t x_return;
-  real norm = norm(x, y, z);
-  x_return[0] = x/norm;
-  x_return[1] = y/norm;
-  x_return[2] = z/norm;
-
-  return x_return;
-}
-
-inline vec3_t GPU_CylinderInCartisianPatch::normalize(vec3_t x)
-{
-  vec3_t x_return;
-  x_return[0] = x[0]/norm(x);
-  x_return[1] = x[1]/norm(x);
-  x_return[2] = x[2]/norm(x);
-
-  return  x;
-}
-
-inline real GPU_CylinderInCartisianPatch::radiusSquare(vec3_t x1)
-{
-  return GPU_CylinderInCartisianPatch::radiusSquare(x1[0], x1[1], x1[2]);
-}
-
-inline real GPU_CylinderInCartisianPatch::radiusSquare(real x, real y, real z)
+CUDA_DH inline real vectorSquare(real x, real y, real z)
 {
   return (x*x + y*y + z*z);
 }
 
-inline real GPU_CylinderInCartisianPatch::dot(vec3_t x1, vec3_t x2)
+CUDA_DH inline real norm(real x, real y, real z)
 {
-  return (x1[0]*x2[0] + x1[1]*x2[1] + x1[2]*x2[2]);
+  return sqrt(x*x + y*y + z*z);
 }
 
-inline real GPU_CylinderInCartisianPatch::scalarProduct(vec3_t x1, vec3_t x2)
+CUDA_DH inline real dot(real x1, real y1, real z1, real x2, real y2, real z2)
 {
-  return GPU_CylinderInCartisianPatch::dot(x1, x2)/GPU_CylinderInCartisianPatch::norm(x2);
+  return (x1*x2 + x1*x2 + x1*x2);
 }
 
-template <unsigned int DIM>
-inline void GPU_CylinderInCartisianPatch::computeDpAndWeight(GPU_CartesianPatch* patch, vec3_t x_PmO, vec3_t x_P, size_t i, size_t j, size_t k, real dx, real& dp, real& weight) {
-  vec3_t x_im;
-  x_im[0] = (real(i) + 0.5)*patch.dx() + x_PmO[0];
-  x_im[1] = (real(j) + 0.5)*patch.dy() + x_PmO[1];
-  x_im[2] = (real(k) + 0.5)*patch.dz() + x_PmO[2];
+CUDA_DH inline real scalarProduct(real x1, real y1, real z1, real x2, real y2, real z2)
+{
+  return dot(x1, y1, z1, x2, y2, z2)/norm(x2, y2, z2);
+}
+
+CUDA_DH inline real normalizedScalarProduct(real x1, real y1, real z1, real x2, real y2, real z2)
+{
+  real norm1 = norm(x1, y1, z1);
+  x1 /= norm1;
+  y1 /= norm1;
+  z1 /= norm1;
+
+  real norm2 = norm(x2, y2, z2);
+  x2 /= norm2;
+  y2 /= norm2;
+  z2 /= norm2;
+
+  return scalarProduct(x1, y1, z1, x2, y2, z2);
+}
+
+CUDA_DH inline void computeDpAndWeight(GPU_CartesianPatch& patch, real x_PmO, real y_PmO, real z_PmO, real x_p, real y_p, real z_p, size_t i, size_t j, size_t k, real dx, real& dp, real& weight)
+{
+  dim_t<5> dim;
+  real x = (real(i) + 0.5)*patch.dx() + x_PmO;
+  real y = (real(j) + 0.5)*patch.dy() + y_PmO;
+  real z = (real(k) + 0.5)*patch.dz() + z_PmO;
 
   real var1[5];
   real T, p, u, v, w;
-  patch.getVar(DIM, 0, i, j, k, var1);
+  patch.getVar(dim, 0, i, j, k, var1);
   PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
 
-  weight = scalarProduct(normalize(x_im), normalize(x_p));
-  // dp = dr*v^2*rho/r
+  weight = normalizedScalarProduct(x, y, z, x_p, y_p, z_p);
+
+  // dp = dr.v_th^2.rho/r
   // Here dr = dx*weight
-  dp     = weight*p + weight*weight*m_Patch.dx()*(u*u + v*v + w*w)*var1[0]/norm(x_im);
+  real v_n   = scalarProduct(u, v, 0, x_p, y_p, 0);
+  real v_th2 = vectorSquare(u, v, 0) - v_n*v_n;
+  //dp = weight*p + weight*weight*dx*(u*u + v*v + w*w)*var1[0]/norm(x_im);
+  dp = weight*p + weight*weight*dx*v_th2*var1[0]/norm(x, y, z);
 }
 
-
-template <unsigned int DIM>
-__global__ void GPU_CylinderInCartisianPatch_Mark(GPU_CartesianPatch patch, vec3_t x_PmO, unsigned int radius2)
+__global__ void GPU_CylinderInCartisianPatch_Mark(GPU_CartesianPatch patch, real x_PmO, real y_PmO, real z_PmO, real radius2, real height2)
 {
-  size_t i = blockDim.y*blockIdx.x + threadIdx.y;
-  size_t j = 2*blockIdx.y;
+  //size_t i = blockDim.y*blockIdx.x + threadIdx.y;
+  //size_t j = 2*blockIdx.y;
+  //size_t k = threadIdx.x;
+  size_t i = blockIdx.x;
+  size_t j = blockIdx.y;
   size_t k = threadIdx.x;
-  if (j >= patch.sizeJ() || i >= patch.sizeI()) return;
 
-  //real x = (real)0.5*patch.dx() + i*patch.dx();
-  //real y = (real)0.5*patch.dy() + j*patch.dy();
-  //real z = (real)0.5*patch.dz() + k*patch.dz();
-  real x = (real(i) + 0.5)*patch.dx() + x_PmO[0];
-  real y = (real(j) + 0.5)*patch.dy() + x_PmO[1];
-  real z = (real(k) + 0.5)*patch.dz() + x_PmO[2];
+  if (i >= patch.sizeI() || j >= patch.sizeJ() || k >= patch.sizeK() ) return;
 
-  if (radiusSquare(x, y, z) < radius2) {
+  real x = (real(i) + 0.5)*patch.dx() + x_PmO;
+  real y = (real(j) + 0.5)*patch.dy() + y_PmO;
+  real z = (real(k) + 0.5)*patch.dz() + z_PmO;
+
+  //if (vectorSquare(x, y, 0.) < radius2) {
+  if (vectorSquare(x, y, 0.) < radius2 && z*z < height2) {
     patch.f(2, 0, i, j, k) = 3;
+  }
+  else {
+    patch.f(2, 0, i, j, k) = 0;
   }
 }
 
-template <unsigned int DIM>
-__global__ void GPU_CylinderInCartisianPatch_ComputeLayer(GPU_CartesianPatch patch, vec3_t x_PmO, unsigned int radius2, unsigned int layer, real omega)
+__global__ void GPU_CylinderInCartisianPatch_ComputeLayer(GPU_CartesianPatch patch, real x_PmO, real y_PmO, real z_PmO, real p_inf, real t_inf, real omega, unsigned int layer)
 {
-  size_t i = 1 + blockDim.y*blockIdx.x + threadIdx.y;
-  size_t j = 1 + 2*blockIdx.y;
-  size_t k = threadIdx.x;
-  if (j >= (patch.sizeJ() - 1) || i >= (patch.sizeI() - 1)) return;
+  dim_t<5> dim;
+
+  size_t i = 1 + blockIdx.x;
+  size_t j = 1 + blockIdx.y;
+  size_t k = 1 + threadIdx.x;
+
+  if (i >= (patch.sizeI() - 1) || j >= (patch.sizeJ() - 1) || k >= (patch.sizeK() - 1)) return;
 
   real l_p = patch.f(2, 0, i, j, k);
-  // if current point == 3, ie in cylinder, return
-  if ( l_p > 2.5 ) return;
-  vec3_t x_p;
-  x_p[0] = (real(i) + 0.5)*patch.dx() + x_PmO[0];
-  x_p[1] = (real(j) + 0.5)*patch.dy() + x_PmO[1];
-  x_p[2] = (real(k) + 0.5)*patch.dz() + x_PmO[2];
+  // if current point marked, ie in cylinder, return
+  if ( l_p > 0.5 ) return;
 
-  real l_im = patch.f(2, 0, i - 1, j    , k);
-  real l_ip = patch.f(2, 0, i + 1, j    , k);
-  real l_jm = patch.f(2, 0, i    , j - 1, k);
-  real l_jp = patch.f(2, 0, i    , j + 1, k);
+  real l_im = patch.f(2, 0, i - 1, j    , k    );
+  real l_ip = patch.f(2, 0, i + 1, j    , k    );
+  real l_jm = patch.f(2, 0, i    , j - 1, k    );
+  real l_jp = patch.f(2, 0, i    , j + 1, k    );
+  real l_km = patch.f(2, 0, i    , j    , k - 1);
+  real l_kp = patch.f(2, 0, i    , j    , k + 1);
 
-  real T, p, u, v, w;
-  real var1[5];
+  real x_p = (real(i) + 0.5)*patch.dx() + x_PmO;
+  real y_p = (real(j) + 0.5)*patch.dy() + y_PmO;
+  real z_p = (real(k) + 0.5)*patch.dz() + z_PmO;
+
+
   real p_sum = 0, w_sum = 0;
   bool updated = false;
 
-  // if l_im point in cylinder, interpolate to l_p
+  // if point l_im in cylinder, interpolate to l_p
   if (l_im > (3.5 - layer) && l_p < 0.5) {
-    vec3_t x_im;
-    x_im[0] = (real(i - 1) + 0.5)*patch.dx() + x_PmO[0];
-    x_im[1] = (real(j)     + 0.5)*patch.dy() + x_PmO[1];
-    x_im[2] = (real(k)     + 0.5)*patch.dz() + x_PmO[2];
-
-    patch.getVar(DIM, 2, i - 1, j, k, var1);
-    PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
-
-    real weight = scalarProduct(normalize(x_im), normalize(x_p));
-    // dp = dr*v^2*rho/r
-    // Here dr = dx*weight
-    real dp     = weight*p + weight*weight*m_Patch.dx()*(u*u + v*v + w*w)*var1[0]/norm(x_im);
+    real weight;
+    real dp;
+    computeDpAndWeight(patch, x_PmO, y_PmO, z_PmO, x_p, y_p, z_p , i - 1, j, k, patch.dx(), dp, weight);
     p_sum += dp;
     w_sum += weight;
-
     updated = true;
   }
-  // if l_ip point in cylinder, interpolate to l_p
+  // if point l_ip in cylinder, interpolate to l_p
   if (l_ip > (3.5 - layer) && l_p < 0.5) {
-    vec3_t x_ip;
-    x_ip[0] = (real(i + 1) + 0.5)*patch.dx() + x_PmO[0];
-    x_ip[1] = (real(j)     + 0.5)*patch.dy() + x_PmO[1];
-    x_ip[2] = (real(k)     + 0.5)*patch.dz() + x_PmO[2];
-
-    patch.getVar(DIM, 2, i + 1, j, k, var1);
-    PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
-
-    real weight = scalarProduct(normalize(x_ip), normalize(x_p));
-    // dp = dr*v^2*rho/r
-    // Here dr = dx*weight
-    real dp     = weight*p + weight*weight*m_Patch.dx()*(u*u + v*v + w*w)*var1[0]/norm(x_ip);
+    real weight;
+    real dp;
+    computeDpAndWeight(patch, x_PmO, y_PmO, z_PmO, x_p, y_p, z_p , i + 1, j, k, patch.dx(), dp, weight);
     p_sum += dp;
     w_sum += weight;
-
     updated = true;
   }
-  // if l_jm point in cylinder, interpolate to l_p
+  // if point l_jm in cylinder, interpolate to l_p
   if (l_jm > (3.5 - layer) && l_p < 0.5) {
-    vec3_t x_jm;
-    x_jm[0] = (real(i)     + 0.5)*patch.dx() + x_PmO[0];
-    x_jm[1] = (real(j - 1) + 0.5)*patch.dy() + x_PmO[1];
-    x_jm[2] = (real(k)     + 0.5)*patch.dz() + x_PmO[2];
-
-    patch.getVar(DIM, 2, i, j - 1, k, var1);
-    PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
-
-    real weight = scalarProduct(normalize(x_jm), normalize(x_p));
-    // dp = dr*v^2*rho/r
-    // Here dr = dy*weight
-    real dp     = weight*p + weight*weight*m_Patch.dy()*(u*u + v*v + w*w)*var1[0]/norm(x_jm);
+    real weight;
+    real dp;
+    computeDpAndWeight(patch, x_PmO, y_PmO, z_PmO, x_p, y_p, z_p , i, j - 1, k, patch.dy(), dp, weight);
     p_sum += dp;
     w_sum += weight;
-
     updated = true;
   }
-  // if l_jp point in cylinder, interpolate to l_p
-  if (l_ip > (3.5 - layer) && l_p < 0.5) {
-    vec3_t x_jp;
-    x_jp[0] = (real(i)     + 0.5)*patch.dx() + x_PmO[0];
-    x_jp[1] = (real(j + 1) + 0.5)*patch.dy() + x_PmO[1];
-    x_jp[2] = (real(k)     + 0.5)*patch.dz() + x_PmO[2];
-
-    patch.getVar(DIM, 2, i, j + 1, k, var1);
-    PerfectGas::conservativeToPrimitive(var1, p, T, u, v, w);
-
-    real weight = scalarProduct(normalize(x_jp), normalize(x_p));
-    // dp = dr*v^2*rho/r
-    // Here dr = dy*weight
-    real dp     = weight*p + weight*weight*m_Patch.dy()*(u*u + v*v + w*w)*var1[0]/norm(x_jp);
+  // if point l_jp in cylinder, interpolate to l_p
+  if (l_jp > (3.5 - layer) && l_p < 0.5) {
+    real weight;
+    real dp;
+    computeDpAndWeight(patch, x_PmO, y_PmO, z_PmO, x_p, y_p, z_p , i, j + 1, k, patch.dy(), dp, weight);
     p_sum += dp;
     w_sum += weight;
-
+    updated = true;
+  }
+  // if point l_km in cylinder, set zero gradient p
+  if (l_km > (3.5 - layer) && l_p < 0.5) {
+    real weight;
+    real dp;
+    computeDpAndWeight(patch, x_PmO, y_PmO, z_PmO, x_p, y_p, z_p , i, j, k - 1, 0, dp, weight);
+    p_sum += dp;
+    w_sum += weight;
+    updated = true;
+  }
+  // if point l_kp in cylinder, set zero gradient p
+  if (l_kp > (3.5 - layer) && l_p < 0.5) {
+    real weight;
+    real dp;
+    computeDpAndWeight(patch, x_PmO, y_PmO, z_PmO, x_p, y_p, z_p , i, j, k + 1, 0, dp, weight);
+    p_sum += dp;
+    w_sum += weight;
     updated = true;
   }
 
+  real var1[5];
   if (updated == true) {
     patch.f(2, 0, i, j, k) = 3 - layer;
 
-    real u_layer =  omega*x_p[1];         // ==  m_Omega*norm(r_2)*r_2[1]/norm(r_2) ->  v_t*r*sin(th);
-    real v_layer = -omega*x_p[0];         // == -m_Omega*norm(r_2)*r_2[0]/norm(r_2) -> -v_t*r*cos(th);
+    real u_layer =  omega*y_p;         // ==  m_Omega*norm(r_2)*r_2[1]/norm(r_2) ->  v_t*r*sin(th);
+    real v_layer = -omega*x_p;         // == -m_Omega*norm(r_2)*r_2[0]/norm(r_2) -> -v_t*r*cos(th);
 
-    PerfectGas::primitiveToConservative(p_sum/w_sum, m_Tinf, u_layer, v_layer, 0, d_var1);
-    m_Patch->setVar(dim, 0, i, j, k, d_var1);
+    PerfectGas::primitiveToConservative(p_sum/w_sum, t_inf, u_layer, v_layer, 0, var1);
+    patch.setVar(dim, 0, i, j, k, var1);
+    if ( 3 - layer > 1.5) {
+    }
+    else {
+    }
   }
   else if (patch.f(2, 0, i, j, k) < 0.5) {
-    PerfectGas::primitiveToConservative(m_Pinf, m_Tinf, 0, 0, 0, d_var1);
-    m_Patch->setVar(dim, 0, i, j, k, d_var1);
+    PerfectGas::primitiveToConservative(p_inf, t_inf, 0, 0, 0, var1);
+    patch.setVar(dim, 0, i, j, k, var1);
   }
 }
 
 void GPU_CylinderInCartisianPatch::operator ()()
 {
-  dim_t<5> dim;
-
   vec3_t x_PmO = m_Po - m_Xo;
 
-  real var1[5];
-  for (int i_var = 0; i_var < 5; ++i_var) {
-    var1[i_var] = 0;
-  }
-  // Clear residual field
-  for (size_t i = 0; i < m_Patch->sizeI(); ++i) {
-    for (size_t j = 0; j < m_Patch->sizeJ(); ++j) {
-      for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
-        m_Patch->setVar(dim, 2, i, j, k, var1);
-      }
-    }
-  }
+  //size_t k_lines = max(size_t(1), size_t(m_MaxNumThreads/m_Patch.sizeK()));
+  {
+    //dim3 blocks(m_Patch.sizeI()/2+1, m_Patch.sizeJ()/k_lines+1, 1);
+    //dim3 threads(m_Patch.sizeK(), k_lines, 1);
 
+    dim3 blocks(m_Patch.sizeI()+1, m_Patch.sizeJ()+1, 1);
+    dim3 threads(m_Patch.sizeK()+1, 1, 1);
 
-
-  vec3_t r, x_p;
-  for (size_t i = 0; i < m_Patch->sizeI(); ++i) {
-    for (size_t j = 0; j < m_Patch->sizeJ(); ++j) {
-      for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
-        x_p[0] = (real(i) + 0.5)*m_Patch->dx();
-        x_p[1] = (real(j) + 0.5)*m_Patch->dy();
-        x_p[2] = (real(k) + 0.5)*m_Patch->dz();
-        x_p = m_Patch->getTransformInertial2This().transformReverse(x_p);
-
-        r[0] = x_p[0] - m_XOrg[0];
-        r[1] = x_p[1] - m_XOrg[1];
-        r[2] = x_p[2] - m_XOrg[2];
-
-        if ((r[0]*r[0] + r[1]*r[1]) < m_Rad*m_Rad) {
-          // set to interior
-          var1[0] = 1;
-          // Abuse the residual field for storage
-          m_Patch->setVar(dim, 2, i, j, k, var1);
-          var1[0] = 0;
-        }
-        else {
-          // clear data field for cells outside of cylinder
-          m_Patch->setVar(dim, 0, i, j, k, var1);
-        }
-      }
-    }
+    GPU_CylinderInCartisianPatch_Mark<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Rad*m_Rad, m_Height*m_Height);
+    cudaDeviceSynchronize();
+    CUDA_CHECK_ERROR;
+    GPU_CylinderInCartisianPatch_ComputeLayer<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Pinf, m_Tinf, m_Omega, 1);
+    cudaDeviceSynchronize();
+    CUDA_CHECK_ERROR;
+    GPU_CylinderInCartisianPatch_ComputeLayer<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Pinf, m_Tinf, m_Omega, 2);
+    cudaDeviceSynchronize();
+    CUDA_CHECK_ERROR;
   }
 
-  //
-  real var2[5], d_var1[5], d_var2[5];
-  vec3_t r_1, x_p1, r_2, x_p2;
-  for (int i_var = 0; i_var < 5; ++i_var) {
-    var1[i_var]   = 0;  // Residual field, pt 1
-    var2[i_var]   = 0;  // Residual field, pt 2
-    d_var1[i_var] = 0;  // Data field, pt 1
-    d_var2[i_var] = 0;  // Data field, pt 2
-  }
-  for (size_t layer = 0; layer < 2; ++layer) {
-    // iterate over I values, and compare i, i-1
-    for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
-      for (size_t i = 1; i < m_Patch->sizeI(); ++i) {
-        for (size_t j = 0; j < m_Patch->sizeJ(); ++j) {
-          m_Patch->getVar(dim, 2, i - 1, j, k, var1);
-          m_Patch->getVar(dim, 2, i    , j, k, var2);
-
-          // 0.5 to ensure real / int comparison works
-          if ((var1[0] > (0.5 + layer) && var2[0] <  0.5 ) ||
-              (var1[0] <  0.5          && var2[0] > (0.5 + layer)))
-          {
-            x_p1[0] = (real(i - 1) + 0.5)*m_Patch->dx();
-            x_p1[1] = (real(j)     + 0.5)*m_Patch->dy();
-            x_p1[2] = (real(k)     + 0.5)*m_Patch->dz();
-            x_p1 = m_Patch->getTransformInertial2This().transformReverse(x_p1);
-            r_1[0] = x_p1[0] - m_XOrg[0];
-            r_1[1] = x_p1[1] - m_XOrg[1];
-            r_1[2] = x_p1[2] - m_XOrg[2];
-
-            x_p2[0] = (real(i) + 0.5)*m_Patch->dx();
-            x_p2[1] = (real(j) + 0.5)*m_Patch->dy();
-            x_p2[2] = (real(k) + 0.5)*m_Patch->dz();
-            x_p2 = m_Patch->getTransformInertial2This().transformReverse(x_p2);
-            r_2[0] = x_p2[0] - m_XOrg[0];
-            r_2[1] = x_p2[1] - m_XOrg[1];
-            r_2[2] = x_p2[2] - m_XOrg[2];
-
-            m_Patch->getVar(dim, 0, i - 1, j, k, d_var1);
-            m_Patch->getVar(dim, 0, i    , j, k, d_var2);
-
-            if (var1[0] > (0.5 + layer)) {
-              // pnt 1 is reference, interpolate to pnt 2
-              real T, p, u, v, w;
-              PerfectGas::conservativeToPrimitive(d_var1, p, T, u, v, w);
-
-              real u_layer =  m_Omega*r_2[1];         // ==  m_Omega*norm(r_2)*r_2[1]/norm(r_2) ->  v_t*r*sin(th);
-              real v_layer = -m_Omega*r_2[0];         // == -m_Omega*norm(r_2)*r_2[0]/norm(r_2) -> -v_t*r*cos(th);
-              real weight  = scalarProduct(normalize(r_1), normalize(r_2));
-              real dp_new  = weight*(p + m_Patch->dx()*(u*u + v*v + w*w)*d_var1[0]/norm(r_1));
-
-              var2[0]  = -1;     // mark layer
-              var2[1] += weight;
-              var2[2] += dp_new;
-              var2[3]  = u_layer;
-              var2[4]  = v_layer;
-              m_Patch->setVar(dim, 2, i, j, k, var2);
-            } else {
-              // pnt 2 is reference, extrapolate to pnt 1
-              real T, p, u, v, w;
-              PerfectGas::conservativeToPrimitive(d_var2, p, T, u, v, w);
-
-              real u_layer =  m_Omega*r_1[1];         // == see above
-              real v_layer = -m_Omega*r_1[0];         // == see above
-              real weight  = scalarProduct(normalize(r_2), normalize(r_1));
-              real dp_new  = weight*(p + m_Patch->dx()*(u*u + v*v + w*w)*d_var2[0]/norm(r_2));
-
-              var1[0]  = -1;     // mark layer
-              var1[1] += weight;
-              var1[2] += dp_new;
-              var1[3]  = u_layer;
-              var1[4]  = v_layer;
-              m_Patch->setVar(dim, 2, i - 1, j, k, var1);
-            }
-          } // end if loop
-        } // end i loop
-      } // end j loop
-    } // end k loop
-
-    // J values
-    for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
-      for (size_t i = 0; i < m_Patch->sizeI(); ++i) {
-        for (size_t j = 1; j < m_Patch->sizeJ(); ++j) {
-          m_Patch->getVar(dim, 2, i, j - 1, k, var1);
-          m_Patch->getVar(dim, 2, i, j    , k, var2);
-
-          if ((var1[0] > (0.5 + layer) && var2[0] <  0.5) ||
-              (var1[0] <  0.5          && var2[0] > (0.5 + layer)))
-          {
-            x_p1[0] = (real(i)     + 0.5)*m_Patch->dx();
-            x_p1[1] = (real(j - 1) + 0.5)*m_Patch->dy();
-            x_p1[2] = (real(k)     + 0.5)*m_Patch->dz();
-            x_p1 = m_Patch->getTransformInertial2This().transformReverse(x_p1);
-            r_1[0] = x_p1[0] - m_XOrg[0];
-            r_1[1] = x_p1[1] - m_XOrg[1];
-            r_1[2] = x_p1[2] - m_XOrg[2];
-
-            x_p2[0] = (real(i) + 0.5)*m_Patch->dx();
-            x_p2[1] = (real(j) + 0.5)*m_Patch->dy();
-            x_p2[2] = (real(k) + 0.5)*m_Patch->dz();
-            x_p2 = m_Patch->getTransformInertial2This().transformReverse(x_p2);
-            r_2[0] = x_p2[0] - m_XOrg[0];
-            r_2[1] = x_p2[1] - m_XOrg[1];
-            r_2[2] = x_p2[2] - m_XOrg[2];
-
-            m_Patch->getVar(dim, 0, i, j - 1, k, d_var1);
-            m_Patch->getVar(dim, 0, i, j    , k, d_var2);
-
-            if (var1[0] > (0.5 + layer) && var2[0] < (0.5 + layer)) {
-              // pnt 1 is reference, extrapolate to pnt 2
-              real T, p, u, v, w;
-              PerfectGas::conservativeToPrimitive(d_var1, p, T, u, v, w);
-
-              real u_layer =  m_Omega*r_2[1];         // ==  m_Omega*norm(r_2)*r_2[1]/norm(r_2) ->  v_t*r*sin(th);
-              real v_layer = -m_Omega*r_2[0];         // == -m_Omega*norm(r_2)*r_2[0]/norm(r_2) -> -v_t*r*cos(th);
-              real weight  = scalarProduct(normalize(r_1), normalize(r_2));
-              real dp_new  = weight*(p + m_Patch->dy()*(u*u + v*v + w*w)*d_var1[0]/norm(r_1));
-
-              var2[0]  = -1;     // mark layer
-              var2[1] += weight;
-              var2[2] += dp_new;
-              var2[3]  = u_layer;
-              var2[4]  = v_layer;
-              m_Patch->setVar(dim, 2, i, j, k, var2);
-            }
-            else if (var1[0] < (0.5 + layer) && var2[0] > (0.5 + layer)) {
-              // pnt 2 is reference, extrapolate to pnt 1
-              real T, p, u, v, w;
-              PerfectGas::conservativeToPrimitive(d_var2, p, T, u, v, w);
-
-              real u_layer =  m_Omega*r_1[1];         // == see above
-              real v_layer = -m_Omega*r_1[0];         // == see above
-              real weight = scalarProduct(normalize(r_2), normalize(r_1));
-              real dp_new = weight*(p + m_Patch->dy()*(u*u + v*v + w*w)*d_var2[0]/norm(r_2));
-
-              var1[0] = -1;     // mark layer
-              var1[1] += weight;
-              var1[2] += dp_new;
-              var1[3] = u_layer;
-              var1[4] = v_layer;
-              m_Patch->setVar(dim, 2, i, j - 1, k, var1);
-            }
-          } // end if loop
-        } // end i loop
-      } // end j loop
-    } // end k loop
-
-    // Set the marked layers to the correct type number. 2 for layer 1, 3 for layer 2.
-    // Then update the data field
-    for (size_t i = 0; i < m_Patch->sizeI(); ++i) {
-      for (size_t j = 1; j < m_Patch->sizeJ(); ++j) {
-        for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
-          m_Patch->getVar(dim, 2, i, j, k, var1);
-          if (var1[0] < -0.5) {
-            var1[0] = 2 + layer;
-            m_Patch->setVar(dim, 2, i, j, k, var1);
-
-            m_Patch->getVar(dim, 0, i, j, k, d_var1);
-            real u, v, p, weight;
-            weight = var1[1];
-            p      = var1[2];
-            u      = var1[3];
-            v      = var1[4];
-            PerfectGas::primitiveToConservative(p/weight, m_Temp, u, v, 0, d_var1);
-            m_Patch->setVar(dim, 0, i, j, k, d_var1);
-          }
-        } // end i loop
-      } // end j loop
-    } // end k loop
-
-  } // end layer loop
-
-
-  // Set the outside field to zero.
-  for (size_t i = 0; i < m_Patch->sizeI(); ++i) {
-    for (size_t j = 0; j < m_Patch->sizeJ(); ++j) {
-      for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
-        m_Patch->getVar(dim, 2, i, j, k, var1);
-        x_p2[0] = (real(i) + 0.5)*m_Patch->dx();
-        x_p2[1] = (real(j) + 0.5)*m_Patch->dy();
-        x_p2[2] = (real(k) + 0.5)*m_Patch->dz();
-        x_p2 = m_Patch->getTransformInertial2This().transformReverse(x_p2);
-        if (var1[0] < 0.5) {
-          PerfectGas::primitiveToConservative(1e5, m_Temp, 0, 0, 0, d_var1);
-          m_Patch->setVar(dim, 0, i, j, k, d_var1);
-        }
-        if (var1[0] < 1.5 && var1[0] > 0.5) {
-          cout << "data1 " << x_p2[0]
-               << " " << x_p2[1]
-               << " " << x_p2[2]
-               << endl;
-        }
-        if (var1[0] < 2.5 && var1[0] > 1.5) {
-          cout << "data2 " << x_p2[0]
-               << " " << x_p2[1]
-               << " " << x_p2[2]
-               << endl;
-        }
-        if (var1[0] > 2.5) {
-          cout << "data3 " << x_p2[0]
-               << " " << x_p2[1]
-               << " " << x_p2[2]
-               << endl;
-        }
-      } // end i loop
-    } // end j loop
-  } // end k loop
-
-  // Clear residual field
-  for (int i_var = 0; i_var < 5; ++i_var) {
-    var1[i_var] = 0;
-  }
-  for (size_t i = 0; i < m_Patch->sizeI(); ++i) {
-    for (size_t j = 0; j < m_Patch->sizeJ(); ++j) {
-      for (size_t k = 0; k < m_Patch->sizeK(); ++k) {
-        m_Patch->setVar(dim, 2, i, j, k, var1);
-      }
-    }
-  }
-
-  m_Patch->copyFieldToDevice(0);
 }
 
-#endif // CYLINDERINCARTISIANPATCH_H
+#endif // GPU_CYLINDERINCARTISIANPATCH_H

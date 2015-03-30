@@ -52,6 +52,7 @@
 #include "rungekutta.h"
 #include "iteratorfeeder.h"
 #include "cylinderincartisianpatch.h"
+#include "gpu_cylinderincartisianpatch.h"
 
 #include <QTime>
 
@@ -363,10 +364,13 @@ void run()
     }
   }
 
-  CartesianPatch *p_cylinder = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0));
+  //CartesianPatch *p_cylinder = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0));
+  //CylinderInCartisianPatch cpu_cylinder(p_cylinder);
+  //runge_kutta.addPostOperation(&cpu_cylinder);
 
-  CylinderInCartisianPatch my_cylinder(p_cylinder);
-  runge_kutta.addPostOperation(&my_cylinder);
+  CartesianPatch *p_cylinder = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0));
+  GPU_CylinderInCartisianPatch gpu_cylinder(p_cylinder, cuda_device, thread_limit);
+  runge_kutta.addPostOperation(&gpu_cylinder);
 
 #ifdef GPU
   iterator->updateDevice();

@@ -263,6 +263,7 @@ void CylinderInCartisianPatch::operator ()()
           PerfectGas::primitiveToConservative(1e5, m_Temp, 0, 0, 0, d_var1);
           m_Patch->setVar(dim, 0, i, j, k, d_var1);
         }
+          /*
         if (var1[0] < 1.5 && var1[0] > 0.5) {
           cout << "data1 " << x_p2[0]
                << " " << x_p2[1]
@@ -281,6 +282,7 @@ void CylinderInCartisianPatch::operator ()()
                << " " << x_p2[2]
                << endl;
         }
+        */
       } // end i loop
     } // end j loop
   } // end k loop
