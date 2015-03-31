@@ -29,9 +29,9 @@ SET(drnumlib_SOURCES
     drnum.h
     externalexchangelist.cpp
     geometrytools.cpp
-    gpu_patch.h
     gpu_cartesianpatch.h
     gpu_cylinderincartisianpatch.h
+    gpu_patch.h
     iteratorfeeder.cpp
     levelsetdefinition.cpp
     levelsetobject.cpp

@@ -271,12 +271,9 @@ __global__ void GPU_CylinderInCartisianPatch_ComputeLayer(GPU_CartesianPatch pat
 
     PerfectGas::primitiveToConservative(p_sum/w_sum, t_inf, u_layer, v_layer, 0, var1);
     patch.setVar(dim, 0, i, j, k, var1);
-    if ( 3 - layer > 1.5) {
-    }
-    else {
-    }
   }
   else if (patch.f(2, 0, i, j, k) < 0.5) {
+    real var1[5];
     PerfectGas::primitiveToConservative(p_inf, t_inf, 0, 0, 0, var1);
     patch.setVar(dim, 0, i, j, k, var1);
   }
