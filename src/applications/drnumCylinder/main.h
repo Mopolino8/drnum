@@ -338,6 +338,7 @@ void run()
 
   int write_counter = 0;
   int iter = 0;
+  int print_out = 0;
   real t = 0;
 
   QString restart_file = config.getValue<QString>("restart-file");
@@ -456,9 +457,17 @@ void run()
         patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
         patch_grid.writeData(0, "data/step", t, write_counter);
       }
+      ++print_out;
+      if (print_out > 4) {
+        print_out = 0;
+      }
     } else {
       ++iter;
+      ++print_out;
+      if (print_out > 4) {
+        print_out = 0;
       cout << iter << " iterations,  t=" << t << ",  t=" << t/time << "*L/u_oo,  dt: " << dt << ",  DrNUM % of run-time: " << 100*drnum_fraction << endl;
+      }
     }
 
     {
