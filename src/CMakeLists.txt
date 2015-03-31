@@ -22,6 +22,7 @@ endif()
 
 
 OPTION(USE_GPU "Use GPU for computation" ON)
+OPTION(USE_OPEN_MP "Use OpenMP for multiple threads" ON)
 
 SET(CMAKE_VERBOSE_MAKEFILE OFF)
 
@@ -38,11 +39,12 @@ FIND_PACKAGE(VTK 6.1 NO_MODULE REQUIRED)
 INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
 
 set(OPENMP_LIBS, "")
-find_package(OpenMP)
-if(OpenMP_FOUND)
-    add_definitions(-DOPEN_MP)
-    set(OPENMP_LIBS, "-lgomp")
-endif(OpenMP_FOUND)
+
+if(USE_OPEN_MP)
+  find_package(OpenMP)
+  add_definitions(-DOPEN_MP)
+  set(OPENMP_LIBS, "-lgomp")
+endif(USE_OPEN_MP)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   add_definitions(-DMAC_OSX)

@@ -21,6 +21,8 @@
 #ifndef GPU_CYLINDERINCARTISIANPATCH_H
 #define GPU_CYLINDERINCARTISIANPATCH_H
 
+#ifdef CUDA
+
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 
@@ -303,5 +305,7 @@ void GPU_CylinderInCartisianPatch::operator ()()
   }
 
 }
+
+#endif // CUDA
 
 #endif // GPU_CYLINDERINCARTISIANPATCH_H

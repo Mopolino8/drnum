@@ -24,12 +24,13 @@ SET(drnumlib_SOURCES
     cudatools.h
     cylinderobject.cpp
     debug.cpp
-    discretelevelset.cpp
+    discretelevelset.h
     donor_t.h
     drnum.h
     externalexchangelist.cpp
     geometrytools.cpp
     gpu_cartesianpatch.h
+    gpu_cartesianlevelsetbc.h
     gpu_cylinderincartisianpatch.h
     gpu_patch.h
     iteratorfeeder.cpp
