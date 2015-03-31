@@ -18,10 +18,10 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#include "cylinderincartisianpatch.h"
+#include "cylinderincartesianpatch.h"
 #include "perfectgas.h"
 
-CylinderInCartisianPatch::CylinderInCartisianPatch(CartesianPatch *patch)
+CylinderInCartesianPatch::CylinderInCartesianPatch(CartesianPatch *patch)
 {
   m_Patch  = patch;
   m_Temp   = 300.0;
@@ -32,7 +32,7 @@ CylinderInCartisianPatch::CylinderInCartisianPatch(CartesianPatch *patch)
 }
 
 
-void CylinderInCartisianPatch::operator ()()
+void CylinderInCartesianPatch::operator ()()
 {
   dim_t<5> dim;
 

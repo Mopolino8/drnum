@@ -18,8 +18,8 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef GPU_CYLINDERINCARTISIANPATCH_H
-#define GPU_CYLINDERINCARTISIANPATCH_H
+#ifndef GPU_CYLINDERINCARTESIANPATCH_H
+#define GPU_CYLINDERINCARTESIANPATCH_H
 
 #ifdef CUDA
 
@@ -32,9 +32,9 @@
 #include "genericoperation.h"
 #include "gpu_cartesianpatch.h"
 
-class GPU_CylinderInCartisianPatch;
+class GPU_CylinderInCartesianPatch;
 
-class GPU_CylinderInCartisianPatch : public GenericOperation
+class GPU_CylinderInCartesianPatch : public GenericOperation
 {
   GPU_CartesianPatch m_Patch;
 
@@ -56,13 +56,13 @@ public:
    *  - index 1 : cell type => 3-> in cylinder, 2-> layer 1, 1-> layer 2, 0-> outside, set to zero.
    */
 
-  GPU_CylinderInCartisianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit);
+  GPU_CylinderInCartesianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit);
 
   virtual void operator()();
 
 };
 
-GPU_CylinderInCartisianPatch::GPU_CylinderInCartisianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit) : m_Patch(patch)
+GPU_CylinderInCartesianPatch::GPU_CylinderInCartesianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit) : m_Patch(patch)
 {
   m_Tinf   = 300.0;
   m_Pinf   = 1e5;
@@ -156,7 +156,7 @@ CUDA_DH inline void computeDpAndWeight(GPU_CartesianPatch& patch, real x_PmO, re
   dp = weight*p + weight*weight*dx*v_th2*var1[0]/norm(x, y, z);
 }
 
-__global__ void GPU_CylinderInCartisianPatch_Mark(GPU_CartesianPatch patch, real x_PmO, real y_PmO, real z_PmO, real radius2, real height2)
+__global__ void GPU_CylinderInCartesianPatch_Mark(GPU_CartesianPatch patch, real x_PmO, real y_PmO, real z_PmO, real radius2, real height2)
 {
   //size_t i = blockDim.y*blockIdx.x + threadIdx.y;
   //size_t j = 2*blockIdx.y;
@@ -180,7 +180,7 @@ __global__ void GPU_CylinderInCartisianPatch_Mark(GPU_CartesianPatch patch, real
   }
 }
 
-__global__ void GPU_CylinderInCartisianPatch_ComputeLayer(GPU_CartesianPatch patch, real x_PmO, real y_PmO, real z_PmO, real p_inf, real t_inf, real omega, unsigned int layer)
+__global__ void GPU_CylinderInCartesianPatch_ComputeLayer(GPU_CartesianPatch patch, real x_PmO, real y_PmO, real z_PmO, real p_inf, real t_inf, real omega, unsigned int layer)
 {
   dim_t<5> dim;
 
@@ -281,7 +281,7 @@ __global__ void GPU_CylinderInCartisianPatch_ComputeLayer(GPU_CartesianPatch pat
   }
 }
 
-void GPU_CylinderInCartisianPatch::operator ()()
+void GPU_CylinderInCartesianPatch::operator ()()
 {
   vec3_t x_PmO = m_Po - m_Xo;
 
@@ -293,13 +293,13 @@ void GPU_CylinderInCartisianPatch::operator ()()
     dim3 blocks(m_Patch.sizeI()+1, m_Patch.sizeJ()+1, 1);
     dim3 threads(m_Patch.sizeK()+1, 1, 1);
 
-    GPU_CylinderInCartisianPatch_Mark<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Rad*m_Rad, m_Height*m_Height);
+    GPU_CylinderInCartesianPatch_Mark<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Rad*m_Rad, m_Height*m_Height);
     cudaDeviceSynchronize();
     CUDA_CHECK_ERROR;
-    GPU_CylinderInCartisianPatch_ComputeLayer<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Pinf, m_Tinf, m_Omega, 1);
+    GPU_CylinderInCartesianPatch_ComputeLayer<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Pinf, m_Tinf, m_Omega, 1);
     cudaDeviceSynchronize();
     CUDA_CHECK_ERROR;
-    GPU_CylinderInCartisianPatch_ComputeLayer<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Pinf, m_Tinf, m_Omega, 2);
+    GPU_CylinderInCartesianPatch_ComputeLayer<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Pinf, m_Tinf, m_Omega, 2);
     cudaDeviceSynchronize();
     CUDA_CHECK_ERROR;
   }
