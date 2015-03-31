@@ -368,9 +368,11 @@ void run()
   //CylinderInCartisianPatch cpu_cylinder(p_cylinder);
   //runge_kutta.addPostOperation(&cpu_cylinder);
 
+#ifdef GPU
   CartesianPatch *p_cylinder = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0));
   GPU_CylinderInCartisianPatch gpu_cylinder(p_cylinder, cuda_device, thread_limit);
   runge_kutta.addPostOperation(&gpu_cylinder);
+#endif
 
 #ifdef GPU
   iterator->updateDevice();

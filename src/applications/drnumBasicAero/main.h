@@ -334,17 +334,18 @@ void run()
   PerfectGas::primitiveToConservative(p, T, u, v, 0.00*u, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
-  DiscreteLevelSet* level_set = NULL;
+  DiscreteLevelSet<NUM_VARS,5>* level_set = NULL;
   if (config.exists("geometry")) {
     QString stl_file_name = config.getValue<QString>("geometry");
-    level_set = new DiscreteLevelSet(&patch_grid, 5, stl_file_name);
+    level_set = new DiscreteLevelSet<NUM_VARS,5>(&patch_grid);
+    level_set->readStlGeometry(stl_file_name);
 
   }
 
   if (mesh_preview) {
     patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), 0);
     if (level_set) {
-      patch_grid.writeToVtk(0, "VTK-drnum/levelset", DiscreteLevelSet::PlotVars<5>(), -1);
+      patch_grid.writeToVtk(0, "VTK-drnum/levelset", LevelSetPlotVars<5>(), -1);
     }
     exit(EXIT_SUCCESS);
   }
