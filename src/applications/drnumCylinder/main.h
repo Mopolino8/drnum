@@ -51,8 +51,8 @@
 
 #include "rungekutta.h"
 #include "iteratorfeeder.h"
-#include "cylinderincartisianpatch.h"
-#include "gpu_cylinderincartisianpatch.h"
+#include "cylinderincartesianpatch.h"
+#include "gpu_cylinderincartesianpatch.h"
 
 #include <QTime>
 
@@ -338,6 +338,7 @@ void run()
 
   int write_counter = 0;
   int iter = 0;
+  int print_out = 0;
   real t = 0;
 
   QString restart_file = config.getValue<QString>("restart-file");
@@ -365,12 +366,12 @@ void run()
   }
 
   //CartesianPatch *p_cylinder = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0));
-  //CylinderInCartisianPatch cpu_cylinder(p_cylinder);
+  //CylinderInCartesianPatch cpu_cylinder(p_cylinder);
   //runge_kutta.addPostOperation(&cpu_cylinder);
 
 #ifdef GPU
   CartesianPatch *p_cylinder = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0));
-  GPU_CylinderInCartisianPatch gpu_cylinder(p_cylinder, cuda_device, thread_limit);
+  GPU_CylinderInCartesianPatch gpu_cylinder(p_cylinder, cuda_device, thread_limit);
   runge_kutta.addPostOperation(&gpu_cylinder);
 #endif
 
@@ -458,9 +459,17 @@ void run()
         patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
         patch_grid.writeData(0, "data/step", t, write_counter);
       }
+      ++print_out;
+      if (print_out > 4) {
+        print_out = 0;
+      }
     } else {
       ++iter;
+      ++print_out;
+      if (print_out > 4) {
+        print_out = 0;
       cout << iter << " iterations,  t=" << t << ",  t=" << t/time << "*L/u_oo,  dt: " << dt << ",  DrNUM % of run-time: " << 100*drnum_fraction << endl;
+      }
     }
 
     {

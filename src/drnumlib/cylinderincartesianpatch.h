@@ -18,13 +18,13 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef CYLINDERINCARTISIANPATCH_H
-#define CYLINDERINCARTISIANPATCH_H
+#ifndef CYLINDERINCARTESIANPATCH_H
+#define CYLINDERINCARTESIANPATCH_H
 
 #include "genericoperation.h"
 #include "cartesianpatch.h"
 
-class CylinderInCartisianPatch : public GenericOperation
+class CylinderInCartesianPatch : public GenericOperation
 {
 
   CartesianPatch *m_Patch;
@@ -51,19 +51,19 @@ public:
    *  - 5 v
    */
 
-  CylinderInCartisianPatch(CartesianPatch* patch);
+  CylinderInCartesianPatch(CartesianPatch* patch);
 
   virtual void operator()();
 
 };
 
 
-inline real CylinderInCartisianPatch::norm(vec3_t x)
+inline real CylinderInCartesianPatch::norm(vec3_t x)
 {
   return sqrt(x[0]*x[0] + x[1]*x[1] +x[2]*x[2]);
 }
 
-inline vec3_t CylinderInCartisianPatch::normalize(vec3_t x)
+inline vec3_t CylinderInCartesianPatch::normalize(vec3_t x)
 {
   x[0] /= norm(x);
   x[1] /= norm(x);
@@ -71,13 +71,13 @@ inline vec3_t CylinderInCartisianPatch::normalize(vec3_t x)
   return  x;
 }
 
-inline real CylinderInCartisianPatch::dot(vec3_t x1, vec3_t x2)
+inline real CylinderInCartesianPatch::dot(vec3_t x1, vec3_t x2)
 {
   return (x1[0]*x2[0] + x1[1]*x2[1] + x1[2]*x2[2]);
 }
 
-inline real CylinderInCartisianPatch::scalarProduct(vec3_t x1, vec3_t x2) {
-  return CylinderInCartisianPatch::dot(x1, x2)/CylinderInCartisianPatch::norm(x2);
+inline real CylinderInCartesianPatch::scalarProduct(vec3_t x1, vec3_t x2) {
+  return CylinderInCartesianPatch::dot(x1, x2)/CylinderInCartesianPatch::norm(x2);
 }
 
-#endif // CYLINDERINCARTISIANPATCH_H
+#endif // CYLINDERINCARTESIANPATCH_H

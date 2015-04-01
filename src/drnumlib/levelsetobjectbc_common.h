@@ -34,7 +34,7 @@ size_t m_NumOuterLayerCells;      /// total number of cells in outer layers
   * 1st dim: patch id (direct; 0, 1, 2, ...)
   * 2nd dim: layer:
   *       0 :  has at least one face neighbour with negative G-value (inside)
-  *       1 .. m_NumOuterLayers : furter layers farther outside
+  *       1 .. m_NumOuterLayers : further layers farther outside
   * 3rd dim: cell indices in layer */
 LSLayerDataExtrapol* m_InnerCellsLayers;
 
