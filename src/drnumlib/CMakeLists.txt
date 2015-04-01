@@ -16,6 +16,7 @@ SET(drnumlib_SOURCES
     combiobjector.cpp
     compressibleeulerbobc.cpp
     compressiblesolidwallbobc.cpp
+    compressiblelsslip.h
     coneobject.cpp
     configmap.cpp
     containertricks.h
@@ -31,6 +32,7 @@ SET(drnumlib_SOURCES
     geometrytools.cpp
     gpu_patch.h
     gpu_cartesianpatch.h
+    gpu_levelsetbc.h
     gpu_cartesianlevelsetbc.h
     gpu_cylinderincartisianpatch.h
     iteratorfeeder.cpp
@@ -108,5 +110,6 @@ INSTALL(TARGETS drnumlib LIBRARY DESTINATION lib)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   SET_TARGET_PROPERTIES(drnumlib PROPERTIES MACOSX_RPATH 1)
 endif()
+
 
 

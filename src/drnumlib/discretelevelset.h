@@ -29,13 +29,14 @@
 #include <CGAL/AABB_traits.h>
 #include <CGAL/AABB_triangle_primitive.h>
 #include <CGAL/AABB_segment_primitive.h>
-//#include <CGAL/exceptions.h>
 
 #include <vtkPolyData.h>
 #include <vtkSTLReader.h>
 
 #include "patchgrid.h"
 #include "postprocessingvariables.h"
+#include "cartesianpatch.h"
+#include "gpu_cartesianpatch.h"
 
 template <unsigned int DIM, unsigned int IVAR>
 class DiscreteLevelSet
@@ -162,6 +163,7 @@ void DiscreteLevelSet<DIM,IVAR>::computeLevelSet(vtkPolyData *poly)
   int count = 0;
   real var[DIM];
   dim_t<DIM> dim;
+  int total_count = 0;
   for (size_t i_patch = 0; i_patch < m_PatchGrid->getNumPatches(); ++i_patch) {
     for (size_t i_cell = 0; i_cell < m_PatchGrid->getPatch(i_patch)->variableSize(); ++i_cell) {
       vec3_t x = m_PatchGrid->getPatch(i_patch)->xyzoCell(i_cell);
@@ -184,13 +186,39 @@ void DiscreteLevelSet<DIM,IVAR>::computeLevelSet(vtkPolyData *poly)
         ERROR("cannot comput distance");
       }
       ++count;
+      ++total_count;
       if (count >= 10000) {
-        cout << i_cell + 1 << endl;
+        cout << total_count << " cells and " << i_patch << " of " << m_PatchGrid->getNumPatches() << " patches" << endl;
         count = 0;
       }
     }
   }
 }
+
+
+template <unsigned int IVAR>
+struct StoredLevelSet
+{
+  CUDA_DH static real G(GPU_CartesianPatch& patch, size_t i, size_t j, size_t k, size_t i_field = 0)
+  {
+    return patch.f(i_field, IVAR, i, j, k);
+  }
+
+  CUDA_DH static real G(CartesianPatch& patch, size_t i, size_t j, size_t k, size_t i_field = 0)
+  {
+    return patch.f(i_field, IVAR, i, j, k);
+  }
+
+  CUDA_DH static void updateG(CartesianPatch& patch, size_t i, size_t j, size_t k, real G_value, size_t i_field = 0)
+  {
+    patch.f(i_field, IVAR, i, j, k) = G_value;
+  }
+
+  CUDA_DH static void updateG(GPU_CartesianPatch& patch, size_t i, size_t j, size_t k, real G_value, size_t i_field = 0)
+  {
+    patch.f(i_field, IVAR, i, j, k) = G_value;
+  }
+};
 
 
 #endif // DISCRETELEVELSET_H

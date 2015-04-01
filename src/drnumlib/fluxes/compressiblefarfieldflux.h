@@ -92,7 +92,7 @@ public:
 
   template <typename PATCH> CUDA_DH void xWallP(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
-    real var1[5];
+    real var1[DIM];
     m_Reconstruction.project(patch, var1, 0, i-1, j, k, i, j, k, x - patch->dx(), y, z, x, y, z);
     FARFIELD_VARS
     real M0 = -CHECKED_REAL(u0/a0);
@@ -107,7 +107,7 @@ public:
 
   template <typename PATCH> CUDA_DH void xWallM(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
-    real var1[5];
+    real var1[DIM];
     m_Reconstruction.project(patch, var1, 0, i, j, k, i-1, j, k, x, y, z, x - patch->dx(), y, z);
     FARFIELD_VARS
     real M0 = CHECKED_REAL(u0/a0);
@@ -122,7 +122,7 @@ public:
 
   template <typename PATCH> CUDA_DH void yWallP(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
-    real var1[5];
+    real var1[DIM];
     m_Reconstruction.project(patch, var1, 0, i, j-1, k, i, j, k, x, y - patch->dy(), z, x, y, z);
     FARFIELD_VARS
     real M0 = -CHECKED_REAL(v0/a0);
@@ -137,7 +137,7 @@ public:
 
   template <typename PATCH> CUDA_DH void yWallM(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
-    real var1[5];
+    real var1[DIM];
     m_Reconstruction.project(patch, var1, 0, i, j, k, i, j-1, k, x, y, z, x, y - patch->dy(), z);
     FARFIELD_VARS
     real M0 = CHECKED_REAL(v0/a0);
@@ -152,7 +152,7 @@ public:
 
   template <typename PATCH> CUDA_DH void zWallP(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
-    real var1[5];
+    real var1[DIM];
     m_Reconstruction.project(patch, var1, 0, i, j, k-1, i, j, k, x, y, z - patch->dz(), x, y, z);
     FARFIELD_VARS
     real M0 = -CHECKED_REAL(w0/a0);
@@ -167,7 +167,7 @@ public:
 
   template <typename PATCH> CUDA_DH void zWallM(PATCH *patch, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
   {
-    real var1[5];
+    real var1[DIM];
     m_Reconstruction.project(patch, var1, 0, i, j, k, i, j, k-1, x, y, z, x, y, z - patch->dz());
     FARFIELD_VARS
     real M0 = CHECKED_REAL(w0/a0);

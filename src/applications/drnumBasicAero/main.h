@@ -48,6 +48,8 @@
 
 #ifdef GPU
 #include "iterators/gpu_cartesianiterator.h"
+#include "gpu_cartesianlevelsetbc.h"
+#include "compressiblelsslip.h"
 #else
 #include "iterators/cartesianiterator.h"
 #endif
@@ -339,7 +341,6 @@ void run()
     QString stl_file_name = config.getValue<QString>("geometry");
     level_set = new DiscreteLevelSet<NUM_VARS,5>(&patch_grid);
     level_set->readStlGeometry(stl_file_name);
-
   }
 
   if (mesh_preview) {
@@ -363,6 +364,9 @@ void run()
     for (list<real>::iterator i = alpha.begin(); i != alpha.end(); ++i) {
       runge_kutta.addAlpha(*i);
     }
+  }
+  if (config.exists("geometry")) {
+    runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, StoredLevelSet<5>, CompressibleLsSlip<NUM_VARS, GPU_CartesianPatch, PerfectGas> >(&patch_grid, cuda_device, thread_limit));
   }
 
   QString reconstruction = config.getValue<QString>("reconstruction");
@@ -561,7 +565,11 @@ void run()
       }
     } else {
       ++iter;
-      cout << iter << " iterations,  t=" << t << ",  t=" << t/time << "*L/u_oo,  dt: " << dt << ",  DrNUM % of run-time: " << 100*drnum_fraction << endl;
+      cout << iter << " iterations,  t=" << t << ",  t=" << t/time << "*L/u_oo,  dt: " << dt;
+      if (code_coupling) {
+        cout << ",  DrNUM % of run-time: " << 100*drnum_fraction;
+      }
+      cout << endl;
     }
     if (coupling_patch) {
       dt = dt_new;

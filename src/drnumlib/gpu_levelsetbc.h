@@ -22,7 +22,7 @@
 #ifndef GPU_LEVELSETBC_H
 #define GPU_LEVELSETBC_H
 
-template <unsigned int DIM, typename TCPU, typename TGPU, typename BC>
+template <unsigned int DIM, typename TCPU, typename TGPU>
 class GPU_LevelSetBC;
 
 #include "cudatools.h"
@@ -30,7 +30,7 @@ class GPU_LevelSetBC;
 #include "drnum.h"
 #include "genericoperation.h"
 
-template <unsigned int DIM, typename TCPU, typename TGPU, typename BC>
+template <unsigned int DIM, typename TCPU, typename TGPU>
 class GPU_LevelSetBC : public GenericOperation
 {
 
@@ -39,26 +39,61 @@ protected: // attributes
   PatchGrid*     m_PatchGrid;
   vector<TCPU*>  m_Patches;
   vector<TGPU>   m_GpuPatches;
-  BC             m_Bc;
+  size_t         m_MaxNumThreads;
+  int            m_CudaDevice;
+
+
+protected: // methods
+
+  CUDA_HO void copyField(size_t i_src, size_t i_dst);
 
 
 public: // methods
 
-  GPU_LevelSetBC(PatchGrid* patch_grid);
+  GPU_LevelSetBC(PatchGrid* patch_grid, int cuda_device = 0, size_t thread_limit = 0);
 
 };
 
 
-template <unsigned int DIM, typename BC>
-GPU_LevelSetBC<DIM,BC>::GPU_LevelSetBC(PatchGrid* patch_grid)
+template <unsigned int DIM, typename TCPU, typename TGPU>
+GPU_LevelSetBC<DIM,TCPU,TGPU>::GPU_LevelSetBC(PatchGrid* patch_grid, int cuda_device, size_t thread_limit)
 {
+  m_CudaDevice = cuda_device;
+  int count;
+  if (cudaGetDeviceCount(&count) != cudaSuccess) {
+    cerr << "error detecting CUDA devices" << endl;
+    exit(EXIT_FAILURE);
+  }
+  if (count < m_CudaDevice + 1) {
+    CudaTools::info();
+    cerr << "specified CUDA device does not exists" << endl;
+    exit(EXIT_FAILURE);
+  }
+  cudaDeviceProp prop;
+  if (cudaGetDeviceProperties(&prop, m_CudaDevice) != cudaSuccess) {
+    cerr << "error fetching device properties" << endl;
+    exit(EXIT_FAILURE);
+  }
+  cudaSetDevice(m_CudaDevice);
+  m_MaxNumThreads = min(prop.maxThreadsPerBlock, prop.maxThreadsDim[0]);
+  if (thread_limit > 0) {
+    m_MaxNumThreads = min(thread_limit, m_MaxNumThreads);
+  }
   m_PatchGrid = patch_grid;
-  for (size_t i = 0; i < m_PatchGrid->getNumPatches(); ++i_patch) {
+  for (size_t i = 0; i < m_PatchGrid->getNumPatches(); ++i) {
     TCPU* patch = dynamic_cast<TCPU*>(m_PatchGrid->getPatch(i));
     if (patch) {
       m_Patches.push_back(patch);
       m_GpuPatches.push_back(TGPU(patch));
     }
+  }
+}
+
+template <unsigned int DIM, typename TCPU, typename TGPU>
+void GPU_LevelSetBC<DIM, TCPU, TGPU>::copyField(size_t i_src, size_t i_dst)
+{
+  for (size_t i = 0; i < this->m_Patches.size(); ++i) {
+    cudaMemcpy(m_GpuPatches[i].getField(i_dst), m_GpuPatches[i].getField(i_src), m_GpuPatches[i].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
   }
 }
 

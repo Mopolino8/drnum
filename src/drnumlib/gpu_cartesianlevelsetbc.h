@@ -22,7 +22,7 @@
 #ifndef GPU_CARTESIANLEVELSETBC_H
 #define GPU_CARTESIANLEVELSETBC_H
 
-template <unsigned int DIM, typename BC>
+template <unsigned int DIM, typename LS, typename BC>
 class GPU_CartesianLevelSetBC;
 
 #include "gpu_levelsetbc.h"
@@ -31,8 +31,8 @@ class GPU_CartesianLevelSetBC;
 #include "genericoperation.h"
 #include "gpu_cartesianpatch.h"
 
-template <unsigned int DIM, unsigned int IVAR, typename BC>
-class GPU_CartesianLevelSetBC : public GPU_LevelSetBC<DIM, CartesianPatch, GPU_CartesianPatch, BC>
+template <unsigned int DIM, typename LS, typename BC>
+class GPU_CartesianLevelSetBC : public GPU_LevelSetBC<DIM, CartesianPatch, GPU_CartesianPatch>
 {
 
 protected: // attributes
@@ -40,90 +40,350 @@ protected: // attributes
 
 public: // methods
 
-  GPU_LevelSetBC(PatchGrid* patch_grid);
+  GPU_CartesianLevelSetBC(PatchGrid* patch_grid, int cuda_device = 0, size_t thread_limit = 0);
 
-  CUDA_DO static real  g     (GPU_CartesianPatch &patch, size_t i, size_t j, size_t k);
-  CUDA_DO static real& marker(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k);
-  CUDA_DO static bool  marked(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k);
-  CUDA_DO static void  grad  (GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz);
+  CUDA_DO static void  grad(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz);
+
+  CUDA_HO virtual void operator()();
 
 };
 
-//CUDA_DH real& f(size_t i_field, size_t i_var, size_t i, size_t j, size_t k)
 
-
-template <unsigned int DIM, typename BC>
-real GPU_CartesianLevelSetBC<DIM,BC>::g(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k)
+template <unsigned int DIM, typename LS, typename BC>
+void GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz)
 {
-  return patch.f(0, IVAR, i, j, k);
+  gx = 0.5*patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i-1, j, k));
+  gy = 0.5*patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j+1, k));
+  gz = 0.5*patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k+1));
 }
 
-template <unsigned int DIM, typename BC>
-real& GPU_CartesianLevelSetBC<DIM,BC>::marker(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k)
-{
-  return patch.f(2, 0, i, j, k);
-}
-
-template <unsigned int DIM, typename BC>
-bool GPU_CartesianLevelSetBC<DIM,BC>::marked(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k)
-{
-  return marker(patch, i, j, k) > 0.5;
-}
-
-template <unsigned int DIM, typename BC>
-void GPU_CartesianLevelSetBC<DIM,BC>::grad(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz)
-{
-  gx = 0.5*patch.idx()*(g(patch, i+1, j, k) - g(patch, i-1, j, k));
-  gy = 0.5*patch.idy()*(g(patch, i, j+1, k) - g(patch, i, j+1, k));
-  gz = 0.5*patch.idz()*(g(patch, i, j, k+1) - g(patch, i, j, k+1));
-}
-
-template <unsigned int DIM, typename BC>
-GPU_CartesianLevelSetBC<DIM,BC>::GPU_CartesianLevelSetBC(PatchGrid* patch_grid)
-  : GPU_LevelSetBC<DIM, CartesianPatch, GPU_CartesianPatch, BC>(patch_grid)
+template <unsigned int DIM, typename LS, typename BC>
+GPU_CartesianLevelSetBC<DIM,LS,BC>::GPU_CartesianLevelSetBC(PatchGrid* patch_grid, int cuda_device, size_t thread_limit)
+  : GPU_LevelSetBC<DIM, CartesianPatch, GPU_CartesianPatch>(patch_grid, cuda_device, thread_limit)
 {
 }
 
 
-template <unsigned int DIM, typename BC>
-__global__ GPU_CartesianLevelSetBC_Operate(GPU_CartesianPatch patch)
+
+template <unsigned int DIM, typename LS, typename BC>
+__global__ void GPU_CartesianLevelSetBC_kernelOperate(GPU_CartesianPatch patch)
 {
   size_t i = 1 + blockIdx.x;
   size_t j = 1 + blockIdx.y;
   size_t k = 1 + threadIdx.x;
 
+  dim_t<DIM> dim;
+
   if (i >= (patch.sizeI() - 1) || j >= (patch.sizeJ() - 1) || k >= (patch.sizeK() - 1)) {
     return;
   }
 
+  if (LS::G(patch, i, j, k) < 0) {
 
-  if (g(i, j, k) < 0) {
+    real var_neigh[DIM], var[DIM];
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var] = 0.0;
+    }
+
     real gx_c, gy_c, gz_c;
-    GPU_CartesianLevelSetBC<DIM,BC>::grad(patch, i, j, k, gx_c, gy_c, gz_c);
-    if (g(i+1, j, k) >= 0) {
-      real gx = patch.idx()*(GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i+1, j, k) - GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j, k));
-      m_Bc.operate(i, j, k, i+1, j, k, gx, gy_c, gz_c);
+    int count = 0;
+    real total_weight = 0;
+    GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx_c, gy_c, gz_c);
+    if (LS::G(patch, i+1, j, k) >= 0) {
+      real gx     = patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i, j, k));
+      real weight = fabs(gx);
+      BC::operateX(&patch, var_neigh, LS::G(patch, i+1, j, k), i, j, k, 1, gx, gy_c, gz_c);
+      total_weight += weight;
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
     }
-    if (g(i-1, j, k) >= 0) {
-      real gx = patch.idx()*(GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j, k) - GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i-1, j, k));
-      m_Bc.operate(i, j, k, i-1, j, k, gx, gy_c, gz_c);
+    if (LS::G(patch, i-1, j, k) >= 0) {
+      real gx     = patch.idx()*(LS::G(patch, i, j, k) - LS::G(patch, i-1, j, k));
+      real weight = fabs(gx);
+      BC::operateX(&patch, var_neigh, LS::G(patch, i-1, j, k), i, j, k, -1, gx, gy_c, gz_c);
+      total_weight += weight;
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
     }
-    if (g(i, j+1, k) >= 0) {
-      real gy = patch.idy()*(GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j+1, k) - GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j, k));
-      m_Bc.operate(i, j, k, i, j+1, k, gx_c, gy, gz_c);
+    if (LS::G(patch, i, j+1, k) >= 0) {
+      real gy     = patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j, k));
+      real weight = fabs(gy);
+      BC::operateY(&patch, var_neigh, LS::G(patch, i, j+1, k), i, j, k, 1, gx_c, gy, gz_c);
+      total_weight += weight;
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
     }
-    if (g(i, j-1, k) >= 0) {
-      real gy = patch.idy()*(GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j, k) - GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j-1, k));
-      m_Bc.operate(i, j, k, i, j-1, k, gx_c, gy, gz_c);
+    if (LS::G(patch, i, j-1, k) >= 0) {
+      real gy     = patch.idy()*(LS::G(patch, i, j, k) - LS::G(patch, i, j-1, k));
+      real weight = fabs(gy);
+      BC::operateY(&patch, var_neigh, LS::G(patch, i, j-1, k), i, j, k, -1, gx_c, gy, gz_c);
+      total_weight += weight;
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
     }
-    if (g(i, j, k+1) >= 0) {
-      real gz = patch.idz()*(GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j, k+1) - GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j, k));
-      m_Bc.operate(i, j, k, i, j, k+1, gx_c, gy, gz_c);
+    if (LS::G(patch, i, j, k+1) >= 0) {
+      real gz     = patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k));
+      real weight = fabs(gz);
+      BC::operateZ(&patch, var_neigh, LS::G(patch, i, j, k+1), i, j, k, 1, gx_c, gy_c, gz);
+      total_weight += weight;
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
     }
-    if (g(i, j, k-1) >= 0) {
-      real gz = patch.idz()*(GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j, k) - GPU_CartesianLevelSetBC<DIM,BC>::g(patch, i, j, k-1));
-      m_Bc.operate(i, j, k, i, j, k-1, gx_c, gy, gz_c);
+    if (LS::G(patch, i, j, k-1) >= 0) {
+      real gz     = patch.idz()*(LS::G(patch, i, j, k) - LS::G(patch, i, j, k-1));
+      real weight = fabs(gz);
+      BC::operateZ(&patch, var_neigh, LS::G(patch, i, j, k-1), i, j, k, -1, gx_c, gy_c, gz);
+      total_weight += weight;
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
     }
+
+    if (count > 0) {
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] /= total_weight;
+      }
+      real G_self = LS::G(patch, i, j, k);
+      patch.setVar(dim, 0, i, j, k, var);
+      LS::updateG(patch, i, j, k, G_self);
+    }
+
+  }
+}
+
+template <unsigned int DIM, typename LS, typename BC>
+__global__ void GPU_CartesianLevelSetBC_kernelExtrapolate(GPU_CartesianPatch patch)
+{
+  size_t i = 1 + blockIdx.x;
+  size_t j = 1 + blockIdx.y;
+  size_t k = 1 + threadIdx.x;
+
+  dim_t<DIM> dim;
+
+  if (i >= (patch.sizeI() - 1) || j >= (patch.sizeJ() - 1) || k >= (patch.sizeK() - 1)) {
+    return;
+  }
+
+  real G_self = LS::G(patch, i, j, k);
+
+  if (G_self < 0) {
+
+    real var_neigh[DIM], var[DIM];
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var] = 0.0;
+    }
+
+    size_t idx = patch.index(i, j, k);
+    real gx_c, gy_c, gz_c;
+    int count = 0;
+    real total_weight = 0;
+    GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx_c, gy_c, gz_c);
+    if (LS::G(patch, i+1, j, k) < 0 && LS::G(patch, i+1, j, k) > G_self) {
+      real   gx     = patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i, j, k));
+      real   weight = fabs(gx);
+      total_weight += weight;
+      patch.getVar(dim, 0, i+1, j, k, var_neigh);
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
+    }
+    if (LS::G(patch, i-1, j, k) < 0 && LS::G(patch, i-1, j, k) > G_self) {
+      real   gx     = patch.idx()*(LS::G(patch, i, j, k) - LS::G(patch, i-1, j, k));
+      real   weight = fabs(gx);
+      total_weight += weight;
+      patch.getVar(dim, 0, i-1, j, k, var_neigh);
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
+    }
+    if (LS::G(patch, i, j+1, k) < 0 && LS::G(patch, i, j+1, k) > G_self) {
+      real   gy     = patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j, k));
+      real   weight = fabs(gy);
+      total_weight += weight;
+      patch.getVar(dim, 0, i, j+1, k, var_neigh);
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
+    }
+    if (LS::G(patch, i, j-1, k) < 0 && LS::G(patch, i, j-1, k) > G_self) {
+      real   gy     = patch.idy()*(LS::G(patch, i, j, k) - LS::G(patch, i, j-1, k));
+      real   weight = fabs(gy);
+      total_weight += weight;
+      patch.getVar(dim, 0, i, j-1, k, var_neigh);
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
+    }
+    if (LS::G(patch, i, j, k+1) < 0 && LS::G(patch, i, j, k+1) > G_self) {
+      real   gz     = patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k));
+      real   weight = fabs(gz);
+      total_weight += weight;
+      patch.getVar(dim, 0, i, j, k+1, var_neigh);
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
+    }
+    if (LS::G(patch, i, j, k-1) < 0 && LS::G(patch, i, j, k-1) > G_self) {
+      real   gz     = patch.idz()*(LS::G(patch, i, j, k) - LS::G(patch, i, j, k-1));
+      real   weight = fabs(gz);
+      total_weight += weight;
+      patch.getVar(dim, 0, i, j, k-1, var_neigh);
+      ++count;
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] += weight*var_neigh[i_var];
+      }
+    }
+
+    if (count > 0) {
+      for (size_t i_var = 0; i_var < DIM; ++i_var) {
+        var[i_var] /= total_weight;
+      }
+      real G_self = LS::G(patch, i, j, k);
+      patch.setVar(dim, 2, i, j, k, var);
+      LS::updateG(patch, i, j, k, G_self, 2);
+    }
+
+  }
+}
+
+template <unsigned int DIM, typename LS, typename BC>
+__global__ void GPU_CartesianLevelSetBC_kernelPre(GPU_CartesianPatch patch)
+{
+  size_t i = 1 + blockIdx.x;
+  size_t j = 1 + blockIdx.y;
+  size_t k = 1 + threadIdx.x;
+
+  dim_t<DIM> dim;
+
+  if (i >= (patch.sizeI() - 1) || j >= (patch.sizeJ() - 1) || k >= (patch.sizeK() - 1)) {
+    return;
+  }
+
+  if (LS::G(patch, i, j, k) >= 0) {
+
+    real var[DIM];
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var] = 0.0;
+    }
+
+    real gx, gy, gz;
+    bool crossover = false;
+    GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
+    if      (LS::G(patch, i+1, j, k) < 0) crossover = true;
+    else if (LS::G(patch, i-1, j, k) < 0) crossover = true;
+    else if (LS::G(patch, i, j+1, k) < 0) crossover = true;
+    else if (LS::G(patch, i, j-1, k) < 0) crossover = true;
+    else if (LS::G(patch, i, j, k+1) < 0) crossover = true;
+    else if (LS::G(patch, i, j, k-1) < 0) crossover = true;
+
+    if (crossover) {
+      BC::pre(&patch, var, i, j, k, gx, gy, gz);
+      patch.setVar(dim, 0, i, j, k, var);
+    }
+
+  }
+}
+
+template <unsigned int DIM, typename LS, typename BC>
+__global__ void GPU_CartesianLevelSetBC_kernelPost(GPU_CartesianPatch patch)
+{
+  size_t i = 1 + blockIdx.x;
+  size_t j = 1 + blockIdx.y;
+  size_t k = 1 + threadIdx.x;
+
+  dim_t<DIM> dim;
+
+  if (i >= (patch.sizeI() - 1) || j >= (patch.sizeJ() - 1) || k >= (patch.sizeK() - 1)) {
+    return;
+  }
+
+  if (LS::G(patch, i, j, k) >= 0) {
+
+    real var[DIM];
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var] = 0.0;
+    }
+
+    real gx, gy, gz;
+    bool crossover = false;
+    GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
+    if      (LS::G(patch, i+1, j, k) < 0) crossover = true;
+    else if (LS::G(patch, i-1, j, k) < 0) crossover = true;
+    else if (LS::G(patch, i, j+1, k) < 0) crossover = true;
+    else if (LS::G(patch, i, j-1, k) < 0) crossover = true;
+    else if (LS::G(patch, i, j, k+1) < 0) crossover = true;
+    else if (LS::G(patch, i, j, k-1) < 0) crossover = true;
+
+    if (crossover) {
+      BC::post(&patch, var, i, j, k, gx, gy, gz);
+      patch.setVar(dim, 0, i, j, k, var);
+    }
+
+  }
+}
+
+template <unsigned int DIM, typename LS, typename BC>
+void GPU_CartesianLevelSetBC<DIM,LS,BC>::operator()()
+{
+  cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
+  CUDA_CHECK_ERROR;
+
+  //GPU_LevelSetBC<DIM,CartesianPatch,GPU_CartesianPatch,BC>::copyField(0, 2);
+  this->copyField(0, 2);
+  cudaDeviceSynchronize();
+
+  for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
+
+    CUDA_CHECK_ERROR;
+
+    size_t max_num_threads = this->m_MaxNumThreads;
+    size_t k_lines = max(size_t(1), size_t(max_num_threads/this->m_Patches[i_patch]->sizeK()));
+
+    {
+      dim3 blocks(this->m_Patches[i_patch]->sizeI(), this->m_Patches[i_patch]->sizeJ()/k_lines+1, 1);
+      dim3 threads(this->m_Patches[i_patch]->sizeK(), k_lines, 1);
+
+      if (BC::usePre()) {
+        GPU_CartesianLevelSetBC_kernelPre<DIM,LS,BC> <<<blocks, threads>>>(this->m_GpuPatches[i_patch]);
+        CUDA_CHECK_ERROR;
+        cudaDeviceSynchronize();
+      }
+
+      GPU_CartesianLevelSetBC_kernelOperate<DIM,LS,BC> <<<blocks, threads>>>(this->m_GpuPatches[i_patch]);
+      CUDA_CHECK_ERROR;
+      cudaDeviceSynchronize();
+
+
+      if (BC::usePost()) {
+        GPU_CartesianLevelSetBC_kernelPost<DIM,LS,BC> <<<blocks, threads>>>(this->m_GpuPatches[i_patch]);
+        CUDA_CHECK_ERROR;
+        cudaDeviceSynchronize();
+      }
+
+      /*
+      GPU_CartesianLevelSetBC_kernelExtrapolate<DIM,LS,BC> <<<blocks, threads>>>(this->m_GpuPatches[i_patch]);
+      CUDA_CHECK_ERROR;
+      cudaDeviceSynchronize();
+      cudaMemcpy(this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
+      */
+    }
+
   }
 }
 
