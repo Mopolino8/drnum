@@ -28,7 +28,7 @@ template <unsigned int DIM, typename TPatch, typename TGas>
 struct CompressibleLsSlip
 {
   CUDA_DH static bool usePre() { return false; }
-  CUDA_DH static bool usePost() { return true; }
+  CUDA_DH static bool usePost() { return false; }
 
   CUDA_DH static void pre(TPatch* patch, real* var, size_t i, size_t j, size_t k, real gx, real gy, real gz) {}
 
