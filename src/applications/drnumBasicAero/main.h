@@ -37,6 +37,7 @@
 #include "fluxes/compressibleslipflux.h"
 #include "perfectgas.h"
 #include "compressiblevariables.h"
+#include "compressiblevariablesandg.h"
 #include "rungekutta.h"
 #include "discretelevelset.h"
 
@@ -72,8 +73,8 @@ protected:
 
   //typedef AusmDV<NUM_VARS, reconstruction_t, PerfectGas> euler_t;
   //typedef VanLeer<NUM_VARS, TReconstruction, PerfectGas> euler_t;
-  typedef Roe<NUM_VARS, TReconstruction, PerfectGas> euler_t;
-  //typedef AusmPlus<NUM_VARS, TReconstruction, PerfectGas> euler_t;
+  //typedef Roe<NUM_VARS, TReconstruction, PerfectGas> euler_t;
+  typedef AusmPlus<NUM_VARS, TReconstruction, PerfectGas> euler_t;
   //typedef KT<NUM_VARS, 10000, TReconstruction, PerfectGas> euler_t;
   //typedef KNP<NUM_VARS, TReconstruction, PerfectGas> euler_t;
 
@@ -345,6 +346,7 @@ void run()
     level_set = new DiscreteLevelSet<NUM_VARS,5>(&patch_grid);
     level_set->readStlGeometry(stl_file_name);
     cout << endl << "Discrete Level Set Runtime -> " << t_levelSet.elapsed()/1000. << endl;
+    patch_grid.writeToVtk(0, "VTK-drnum/levelset", LevelSetPlotVars<5>(), -1);
   }
 
   if (mesh_preview) {
@@ -564,7 +566,7 @@ void run()
 
       ++write_counter;
       if (config.getValue<bool>("file-output")) {
-        patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), write_counter);
+        patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariablesAndG<PerfectGas>(), write_counter);
         patch_grid.writeData(0, "data/step", t, write_counter);
       }
     } else {
@@ -585,7 +587,7 @@ void run()
       if (config.exists("single-iteration")) {
         if (config.getValue<bool>("single-iteration")) {
           if (config.getValue<bool>("file-output")) {
-            patch_grid.writeToVtk(0, "VTK-drnum/final", CompressibleVariables<PerfectGas>(), -1);
+            patch_grid.writeToVtk(0, "VTK-drnum/final", CompressibleVariablesAndG<PerfectGas>(), -1);
           }
           exit(0);
         }

@@ -53,8 +53,8 @@ template <unsigned int DIM, typename LS, typename BC>
 void GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz)
 {
   gx = 0.5*patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i-1, j, k));
-  gy = 0.5*patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j+1, k));
-  gz = 0.5*patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k+1));
+  gy = 0.5*patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j-1, k));
+  gz = 0.5*patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k-1));
 }
 
 template <unsigned int DIM, typename LS, typename BC>
@@ -63,14 +63,16 @@ GPU_CartesianLevelSetBC<DIM,LS,BC>::GPU_CartesianLevelSetBC(PatchGrid* patch_gri
 {
 }
 
+#define GPU_CARTESIANLEVELSETBC_INDICES           \
+  size_t i = blockIdx.x;                          \
+  size_t j = blockDim.y*blockIdx.y + threadIdx.y; \
+  size_t k = threadIdx.x;
 
 
 template <unsigned int DIM, typename LS, typename BC>
 __global__ void GPU_CartesianLevelSetBC_kernelOperate(GPU_CartesianPatch patch)
 {
-  size_t i = 1 + blockIdx.x;
-  size_t j = 1 + blockIdx.y;
-  size_t k = 1 + threadIdx.x;
+  GPU_CARTESIANLEVELSETBC_INDICES;
 
   dim_t<DIM> dim;
 
@@ -165,9 +167,7 @@ __global__ void GPU_CartesianLevelSetBC_kernelOperate(GPU_CartesianPatch patch)
 template <unsigned int DIM, typename LS, typename BC>
 __global__ void GPU_CartesianLevelSetBC_kernelExtrapolate(GPU_CartesianPatch patch)
 {
-  size_t i = 1 + blockIdx.x;
-  size_t j = 1 + blockIdx.y;
-  size_t k = 1 + threadIdx.x;
+  GPU_CARTESIANLEVELSETBC_INDICES;
 
   dim_t<DIM> dim;
 
@@ -186,71 +186,96 @@ __global__ void GPU_CartesianLevelSetBC_kernelExtrapolate(GPU_CartesianPatch pat
 
     size_t idx = patch.index(i, j, k);
     real gx_c, gy_c, gz_c;
-    int count = 0;
+    int count1 = 0;
+    int count2 = 0;
     real total_weight = 0;
     GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx_c, gy_c, gz_c);
-    if (LS::G(patch, i+1, j, k) < 0 && LS::G(patch, i+1, j, k) > G_self) {
-      real   gx     = patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i, j, k));
-      real   weight = fabs(gx);
-      total_weight += weight;
-      patch.getVar(dim, 0, i+1, j, k, var_neigh);
-      ++count;
-      for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+    if (LS::G(patch, i+1, j, k) < 0) {
+      if (LS::G(patch, i+1, j, k) > G_self) {
+        real   gx     = patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i, j, k));
+        real   weight = fabs(gx);
+        total_weight += weight;
+        patch.getVar(dim, 0, i+1, j, k, var_neigh);
+        ++count1;
+        for (size_t i_var = 0; i_var < DIM; ++i_var) {
+          var[i_var] += weight*var_neigh[i_var];
+        }
       }
+    } else {
+      ++count2;
     }
-    if (LS::G(patch, i-1, j, k) < 0 && LS::G(patch, i-1, j, k) > G_self) {
-      real   gx     = patch.idx()*(LS::G(patch, i, j, k) - LS::G(patch, i-1, j, k));
-      real   weight = fabs(gx);
-      total_weight += weight;
-      patch.getVar(dim, 0, i-1, j, k, var_neigh);
-      ++count;
-      for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+    if (LS::G(patch, i-1, j, k) < 0) {
+      if (LS::G(patch, i-1, j, k) > G_self) {
+        real   gx     = patch.idx()*(LS::G(patch, i, j, k) - LS::G(patch, i-1, j, k));
+        real   weight = fabs(gx);
+        total_weight += weight;
+        patch.getVar(dim, 0, i-1, j, k, var_neigh);
+        ++count1;
+        for (size_t i_var = 0; i_var < DIM; ++i_var) {
+          var[i_var] += weight*var_neigh[i_var];
+        }
       }
+    } else {
+      ++count2;
     }
-    if (LS::G(patch, i, j+1, k) < 0 && LS::G(patch, i, j+1, k) > G_self) {
-      real   gy     = patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j, k));
-      real   weight = fabs(gy);
-      total_weight += weight;
-      patch.getVar(dim, 0, i, j+1, k, var_neigh);
-      ++count;
-      for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+    if (LS::G(patch, i, j+1, k) < 0) {
+      if (LS::G(patch, i, j+1, k) > G_self) {
+        real   gy     = patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j, k));
+        real   weight = fabs(gy);
+        total_weight += weight;
+        patch.getVar(dim, 0, i, j+1, k, var_neigh);
+        ++count1;
+        for (size_t i_var = 0; i_var < DIM; ++i_var) {
+          var[i_var] += weight*var_neigh[i_var];
+        }
       }
+    } else {
+      ++count2;
     }
-    if (LS::G(patch, i, j-1, k) < 0 && LS::G(patch, i, j-1, k) > G_self) {
-      real   gy     = patch.idy()*(LS::G(patch, i, j, k) - LS::G(patch, i, j-1, k));
-      real   weight = fabs(gy);
-      total_weight += weight;
-      patch.getVar(dim, 0, i, j-1, k, var_neigh);
-      ++count;
-      for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+    if (LS::G(patch, i, j-1, k) < 0) {
+      if (LS::G(patch, i, j-1, k) > G_self) {
+        real   gy     = patch.idy()*(LS::G(patch, i, j, k) - LS::G(patch, i, j-1, k));
+        real   weight = fabs(gy);
+        total_weight += weight;
+        patch.getVar(dim, 0, i, j-1, k, var_neigh);
+        ++count1;
+        for (size_t i_var = 0; i_var < DIM; ++i_var) {
+          var[i_var] += weight*var_neigh[i_var];
+        }
       }
+    } else {
+      ++count2;
     }
-    if (LS::G(patch, i, j, k+1) < 0 && LS::G(patch, i, j, k+1) > G_self) {
-      real   gz     = patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k));
-      real   weight = fabs(gz);
-      total_weight += weight;
-      patch.getVar(dim, 0, i, j, k+1, var_neigh);
-      ++count;
-      for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+    if (LS::G(patch, i, j, k+1) < 0) {
+      if (LS::G(patch, i, j, k+1) > G_self) {
+        real   gz     = patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k));
+        real   weight = fabs(gz);
+        total_weight += weight;
+        patch.getVar(dim, 0, i, j, k+1, var_neigh);
+        ++count1;
+        for (size_t i_var = 0; i_var < DIM; ++i_var) {
+          var[i_var] += weight*var_neigh[i_var];
+        }
       }
+    } else {
+      ++count2;
     }
-    if (LS::G(patch, i, j, k-1) < 0 && LS::G(patch, i, j, k-1) > G_self) {
-      real   gz     = patch.idz()*(LS::G(patch, i, j, k) - LS::G(patch, i, j, k-1));
-      real   weight = fabs(gz);
-      total_weight += weight;
-      patch.getVar(dim, 0, i, j, k-1, var_neigh);
-      ++count;
-      for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+    if (LS::G(patch, i, j, k-1) < 0) {
+      if (LS::G(patch, i, j, k-1) > G_self) {
+        real   gz     = patch.idz()*(LS::G(patch, i, j, k) - LS::G(patch, i, j, k-1));
+        real   weight = fabs(gz);
+        total_weight += weight;
+        patch.getVar(dim, 0, i, j, k-1, var_neigh);
+        ++count1;
+        for (size_t i_var = 0; i_var < DIM; ++i_var) {
+          var[i_var] += weight*var_neigh[i_var];
+        }
       }
+    } else {
+      ++count2;
     }
 
-    if (count > 0) {
+    if (count1 > 0 && count2 == 0) {
       for (size_t i_var = 0; i_var < DIM; ++i_var) {
         var[i_var] /= total_weight;
       }
@@ -265,9 +290,7 @@ __global__ void GPU_CartesianLevelSetBC_kernelExtrapolate(GPU_CartesianPatch pat
 template <unsigned int DIM, typename LS, typename BC>
 __global__ void GPU_CartesianLevelSetBC_kernelPre(GPU_CartesianPatch patch)
 {
-  size_t i = 1 + blockIdx.x;
-  size_t j = 1 + blockIdx.y;
-  size_t k = 1 + threadIdx.x;
+  GPU_CARTESIANLEVELSETBC_INDICES;
 
   dim_t<DIM> dim;
 
@@ -303,9 +326,7 @@ __global__ void GPU_CartesianLevelSetBC_kernelPre(GPU_CartesianPatch patch)
 template <unsigned int DIM, typename LS, typename BC>
 __global__ void GPU_CartesianLevelSetBC_kernelPost(GPU_CartesianPatch patch)
 {
-  size_t i = 1 + blockIdx.x;
-  size_t j = 1 + blockIdx.y;
-  size_t k = 1 + threadIdx.x;
+  GPU_CARTESIANLEVELSETBC_INDICES;
 
   dim_t<DIM> dim;
 
@@ -322,7 +343,6 @@ __global__ void GPU_CartesianLevelSetBC_kernelPost(GPU_CartesianPatch patch)
 
     real gx, gy, gz;
     bool crossover = false;
-    GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
     if      (LS::G(patch, i+1, j, k) < 0) crossover = true;
     else if (LS::G(patch, i-1, j, k) < 0) crossover = true;
     else if (LS::G(patch, i, j+1, k) < 0) crossover = true;
@@ -331,6 +351,7 @@ __global__ void GPU_CartesianLevelSetBC_kernelPost(GPU_CartesianPatch patch)
     else if (LS::G(patch, i, j, k-1) < 0) crossover = true;
 
     if (crossover) {
+      GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
       BC::post(&patch, var, i, j, k, gx, gy, gz);
       patch.setVar(dim, 0, i, j, k, var);
     }
@@ -345,7 +366,7 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::operator()()
   CUDA_CHECK_ERROR;
 
   //GPU_LevelSetBC<DIM,CartesianPatch,GPU_CartesianPatch,BC>::copyField(0, 2);
-  this->copyField(0, 2);
+  //this->copyField(0, 2);
   cudaDeviceSynchronize();
 
   for (size_t i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
@@ -369,19 +390,18 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::operator()()
       CUDA_CHECK_ERROR;
       cudaDeviceSynchronize();
 
-
       if (BC::usePost()) {
         GPU_CartesianLevelSetBC_kernelPost<DIM,LS,BC> <<<blocks, threads>>>(this->m_GpuPatches[i_patch]);
         CUDA_CHECK_ERROR;
         cudaDeviceSynchronize();
       }
 
-      /*
+      cudaMemcpy(this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
       GPU_CartesianLevelSetBC_kernelExtrapolate<DIM,LS,BC> <<<blocks, threads>>>(this->m_GpuPatches[i_patch]);
       CUDA_CHECK_ERROR;
       cudaDeviceSynchronize();
       cudaMemcpy(this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
-      */
+
     }
 
   }

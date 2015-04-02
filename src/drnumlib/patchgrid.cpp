@@ -690,6 +690,7 @@ void PatchGrid::writeToVtk(size_t i_field, string file_name, const PostProcessin
   vtkSmartPointer<vtkXMLMultiBlockDataWriter> vmb = vtkSmartPointer<vtkXMLMultiBlockDataWriter>::New();
   vmb->SetInputData(multi_block);
   vmb->SetFileName(file_name.c_str());
+  //vmb->SetDataModeToAscii();
   vmb->Write();
 }
 
