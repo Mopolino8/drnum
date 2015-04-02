@@ -339,8 +339,12 @@ void run()
   DiscreteLevelSet<NUM_VARS,5>* level_set = NULL;
   if (config.exists("geometry")) {
     QString stl_file_name = config.getValue<QString>("geometry");
+    QTime t_levelSet;
+    t_levelSet.start();
+    cout << endl << "Starting Level Set Computation" << endl;
     level_set = new DiscreteLevelSet<NUM_VARS,5>(&patch_grid);
     level_set->readStlGeometry(stl_file_name);
+    cout << endl << "Discrete Level Set Runtime -> " << t_levelSet.elapsed()/1000. << endl;
   }
 
   if (mesh_preview) {
