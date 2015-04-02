@@ -56,21 +56,23 @@ public:
    *  - index 1 : cell type => 3-> in cylinder, 2-> layer 1, 1-> layer 2, 0-> outside, set to zero.
    */
 
-  GPU_CylinderInCartesianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit);
+  GPU_CylinderInCartesianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit, real p, real T);
 
   virtual void operator()();
 
 };
 
-GPU_CylinderInCartesianPatch::GPU_CylinderInCartesianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit) : m_Patch(patch)
+GPU_CylinderInCartesianPatch::GPU_CylinderInCartesianPatch(CartesianPatch *patch, int cuda_device, size_t thread_limit, real p, real T) : m_Patch(patch)
 {
-  m_Tinf   = 300.0;
-  m_Pinf   = 1e5;
+  //m_Tinf   = 300.0;
+  //m_Pinf   = 1e5;
+  m_Pinf = p;
+  m_Tinf = T;
   m_Xo     = vec3_t(0.0, 0.0, 0.0);
   m_Rad    = 1.0;
-  m_Height = 0.5;
+  m_Height = 1.0;
   //m_Omega  = -1.04719775;
-  m_Omega  = 17.3594;
+  m_Omega  = 34.73/m_Rad;
   m_Po[0] = 0.5*patch->dx();
   m_Po[1] = 0.5*patch->dy();
   m_Po[2] = 0.5*patch->dz();
@@ -111,7 +113,7 @@ CUDA_DH inline real norm(real x, real y, real z)
 
 CUDA_DH inline real dot(real x1, real y1, real z1, real x2, real y2, real z2)
 {
-  return (x1*x2 + x1*x2 + x1*x2);
+  return (x1*x2 + y1*y2 + z1*z2);
 }
 
 CUDA_DH inline real scalarProduct(real x1, real y1, real z1, real x2, real y2, real z2)
@@ -150,14 +152,16 @@ CUDA_DH inline void computeDpAndWeight(GPU_CartesianPatch& patch, real x_PmO, re
 
   // dp = dr.v_th^2.rho/r
   // Here dr = dx*weight
-  real v_n   = scalarProduct(u, v, 0, x_p, y_p, 0);
+  real n_xp  = norm(x_p, y_p, 0);
+  real v_n   = scalarProduct(u, v, 0, x_p/n_xp, y_p/n_xp, 0);
   real v_th2 = vectorSquare(u, v, 0) - v_n*v_n;
   //dp = weight*p + weight*weight*dx*(u*u + v*v + w*w)*var1[0]/norm(x_im);
   dp = weight*p + weight*weight*dx*v_th2*var1[0]/norm(x, y, z);
 }
 
-__global__ void GPU_CylinderInCartesianPatch_Mark(GPU_CartesianPatch patch, real x_PmO, real y_PmO, real z_PmO, real radius2, real height2)
+__global__ void GPU_CylinderInCartesianPatch_Mark(GPU_CartesianPatch patch, real x_PmO, real y_PmO, real z_PmO, real p_inf, real t_inf, real radius, real height)
 {
+  dim_t<5> dim;
   //size_t i = blockDim.y*blockIdx.x + threadIdx.y;
   //size_t j = 2*blockIdx.y;
   //size_t k = threadIdx.x;
@@ -172,11 +176,14 @@ __global__ void GPU_CylinderInCartesianPatch_Mark(GPU_CartesianPatch patch, real
   real z = (real(k) + 0.5)*patch.dz() + z_PmO;
 
   //if (vectorSquare(x, y, 0.) < radius2) {
-  if (vectorSquare(x, y, 0.) < radius2 && z*z < height2) {
+  if (vectorSquare(x, y, 0.) < radius*radius && z*z < height*height) {
     patch.f(2, 0, i, j, k) = 3;
   }
   else {
     patch.f(2, 0, i, j, k) = 0;
+    real var1[5];
+    PerfectGas::primitiveToConservative(p_inf, t_inf, 0, 0, 0, var1);
+    patch.setVar(dim, 0, i, j, k, var1);
   }
 }
 
@@ -275,9 +282,9 @@ __global__ void GPU_CylinderInCartesianPatch_ComputeLayer(GPU_CartesianPatch pat
     patch.setVar(dim, 0, i, j, k, var1);
   }
   else if (patch.f(2, 0, i, j, k) < 0.5) {
-    real var1[5];
-    PerfectGas::primitiveToConservative(p_inf, t_inf, 0, 0, 0, var1);
-    patch.setVar(dim, 0, i, j, k, var1);
+    //real var1[5];
+    //PerfectGas::primitiveToConservative(p_inf, t_inf, 0, 0, 0, var1);
+    //patch.setVar(dim, 0, i, j, k, var1);
   }
 }
 
@@ -293,7 +300,7 @@ void GPU_CylinderInCartesianPatch::operator ()()
     dim3 blocks(m_Patch.sizeI()+1, m_Patch.sizeJ()+1, 1);
     dim3 threads(m_Patch.sizeK()+1, 1, 1);
 
-    GPU_CylinderInCartesianPatch_Mark<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Rad*m_Rad, m_Height*m_Height);
+    GPU_CylinderInCartesianPatch_Mark<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Pinf, m_Tinf, m_Rad, m_Height);
     cudaDeviceSynchronize();
     CUDA_CHECK_ERROR;
     GPU_CylinderInCartesianPatch_ComputeLayer<<<blocks, threads>>>(m_Patch, x_PmO[0], x_PmO[1], x_PmO[2], m_Pinf, m_Tinf, m_Omega, 1);

@@ -34,6 +34,7 @@
 #include "fluxes/roe.h"
 #include "fluxes/compressiblefarfieldflux.h"
 #include "fluxes/compressiblesmagorinskyflux.h"
+#include "fluxes/compressibleviscflux.h"
 #include "fluxes/compressibleslipflux.h"
 #include "perfectgas.h"
 #include "compressiblevariables.h"
@@ -66,17 +67,18 @@ protected:
 
   //typedef AusmDV<5, reconstruction_t, PerfectGas> euler_t;
   //typedef VanLeer<5, TReconstruction, PerfectGas> euler_t;
-  typedef Roe<5, TReconstruction, PerfectGas> euler_t;
-  //typedef AusmPlus<5, TReconstruction, PerfectGas> euler_t;
+  //typedef Roe<5, TReconstruction, PerfectGas> euler_t;
+  typedef AusmPlus<5, TReconstruction, PerfectGas> euler_t;
   //typedef KT<5, 10000, TReconstruction, PerfectGas> euler_t;
   //typedef KNP<5, TReconstruction, PerfectGas> euler_t;
 
   typedef CompressibleSlipFlux<5, Upwind1<5>, PerfectGas>     wall_t;
-  typedef CompressibleSmagorinskyFlux<5, 2000, PerfectGas>    viscous_t;
+  //typedef CompressibleSmagorinskyFlux<5, 2000, PerfectGas>    viscous_t;
+  typedef CompressibleViscFlux<5, PerfectGas>                 viscous_t;
   typedef CompressibleFarfieldFlux<5, Upwind1<5>, PerfectGas> farfield_t;
   typedef CompressibleFlux<5, PerfectGas>                     split_t;
 
-  TReconstruction m_Reconstruction;
+  TReconstruction  m_Reconstruction;
   euler_t          m_EulerFlux;
   viscous_t        m_ViscFlux;
   farfield_t       m_FarfieldFlux;
@@ -231,10 +233,9 @@ void run()
   real write_interval = config.getValue<real>("write-interval")*time;
   real total_time     = config.getValue<real>("total-time")*time;
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
-  bool code_coupling  = config.getValue<bool>("code-coupling");
   real scale          = config.getValue<real>("scale");
-  real u = 0;
-  real v = 0;
+  real u = 0.1;
+  real v = 0.01;
 
   int thread_limit   = 0;
   if (config.exists("thread-limit")) {
@@ -274,7 +275,7 @@ void run()
 
   // Initialize
   real init_var[5];
-  PerfectGas::primitiveToConservative(p, T, u, v, 0.00*u, init_var);
+  PerfectGas::primitiveToConservative(p, T, u, v, 0.1*u, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
   if (mesh_preview) {
@@ -352,7 +353,8 @@ void run()
 
   // set inside of bodies at rest (if requested)
   bool inside_at_rest = config.getValue<bool>("inside-at-rest");
-  if (inside_at_rest) {
+  //if (inside_at_rest && (restart_file == "none")) {
+  if (inside_at_rest ) {
     for (size_t i_patch = 0; i_patch < patch_grid.getNumPatches(); ++i_patch) {
       Patch *P = patch_grid.getPatch(i_patch);
       for (size_t idx = 0; idx < P->variableSize(); ++idx) {
@@ -371,7 +373,7 @@ void run()
 
 #ifdef GPU
   CartesianPatch *p_cylinder = dynamic_cast<CartesianPatch*>(patch_grid.getPatch(0));
-  GPU_CylinderInCartesianPatch gpu_cylinder(p_cylinder, cuda_device, thread_limit);
+  GPU_CylinderInCartesianPatch gpu_cylinder(p_cylinder, cuda_device, thread_limit, p, T);
   runge_kutta.addPostOperation(&gpu_cylinder);
 #endif
 
