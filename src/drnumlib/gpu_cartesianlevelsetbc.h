@@ -42,7 +42,12 @@ public: // methods
 
   GPU_CartesianLevelSetBC(PatchGrid* patch_grid, int cuda_device = 0, size_t thread_limit = 0);
 
-  CUDA_DO static void  grad(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz);
+  CUDA_DO static void grad(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz);
+  CUDA_DO static void getOutsideState(GPU_CartesianPatch &patch,
+                                      size_t i, size_t j, size_t k,
+                                      int di, int dj, int dk,
+                                      real gx, real gy, real gz,
+                                      real &h, real &w, real* var);
 
   CUDA_HO virtual void operator()();
 
@@ -55,6 +60,34 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(GPU_CartesianPatch &patch, size_t 
   gx = 0.5*patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i-1, j, k));
   gy = 0.5*patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j-1, k));
   gz = 0.5*patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k-1));
+}
+
+template <unsigned int DIM, typename LS, typename BC>
+void GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(GPU_CartesianPatch &patch,
+                                                         size_t i, size_t j, size_t k,
+                                                         int di, int dj, int dk,
+                                                         real gx, real gy, real gz,
+                                                         real &h, real &w, real *var)
+{
+  dim_t<DIM> dim;
+  real h0 = LS::G(patch, i, j, k);
+  real h1 = LS::G(patch, i + di, j + dj, k + dk);
+  real h2 = LS::G(patch, i + 2*di, j + 2*dj, k + 2*dk);
+  if (h2 < 0) {
+    patch.getVar(dim, 0, i + di, j + dj, k + dk, var);
+    h = h1;
+    w = 0;
+  } else {
+    patch.getVar(dim, 0, i + di, j + dj, k + dk, var);
+    real var2[DIM];
+    patch.getVar(dim, 0, i + 2*di, j + 2*dj, k + 2*dk, var2);
+    w = h1/(h1 - h0);
+    h = w*h1 + (1 - w)*h2;
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      var[i_var] = w*var[i_var] + (1 - w)*var2[i_var];
+    }
+    w = -h0/h;
+  }
 }
 
 template <unsigned int DIM, typename LS, typename BC>
@@ -82,73 +115,80 @@ __global__ void GPU_CartesianLevelSetBC_kernelOperate(GPU_CartesianPatch patch)
 
   if (LS::G(patch, i, j, k) < 0) {
 
-    real var_neigh[DIM], var[DIM];
+    real var_outside[DIM], var[DIM];
     for (size_t i_var = 0; i_var < DIM; ++i_var) {
       var[i_var] = 0.0;
     }
 
-    real gx_c, gy_c, gz_c;
+    real gx, gy, gz;
     int count = 0;
     real total_weight = 0;
-    GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx_c, gy_c, gz_c);
+    real h, w;
+    GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
     if (LS::G(patch, i+1, j, k) >= 0) {
       real gx     = patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i, j, k));
       real weight = fabs(gx);
-      BC::operateX(&patch, var_neigh, LS::G(patch, i+1, j, k), i, j, k, 1, gx, gy_c, gz_c);
+      GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, 1, 0, 0, gx, gy, gz, h, w, var_outside);
+      BC::operate(var_outside, h, w, gx, gy, gz);
       total_weight += weight;
       ++count;
       for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+        var[i_var] += weight*var_outside[i_var];
       }
     }
     if (LS::G(patch, i-1, j, k) >= 0) {
       real gx     = patch.idx()*(LS::G(patch, i, j, k) - LS::G(patch, i-1, j, k));
       real weight = fabs(gx);
-      BC::operateX(&patch, var_neigh, LS::G(patch, i-1, j, k), i, j, k, -1, gx, gy_c, gz_c);
+      GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, -1, 0, 0, gx, gy, gz, h, w, var_outside);
+      BC::operate(var_outside, h, w, gx, gy, gz);
       total_weight += weight;
       ++count;
       for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+        var[i_var] += weight*var_outside[i_var];
       }
     }
     if (LS::G(patch, i, j+1, k) >= 0) {
       real gy     = patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j, k));
       real weight = fabs(gy);
-      BC::operateY(&patch, var_neigh, LS::G(patch, i, j+1, k), i, j, k, 1, gx_c, gy, gz_c);
+      GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, 0, 1, 0, gx, gy, gz, h, w, var_outside);
+      BC::operate(var_outside, h, w, gx, gy, gz);
       total_weight += weight;
       ++count;
       for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+        var[i_var] += weight*var_outside[i_var];
       }
     }
     if (LS::G(patch, i, j-1, k) >= 0) {
       real gy     = patch.idy()*(LS::G(patch, i, j, k) - LS::G(patch, i, j-1, k));
       real weight = fabs(gy);
-      BC::operateY(&patch, var_neigh, LS::G(patch, i, j-1, k), i, j, k, -1, gx_c, gy, gz_c);
+      GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, 0, -1, 0, gx, gy, gz, h, w, var_outside);
+      BC::operate(var_outside, h, w, gx, gy, gz);
       total_weight += weight;
       ++count;
       for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+        var[i_var] += weight*var_outside[i_var];
       }
     }
     if (LS::G(patch, i, j, k+1) >= 0) {
       real gz     = patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k));
       real weight = fabs(gz);
-      BC::operateZ(&patch, var_neigh, LS::G(patch, i, j, k+1), i, j, k, 1, gx_c, gy_c, gz);
+      GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, 0, 0, 1, gx, gy, gz, h, w, var_outside);
+      BC::operate(var_outside, h, w, gx, gy, gz);
       total_weight += weight;
       ++count;
       for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+        var[i_var] += weight*var_outside[i_var];
       }
     }
     if (LS::G(patch, i, j, k-1) >= 0) {
       real gz     = patch.idz()*(LS::G(patch, i, j, k) - LS::G(patch, i, j, k-1));
       real weight = fabs(gz);
-      BC::operateZ(&patch, var_neigh, LS::G(patch, i, j, k-1), i, j, k, -1, gx_c, gy_c, gz);
+      GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, 0, 0, -1, gx, gy, gz, h, w, var_outside);
+      BC::operate(var_outside, h, w, gx, gy, gz);
       total_weight += weight;
       ++count;
       for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] += weight*var_neigh[i_var];
+        var[i_var] += weight*var_outside[i_var];
       }
     }
 
@@ -316,7 +356,7 @@ __global__ void GPU_CartesianLevelSetBC_kernelPre(GPU_CartesianPatch patch)
     else if (LS::G(patch, i, j, k-1) < 0) crossover = true;
 
     if (crossover) {
-      BC::pre(&patch, var, i, j, k, gx, gy, gz);
+      BC::pre(var, gx, gy, gz);
       patch.setVar(dim, 0, i, j, k, var);
     }
 
@@ -352,7 +392,7 @@ __global__ void GPU_CartesianLevelSetBC_kernelPost(GPU_CartesianPatch patch)
 
     if (crossover) {
       GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
-      BC::post(&patch, var, i, j, k, gx, gy, gz);
+      BC::post(var, gx, gy, gz);
       patch.setVar(dim, 0, i, j, k, var);
     }
 

@@ -30,12 +30,9 @@ struct CompressibleLsSlip
   CUDA_DH static bool usePre() { return false; }
   CUDA_DH static bool usePost() { return false; }
 
-  CUDA_DH static void pre(TPatch* patch, real* var, size_t i, size_t j, size_t k, real gx, real gy, real gz) {}
-
-  CUDA_DH static void operateXYZ(TPatch* patch, real* var, size_t i, size_t j, size_t k, real gx, real gy, real gz)
+  CUDA_DH static void pre (real* var, real gx, real gy, real gz) {}
+  CUDA_DH static void post(real* var, real gx, real gy, real gz)
   {
-    dim_t<DIM> dim;
-    patch->getVar(dim, 0, i, j, k, var);
     real p, T, u, v, w;
     TGas::conservativeToPrimitive(var, p, T, u, v, w);
     real s = u*gx + v*gy + w*gz;
@@ -45,24 +42,15 @@ struct CompressibleLsSlip
     TGas::primitiveToConservative(p, T, u, v, w, var);
   }
 
-  CUDA_DH static void post(TPatch* patch, real* var, size_t i, size_t j, size_t k, real gx, real gy, real gz)
+  CUDA_DH static void operate(real* var, real, real wgt, real gx, real gy, real gz)
   {
-    operateXYZ(patch, var, i, j, k, gx, gy, gz);
-  }
-
-  CUDA_DH static void operateX(TPatch* patch, real* var, real, size_t i, size_t j, size_t k, size_t dir, real gx, real gy, real gz)
-  {
-    operateXYZ(patch, var, i+dir, j, k, gx, gy, gz);
-  }
-
-  CUDA_DH static void operateY(TPatch* patch, real* var, real, size_t i, size_t j, size_t k, size_t dir, real gx, real gy, real gz)
-  {
-    operateXYZ(patch, var, i, j+dir, k, gx, gy, gz);
-  }
-
-  CUDA_DH static void operateZ(TPatch* patch, real* var, real, size_t i, size_t j, size_t k, size_t dir, real gx, real gy, real gz)
-  {
-    operateXYZ(patch, var, i, j, k+dir, gx, gy, gz);
+    real p, T, u, v, w;
+    TGas::conservativeToPrimitive(var, p, T, u, v, w);
+    real s = u*gx + v*gy + w*gz;
+    u -= s*(1 + wgt)*gx;
+    v -= s*(1 + wgt)*gy;
+    w -= s*(1 + wgt)*gz;
+    TGas::primitiveToConservative(p, T, u, v, w, var);
   }
 
 };
