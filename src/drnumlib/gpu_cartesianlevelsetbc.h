@@ -69,6 +69,10 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(GPU_CartesianPatch &pat
                                                          real gx, real gy, real gz,
                                                          real &h, real &w, real *var)
 {
+  
+  // careful with parallel level sets (e.g. flat plate)
+  // there might be a 0/0 occurring
+  
   dim_t<DIM> dim;
   real h0 = LS::G(patch, i, j, k);
   real h1 = LS::G(patch, i + di, j + dj, k + dk);
