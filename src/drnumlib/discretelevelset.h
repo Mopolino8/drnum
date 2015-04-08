@@ -36,7 +36,7 @@
 #include "patchgrid.h"
 #include "postprocessingvariables.h"
 #include "cartesianpatch.h"
-#include "gpu_cartesianpatch.h"
+//#include "gpu_cartesianpatch.h"
 
 template <unsigned int DIM, unsigned int IVAR>
 class DiscreteLevelSet
@@ -64,7 +64,7 @@ private: // types
   typedef CGAL::AABB_traits<K, SegmentPrimitive>           SegmentTraits;
   typedef CGAL::AABB_tree<SegmentTraits>                   SegmentTree;
 
-  typedef TriangleTree::Intersection_and_primitive_id<Ray>::Type Intersection;
+
 
 
 private: // attributes
@@ -173,8 +173,8 @@ void DiscreteLevelSet<DIM,IVAR>::computeLevelSet(vtkPolyData *poly)
   //dim_t<DIM> dim;
   for (size_t i_patch = 0; i_patch < m_PatchGrid->getNumPatches(); ++i_patch) {
 
-    //CartesianPatch* patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_patch));
-    CartesianPatch* patch = NULL;
+    CartesianPatch* patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_patch));
+    //CartesianPatch* patch = NULL;
     if (patch) {
       size_t i_m = patch->sizeI() - 1;
       size_t j_m = patch->sizeJ() - 1;
@@ -182,13 +182,12 @@ void DiscreteLevelSet<DIM,IVAR>::computeLevelSet(vtkPolyData *poly)
 
       if ( i_m == 0 || j_m == 0 || k_m == 0) {
          cout << endl << endl << "Error! i-> " << i_m << " j-> " << j_m << " k-> " << k_m << endl;
-         return;
+         BUG;
       }
-
       recursiveLevelSet(patch, 0, 0, 0, i_m, j_m, k_m);
-
     }
     else {
+      cout << "Computing levelset cell per cell for patch-> " << i_patch << "." << endl;
       levelSetPerCell(i_patch, count, total_count);
     }
 
@@ -225,93 +224,81 @@ void DiscreteLevelSet<DIM,IVAR>::recursiveLevelSet(CartesianPatch* patch, size_t
     vec3_t x = patch->xyzoCell(index[i]);
     g.push_back( computePointLevelSet(x) );
   }
-  cout  << "     g0-> "   << g[0]
-      << "     g1-> "   << g[1]
-      << "     g2-> "   << g[2]
-      << "     g3-> "   << g[3]
-      << "     g4-> "   << g[4]
-      << "     g5-> "   << g[5]
-      << "     g6-> "   << g[6]
-      << "     g7-> "   << g[7] << endl;
   vec3_t x_ooo = patch->xyzoCell(index[0]);
   vec3_t x_ijk = patch->xyzoCell(index[index.size()-1]);
-
   real d = m_Tol*distance(x_ooo, x_ijk);
+
+        /*
+  cout  << "  g0-> "   << g[0]
+        << "  g1-> "   << g[1]
+        << "  g2-> "   << g[2]
+        << "  g3-> "   << g[3]
+        << "  g4-> "   << g[4]
+        << "  g5-> "   << g[5]
+        << "  g6-> "   << g[6]
+        << "  g7-> "   << g[7] << endl;
+  cout  << "  d-> "    << d << endl
+        << "  io-> "   << i_o
+        << "  jo-> "   << j_o
+        << "  ko-> "   << k_o
+        << "  im-> "   << i_m
+        << "  jm-> "   << j_m
+        << "  km-> "   << k_m << endl;
+        */
+
   if ( fabs(g[0]) < d || fabs(g[1]) < d || fabs(g[2]) < d || fabs(g[3]) < d ||
        fabs(g[4]) < d || fabs(g[5]) < d || fabs(g[6]) < d || fabs(g[7]) < d)
   {
-    /*
-  cout << "io-> " << i_o << " j_o-> " << j_o << " k_o-> " << k_o
-      << " im-> " << i_m << " j_m-> " << j_m << " k_m-> " << k_m
-      << " d-> "  << d  << endl
-      << "     g0-> "   << g[0]
-      << "     g1-> "   << g[1]
-      << "     g2-> "   << g[2]
-      << "     g3-> "   << g[3]
-      << "     g4-> "   << g[4]
-      << "     g5-> "   << g[5]
-      << "     g6-> "   << g[6]
-      << "     g7-> "   << g[7] << endl;
-      */
+    //cout  << "    recursion" << endl;
     if ( (i_m-i_o) == 1 && (j_m-j_o) == 1 && (k_m-k_o) == 1) {
+      //cout << "all i-im == 1" << endl;
       for (int i = 0; i != index.size(); ++i) {
         size_t i_cell = index[i];
-        //patch->getVar(dim, 0, i_cell, var);
         dynamic_cast<Patch*>(patch)->getVar(dim, 0, i_cell, var);
         var[IVAR] = g[i];
-        //patch->setVar(dim, 0, i_cell, var);
         dynamic_cast<Patch*>(patch)->setVar(dim, 0, i_cell, var);
       }
-    }  else
-    if ( (i_m - i_o) >= max(j_m-j_o, k_m-k_o)) {
-      int i_new = (i_m - i_o)/2 + i_o;
-      //if (i_new == 1) {
-      //  recursiveLevelSet(patch, i_o  , j_o, k_o, i_o+1, j_m, k_m );
-      //  recursiveLevelSet(patch, i_o+1, j_o, k_o, i_m  , j_m, k_m );
-      //}
-      //else {
+      return;
+    } else {
+      if ( (i_m-i_o) == 0 || (j_m-j_o) == 0 || (k_m-k_o) == 0) {
+        cout << "WARNING at least one x_m-x_o == 0" << endl;
+      }
+      if ( (i_m - i_o) >= max(j_m-j_o, k_m-k_o)) {
+        //cout << "half i" << endl;
+        int i_new = (i_m - i_o)/2 + i_o;
         recursiveLevelSet(patch, i_o  , j_o, k_o, i_new, j_m, k_m );
         recursiveLevelSet(patch, i_new, j_o, k_o, i_m  , j_m, k_m );
-      //}
-    } else
-    if ( (j_m - j_o) >= max(i_m-i_o, k_m-k_o)) {
-      int j_new = (j_m - j_o)/2 + j_o;
-      //if (j_new == 1) {
-      //  recursiveLevelSet(patch, i_o, j_o  , k_o, i_m, j_o+1, k_m );
-      //  recursiveLevelSet(patch, i_o, j_o+1, k_o, i_m, j_m  , k_m );
-      //}
-      //else {
+        return;
+      }
+      if ( (j_m - j_o) >= max(i_m-i_o, k_m-k_o)) {
+        //cout << "half j" << endl;
+        int j_new = (j_m - j_o)/2 + j_o;
         recursiveLevelSet(patch, i_o, j_o  , k_o, i_m, j_new, k_m );
         recursiveLevelSet(patch, i_o, j_new, k_o, i_m, j_m, k_m );
-      //}
-    } else
-    if ( (k_m - k_o) >= max(i_m-i_o, j_m-j_o)) {
-      int k_new = (k_m - k_o)/2 + k_o;
-      //if (k_new == 1) {
-        //recursiveLevelSet(patch, i_o, j_o, k_o  , i_m, j_m, k_o+1 );
-        //recursiveLevelSet(patch, i_o, j_o, k_o+1, i_m, j_m, k_m   );
-      //}
-      //else {
+        return;
+      }
+      if ( (k_m - k_o) >= max(i_m-i_o, j_m-j_o)) {
+        //cout << "half k" << endl;
+        int k_new = (k_m - k_o)/2 + k_o;
         recursiveLevelSet(patch, i_o, j_o, k_o  , i_m, j_m, k_new );
         recursiveLevelSet(patch, i_o, j_o, k_new, i_m, j_m, k_m   );
-      //}
+        return;
+      }
     }
   }
-  else {
-    interpolate(patch, i_o, j_o, k_o, i_m, j_m, k_m);
-  }
+  interpolate(patch, i_o, j_o, k_o, i_m, j_m, k_m);
 }
 
 template <unsigned int DIM, unsigned int IVAR>
 void DiscreteLevelSet<DIM,IVAR>::interpolate(CartesianPatch* patch, size_t i_o, size_t j_o, size_t k_o, size_t i_m, size_t j_m, size_t k_m) {
-  cout << endl << endl << "      in interpolate" << endl << endl;
+  //cout << endl << endl << "      in interpolate" << endl << endl;
   vec3_t x_ooo = patch->xyzoCell( patch->index(i_o, j_o, k_o) );
   vec3_t x_ijk = patch->xyzoCell( patch->index(i_m, j_m, k_m) );
 
   vec3_t x_m;
-  x_m[0] = x_ijk[0] - x_ooo[0];
-  x_m[1] = x_ijk[1] - x_ooo[1];
-  x_m[2] = x_ijk[2] - x_ooo[2];
+  x_m[0] = 0.5*(x_ijk[0] + x_ooo[0]);
+  x_m[1] = 0.5*(x_ijk[1] + x_ooo[1]);
+  x_m[2] = 0.5*(x_ijk[2] + x_ooo[2]);
 
   real g_m = computePointLevelSet(x_m);
 
@@ -326,12 +313,14 @@ void DiscreteLevelSet<DIM,IVAR>::interpolate(CartesianPatch* patch, size_t i_o, 
       }
     }
   }
-
 }
 
 template <unsigned int DIM, unsigned int IVAR>
 real DiscreteLevelSet<DIM,IVAR>::distance(vec3_t x1, vec3_t x2) {
-  return sqrt(x1[0]*x2[0] + x1[1]*x2[1] + x1[2]*x2[2]);
+  real dx = x2[0] - x1[0];
+  real dy = x2[1] - x1[1];
+  real dz = x2[2] - x1[2];
+  return sqrt( dx*dx + dy*dy + dz*dz );
 }
 
 template <unsigned int DIM, unsigned int IVAR>
@@ -379,6 +368,7 @@ void DiscreteLevelSet<DIM,IVAR>::levelSetPerCell(size_t i_patch, int& count, int
   }
 }
 
+/*
 template <unsigned int IVAR>
 struct StoredLevelSet
 {
@@ -402,6 +392,7 @@ struct StoredLevelSet
     patch.f(i_field, IVAR, i, j, k) = G_value;
   }
 };
+*/
 
 
 #endif // DISCRETELEVELSET_H
