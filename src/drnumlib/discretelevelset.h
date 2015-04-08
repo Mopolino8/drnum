@@ -36,7 +36,7 @@
 #include "patchgrid.h"
 #include "postprocessingvariables.h"
 #include "cartesianpatch.h"
-//#include "gpu_cartesianpatch.h"
+#include "gpu_cartesianpatch.h"
 
 template <unsigned int DIM, unsigned int IVAR>
 class DiscreteLevelSet
@@ -190,16 +190,6 @@ void DiscreteLevelSet<DIM,IVAR>::computeLevelSet(vtkPolyData *poly)
       cout << "Computing levelset cell per cell for patch-> " << i_patch << "." << endl;
       levelSetPerCell(i_patch, count, total_count);
     }
-
-    /*
-      ++count;
-      ++total_count;
-      if (count >= 10000) {
-        cout << total_count << " cells and " << i_patch << " of " << m_PatchGrid->getNumPatches() << " patches" << endl;
-        count = 0;
-      }
-      */
-
   }
 }
 
@@ -290,25 +280,35 @@ void DiscreteLevelSet<DIM,IVAR>::recursiveLevelSet(CartesianPatch* patch, size_t
 }
 
 template <unsigned int DIM, unsigned int IVAR>
-void DiscreteLevelSet<DIM,IVAR>::interpolate(CartesianPatch* patch, size_t i_o, size_t j_o, size_t k_o, size_t i_m, size_t j_m, size_t k_m) {
-  //cout << endl << endl << "      in interpolate" << endl << endl;
-  vec3_t x_ooo = patch->xyzoCell( patch->index(i_o, j_o, k_o) );
-  vec3_t x_ijk = patch->xyzoCell( patch->index(i_m, j_m, k_m) );
-
-  vec3_t x_m;
-  x_m[0] = 0.5*(x_ijk[0] + x_ooo[0]);
-  x_m[1] = 0.5*(x_ijk[1] + x_ooo[1]);
-  x_m[2] = 0.5*(x_ijk[2] + x_ooo[2]);
-
-  real g_m = computePointLevelSet(x_m);
-
+void DiscreteLevelSet<DIM,IVAR>::interpolate(CartesianPatch* patch, size_t i1, size_t j1, size_t k1, size_t i2, size_t j2, size_t k2)
+{
   real var[DIM];
   dim_t<DIM> dim;
-  for (size_t i = i_o; i <= i_m; ++i) {
-    for (size_t j = j_o; j <= j_m; ++j) {
-      for (size_t k = k_o; k <= k_m; ++k) {
+
+  real G_111 = computePointLevelSet(patch->xyzoCell(patch->index(i1, j1, k1)));
+  real G_112 = computePointLevelSet(patch->xyzoCell(patch->index(i1, j1, k2)));
+  real G_121 = computePointLevelSet(patch->xyzoCell(patch->index(i1, j2, k1)));
+  real G_122 = computePointLevelSet(patch->xyzoCell(patch->index(i1, j2, k2)));
+  real G_211 = computePointLevelSet(patch->xyzoCell(patch->index(i2, j1, k1)));
+  real G_212 = computePointLevelSet(patch->xyzoCell(patch->index(i2, j1, k2)));
+  real G_221 = computePointLevelSet(patch->xyzoCell(patch->index(i2, j2, k1)));
+  real G_222 = computePointLevelSet(patch->xyzoCell(patch->index(i2, j2, k2)));
+
+  for (size_t i = i1; i <= i2; ++i) {
+    real di = real(i - i1)/real(i2 - i1);
+    real G_i11 = (1-di)*G_111 + di*G_211;
+    real G_i12 = (1-di)*G_112 + di*G_212;
+    real G_i21 = (1-di)*G_121 + di*G_221;
+    real G_i22 = (1-di)*G_122 + di*G_222;
+    for (size_t j = j1; j <= j2; ++j) {
+      real dj = real(j - j1)/real(j2 - j1);
+      real G_ij1 = (1-dj)*G_i11 + dj*G_i21;
+      real G_ij2 = (1-dj)*G_i12 + dj*G_i22;
+      for (size_t k = k1; k <= k2; ++k) {
+        real dk = real(k - k1)/real(k2 - k1);
+        real G_ijk = (1-dk)*G_ij1 + dk*G_ij2;
         patch->getVar(dim, 0, i, j, k, var);
-        var[IVAR] = g_m;
+        var[IVAR] = G_ijk;
         patch->setVar(dim, 0, i, j, k, var);
       }
     }
@@ -352,23 +352,12 @@ void DiscreteLevelSet<DIM,IVAR>::levelSetPerCell(size_t i_patch, int& count, int
   dim_t<DIM> dim;
   for (size_t i_cell = 0; i_cell < m_PatchGrid->getPatch(i_patch)->variableSize(); ++i_cell) {
     vec3_t x = m_PatchGrid->getPatch(i_patch)->xyzoCell(i_cell);
-
     m_PatchGrid->getPatch(i_patch)->getVar(dim, 0, i_cell, var);
     var[IVAR] = DiscreteLevelSet::computePointLevelSet(x);
     m_PatchGrid->getPatch(i_patch)->setVar(dim, 0, i_cell, var);
-
-    /*
-    ++count;
-    ++total_count;
-    if (count >= 10000) {
-      cout << total_count << " cells and " << i_patch << " of " << m_PatchGrid->getNumPatches() << " patches" << endl;
-      count = 0;
-    }
-    */
   }
 }
 
-/*
 template <unsigned int IVAR>
 struct StoredLevelSet
 {
@@ -392,7 +381,6 @@ struct StoredLevelSet
     patch.f(i_field, IVAR, i, j, k) = G_value;
   }
 };
-*/
 
 
 #endif // DISCRETELEVELSET_H
