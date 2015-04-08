@@ -44,6 +44,7 @@ if(USE_OPEN_MP)
   find_package(OpenMP)
   add_definitions(-DOPEN_MP)
   set(OPENMP_LIBS, "-lgomp")
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif(USE_OPEN_MP)
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
