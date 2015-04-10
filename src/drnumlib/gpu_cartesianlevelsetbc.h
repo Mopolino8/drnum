@@ -46,8 +46,7 @@ public: // methods
   CUDA_DO static void getOutsideState(GPU_CartesianPatch &patch,
                                       size_t i, size_t j, size_t k,
                                       int di, int dj, int dk,
-                                      real gx, real gy, real gz,
-                                      real &h, real &w, real* var);
+                                      real &h0, real &h1, real &h2, real &w, real* var1, real* var2);
 
   CUDA_HO virtual void operator()();
 
@@ -66,31 +65,24 @@ template <unsigned int DIM, typename LS, typename BC>
 void GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(GPU_CartesianPatch &patch,
                                                          size_t i, size_t j, size_t k,
                                                          int di, int dj, int dk,
-                                                         real gx, real gy, real gz,
-                                                         real &h, real &w, real *var)
+                                                         real &h0, real &h1, real &h2, real &w, real *var1, real *var2)
 {
   
   // careful with parallel level sets (e.g. flat plate)
   // there might be a 0/0 occurring
   
   dim_t<DIM> dim;
-  real h0 = LS::G(patch, i, j, k);
-  real h1 = LS::G(patch, i + di, j + dj, k + dk);
-  real h2 = LS::G(patch, i + 2*di, j + 2*dj, k + 2*dk);
+
+  h0 = LS::G(patch, i, j, k);
+  h1 = LS::G(patch, i + di, j + dj, k + dk);
+  h2 = LS::G(patch, i + 2*di, j + 2*dj, k + 2*dk);
+
+  patch.getVar(dim, 0, i + di, j + dj, k + dk, var1);
+  patch.getVar(dim, 0, i + 2*di, j + 2*dj, k + 2*dk, var2);
   if (h2 < 0) {
-    patch.getVar(dim, 0, i + di, j + dj, k + dk, var);
-    h = h1;
-    w = 0;
+    w = 1;
   } else {
-    patch.getVar(dim, 0, i + di, j + dj, k + dk, var);
-    real var2[DIM];
-    patch.getVar(dim, 0, i + 2*di, j + 2*dj, k + 2*dk, var2);
     w = h1/(h1 - h0);
-    h = w*h1 + (1 - w)*h2;
-    for (size_t i_var = 0; i_var < DIM; ++i_var) {
-      var[i_var] = w*var[i_var] + (1 - w)*var2[i_var];
-    }
-    w = -h0/h;
   }
 }
 
@@ -119,7 +111,8 @@ __global__ void GPU_CartesianLevelSetBC_kernelOperate(GPU_CartesianPatch patch)
 
   if (LS::G(patch, i, j, k) < 0) {
 
-    real var_outside[DIM], var[DIM];
+    real var_1[DIM], var_2[DIM];
+    real var[DIM], var_bc[DIM];
     for (size_t i_var = 0; i_var < DIM; ++i_var) {
       var[i_var] = 0.0;
     }
@@ -127,7 +120,7 @@ __global__ void GPU_CartesianLevelSetBC_kernelOperate(GPU_CartesianPatch patch)
     real gx, gy, gz;
     int count = 0;
     real total_weight = 0;
-    real h, w;
+    real h0, h1, h2, w;
     GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
     for (int di = -1; di <= 1; ++di) {
       for (int dj = -1; dj <= 1; ++dj) {
@@ -138,12 +131,12 @@ __global__ void GPU_CartesianLevelSetBC_kernelOperate(GPU_CartesianPatch patch)
               real dy = dj*patch.dy();
               real dz = dk*patch.dz();
               real weight = fabs(dx*gx + dy*gy + dz*gz)/sqrt(dx*dx + dy*dy + dz*dz);
-              GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, di, dj, dk, gx, gy, gz, h, w, var_outside);
-              BC::operate(var_outside, h, w, gx, gy, gz);
-              total_weight += weight;
+              GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, di, dj, dk, h0, h1, h2, w, var_1, var_2);
+              BC::operate(var_1, var_2, var_bc, h0, h1, h2, w, gx, gy, gz);
               ++count;
+              total_weight += weight;
               for (size_t i_var = 0; i_var < DIM; ++i_var) {
-                var[i_var] += weight*var_outside[i_var];
+                var[i_var] += weight*var_bc[i_var];
               }
             }
           }
@@ -155,8 +148,8 @@ __global__ void GPU_CartesianLevelSetBC_kernelOperate(GPU_CartesianPatch patch)
         var[i_var] /= total_weight;
       }
       real G_self = LS::G(patch, i, j, k);
-      patch.setVar(dim, 0, i, j, k, var);
-      LS::updateG(patch, i, j, k, G_self);
+      patch.setVar(dim, 2, i, j, k, var);
+      LS::updateG(patch, i, j, k, G_self, 2);
     }
 
   }
@@ -322,9 +315,11 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::operator()()
         cudaDeviceSynchronize();
       }
 
+      cudaMemcpy(this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
       GPU_CartesianLevelSetBC_kernelOperate<DIM,LS,BC> <<<blocks, threads>>>(this->m_GpuPatches[i_patch]);
       CUDA_CHECK_ERROR;
       cudaDeviceSynchronize();
+      cudaMemcpy(this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
 
       if (BC::usePost()) {
         GPU_CartesianLevelSetBC_kernelPost<DIM,LS,BC> <<<blocks, threads>>>(this->m_GpuPatches[i_patch]);
