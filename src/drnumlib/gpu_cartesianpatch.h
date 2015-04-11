@@ -66,7 +66,7 @@ public:
     GPU_CartesianPatch_kernelPartialCopy <DIM> <<<1, 1>>> (*this, i_field, tmp_device_array, i1, i2, j1, j2, k1, k2);
     cudaThreadSynchronize();
     CUDA_CHECK_ERROR
-    cudaMemcpy(tmp_host_array, tmp_device_array, tmp_array_length, cudaMemcpyDeviceToHost);
+    cudaMemcpy(tmp_host_array, tmp_device_array, tmp_array_length*sizeof(real), cudaMemcpyDeviceToHost);
     CUDA_CHECK_ERROR
     size_t i_tmp = 0;
     for (size_t i_var = 0; i_var < dim; ++i_var) {
