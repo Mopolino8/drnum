@@ -83,19 +83,27 @@ protected:
   typedef CompressibleFarfieldFlux<NUM_VARS, Upwind1<NUM_VARS>, PerfectGas> farfield_t;
   typedef CompressibleFlux<NUM_VARS, PerfectGas>                     split_t;
 
-  TReconstruction m_Reconstruction;
+  TReconstruction  m_Reconstruction;
   euler_t          m_EulerFlux;
   viscous_t        m_ViscFlux;
   farfield_t       m_FarfieldFlux;
   wall_t           m_WallFlux;
   split_t          m_SplitFlux;
   bool             m_Inviscid;
+  int              m_XPlusBC;
+  int              m_XMinusBC;
+  int              m_YPlusBC;
+  int              m_YMinusBC;
+  int              m_ZPlusBC;
+  int              m_ZMinusBC;
 
 
 public: // methods
 
   EaFlux(real u, real v, real p, real T, bool inviscid);
   EaFlux();
+
+  void setBCs(int xp, int xm, int yp, int ym, int zp, int zm);
 
   template <typename PATCH> CUDA_DH void xField(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
   template <typename PATCH> CUDA_DH void yField(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux);
@@ -118,11 +126,27 @@ EaFlux<TReconstruction>::EaFlux(real u, real v, real p, real T, bool inviscid)
 {
   m_FarfieldFlux.setFarfield(p, T, u, v, 0);
   m_Inviscid = inviscid;
+  m_XPlusBC  = 0;
+  m_XMinusBC = 0;
+  m_YPlusBC  = 0;
+  m_YMinusBC = 0;
+  m_ZPlusBC  = 0;
+  m_ZMinusBC = 0;
 }
 
 template <typename TReconstruction>
 EaFlux<TReconstruction>::EaFlux()
 {
+}
+
+template<typename TReconstruction>
+void EaFlux<TReconstruction>::setBCs(int xp, int xm, int yp, int ym, int zp, int zm) {
+  m_XPlusBC  = xp;
+  m_XMinusBC = xm;
+  m_YPlusBC  = yp;
+  m_YMinusBC = ym;
+  m_ZPlusBC  = zp;
+  m_ZMinusBC = zm;
 }
 
 template <typename TReconstruction>
@@ -171,44 +195,67 @@ template <typename TReconstruction>
 template <typename PATCH>
 inline void EaFlux<TReconstruction>::xWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarfieldFlux.xWallP(P, i, j, k, x, y, z, A, flux);
+  if (m_XPlusBC == 1) {
+    m_WallFlux.xWallP(P, i, j, k, x, y, z, A, flux);
+  } else {
+    m_FarfieldFlux.xWallP(P, i, j, k, x, y, z, A, flux);
+  }
 }
 
 template <typename TReconstruction>
 template <typename PATCH>
 inline void EaFlux<TReconstruction>::yWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarfieldFlux.yWallP(P, i, j, k, x, y, z, A, flux);
-  //m_WallFlux.yWallP(P, i, j, k, x, y, z, A, flux);
+  if (m_YPlusBC == 1) {
+    m_WallFlux.yWallP(P, i, j, k, x, y, z, A, flux);
+  } else {
+    m_FarfieldFlux.yWallP(P, i, j, k, x, y, z, A, flux);
+  }
 }
 
 template <typename TReconstruction>
 template <typename PATCH>
 inline void EaFlux<TReconstruction>::zWallP(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarfieldFlux.zWallP(P, i, j, k, x, y, z, A, flux);
+  if (m_ZPlusBC == 1) {
+    m_WallFlux.zWallP(P, i, j, k, x, y, z, A, flux);
+  } else {
+    m_FarfieldFlux.zWallP(P, i, j, k, x, y, z, A, flux);
+  }
 }
 
 template <typename TReconstruction>
 template <typename PATCH>
 inline void EaFlux<TReconstruction>::xWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarfieldFlux.xWallM(P, i, j, k, x, y, z, A, flux);
+  if (m_XMinusBC == 1) {
+    m_WallFlux.xWallM(P, i, j, k, x, y, z, A, flux);
+  } else {
+    m_FarfieldFlux.xWallM(P, i, j, k, x, y, z, A, flux);
+  }
 }
 
 template <typename TReconstruction>
 template <typename PATCH>
 inline void EaFlux<TReconstruction>::yWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarfieldFlux.yWallM(P, i, j, k, x, y, z, A, flux);
-  //m_WallFlux.yWallM(P, i, j, k, x, y, z, A, flux);
+  if (m_YMinusBC == 1) {
+    m_WallFlux.yWallM(P, i, j, k, x, y, z, A, flux);
+  }
+  else {
+    m_FarfieldFlux.yWallM(P, i, j, k, x, y, z, A, flux);
+  }
 }
 
 template <typename TReconstruction>
 template <typename PATCH>
 inline void EaFlux<TReconstruction>::zWallM(PATCH *P, size_t i, size_t j, size_t k, real x, real y, real z, real A, real* flux)
 {
-  m_FarfieldFlux.zWallM(P, i, j, k, x, y, z, A, flux);
+  if (m_ZMinusBC == 1) {
+    m_WallFlux.zWallM(P, i, j, k, x, y, z, A, flux);
+  } else {
+    m_FarfieldFlux.zWallM(P, i, j, k, x, y, z, A, flux);
+  }
 }
 
 template <typename TReconstruction>
@@ -291,6 +338,31 @@ void run()
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
   bool code_coupling  = config.getValue<bool>("code-coupling");
   real scale          = config.getValue<real>("scale");
+
+  int  xp_bc = 0;
+  int  xm_bc = 0;
+  int  yp_bc = 0;
+  int  ym_bc = 0;
+  int  zp_bc = 0;
+  int  zm_bc = 0;
+  if (config.exists("xplus-bc")) {
+    xp_bc = config.getValue<int>("xplus-bc");
+  }
+  if (config.exists("xminus-bc")) {
+    xm_bc = config.getValue<int>("xminus-bc");
+  }
+  if (config.exists("yplus-bc")) {
+    yp_bc = config.getValue<int>("yplus-bc");
+  }
+  if (config.exists("yminus-bc")) {
+    ym_bc = config.getValue<int>("yminus-bc");
+  }
+  if (config.exists("zplus-bc")) {
+    zp_bc = config.getValue<int>("zplus-bc");
+  }
+  if (config.exists("zminus-bc")) {
+    zm_bc = config.getValue<int>("zminus-bc");
+  }
 
   int thread_limit   = 0;
   if (config.exists("thread-limit")) {
@@ -383,6 +455,7 @@ void run()
 
   if (reconstruction == "second-order") {
     EaFlux<Upwind2<NUM_VARS, SecondOrder> > flux(u, v, p, T, inviscid);
+    flux.setBCs(xp_bc, xm_bc, yp_bc, ym_bc, zp_bc, zm_bc);
 #ifdef GPU
     iterator = new GPU_CartesianIterator<NUM_VARS, EaFlux<Upwind2<NUM_VARS, SecondOrder> > >(flux, cuda_device, thread_limit);
 #else
@@ -399,6 +472,7 @@ void run()
 
   } else {
     EaFlux<Upwind1<NUM_VARS> > flux(u, v, p, T, inviscid);
+    flux.setBCs(xp_bc, xm_bc, yp_bc, ym_bc, zp_bc, zm_bc);
 #ifdef GPU
     iterator = new GPU_CartesianIterator<NUM_VARS, EaFlux<Upwind1<NUM_VARS> > >(flux, cuda_device, thread_limit);
 #else
