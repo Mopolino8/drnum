@@ -32,6 +32,7 @@
 
 #include <vtkPolyData.h>
 #include <vtkSTLReader.h>
+#include <vtkPLYReader.h>
 
 #include "patchgrid.h"
 #include "postprocessingvariables.h"
@@ -89,7 +90,7 @@ public:
 
   DiscreteLevelSet(PatchGrid *patch_grid);
 
-  void readStlGeometry(QString stl_file_name);
+  void readGeometry(QString geometry_file_name);
 
 };
 
@@ -117,14 +118,25 @@ DiscreteLevelSet<DIM,IVAR>::DiscreteLevelSet(PatchGrid *patch_grid)
 }
 
 template <unsigned int DIM, unsigned int IVAR>
-void DiscreteLevelSet<DIM,IVAR>::readStlGeometry(QString stl_file_name)
+void DiscreteLevelSet<DIM,IVAR>::readGeometry(QString geometry_file_name)
 {
-  vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
-  reader->SetFileName(qPrintable(stl_file_name));
-  reader->MergingOff();
-  reader->Update();
   vtkSmartPointer<vtkPolyData> poly = vtkSmartPointer<vtkPolyData>::New();
-  poly->DeepCopy(reader->GetOutput());
+  if (geometry_file_name.endsWith(".stl")) {
+    cout << "Reading STL geometry" << endl;
+    vtkSmartPointer<vtkSTLReader> reader = vtkSmartPointer<vtkSTLReader>::New();
+    reader->SetFileName(qPrintable(geometry_file_name));
+    reader->MergingOff();
+    reader->Update();
+    poly->DeepCopy(reader->GetOutput());
+  } else if (geometry_file_name.endsWith(".ply")) {
+    cout << "Reading PLY geometry" << endl;
+    vtkSmartPointer<vtkPLYReader> reader = vtkSmartPointer<vtkPLYReader>::New();
+    reader->SetFileName(qPrintable(geometry_file_name));
+    reader->Update();
+    poly->DeepCopy(reader->GetOutput());
+  } else {
+   BUG;
+  }
   poly->BuildCells();
   computeLevelSet(poly);
 }
@@ -167,8 +179,8 @@ void DiscreteLevelSet<DIM,IVAR>::computeLevelSet(vtkPolyData *poly)
   //dim_t<DIM> dim;
   for (size_t i_patch = 0; i_patch < m_PatchGrid->getNumPatches(); ++i_patch) {
 
-    CartesianPatch* patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_patch));
-    //CartesianPatch* patch = NULL;
+    //CartesianPatch* patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_patch));
+    CartesianPatch* patch = NULL;
     if (patch) {
       size_t i_m = patch->sizeI() - 1;
       size_t j_m = patch->sizeJ() - 1;

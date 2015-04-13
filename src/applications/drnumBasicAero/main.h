@@ -73,9 +73,9 @@ class EaFlux
 protected:
 
   //typedef AusmDV<NUM_VARS, reconstruction_t, PerfectGas> euler_t;
-  //typedef VanLeer<NUM_VARS, TReconstruction, PerfectGas> euler_t;
+  typedef VanLeer<NUM_VARS, TReconstruction, PerfectGas> euler_t;
   //typedef Roe<NUM_VARS, TReconstruction, PerfectGas> euler_t;
-  typedef AusmPlus<NUM_VARS, TReconstruction, PerfectGas> euler_t;
+  //typedef AusmPlus<NUM_VARS, TReconstruction, PerfectGas> euler_t;
   //typedef KT<NUM_VARS, 10000, TReconstruction, PerfectGas> euler_t;
   //typedef KNP<NUM_VARS, TReconstruction, PerfectGas> euler_t;
 
@@ -427,12 +427,12 @@ void run()
 
   DiscreteLevelSet<NUM_VARS,5>* level_set = NULL;
   if (config.exists("geometry")) {
-    QString stl_file_name = config.getValue<QString>("geometry");
+    QString file_name = config.getValue<QString>("geometry");
     QTime t_levelSet;
     t_levelSet.start();
     cout << endl << "Starting Level Set Computation" << endl;
     level_set = new DiscreteLevelSet<NUM_VARS,5>(&patch_grid);
-    level_set->readStlGeometry(stl_file_name);
+    level_set->readGeometry(file_name);
     cout << endl << "Discrete Level Set Runtime -> " << t_levelSet.elapsed()/1000. << endl;
     patch_grid.writeToVtk(0, "VTK-drnum/levelset", LevelSetPlotVars<5>(), -1);
     runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, StoredLevelSet<5>, CompressibleLsSlip<NUM_VARS, GPU_CartesianPatch, PerfectGas> >(&patch_grid, cuda_device, thread_limit));
