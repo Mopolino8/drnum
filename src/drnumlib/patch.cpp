@@ -76,6 +76,9 @@ bool Patch::readFromFile(istringstream& iss_input, real scale)
   xyzoref *= m_IOScale;
   setupTransformation(xyzoref, base_i, base_j);
   /// @todo check before returning "true"
+  m_Xo = xyzoref[0];
+  m_Yo = xyzoref[1];
+  m_Zo = xyzoref[2];
   return true;
 }
 

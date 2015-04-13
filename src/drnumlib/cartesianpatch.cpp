@@ -1704,7 +1704,9 @@ vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, con
       for (size_t j = j_start; j < j_stop; ++j) {
         for (size_t i = i_start; i < i_stop; ++i) {
           getVarDim(numVariables(), i_field, i, j, k, raw_var);
-          var->SetValue(id, proc_vars.getScalar(i_var, raw_var));
+          vec3_t x;
+          xyzoIJK(i, j, k, x[0], x[1], x[2]);
+          var->SetValue(id, proc_vars.getScalar(i_var, raw_var, x));
           ++id;
         }
       }
@@ -1721,7 +1723,9 @@ vtkSmartPointer<vtkDataSet> CartesianPatch::createVtkDataSet(size_t i_field, con
       for (size_t j = j_start; j < j_stop; ++j) {
         for (size_t i = i_start; i < i_stop; ++i) {
           getVarDim(numVariables(), i_field, i, j, k, raw_var);
-          vec3_t v = proc_vars.getVector(i_var, raw_var);
+          vec3_t x;
+          xyzoIJK(i, j, k, x[0], x[1], x[2]);
+          vec3_t v = proc_vars.getVector(i_var, raw_var, x);
           v = m_TransformInertial2This.transfreeReverse(v);
           float vf[3];
           vf[0] = v[0]; vf[1] = v[1]; vf[2] = v[2];

@@ -18,8 +18,8 @@
 // + along with DrNUM. If not, see <http://www.gnu.org/licenses/>.        +
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#ifndef BLOCKCFD_H
-#define BLOCKCFD_H
+#ifndef DRNUM_H
+#define DRNUM_H
 
 #include <algorithm>
 #include <cmath>
@@ -284,5 +284,10 @@ inline CUDA_DH bool logicalXor(bool a, bool b)
   return (a && !b) || (!a && b);
 }
 
+struct ijk_t
+{
+  size_t i, j, k;
+  ijk_t(size_t i, size_t j, size_t k) { this->i = i; this->j = j; this->k = k; }
+};
 
-#endif // BLOCKCFD_H
+#endif // DRNUM_H

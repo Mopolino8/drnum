@@ -75,11 +75,6 @@ private: // attributes
   TriangleTree      m_TriangleTree;
   real              m_Tol;
 
-  //SegmentTree          m_SegmentTree;
-  //vtkPolyData*         m_PolyData;
-  //QVector<vtkIdType>   m_Tri2Grid;
-  //QVector<double>      m_Radius;      ///< Surface radius for mesh resolution.
-
 
 protected: //
 
@@ -88,7 +83,6 @@ protected: //
   void levelSetPerCell(size_t i_patch, int& count, int& total_count);
   void recursiveLevelSet(CartesianPatch* patch, size_t i_o, size_t j_o, size_t k_o, size_t i_m, size_t j_m, size_t k_m);
   void interpolate(CartesianPatch* patch, size_t i_o, size_t j_o, size_t k_o, size_t i_m, size_t j_m, size_t k_m);
-  real distance(vec3_t x1, vec3_t x2);
 
 
 public:
@@ -110,8 +104,8 @@ public:
 
   virtual string getScalarName(int) const { return "G"; }
   virtual string getVectorName(int) const { BUG; }
-  virtual real   getScalar(int, real* var) const { return var[IVAR]; }
-  virtual vec3_t getVector(int, real*)     const { BUG; return vec3_t(0,0,0); }
+  virtual real   getScalar(int, real* var, vec3_t) const { return var[IVAR]; }
+  virtual vec3_t getVector(int, real*, vec3_t)     const { BUG; return vec3_t(0,0,0); }
 };
 
 
@@ -199,54 +193,51 @@ void DiscreteLevelSet<DIM,IVAR>::recursiveLevelSet(CartesianPatch* patch, size_t
   real var[DIM];
   dim_t<DIM> dim;
 
-  vector<size_t> index;
-  index.push_back( patch->index(i_o, j_o, k_o) );
-  index.push_back( patch->index(i_m, j_o, k_o) );
-  index.push_back( patch->index(i_o, j_m, k_o) );
-  index.push_back( patch->index(i_o, j_o, k_m) );
-  index.push_back( patch->index(i_m, j_m, k_o) );
-  index.push_back( patch->index(i_m, j_o, k_m) );
-  index.push_back( patch->index(i_o, j_m, k_m) );
-  index.push_back( patch->index(i_m, j_m, k_m) );
+  size_t index[8];
+  index[0] = patch->index(i_o, j_o, k_o);
+  index[1] = patch->index(i_m, j_o, k_o);
+  index[2] = patch->index(i_o, j_m, k_o);
+  index[3] = patch->index(i_o, j_o, k_m);
+  index[4] = patch->index(i_m, j_m, k_o);
+  index[5] = patch->index(i_m, j_o, k_m);
+  index[6] = patch->index(i_o, j_m, k_m);
+  index[7] = patch->index(i_m, j_m, k_m);
 
-  vector<real>   g;
-  for (int i = 0; i != index.size(); ++i) {
+  real g[8];
+  for (int i = 0; i < 8; ++i) {
     vec3_t x = patch->xyzoCell(index[i]);
-    g.push_back( computePointLevelSet(x) );
+    g[i] = computePointLevelSet(x);
   }
   vec3_t x_ooo = patch->xyzoCell(index[0]);
-  vec3_t x_ijk = patch->xyzoCell(index[index.size()-1]);
-  real d = m_Tol*distance(x_ooo, x_ijk);
-
-        /*
-  cout  << "  g0-> "   << g[0]
-        << "  g1-> "   << g[1]
-        << "  g2-> "   << g[2]
-        << "  g3-> "   << g[3]
-        << "  g4-> "   << g[4]
-        << "  g5-> "   << g[5]
-        << "  g6-> "   << g[6]
-        << "  g7-> "   << g[7] << endl;
-  cout  << "  d-> "    << d << endl
-        << "  io-> "   << i_o
-        << "  jo-> "   << j_o
-        << "  ko-> "   << k_o
-        << "  im-> "   << i_m
-        << "  jm-> "   << j_m
-        << "  km-> "   << k_m << endl;
-        */
+  vec3_t x_ijk = patch->xyzoCell(index[7]);
+  real d = m_Tol*(x_ooo - x_ijk).abs();
 
   if ( fabs(g[0]) < d || fabs(g[1]) < d || fabs(g[2]) < d || fabs(g[3]) < d ||
        fabs(g[4]) < d || fabs(g[5]) < d || fabs(g[6]) < d || fabs(g[7]) < d)
   {
     //cout  << "    recursion" << endl;
-    if ( (i_m-i_o) == 1 && (j_m-j_o) == 1 && (k_m-k_o) == 1) {
+    int trunc = 5;
+    if ( (i_m-i_o) <= trunc && (j_m-j_o) <= trunc && (k_m-k_o) <= trunc) {
       //cout << "all i-im == 1" << endl;
+      /*
       for (int i = 0; i != index.size(); ++i) {
         size_t i_cell = index[i];
         dynamic_cast<Patch*>(patch)->getVar(dim, 0, i_cell, var);
         var[IVAR] = g[i];
         dynamic_cast<Patch*>(patch)->setVar(dim, 0, i_cell, var);
+      }
+      */
+      for (size_t i = i_o; i <= i_m; ++i) {
+        for (size_t j = j_o; j <= j_m; ++j) {
+          for (size_t k = k_o; k <= k_m; ++k) {
+            size_t i_cell = patch->index(i,j,k);
+            vec3_t x = patch->xyzoCell(i_cell);
+            real g = computePointLevelSet(x);
+            static_cast<Patch*>(patch)->getVar(dim, 0, i_cell, var);
+            var[IVAR] = g;
+            static_cast<Patch*>(patch)->setVar(dim, 0, i_cell, var);
+          }
+        }
       }
       return;
     } else {
@@ -313,14 +304,6 @@ void DiscreteLevelSet<DIM,IVAR>::interpolate(CartesianPatch* patch, size_t i1, s
       }
     }
   }
-}
-
-template <unsigned int DIM, unsigned int IVAR>
-real DiscreteLevelSet<DIM,IVAR>::distance(vec3_t x1, vec3_t x2) {
-  real dx = x2[0] - x1[0];
-  real dy = x2[1] - x1[1];
-  real dz = x2[2] - x1[2];
-  return sqrt( dx*dx + dy*dy + dz*dz );
 }
 
 template <unsigned int DIM, unsigned int IVAR>

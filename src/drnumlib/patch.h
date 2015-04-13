@@ -113,11 +113,6 @@ protected: // attributes
   string m_patchcomment;      ///< Optional comment for this patch to be read/written in patchgrid files
   CodeString m_solvercodes;   ///< String containing infos for choice of field-fluxes, RB-fluxes, sources, ...
 
-  // reference position
-  /// @todo redundant info: ommit m_Xo,m_Yo,m_Zo as it is contained in m_transformInertial2This
-  real m_Xo;                  ///< X-coord of reference position in parental coordinates
-  real m_Yo;                  ///< Y-coord of reference position in parental coordinates
-  real m_Zo;                  ///< Z-coord of reference position in parental coordinates
   // settings
   bool m_InterpolateData;     ///< Flag indicates wether to interpolate data on interpatch transfers
   //  bool m_InterpolateGrad1N;   ///< Flag indicates wether to interpolate directed gradients on interpatch transfers

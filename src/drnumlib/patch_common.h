@@ -60,6 +60,11 @@ protected: // attributes
 
 size_t  m_MyIndex;      ///< Index of patch in sequence of PatchGrid::m_patches. Optional setting.
 
+/// @todo redundant info: ommit m_Xo,m_Yo,m_Zo as it is contained in m_transformInertial2This
+real m_Xo;              ///< X-coord of reference position in parental coordinates
+real m_Yo;              ///< Y-coord of reference position in parental coordinates
+real m_Zo;              ///< Z-coord of reference position in parental coordinates
+
 
 public:
 
@@ -167,6 +172,10 @@ CUDA_HO PatchGrid* getPatchGrid()
 {
   return m_PatchGrid;
 }
+
+CUDA_DH real xo() { return m_Xo; }
+CUDA_DH real yo() { return m_Yo; }
+CUDA_DH real zo() { return m_Zo; }
 
 /**
  * @brief Set a variable set at a specified l_c - position.
@@ -506,6 +515,9 @@ CUDA_HO void copyAttributes(T* obj)
   m_PatchGrid               = obj->getPatchGrid();
   m_MyIndex                 = obj->getIndex();
   m_NumSplitFaces           = obj->getNumSplitFaces();
+  m_Xo                      = obj->m_Xo;
+  m_Yo                      = obj->m_Yo;
+  m_Zo                      = obj->m_Zo;
 }
 
 

@@ -313,6 +313,23 @@ CUDA_DH bool checkRange(size_t i, size_t j, size_t k)
 }
 
 /**
+ * Get the global coordinates of a cell.
+ * Attention: This might have to change drastically in the future!
+ * @param i first index
+ * @param j second index
+ * @param k third index
+ * @param x will contain the x-coordinate on return
+ * @param y will contain the y-coordinate on return
+ * @param z will contain the z-coordinate on return
+ */
+void xyzoIJK(size_t i, size_t j, size_t k, real& x, real& y, real& z)
+{
+  x = m_Xo + i*m_Dx + 0.5*m_Dx;
+  y = m_Yo + j*m_Dy + 0.5*m_Dy;
+  z = m_Zo + k*m_Dz + 0.5*m_Dz;
+}
+
+/**
  * Copy simple data attributes from another object.
  * The other object can have a different type as long as the required attributes are present.
  * param obj a constant reference to the other object

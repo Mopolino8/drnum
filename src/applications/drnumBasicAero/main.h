@@ -40,6 +40,7 @@
 #include "compressiblevariablesandg.h"
 #include "rungekutta.h"
 #include "discretelevelset.h"
+#include "simplelevelsets.h"
 
 #ifdef GPU
 #include "cartesiancycliccopy.h"
@@ -394,7 +395,6 @@ void run()
   patch_grid.setNumSeekLayers(2);  /// @todo check default = 2
   patch_grid.setTransferType("padded_direct");
   patch_grid.readGrid("patches/standard.grid", scale);
-  //patch_grid.readGrid("patches/V1");
   patch_grid.computeDependencies(true);
 
   // Time step
@@ -408,27 +408,6 @@ void run()
   real init_var[NUM_VARS];
   PerfectGas::primitiveToConservative(p, T, u, v, 0.00*u, init_var);
   patch_grid.setFieldToConst(0, init_var);
-
-  DiscreteLevelSet<NUM_VARS,5>* level_set = NULL;
-  if (config.exists("geometry")) {
-    QString stl_file_name = config.getValue<QString>("geometry");
-    QTime t_levelSet;
-    t_levelSet.start();
-    cout << endl << "Starting Level Set Computation" << endl;
-    level_set = new DiscreteLevelSet<NUM_VARS,5>(&patch_grid);
-    level_set->readStlGeometry(stl_file_name);
-    cout << endl << "Discrete Level Set Runtime -> " << t_levelSet.elapsed()/1000. << endl;
-    patch_grid.writeToVtk(0, "VTK-drnum/levelset", LevelSetPlotVars<5>(), -1);
-  }
-
-  if (mesh_preview) {
-    patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), 0);
-    if (level_set) {
-      patch_grid.writeToVtk(0, "VTK-drnum/levelset", LevelSetPlotVars<5>(), -1);
-    }
-    exit(EXIT_SUCCESS);
-  }
-
 
   RungeKutta runge_kutta;
   {
@@ -444,7 +423,31 @@ void run()
     }
   }
   if (config.exists("geometry")) {
+  }
+
+  DiscreteLevelSet<NUM_VARS,5>* level_set = NULL;
+  if (config.exists("geometry")) {
+    QString stl_file_name = config.getValue<QString>("geometry");
+    QTime t_levelSet;
+    t_levelSet.start();
+    cout << endl << "Starting Level Set Computation" << endl;
+    level_set = new DiscreteLevelSet<NUM_VARS,5>(&patch_grid);
+    level_set->readStlGeometry(stl_file_name);
+    cout << endl << "Discrete Level Set Runtime -> " << t_levelSet.elapsed()/1000. << endl;
+    patch_grid.writeToVtk(0, "VTK-drnum/levelset", LevelSetPlotVars<5>(), -1);
     runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, StoredLevelSet<5>, CompressibleLsSlip<NUM_VARS, GPU_CartesianPatch, PerfectGas> >(&patch_grid, cuda_device, thread_limit));
+  }
+
+  if (config.exists("chamber")) {
+    if (config.getValue<bool>("chamber")) {
+      patch_grid.writeToVtk(0, "VTK-drnum/chamber", GenericLevelSetPlotVars<LevelSetXCylinder<-6,0,0,6,3> >(), -1);
+      //runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, LevelSetXCylinder<-1,0,0,6,3>, BC> cyl;
+    }
+  }
+
+  if (mesh_preview) {
+    patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), 0);
+    exit(EXIT_SUCCESS);
   }
 
   QString reconstruction = config.getValue<QString>("reconstruction");

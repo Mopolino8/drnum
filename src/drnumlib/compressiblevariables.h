@@ -46,8 +46,8 @@ public:
 
   virtual string getScalarName(int i) const;
   virtual string getVectorName(int i) const;
-  virtual real   getScalar(int i, real* var) const;
-  virtual vec3_t getVector(int i, real* var) const;
+  virtual real   getScalar(int i, real* var, vec3_t) const;
+  virtual vec3_t getVector(int i, real* var, vec3_t) const;
 
 };
 
@@ -79,7 +79,7 @@ string CompressibleVariables<TGas>::getVectorName(int i) const
 }
 
 template <typename TGas>
-real CompressibleVariables<TGas>::getScalar(int i, real *var) const
+real CompressibleVariables<TGas>::getScalar(int i, real *var, vec3_t) const
 {
   real p, T, u, v, w;
   m_Gas.conservativeToPrimitive(var, p, T, u, v, w);
@@ -94,7 +94,7 @@ real CompressibleVariables<TGas>::getScalar(int i, real *var) const
 }
 
 template <typename TGas>
-vec3_t CompressibleVariables<TGas>::getVector(int i, real *var) const
+vec3_t CompressibleVariables<TGas>::getVector(int i, real *var, vec3_t) const
 {
   real p, T, u, v, w;
   m_Gas.conservativeToPrimitive(var, p, T, u, v, w);

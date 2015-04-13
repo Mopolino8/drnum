@@ -19,25 +19,31 @@
 // +                                                                      +
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-#ifndef POSTPROCESSINGVARIABLES_H
-#define POSTPROCESSINGVARIABLES_H
+#ifndef COMPRESSIBLELSCHAMBER_H
+#define COMPRESSIBLELSCHAMBER_H
 
 #include "drnum.h"
 
-class PostProcessingVariables
+template <unsigned int DIM, typename TPatch, typename TGas, int T_temp, int T_press>
+struct CompressibleLsChamber
 {
+  CUDA_DH static real extrapolate(real h0, real h1, real h2, real f1, real f2)
+  {
+    return f1 + (h0-h1)*(f1-f2)/(h1-h2);
+  }
 
-public: // methods
+  CUDA_DH static void operate(real* var_f, real*, real* var, real h0, real h1, real h2, real wgt, real gx, real gy, real gz)
+  {
+    real p_f, T_f, u_f, v_f, w_f;
+    real p_bc, T_bc, u_bc, v_bc, w_bc;
+    TGas::conservativeToPrimitive(var_f, p_f, T_f, u_f, v_f, w_f);
 
-  virtual int numScalars() const = 0;
-  virtual int numVectors() const = 0;
+    //real a_f = CHECKED_REAL(sqrt(TGas::gamma(var_f)*TGas::R(var_f)*T_f));
+    //real
 
-  virtual string getScalarName(int i) const = 0;
-  virtual string getVectorName(int i) const = 0;
-  virtual real   getScalar(int i, real* var, vec3_t x) const = 0;
-  virtual vec3_t getVector(int i, real* var, vec3_t x) const = 0;
 
+    TGas::primitiveToConservative(p, T, u, v, w, var);
+  }
 
 };
-
-#endif // POSTPROCESSINGVARIABLES_H
+#endif // COMPRESSIBLELSCHAMBER_H

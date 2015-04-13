@@ -16,6 +16,7 @@ SET(drnumlib_SOURCES
     combiobjector.cpp
     compressibleeulerbobc.cpp
     compressiblesolidwallbobc.cpp
+    compressiblelschamber.h
     compressiblelsslip.h
     coneobject.cpp
     configmap.cpp
@@ -94,6 +95,7 @@ SET(drnumlib_SOURCES
     reconstruction/vanleerlim.h
     cpu_levelsetobjectbc.h
     lsobccompressibleswallop.h
+    simplelevelsets.h
     timeaverage.h
     timeaverage.cpp
 )
