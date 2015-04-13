@@ -40,15 +40,14 @@ public: // data types
   struct cell_t
   {
     size_t i, j, k;
+    bool   extrapolate;
   };
 
 
 protected: // attributes
 
-  QVector<QList<cell_t> > m_Cells1;
-  QVector<cell_t*>        m_GpuCells1;
-  QVector<QList<cell_t> > m_Cells2;
-  QVector<cell_t*>        m_GpuCells2;
+  QVector<QList<cell_t> > m_Cells;
+  QVector<cell_t*>        m_GpuCells;
   bool                    m_UpdateRequired;
 
 
@@ -85,11 +84,9 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::update()
   if (!m_UpdateRequired) {
     return;
   }
-  m_Cells1.resize(this->m_Patches.size());
-  m_Cells2.resize(this->m_Patches.size());
+  m_Cells.resize(this->m_Patches.size());
   for (int i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
-    m_Cells1[i_patch].clear();
-    m_Cells2[i_patch].clear();
+    m_Cells[i_patch].clear();
     for (size_t i = 2; i < this->m_Patches[i_patch]->sizeI() - 2; ++i) {
       for (size_t j = 2; j < this->m_Patches[i_patch]->sizeJ() - 2; ++j) {
         for (size_t k = 2; k < this->m_Patches[i_patch]->sizeK() - 2; ++k) {
@@ -111,11 +108,8 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::update()
             cell.i = i;
             cell.j = j;
             cell.k = k;
-            if (!extrapolate) {
-              m_Cells1[i_patch] << cell;
-            } else {
-              m_Cells2[i_patch] << cell;
-            }
+            cell.extrapolate = extrapolate;
+            m_Cells[i_patch] << cell;
           }
         }
       }
@@ -123,48 +117,27 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::update()
   }
 
   // delete old GPU arrays
-  foreach (cell_t* cells, m_GpuCells1) {
+  foreach (cell_t* cells, m_GpuCells) {
     cudaFree(cells);
     CUDA_CHECK_ERROR;
   }
-  m_GpuCells1.clear();
-  foreach (cell_t* cells, m_GpuCells2) {
-    cudaFree(cells);
-    CUDA_CHECK_ERROR;
-  }
-  m_GpuCells2.clear();
+  m_GpuCells.clear();
 
   // allocate new arrays
-  m_GpuCells1.resize(this->m_Patches.size());
+  m_GpuCells.resize(this->m_Patches.size());
   for (int i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
-    if (m_Cells1[i_patch].size() > 0) {
-      cudaMalloc(&m_GpuCells1[i_patch], m_Cells1[i_patch].size()*sizeof(cell_t));
+    if (m_Cells[i_patch].size() > 0) {
+      cudaMalloc(&m_GpuCells[i_patch], m_Cells[i_patch].size()*sizeof(cell_t));
       CUDA_CHECK_ERROR;
-      cell_t* cells = new cell_t[m_Cells1[i_patch].size()];
-      for (int i = 0; i < m_Cells1[i_patch].size(); ++i) {
-        cells[i] = m_Cells1[i_patch][i];
+      cell_t* cells = new cell_t[m_Cells[i_patch].size()];
+      for (int i = 0; i < m_Cells[i_patch].size(); ++i) {
+        cells[i] = m_Cells[i_patch][i];
       }
-      cudaMemcpy(m_GpuCells1[i_patch], cells, m_Cells1[i_patch].size()*sizeof(cell_t), cudaMemcpyHostToDevice);
+      cudaMemcpy(m_GpuCells[i_patch], cells, m_Cells[i_patch].size()*sizeof(cell_t), cudaMemcpyHostToDevice);
       CUDA_CHECK_ERROR;
       delete [] cells;
     } else {
-      m_GpuCells1[i_patch] = NULL;
-    }
-  }
-  m_GpuCells2.resize(this->m_Patches.size());
-  for (int i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
-    if (m_Cells1[i_patch].size() > 0) {
-      cudaMalloc(&m_GpuCells2[i_patch], m_Cells2[i_patch].size()*sizeof(cell_t));
-      CUDA_CHECK_ERROR;
-      cell_t* cells = new cell_t[m_Cells2[i_patch].size()];
-      for (int i = 0; i < m_Cells2[i_patch].size(); ++i) {
-        cells[i] = m_Cells2[i_patch][i];
-      }
-      cudaMemcpy(m_GpuCells2[i_patch], cells, m_Cells2[i_patch].size()*sizeof(cell_t), cudaMemcpyHostToDevice);
-      CUDA_CHECK_ERROR;
-      delete [] cells;
-    } else {
-      m_GpuCells2[i_patch] = NULL;
+      m_GpuCells[i_patch] = NULL;
     }
   }
 
@@ -205,7 +178,7 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(GPU_CartesianPatch &pat
 }
 
 template <unsigned int DIM, typename LS, typename BC>
-__global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typename GPU_CartesianLevelSetBC<DIM,LS,BC>::cell_t* cells, size_t num_cells, bool extrapolate)
+__global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typename GPU_CartesianLevelSetBC<DIM,LS,BC>::cell_t* cells, size_t num_cells)
 {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
 
@@ -215,6 +188,7 @@ __global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typenam
   size_t i = cells[idx].i;
   size_t j = cells[idx].j;
   size_t k = cells[idx].k;
+  bool extrapolate = cells[idx].extrapolate;
 
   dim_t<DIM> dim;
 
@@ -235,7 +209,7 @@ __global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typenam
       for (int dj = -1; dj <= 1; ++dj) {
         for (int dk = -1; dk <= 1; ++dk) {
           if (di != 0 || dj != 0 || dk != 0) {
-            if (LS::G(patch, i + di, j + dj, k + dk) >= 0 || extrapolate) {
+            if (LS::G(patch, i + di, j + dj, k + dk) >= 0 || (extrapolate && LS::G(patch, i + di, j + dj, k + dk) > LS::G(patch, i, j, k))) {
               real dx = di*patch.dx();
               real dy = dj*patch.dy();
               real dz = dk*patch.dz();
@@ -282,24 +256,13 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::operator()()
 
     CUDA_CHECK_ERROR;
 
-    if (m_Cells1[i_patch].size() > 0) {
-      int num_cells   = m_Cells1[i_patch].size();
+    if (m_Cells[i_patch].size() > 0) {
+      int num_cells   = m_Cells[i_patch].size();
       int num_blocks  = max(int(16), int(num_cells/max_num_threads) + 1);
       int num_threads = num_cells/num_blocks + 1;
       if (num_cells > num_blocks*num_threads) BUG;
       cudaMemcpy(this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
-      GPU_CartesianLevelSetBC_kernel<DIM,LS,BC> <<<num_blocks, num_threads>>>(this->m_GpuPatches[i_patch], m_GpuCells1[i_patch], num_cells, false);
-      CUDA_CHECK_ERROR;
-      cudaDeviceSynchronize();
-      cudaMemcpy(this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
-    }
-    if (m_Cells2[i_patch].size() > 0) {
-      int num_cells   = m_Cells2[i_patch].size();
-      int num_blocks  = max(int(16), int(num_cells/max_num_threads) + 1);
-      int num_threads = num_cells/num_blocks + 1;
-      if (num_cells > num_blocks*num_threads) BUG;
-      cudaMemcpy(this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
-      GPU_CartesianLevelSetBC_kernel<DIM,LS,BC> <<<num_blocks, num_threads>>>(this->m_GpuPatches[i_patch], m_GpuCells2[i_patch], num_cells, true);
+      GPU_CartesianLevelSetBC_kernel<DIM,LS,BC> <<<num_blocks, num_threads>>>(this->m_GpuPatches[i_patch], m_GpuCells[i_patch], num_cells);
       CUDA_CHECK_ERROR;
       cudaDeviceSynchronize();
       cudaMemcpy(this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
