@@ -42,16 +42,16 @@ public:
 };
 
 
-template <int T_X0, int T_Y0, int T_Z0, int T_R, int T_H>
+template <intreal_t T_X0, intreal_t T_Y0, intreal_t T_Z0, intreal_t T_R, intreal_t T_H>
 struct LevelSetXCylinder
 {
   CUDA_DH static real G(real x, real y, real z)
   {
-    real R = 1e-3*T_R;
-    real H = 1e-3*T_H;
-    x -= 1e-3*T_X0;
-    y -= 1e-3*T_Y0;
-    z -= 1e-3*T_Z0;
+    real R = INTREAL(T_R);
+    real H = INTREAL(T_H);
+    x -= INTREAL(T_X0);
+    y -= INTREAL(T_Y0);
+    z -= INTREAL(T_Z0);
     real h = x;
     real r = sqrt(y*y + z*z);
     if (h >= 0 && h <= H) {
@@ -73,7 +73,7 @@ struct LevelSetXCylinder
   CUDA_DH static real G(TPatch& patch, size_t i, size_t j, size_t k, size_t = 0)
   {
     real x, y, z;
-    patch.xyzIJK(i, j, k, x, y, z);
+    patch.xyzoIJK(i, j, k, x, y, z);
     return G(x, y, x);
   }
 
