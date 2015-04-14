@@ -174,6 +174,14 @@ void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::grad(GPU_CartesianPatch &patch, 
   gx = 0.5*patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i-1, j, k));
   gy = 0.5*patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j-1, k));
   gz = 0.5*patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k-1));
+
+  if (i == 0)                 gx = patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i,   j, k));
+  if (i == patch.sizeI() - 1) gx = patch.idx()*(LS::G(patch, i  , j, k) - LS::G(patch, i-1, j, k));
+  if (j == 0)                 gy = patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j  , k));
+  if (j == patch.sizeJ() - 1) gy = patch.idy()*(LS::G(patch, i, j  , k) - LS::G(patch, i, j-1, k));
+  if (k == 0)                 gz = patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k  ));
+  if (k == patch.sizeK() - 1) gz = patch.idz()*(LS::G(patch, i, j, k  ) - LS::G(patch, i, j, k-1));
+
 }
 
 template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
