@@ -22,7 +22,7 @@
 #ifndef GPU_CARTESIANLEVELSETBC_H
 #define GPU_CARTESIANLEVELSETBC_H
 
-template <unsigned int DIM, typename LS, typename BC>
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
 class GPU_CartesianLevelSetBC;
 
 #include "gpu_levelsetbc.h"
@@ -31,7 +31,7 @@ class GPU_CartesianLevelSetBC;
 #include "genericoperation.h"
 #include "gpu_cartesianpatch.h"
 
-template <unsigned int DIM, typename LS, typename BC>
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
 class GPU_CartesianLevelSetBC : public GPU_LevelSetBC<DIM, CartesianPatch, GPU_CartesianPatch>
 {
 
@@ -71,15 +71,15 @@ public: // methods
 };
 
 
-template <unsigned int DIM, typename LS, typename BC>
-GPU_CartesianLevelSetBC<DIM,LS,BC>::GPU_CartesianLevelSetBC(PatchGrid* patch_grid, int cuda_device, size_t thread_limit)
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
+GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::GPU_CartesianLevelSetBC(PatchGrid* patch_grid, int cuda_device, size_t thread_limit)
   : GPU_LevelSetBC<DIM, CartesianPatch, GPU_CartesianPatch>(patch_grid, cuda_device, thread_limit)
 {
   m_UpdateRequired = true;
 }
 
-template <unsigned int DIM, typename LS, typename BC>
-void GPU_CartesianLevelSetBC<DIM,LS,BC>::update()
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
+void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::update()
 {
   if (!m_UpdateRequired) {
     return;
@@ -102,14 +102,14 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::update()
             int dk_1 = -1;
             int dk_2 =  1;
             if (i < 2)         di_1 = 0;
-            if (i > imax - 2)  di_2 = 0;
+            if (i >= imax - 2) di_2 = 0;
             if (j < 2)         dj_1 = 0;
-            if (j > jmax - 2)  dj_2 = 0;
+            if (j >= jmax - 2) dj_2 = 0;
             if (k < 2)         dk_1 = 0;
-            if (k > kmax - 2)  dk_2 = 0;
+            if (k >= kmax - 2) dk_2 = 0;
             for (int di = di_1; di <= di_2; ++di) {
               for (int dj = dj_1; dj <= dj_2; ++dj) {
-                for (int dk = -dk_1; dk <= dk_2; ++dk) {
+                for (int dk = dk_1; dk <= dk_2; ++dk) {
                   if (di != 0 || dj != 0 || dk != 0) {
                     if (LS::G(*this->m_Patches[i_patch], i + di, j + dj, k + dk) >= 0) {
                       extrapolate = false;
@@ -159,19 +159,19 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::update()
   m_UpdateRequired = false;
 }
 
-template <unsigned int DIM, typename LS, typename BC>
-void GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz)
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
+void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::grad(GPU_CartesianPatch &patch, size_t i, size_t j, size_t k, real &gx, real &gy, real &gz)
 {
   gx = 0.5*patch.idx()*(LS::G(patch, i+1, j, k) - LS::G(patch, i-1, j, k));
   gy = 0.5*patch.idy()*(LS::G(patch, i, j+1, k) - LS::G(patch, i, j-1, k));
   gz = 0.5*patch.idz()*(LS::G(patch, i, j, k+1) - LS::G(patch, i, j, k-1));
 }
 
-template <unsigned int DIM, typename LS, typename BC>
-void GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(GPU_CartesianPatch &patch,
-                                                         size_t i, size_t j, size_t k,
-                                                         int di, int dj, int dk,
-                                                         real &h0, real &h1, real &h2, real &w, real *var1, real *var2)
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
+void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::getOutsideState(GPU_CartesianPatch &patch,
+                                                                size_t i, size_t j, size_t k,
+                                                                int di, int dj, int dk,
+                                                                real &h0, real &h1, real &h2, real &w, real *var1, real *var2)
 {
   
   // careful with parallel level sets (e.g. flat plate)
@@ -192,8 +192,8 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(GPU_CartesianPatch &pat
   }
 }
 
-template <unsigned int DIM, typename LS, typename BC>
-__global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typename GPU_CartesianLevelSetBC<DIM,LS,BC>::cell_t* cells, size_t num_cells)
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
+__global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typename GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::cell_t* cells, size_t num_cells)
 {
   int idx = blockDim.x*blockIdx.x + threadIdx.x;
 
@@ -226,12 +226,12 @@ __global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typenam
     int dk_1 = -1;
     int dk_2 =  1;
     if (i < 2)                  di_1 = 0;
-    if (i > patch.sizeI() - 2)  di_2 = 0;
+    if (i >= patch.sizeI() - 2) di_2 = 0;
     if (j < 2)                  dj_1 = 0;
-    if (j > patch.sizeJ() - 2)  dj_2 = 0;
+    if (j >= patch.sizeJ() - 2) dj_2 = 0;
     if (k < 2)                  dk_1 = 0;
-    if (k > patch.sizeK() - 2)  dk_2 = 0;
-    GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
+    if (k >= patch.sizeK() - 2) dk_2 = 0;
+    GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
     for (int di = di_1; di <= di_2; ++di) {
       for (int dj = dj_1; dj <= dj_2; ++dj) {
         for (int dk = dk_1; dk <= dk_2; ++dk) {
@@ -244,7 +244,7 @@ __global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typenam
               if (extrapolate) {
                 patch.getVar(dim, 0, i + di, j + dj, k + dk, var_bc);
               } else {
-                GPU_CartesianLevelSetBC<DIM,LS,BC>::getOutsideState(patch, i, j, k, di, dj, dk, h0, h1, h2, w, var_1, var_2);
+                GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::getOutsideState(patch, i, j, k, di, dj, dk, h0, h1, h2, w, var_1, var_2);
                 BC::operate(var_1, var_2, var_bc, h0, h1, h2, w, gx, gy, gz);
               }
               ++count;
@@ -258,19 +258,20 @@ __global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typenam
       }
     }
     if (count > 0) {
-      for (size_t i_var = 0; i_var < DIM; ++i_var) {
-        var[i_var] /= total_weight;
+      patch.getVar(dim, 0, i, j, k, var_bc);
+      for (size_t i_var = 0; i_var < DIM - NUM_LS; ++i_var) {
+        var_bc[i_var] = var[i_var]/total_weight;
       }
-      real G_self = LS::G(patch, i, j, k);
-      patch.setVar(dim, 2, i, j, k, var);
-      LS::updateG(patch, i, j, k, G_self, 2);
+      //real G_self = LS::G(patch, i, j, k);
+      patch.setVar(dim, 2, i, j, k, var_bc);
+      //LS::updateG(patch, i, j, k, G_self, 2);
     }
 
   }
 }
 
-template <unsigned int DIM, typename LS, typename BC>
-void GPU_CartesianLevelSetBC<DIM,LS,BC>::operator()()
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
+void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::operator()()
 {
   cudaDeviceSetCacheConfig(cudaFuncCachePreferL1);
   CUDA_CHECK_ERROR;
@@ -289,7 +290,7 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::operator()()
       int num_threads = num_cells/num_blocks + 1;
       if (num_cells > num_blocks*num_threads) BUG;
       cudaMemcpy(this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);
-      GPU_CartesianLevelSetBC_kernel<DIM,LS,BC> <<<num_blocks, num_threads>>>(this->m_GpuPatches[i_patch], m_GpuCells[i_patch], num_cells);
+      GPU_CartesianLevelSetBC_kernel<DIM,NUM_LS,LS,BC> <<<num_blocks, num_threads>>>(this->m_GpuPatches[i_patch], m_GpuCells[i_patch], num_cells);
       CUDA_CHECK_ERROR;
       cudaDeviceSynchronize();
       cudaMemcpy(this->m_GpuPatches[i_patch].getField(0), this->m_GpuPatches[i_patch].getField(2), this->m_GpuPatches[i_patch].fieldSize()*sizeof(real) ,cudaMemcpyDeviceToDevice);

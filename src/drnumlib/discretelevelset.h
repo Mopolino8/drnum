@@ -179,8 +179,8 @@ void DiscreteLevelSet<DIM,IVAR>::computeLevelSet(vtkPolyData *poly)
   //dim_t<DIM> dim;
   for (size_t i_patch = 0; i_patch < m_PatchGrid->getNumPatches(); ++i_patch) {
 
-    //CartesianPatch* patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_patch));
-    CartesianPatch* patch = NULL;
+    CartesianPatch* patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_patch));
+    //CartesianPatch* patch = NULL;
     if (patch) {
       size_t i_m = patch->sizeI() - 1;
       size_t j_m = patch->sizeJ() - 1;
@@ -230,15 +230,6 @@ void DiscreteLevelSet<DIM,IVAR>::recursiveLevelSet(CartesianPatch* patch, size_t
     //cout  << "    recursion" << endl;
     int trunc = 5;
     if ( (i_m-i_o) <= trunc && (j_m-j_o) <= trunc && (k_m-k_o) <= trunc) {
-      //cout << "all i-im == 1" << endl;
-      /*
-      for (int i = 0; i != index.size(); ++i) {
-        size_t i_cell = index[i];
-        dynamic_cast<Patch*>(patch)->getVar(dim, 0, i_cell, var);
-        var[IVAR] = g[i];
-        dynamic_cast<Patch*>(patch)->setVar(dim, 0, i_cell, var);
-      }
-      */
       for (size_t i = i_o; i <= i_m; ++i) {
         for (size_t j = j_o; j <= j_m; ++j) {
           for (size_t k = k_o; k <= k_m; ++k) {

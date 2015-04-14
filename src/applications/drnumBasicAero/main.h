@@ -52,6 +52,7 @@
 #include "iterators/gpu_cartesianiterator.h"
 #include "gpu_cartesianlevelsetbc.h"
 #include "compressiblelsslip.h"
+#include "compressiblelschamber.h"
 #else
 #include "iterators/cartesianiterator.h"
 #endif
@@ -328,7 +329,9 @@ void run()
   real Ma             = config.getValue<real>("Mach-number");
   real p              = config.getValue<real>("pressure");
   real T              = config.getValue<real>("temperature");
+  real Ma_init        = Ma;
   real uabs           = Ma*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+  real uabs_init      = uabs;
   real alpha          = 0.0;
   real L              = config.getValue<real>("reference-length");
   real time           = L/uabs;
@@ -339,6 +342,11 @@ void run()
   bool mesh_preview   = config.getValue<bool>("mesh-preview");
   bool code_coupling  = config.getValue<bool>("code-coupling");
   real scale          = config.getValue<real>("scale");
+
+  if (config.exists("initial-Mach-number")) {
+    Ma_init = config.getValue<real>("initial-Mach-number");
+    uabs_init = Ma_init*sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+  }
 
   int  xp_bc = 0;
   int  xm_bc = 0;
@@ -382,8 +390,10 @@ void run()
   }
 
   alpha = M_PI*alpha/180.0;
-  real u = uabs*cos(alpha);
-  real v = uabs*sin(alpha);
+  real u_init = uabs_init*cos(alpha);
+  real v_init = uabs_init*sin(alpha);
+  real u      = uabs*cos(alpha);
+  real v      = uabs*sin(alpha);
 
   // Patch grid
   PatchGrid patch_grid;
@@ -398,7 +408,7 @@ void run()
   patch_grid.computeDependencies(true);
 
   // Time step
-  real ch_speed = u + sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
+  real ch_speed = uabs_init + sqrt(PerfectGas::gamma()*PerfectGas::R()*T);
   real dt       = cfl_target*patch_grid.computeMinChLength()/ch_speed;
 
   cout << " patch_grid.computeMinChLength() = " << patch_grid.computeMinChLength() << endl;
@@ -406,7 +416,7 @@ void run()
 
   // Initialize
   real init_var[NUM_VARS];
-  PerfectGas::primitiveToConservative(p, T, u, v, 0.00*u, init_var);
+  PerfectGas::primitiveToConservative(p, T, u_init, v_init, 0.00*u_init, init_var);
   patch_grid.setFieldToConst(0, init_var);
 
   RungeKutta runge_kutta;
@@ -435,13 +445,15 @@ void run()
     level_set->readGeometry(file_name);
     cout << endl << "Discrete Level Set Runtime -> " << t_levelSet.elapsed()/1000. << endl;
     patch_grid.writeToVtk(0, "VTK-drnum/levelset", LevelSetPlotVars<5>(), -1);
-    runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, StoredLevelSet<5>, CompressibleLsSlip<NUM_VARS, GPU_CartesianPatch, PerfectGas> >(&patch_grid, cuda_device, thread_limit));
+    runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, 1, StoredLevelSet<5>, CompressibleLsSlip<NUM_VARS, GPU_CartesianPatch, PerfectGas> >(&patch_grid, cuda_device, thread_limit));
   }
 
   if (config.exists("chamber")) {
     if (config.getValue<bool>("chamber")) {
-      patch_grid.writeToVtk(0, "VTK-drnum/chamber", GenericLevelSetPlotVars<LevelSetXCylinder<-6,0,0,6,3> >(), -1);
-      //runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, LevelSetXCylinder<-1,0,0,6,3>, BC> cyl;
+      typedef LevelSetXCylinder<REALINT(-6e-3), 0, 0, REALINT(6e-3), REALINT(3e-3)> ls_t;
+      typedef CompressibleLsChamber<NUM_VARS, PerfectGas, REALINT(1e7), REALINT(1000), REALINT(1), 0, 0> bc_t;
+      patch_grid.writeToVtk(0, "VTK-drnum/chamber", GenericLevelSetPlotVars<ls_t>(), -1);
+      runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, 1, ls_t, bc_t>(&patch_grid, cuda_device, thread_limit));
     }
   }
 

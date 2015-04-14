@@ -290,4 +290,9 @@ struct ijk_t
   ijk_t(size_t i, size_t j, size_t k) { this->i = i; this->j = j; this->k = k; }
 };
 
+typedef long long intreal_t;
+
+#define INTREAL(X) 1e-6*X
+#define REALINT(X) intreal_t(1e6*X)
+
 #endif // DRNUM_H
