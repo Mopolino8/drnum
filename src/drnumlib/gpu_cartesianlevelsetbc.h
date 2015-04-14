@@ -101,16 +101,25 @@ void GPU_CartesianLevelSetBC<DIM,LS,BC>::update()
             int dj_2 =  1;
             int dk_1 = -1;
             int dk_2 =  1;
-            if (i < 2)         di_1 = 0;
-            if (i > imax - 2)  di_2 = 0;
-            if (j < 2)         dj_1 = 0;
-            if (j > jmax - 2)  dj_2 = 0;
-            if (k < 2)         dk_1 = 0;
-            if (k > kmax - 2)  dk_2 = 0;
+            if (i < 2)          di_1 = 0;
+            if (i >= imax - 2)  di_2 = 0;
+            if (j < 2)          dj_1 = 0;
+            if (j >= jmax - 2)  dj_2 = 0;
+            if (k < 2)          dk_1 = 0;
+            if (k >= kmax - 2)  dk_2 = 0;
             for (int di = di_1; di <= di_2; ++di) {
               for (int dj = dj_1; dj <= dj_2; ++dj) {
-                for (int dk = -dk_1; dk <= dk_2; ++dk) {
+                for (int dk = dk_1; dk <= dk_2; ++dk) {
                   if (di != 0 || dj != 0 || dk != 0) {
+                    if ((i+2*di) < 0 || (j+2*dj) < 0 || (k+2*dk) < 0) {
+                      BUG;
+                    }
+                    if (!this->m_Patches[i_patch]->checkRange(i, j, k)) {
+                      BUG;
+                    }
+                    if (!this->m_Patches[i_patch]->checkRange(i+2*di, j+2*dj, k+2*dk)) {
+                      BUG;
+                    }
                     if (LS::G(*this->m_Patches[i_patch], i + di, j + dj, k + dk) >= 0) {
                       extrapolate = false;
                       break;
@@ -226,11 +235,11 @@ __global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typenam
     int dk_1 = -1;
     int dk_2 =  1;
     if (i < 2)                  di_1 = 0;
-    if (i > patch.sizeI() - 2)  di_2 = 0;
+    if (i >= patch.sizeI() - 2)  di_2 = 0;
     if (j < 2)                  dj_1 = 0;
-    if (j > patch.sizeJ() - 2)  dj_2 = 0;
+    if (j >= patch.sizeJ() - 2)  dj_2 = 0;
     if (k < 2)                  dk_1 = 0;
-    if (k > patch.sizeK() - 2)  dk_2 = 0;
+    if (k >= patch.sizeK() - 2)  dk_2 = 0;
     GPU_CartesianLevelSetBC<DIM,LS,BC>::grad(patch, i, j, k, gx, gy, gz);
     for (int di = di_1; di <= di_2; ++di) {
       for (int dj = dj_1; dj <= dj_2; ++dj) {
