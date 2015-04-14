@@ -179,8 +179,8 @@ void DiscreteLevelSet<DIM,IVAR>::computeLevelSet(vtkPolyData *poly)
   //dim_t<DIM> dim;
   for (size_t i_patch = 0; i_patch < m_PatchGrid->getNumPatches(); ++i_patch) {
 
-    //CartesianPatch* patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_patch));
-    CartesianPatch* patch = NULL;
+    CartesianPatch* patch = dynamic_cast<CartesianPatch*>(m_PatchGrid->getPatch(i_patch));
+    //CartesianPatch* patch = NULL;
     if (patch) {
       size_t i_m = patch->sizeI() - 1;
       size_t j_m = patch->sizeJ() - 1;
