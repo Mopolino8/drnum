@@ -31,6 +31,7 @@ Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotect
 {
   m_PatchGrid = patch_grid;
   m_Data = NULL;
+  m_Active = NULL;
   m_NumFields = 0;
   m_NumVariables = 0;
   m_VariableSize = 0;
@@ -49,6 +50,7 @@ Patch::Patch(PatchGrid *patch_grid, size_t num_seeklayers, size_t num_addprotect
   m_NumReceivingCellsUnique = 0;
   m_NumDonorWIConcat = 0;
   m_GpuData = NULL;
+  m_GpuActive = NULL;
   m_GpuDataSet = false;
   m_VectorVarIndices = patch_grid->getVectorVarIndices();
 }
@@ -703,18 +705,23 @@ void Patch::allocateData()
 {
   m_FieldSize = m_NumVariables * m_VariableSize;
   m_Data = new real [m_NumFields*m_FieldSize];
+  m_Active = new bool [m_VariableSize];
   m_IsInsideCell = new bool [m_VariableSize];
   m_IsSplitCell = new bool [m_VariableSize];
   for (size_t i = 0; i < m_VariableSize; ++i) {
     m_IsInsideCell[i] = false;
     m_IsSplitCell[i] = false;
+    m_Active[i] = true;
   }
 }
 
 void Patch::deleteData()
 {
-  if(m_Data) {   /// @todo condition needed ??
+  if (m_Data) {   /// @todo condition needed ??
     delete [] m_Data;
+  }
+  if (m_Active) {
+    delete [] m_Active;
   }
 }
 

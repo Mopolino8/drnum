@@ -23,62 +23,91 @@
 #define SIMPLELEVELSETS_H
 
 #include "cartesianpatch.h"
-#include "gpu_cartesianpatch.h"
 #include "postprocessingvariables.h"
+
+#ifdef GPU
+#include "gpu_cartesianpatch.h"
+#endif
 
 template <typename LS>
 struct GenericLevelSetPlotVars : public PostProcessingVariables
 {
+
+protected:
+
+  LS& m_Ls;
+
+
 public:
+
+  GenericLevelSetPlotVars(LS& ls) : PostProcessingVariables(), m_Ls(ls) {}
 
   virtual int numScalars() const { return 1; }
   virtual int numVectors() const { return 0; }
 
   virtual string getScalarName(int) const { return "G"; }
   virtual string getVectorName(int) const { BUG; }
-  virtual real   getScalar(int, real*, vec3_t x) const { return LS::G(x[0], x[1], x[2]); }
+  virtual real   getScalar(int, real*, vec3_t x) const { return m_Ls.G(x[0], x[1], x[2]); }
   virtual vec3_t getVector(int, real*, vec3_t)   const { BUG; return vec3_t(0,0,0); }
 
 };
 
 
-template <intreal_t T_X0, intreal_t T_Y0, intreal_t T_Z0, intreal_t T_R, intreal_t T_H>
-struct LevelSetXCylinder
+class LevelSetXCylinder
 {
-  CUDA_DH static real G(real x, real y, real z)
+
+protected: // attributes
+
+  real m_X0;
+  real m_Y0;
+  real m_Z0;
+  real m_R;
+  real m_H;
+
+
+public: // methods
+
+  CUDA_DH LevelSetXCylinder() {}
+
+  CUDA_DH LevelSetXCylinder(real x0, real y0, real z0, real R, real H)
   {
-    real R = INTREAL(T_R);
-    real H = INTREAL(T_H);
-    x -= INTREAL(T_X0);
-    y -= INTREAL(T_Y0);
-    z -= INTREAL(T_Z0);
+    m_X0 = x0;
+    m_Y0 = y0;
+    m_Z0 = z0;
+    m_R = R;
+    m_H = H;
+  }
+
+  CUDA_DH real G(real x, real y, real z)
+  {
+    x -= m_X0;
+    y -= m_Y0;
+    z -= m_Z0;
     real h = x;
     real r = sqrt(y*y + z*z);
-    if (h >= 0 && h <= H) {
-      if (r <= R) return -min(R-r, min(h, H-h));
-      else        return r-R;
+    if (h >= 0 && h <= m_H) {
+      if (r <= m_R) return -min(m_R-r, min(h, m_H-h));
+      else          return r-m_R;
     } else {
-      if (r <= R) {
+      if (r <= m_R) {
         if (h < 0) return -h;
-        else       return  h-H;
+        else       return  h-m_H;
       } else {
-        real dh = min(-h, h-H);
-        real dr = R - r;
+        real dh = min(-h, h-m_H);
+        real dr = m_R - r;
         return sqrt(dh*dh + dr*dr);
       }
     }
   }
 
   template <typename TPatch>
-  CUDA_DH static real G(TPatch& patch, size_t i, size_t j, size_t k, size_t = 0)
+  CUDA_DH real G(TPatch& patch, size_t i, size_t j, size_t k, size_t = 0)
   {
     real x, y, z;
     patch.xyzoIJK(i, j, k, x, y, z);
     return G(x, y, x);
   }
 
-  template <typename TPatch>
-  CUDA_DH static void updateG(TPatch&, size_t, size_t, size_t, real, size_t = 0) {}
 };
 
 #endif // SIMPLELEVELSETS_H

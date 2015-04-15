@@ -41,6 +41,8 @@
 #include "rungekutta.h"
 #include "discretelevelset.h"
 #include "simplelevelsets.h"
+#include "compressiblelsslip.h"
+#include "compressiblelschamber.h"
 
 #ifdef GPU
 #include "cartesiancycliccopy.h"
@@ -51,8 +53,6 @@
 #ifdef GPU
 #include "iterators/gpu_cartesianiterator.h"
 #include "gpu_cartesianlevelsetbc.h"
-#include "compressiblelsslip.h"
-#include "compressiblelschamber.h"
 #else
 #include "iterators/cartesianiterator.h"
 #endif
@@ -432,30 +432,42 @@ void run()
       runge_kutta.addAlpha(*i);
     }
   }
-  if (config.exists("geometry")) {
+
+#ifdef GPU
+  if (config.exists("chamber")) {
+    if (config.getValue<bool>("chamber")) {
+      real x0 = config.getValue<real>("chamber-x");
+      real y0 = config.getValue<real>("chamber-y");
+      real z0 = config.getValue<real>("chamber-z");
+      real R  = config.getValue<real>("chamber-R");
+      real H  = config.getValue<real>("chamber-H");
+      real p0 = config.getValue<real>("chamber-p0");
+      real T0 = config.getValue<real>("chamber-T0");
+      typedef LevelSetXCylinder ls_t;
+      ls_t ls(x0, y0, z0, R, H);
+      typedef CompressibleLsChamber<PerfectGas> bc_t;
+      bc_t bc(p0, T0);
+      patch_grid.writeToVtk(0, "VTK-drnum/chamber", GenericLevelSetPlotVars<ls_t>(ls), -1);
+      runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, 1, ls_t, bc_t>(&patch_grid, ls, bc, cuda_device, thread_limit));
+    }
   }
 
-  DiscreteLevelSet<NUM_VARS,5>* level_set = NULL;
   if (config.exists("geometry")) {
     QString file_name = config.getValue<QString>("geometry");
     QTime t_levelSet;
     t_levelSet.start();
     cout << endl << "Starting Level Set Computation" << endl;
-    level_set = new DiscreteLevelSet<NUM_VARS,5>(&patch_grid);
-    level_set->readGeometry(file_name);
+    DiscreteLevelSet<NUM_VARS,5> ls_wall(&patch_grid);
+    ls_wall.readGeometry(file_name);
     cout << endl << "Discrete Level Set Runtime -> " << t_levelSet.elapsed()/1000. << endl;
     patch_grid.writeToVtk(0, "VTK-drnum/levelset", LevelSetPlotVars<5>(), -1);
-    runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, 1, StoredLevelSet<5>, CompressibleLsSlip<NUM_VARS, GPU_CartesianPatch, PerfectGas> >(&patch_grid, cuda_device, thread_limit));
+    typedef CompressibleLsSlip<GPU_CartesianPatch, PerfectGas> bc_t;
+    typedef StoredLevelSet ls_t;
+    bc_t bc;
+    ls_t ls(5);
+    runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, 1, ls_t, bc_t>(&patch_grid, ls, bc, cuda_device, thread_limit));
   }
-
-  if (config.exists("chamber")) {
-    if (config.getValue<bool>("chamber")) {
-      typedef LevelSetXCylinder<REALINT(-6e-3), 0, 0, REALINT(6e-3), REALINT(3e-3)> ls_t;
-      typedef CompressibleLsChamber<NUM_VARS, PerfectGas, REALINT(1e7), REALINT(1000), REALINT(1), 0, 0> bc_t;
-      patch_grid.writeToVtk(0, "VTK-drnum/chamber", GenericLevelSetPlotVars<ls_t>(), -1);
-      runge_kutta.addPostOperation(new GPU_CartesianLevelSetBC<NUM_VARS, 1, ls_t, bc_t>(&patch_grid, cuda_device, thread_limit));
-    }
-  }
+#endif
 
   if (mesh_preview) {
     patch_grid.writeToVtk(0, "VTK-drnum/step", CompressibleVariables<PerfectGas>(), 0);

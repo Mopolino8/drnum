@@ -96,6 +96,7 @@ class Patch
 private: // attributes
 
   real        *m_GpuData;
+  bool        *m_GpuActive;
   size_t      *m_GpuReceivingCellIndicesConcat;
   size_t      *m_GpuReceivingCellIndicesUnique;
   donor_t     *m_GpuDonors;

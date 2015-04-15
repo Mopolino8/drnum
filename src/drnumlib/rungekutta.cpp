@@ -35,6 +35,7 @@ void RungeKutta::operator()(real dt)
     }
     first_step = false;
     computeIterators((*i)*dt);
+    copyDonorData(0);
     runPostOperations();
     countFlops(1);
   }

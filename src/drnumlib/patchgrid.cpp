@@ -499,7 +499,7 @@ void PatchGrid::readGrid(string gridfilename, real scale)
   };
 
   // Say something
-  cout << "Reading PatchGrid::readGrid() from file " << grid_file << " ... ";
+  cout << "Reading PatchGrid::readGrid() from file " << grid_file << " ... " << endl;
   /** @todo Preliminary format. */
 
   // Read file contents

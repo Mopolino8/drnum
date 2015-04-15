@@ -28,6 +28,7 @@ size_t  m_NumFields;    ///< number of fields (e.g. old, new, ...)
 size_t  m_NumVariables; ///< number of variables (e.g. rho, rhou, ...)
 size_t  m_FieldSize;    ///< length of each field
 size_t  m_VariableSize; ///< length of each variable
+bool*   m_Active;       ///< a field indicating if a cell is active (e.g. for immersed boundaries)
 
 PatchGrid* m_PatchGrid; ///< the patch grid this patch belongs to
 
@@ -121,6 +122,11 @@ CUDA_DH size_t variableSize() const
 CUDA_DH real* getData()
 {
   return m_Data;
+}
+
+CUDA_DH bool* getActive()
+{
+  return m_Active;
 }
 
 CUDA_DH size_t getNumDonorPatches()
@@ -495,6 +501,10 @@ CUDA_DH bool isSplitFace(size_t idx1, size_t idx2)
 {
   return logicalXor(m_IsInsideCell[idx1], m_IsInsideCell[idx2]);
 }
+
+CUDA_DH void deactivate(size_t i_cell) { m_Active[i_cell] = false; }
+CUDA_DH void activate  (size_t i_cell) { m_Active[i_cell] = true; }
+CUDA_DH bool isActive  (size_t i_cell) { return m_Active[i_cell]; }
 
 /**
  * Copy simple data attributes from another object.

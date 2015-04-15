@@ -37,7 +37,10 @@
 #include "patchgrid.h"
 #include "postprocessingvariables.h"
 #include "cartesianpatch.h"
+
+#ifdef GPU
 #include "gpu_cartesianpatch.h"
+#endif
 
 template <unsigned int DIM, unsigned int IVAR>
 class DiscreteLevelSet
@@ -344,28 +347,25 @@ void DiscreteLevelSet<DIM,IVAR>::levelSetPerCell(size_t i_patch, int& count, int
   }
 }
 
-template <unsigned int IVAR>
-struct StoredLevelSet
+class StoredLevelSet
 {
-  CUDA_DH static real G(GPU_CartesianPatch& patch, size_t i, size_t j, size_t k, size_t i_field = 0)
+
+protected: // attributes
+
+  size_t m_IVar;
+
+
+public: // methods
+
+  CUDA_DH StoredLevelSet(size_t i_var) { m_IVar = i_var; }
+  CUDA_DH StoredLevelSet() {}
+
+  template <typename T_Patch>
+  CUDA_DH real G(T_Patch& patch, size_t i, size_t j, size_t k, size_t i_field = 0)
   {
-    return patch.f(i_field, IVAR, i, j, k);
+    return patch.f(i_field, m_IVar, i, j, k);
   }
 
-  CUDA_DH static real G(CartesianPatch& patch, size_t i, size_t j, size_t k, size_t i_field = 0)
-  {
-    return patch.f(i_field, IVAR, i, j, k);
-  }
-
-  CUDA_DH static void updateG(CartesianPatch& patch, size_t i, size_t j, size_t k, real G_value, size_t i_field = 0)
-  {
-    patch.f(i_field, IVAR, i, j, k) = G_value;
-  }
-
-  CUDA_DH static void updateG(GPU_CartesianPatch& patch, size_t i, size_t j, size_t k, real G_value, size_t i_field = 0)
-  {
-    patch.f(i_field, IVAR, i, j, k) = G_value;
-  }
 };
 
 

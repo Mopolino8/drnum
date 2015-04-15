@@ -45,6 +45,7 @@ public:
     copyAttributes(patch);
     if (patch->m_GpuDataSet) {
       m_Data                       = patch->m_GpuData;
+      m_Active                     = patch->m_GpuActive;
       m_DonorIndexConcat           = patch->m_GpuDonorIndexConcat;
       m_Donors                     = patch->m_GpuDonors;
       m_DonorWeightConcat          = patch->m_GpuDonorWeightConcat;
@@ -55,10 +56,15 @@ public:
       m_IsSplitCell                = patch->m_GpuIsSplitCell;
     } else {
       if (cudaMalloc(&m_Data, sizeof(real)*patch->dataSize()) != cudaSuccess) {
-        QString msg = "Unable to allocate memory on the GPU";
+        QString msg = "Unable to allocate main memory on the GPU";
+        ERROR(qPrintable(msg));
+      }
+      if (cudaMalloc(&m_Active, sizeof(bool)*patch->variableSize()) != cudaSuccess) {
+        QString msg = "Unable to allocate active memory on the GPU";
         ERROR(qPrintable(msg));
       }
       copyToDevice(patch);
+      CUDA_CHECK_ERROR;
 
       cudaMalloc(&m_ReceivingCellIndicesConcat, sizeof(size_t)*m_NumReceivingCellsConcat);
       CUDA_CHECK_ERROR;
@@ -109,6 +115,7 @@ public:
       CUDA_CHECK_ERROR;
 
       patch->m_GpuData                       = m_Data;
+      patch->m_GpuActive                     = m_Active;
       patch->m_GpuDonorIndexConcat           = m_DonorIndexConcat;
       patch->m_GpuDonors                     = m_Donors;
       patch->m_GpuDonorWeightConcat          = m_DonorWeightConcat;
@@ -123,7 +130,8 @@ public:
 
   CUDA_HO void copyToDevice(Patch* patch)
   {
-    cudaMemcpy(m_Data, patch->getData(), patch->dataSize()*sizeof(real), cudaMemcpyHostToDevice);
+    cudaMemcpy(m_Data,   patch->getData(),   patch->dataSize()    *sizeof(real), cudaMemcpyHostToDevice);
+    cudaMemcpy(m_Active, patch->getActive(), patch->variableSize()*sizeof(bool), cudaMemcpyHostToDevice);
   }
 
   CUDA_HO void copyFromDevice(Patch* patch)

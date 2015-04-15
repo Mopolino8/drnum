@@ -196,6 +196,10 @@ __global__ void GPU_CartesianIterator_kernelAdvance(GPU_CartesianPatch patch, re
     return;
   }
 
+  if (!patch.isActive(i,j,k)) {
+    factor = 0;
+  }
+
   factor /= patch.dV();
   for (size_t i_var = 0; i_var < DIM; ++i_var) {
     patch.f(0, i_var, i, j, k) = patch.f(1, i_var, i, j, k) + factor*patch.f(2, i_var, i, j, k);

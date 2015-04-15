@@ -322,12 +322,16 @@ CUDA_DH bool checkRange(size_t i, size_t j, size_t k)
  * @param y will contain the y-coordinate on return
  * @param z will contain the z-coordinate on return
  */
-void xyzoIJK(size_t i, size_t j, size_t k, real& x, real& y, real& z)
+CUDA_DH void xyzoIJK(size_t i, size_t j, size_t k, real& x, real& y, real& z)
 {
   x = m_Xo + i*m_Dx + 0.5*m_Dx;
   y = m_Yo + j*m_Dy + 0.5*m_Dy;
   z = m_Zo + k*m_Dz + 0.5*m_Dz;
 }
+
+CUDA_DH void deactivate(size_t i, size_t j, size_t k) { getActive()[index(i, j, k)] = false; }
+CUDA_DH void activate  (size_t i, size_t j, size_t k) { getActive()[index(i, j, k)] = true; }
+CUDA_DH bool isActive  (size_t i, size_t j, size_t k) { return getActive()[index(i, j, k)]; }
 
 /**
  * Copy simple data attributes from another object.

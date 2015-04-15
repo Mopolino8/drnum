@@ -312,8 +312,10 @@ void CartesianIterator<DIM, OP>::compute(real factor, const vector<size_t> &patc
       for (size_t i = i1; i < i2; ++i) {
         for (size_t j = j1; j < j2; ++j) {
           for (size_t k = k1; k < k2; ++k) {
-            for (size_t i_var = 0; i_var < DIM; ++i_var) {
-              patch->f(0, i_var, i, j, k) = patch->f(1, i_var, i, j, k) + patch_factor*m_Res[resIndex(i_var, i, j, k)];
+            if (patch->isActive(i,j,k)) {
+              for (size_t i_var = 0; i_var < DIM; ++i_var) {
+                patch->f(0, i_var, i, j, k) = patch->f(1, i_var, i, j, k) + patch_factor*m_Res[resIndex(i_var, i, j, k)];
+              }
             }
           }
         }

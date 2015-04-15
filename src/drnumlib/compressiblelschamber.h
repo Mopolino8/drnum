@@ -24,32 +24,37 @@
 
 #include "drnum.h"
 
-template <unsigned int DIM, typename TGas, intreal_t T_press, intreal_t T_temp, intreal_t T_U, intreal_t T_V, intreal_t T_W>
-struct CompressibleLsChamber
+template <typename TGas>
+class CompressibleLsChamber
 {
 
-  CUDA_DH static void operate(real* var_f, real*, real* var, real, real, real, real, real, real, real)
+protected: // attributes
+
+  real m_P0;
+  real m_T0;
+
+
+public: // methods
+
+  CUDA_DH CompressibleLsChamber() {}
+  CUDA_DH CompressibleLsChamber(real p0, real T0)
+  {
+    m_P0 = p0;
+    m_T0 = T0;
+  }
+
+  CUDA_DH void operate(real* var_f, real*, real* var, real, real, real, real, real, real, real)
   {
     real p_f, T_f, u_f, v_f, w_f;
     TGas::conservativeToPrimitive(var_f, p_f, T_f, u_f, v_f, w_f);
 
-    real p0  = INTREAL(T_press);
-    real T0  = INTREAL(T_temp);
     real gam = TGas::gamma(var_f);
-    real Ma  = sqrt((pow(p0/p_f, (gam-1)/gam) - 1)*2/(gam-1));
+    real Ma  = sqrt((pow(m_P0/p_f, (gam-1)/gam) - 1)*2/(gam-1));
     real p   = p_f;
-    real T   = T0/(1 + 0.5*(gam-1)*Ma*Ma);
+    real T   = m_T0/(1 + 0.5*(gam-1)*Ma*Ma);
     real a   = sqrt(gam*TGas::R(var_f)*T);
-    real u   = INTREAL(T_U)*a*Ma;
-    real v   = INTREAL(T_V)*a*Ma;
-    real w   = INTREAL(T_W)*a*Ma;
 
-    TGas::primitiveToConservative(p, T, u, v, w, var);
-
-    if (isnan(var[0]) || isinf(var[0])) {
-      printf("Ma=%f, p=%f, T=%f, a=%f, p0=%f, T0=%f, u=%f, v=%f, w=%f, rho=%f\n", Ma, p, T, a, p0, T0, u, v, w, var[0]);
-      printf("field cell --> p=%f, T=%f, u=%f, v=%f, w=%f\n\n", p_f, T_f, u_f, v_f, w_f);
-    }
+    TGas::primitiveToConservative(p, T, Ma*a, 0, 0, var);
 
   }
 

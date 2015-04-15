@@ -24,12 +24,16 @@
 
 #include "drnum.h"
 
-template <unsigned int DIM, typename TPatch, typename TGas>
-struct CompressibleLsSlip
+template <typename TPatch, typename TGas>
+class CompressibleLsSlip
 {
-  CUDA_DH static real extrapolate(real h0, real h1, real h2, real f1, real f2)
+
+public:
+
+  CUDA_DH real extrapolate(real h0, real h1, real h2, real f1, real f2)
   {
-    return f1 + (h0-h1)*(f1-f2)/(h1-h2);
+    real dh = min(h0-h1, h1-h2);
+    return f1 + (h0-h1)*(f1-f2)/dh;
 
     /*
     real H = h1*h1 - h2*h2;
@@ -40,22 +44,7 @@ struct CompressibleLsSlip
     */
   }
 
-  CUDA_DH static bool usePre() { return false; }
-  CUDA_DH static bool usePost() { return false; }
-
-  CUDA_DH static void pre (real* var, real gx, real gy, real gz) {}
-  CUDA_DH static void post(real* var, real gx, real gy, real gz)
-  {
-    real p, T, u, v, w;
-    TGas::conservativeToPrimitive(var, p, T, u, v, w);
-    real s = u*gx + v*gy + w*gz;
-    u -= s*gx;
-    v -= s*gy;
-    w -= s*gz;
-    TGas::primitiveToConservative(p, T, u, v, w, var);
-  }
-
-  CUDA_DH static void operate(real* var1, real* var2, real* var, real h0, real h1, real h2, real wgt, real gx, real gy, real gz)
+  CUDA_DH void operate(real* var1, real* var2, real* var, real h0, real h1, real h2, real wgt, real gx, real gy, real gz)
   {
     real p1, T1, u1, v1, w1;
     real p2, T2, u2, v2, w2;
@@ -72,7 +61,21 @@ struct CompressibleLsSlip
     u -= s*gx;
     v -= s*gy;
     w -= s*gz;
-    TGas::primitiveToConservative(extrapolate(h0, h1, h2, p1, p2), extrapolate(h0, h1, h2, T1, T2), u, v, w, var);
+    real p = extrapolate(h0, h1, h2, p1, p2);
+    real T = extrapolate(h0, h1, h2, T1, T2);
+    TGas::primitiveToConservative(p, T, u, v, w, var);
+    /*
+    bool bad = false;
+    for (size_t i_var = 0; i_var < DIM; ++i_var) {
+      if (isnan(var[i_var]) || isinf(var[i_var])) {
+        bad = true;
+      }
+    }
+    if (bad) {
+      printf("p=%f, T=%f, u=%f, v=%f, w=%f, rho=%f, h0=%f, h1=%f, h2=%f\n", p, T, u, v, w, var[0], h0, h1, h2);
+      asm("trap;");
+    }
+    */
   }
 
 };
