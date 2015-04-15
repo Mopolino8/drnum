@@ -106,16 +106,40 @@ void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::update()
   for (int i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
     m_Cells[i_patch].clear();
     CartesianPatch* patch = this->m_Patches[i_patch];
-    for (size_t i = 2; i < patch->sizeI() - 2; ++i) {
-      for (size_t j = 2; j < patch->sizeJ() - 2; ++j) {
-        for (size_t k = 2; k < patch->sizeK() - 2; ++k) {
+    int imax = patch->sizeI();
+    int jmax = patch->sizeJ();
+    int kmax = patch->sizeK();
+    for (size_t i = 0; i < imax; ++i) {
+      for (size_t j = 0; j < jmax; ++j) {
+        for (size_t k = 0; k < kmax; ++k) {
           if (m_Ls.G(*patch, i, j, k) < 0) {
             bool extrapolate = true;
-            for (int di = -1; di <= 1; ++di) {
-              for (int dj = -1; dj <= 1; ++dj) {
-                for (int dk = -1; dk <= 1; ++dk) {
+            int di_1 = -1;
+            int di_2 =  1;
+            int dj_1 = -1;
+            int dj_2 =  1;
+            int dk_1 = -1;
+            int dk_2 =  1;
+            if (i < 2)          di_1 = 0;
+            if (i >= imax - 2)  di_2 = 0;
+            if (j < 2)          dj_1 = 0;
+            if (j >= jmax - 2)  dj_2 = 0;
+            if (k < 2)          dk_1 = 0;
+            if (k >= kmax - 2)  dk_2 = 0;
+            for (int di = di_1; di <= di_2; ++di) {
+              for (int dj = dj_1; dj <= dj_2; ++dj) {
+                for (int dk = dk_1; dk <= dk_2; ++dk) {
                   if (di != 0 || dj != 0 || dk != 0) {
-                    if (m_Ls.G(*patch, i + di, j + dj, k + dk) >= 0 && patch->isActive(i + di, j + dj, k + dk)) {
+                    if ((i+2*di) < 0 || (j+2*dj) < 0 || (k+2*dk) < 0) {
+                      BUG;
+                    }
+                    if (!this->m_Patches[i_patch]->checkRange(i, j, k)) {
+                      BUG;
+                    }
+                    if (!this->m_Patches[i_patch]->checkRange(i+2*di, j+2*dj, k+2*dk)) {
+                      BUG;
+                    }
+                    if (m_Ls.G(*this->m_Patches[i_patch], i + di, j + dj, k + dk) >= 0) {
                       extrapolate = false;
                       break;
                     }
@@ -168,9 +192,19 @@ void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::grad(GPU_CartesianPatch &patch, 
                                                      size_t i, size_t j, size_t k,
                                                      real &gx, real &gy, real &gz)
 {
-  gx = 0.5*patch.idx()*(ls.G(patch, i+1, j, k) - ls.G(patch, i-1, j, k));
-  gy = 0.5*patch.idy()*(ls.G(patch, i, j+1, k) - ls.G(patch, i, j-1, k));
-  gz = 0.5*patch.idz()*(ls.G(patch, i, j, k+1) - ls.G(patch, i, j, k-1));
+
+  if      (i == 0)                 gx = patch.idx()*(ls.G(patch, i+1, j, k) - ls.G(patch, i,   j, k));
+  else if (i == patch.sizeI() - 1) gx = patch.idx()*(ls.G(patch, i  , j, k) - ls.G(patch, i-1, j, k));
+  else                             gx = 0.5*patch.idx()*(ls.G(patch, i+1, j, k) - ls.G(patch, i-1, j, k));
+
+  if      (j == 0)                 gy = patch.idy()*(ls.G(patch, i, j+1, k) - ls.G(patch, i, j  , k));
+  else if (j == patch.sizeJ() - 1) gy = patch.idy()*(ls.G(patch, i, j  , k) - ls.G(patch, i, j-1, k));
+  else                             gy = 0.5*patch.idy()*(ls.G(patch, i, j+1, k) - ls.G(patch, i, j-1, k));
+
+  if      (k == 0)                 gz = patch.idz()*(ls.G(patch, i, j, k+1) - ls.G(patch, i, j, k  ));
+  else if (k == patch.sizeK() - 1) gz = patch.idz()*(ls.G(patch, i, j, k  ) - ls.G(patch, i, j, k-1));
+  else                             gz = 0.5*patch.idz()*(ls.G(patch, i, j, k+1) - ls.G(patch, i, j, k-1));
+
 }
 
 template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
