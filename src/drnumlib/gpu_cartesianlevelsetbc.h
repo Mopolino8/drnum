@@ -40,6 +40,7 @@ public: // data types
   struct cell_t
   {
     size_t i, j, k;
+    int    di_1, di_2, dj_1, dj_2, dk_1, dk_2;
     bool   extrapolate;
   };
 
@@ -151,6 +152,12 @@ void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::update()
             cell.i = i;
             cell.j = j;
             cell.k = k;
+            cell.di_1 = di_1;
+            cell.di_2 = di_2;
+            cell.dj_1 = dj_1;
+            cell.dj_2 = dj_2;
+            cell.dk_1 = dk_1;
+            cell.dk_2 = dk_2;
             cell.extrapolate = extrapolate;
             m_Cells[i_patch] << cell;
           }
@@ -244,6 +251,12 @@ __global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typenam
   size_t j = cells[idx].j;
   size_t k = cells[idx].k;
   bool extrapolate = cells[idx].extrapolate;
+  int di_1 = cells[idx].di_1;
+  int di_2 = cells[idx].di_2;
+  int dj_1 = cells[idx].dj_1;
+  int dj_2 = cells[idx].dj_2;
+  int dk_1 = cells[idx].dk_1;
+  int dk_2 = cells[idx].dk_2;
 
   dim_t<DIM> dim;
 
@@ -260,9 +273,9 @@ __global__ void GPU_CartesianLevelSetBC_kernel(GPU_CartesianPatch patch, typenam
     real total_weight = 0;
     real h0, h1, h2, w;
     GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::grad(patch, ls, i, j, k, gx, gy, gz);
-    for (int di = -1; di <= 1; ++di) {
-      for (int dj = -1; dj <= 1; ++dj) {
-        for (int dk = -1; dk <= 1; ++dk) {
+    for (int di = di_1; di <= di_2; ++di) {
+      for (int dj = dj_1; dj <= dj_2; ++dj) {
+        for (int dk = dk_1; dk <= dk_2; ++dk) {
           if (di != 0 || dj != 0 || dk != 0) {
             if (ls.G(patch, i + di, j + dj, k + dk) >= 0 || (extrapolate && ls.G(patch, i + di, j + dj, k + dk) > ls.G(patch, i, j, k))) {
               real dx = di*patch.dx();
