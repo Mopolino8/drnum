@@ -44,19 +44,30 @@ public: // data types
     bool   extrapolate;
   };
 
+  struct bccell_t
+  {
+    size_t index;
+    // neighbouring weight
+    int    octet_wt[8];
+    // neighbouring index
+    int    octet_id[8];
+  };
+
 
 protected: // attributes
 
-  QVector<QList<cell_t> > m_Cells;
-  QVector<cell_t*>        m_GpuCells;
-  bool                    m_UpdateRequired;
-  LS                      m_Ls;
-  BC                      m_Bc;
+  QVector<QList<cell_t> >   m_Cells;
+  QVector<QList<bccell_t> > m_BcCells;
+  QVector<cell_t*>          m_GpuCells;
+  bool                      m_UpdateRequired;
+  LS                        m_Ls;
+  BC                        m_Bc;
 
 
 protected: // methods
 
   void update();
+  void returnBaseIndex(CartesianPatch* patch, vec3_t pt_n, int& idx);
 
 
 public: // methods
@@ -100,6 +111,141 @@ GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::GPU_CartesianLevelSetBC(PatchGrid* pa
 template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
 void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::update()
 {
+  if (!m_UpdateRequired) {
+    return;
+  }
+  m_Cells.resize(this->m_Patches.size());
+  m_BcCells.resize(this->m_Patches.size());
+  for (int i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
+    m_Cells[i_patch].clear();
+    m_BcCells[i_patch].clear();
+    CartesianPatch* patch = this->m_Patches[i_patch];
+    int imax = patch->sizeI();
+    int jmax = patch->sizeJ();
+    int kmax = patch->sizeK();
+    for (size_t i = 0; i < imax; ++i) {
+      for (size_t j = 0; j < jmax; ++j) {
+        for (size_t k = 0; k < kmax; ++k) {
+          if (m_Ls.G(*patch, i, j, k) < 0) {
+            bool extrapolate = true;
+            // -start and -end iteration range
+            // For two boundary layers
+            int i_stt = -2;
+            int i_end =  2;
+            int j_stt = -2;
+            int j_end =  2;
+            int k_stt = -2;
+            int k_end =  2;
+            // Limit iteration bounds close to the boundaries
+            if (i < 2)          i_stt += 2-i;
+            if (i == imax - 1)  i_end  = 0;
+            if (i == imax - 2)  i_end  = 1;
+            if (j < 2)          j_stt += 2-j;
+            if (j == jmax - 1)  j_end  = 0;
+            if (j == jmax - 2)  j_end  = 1;
+            if (k < 2)          k_stt += 2-k;
+            if (k == kmax - 1)  k_end  = 0;
+            if (k == kmax - 2)  k_end  = 1;
+            for (int di = i_stt; di <= i_end; ++di) {
+              for (int dj = j_stt; dj <= j_end; ++dj) {
+                for (int dk = k_stt; dk <= k_end; ++dk) {
+                  if (di != 0 || dj != 0 || dk != 0) {
+                    //- To remove later.  For debugging purposes.
+                    if ((i+2*di) < 0 || (j+2*dj) < 0 || (k+2*dk) < 0) {
+                      BUG;
+                    }
+                    if (!patch->checkRange(i, j, k)) {
+                      BUG;
+                    }
+                    if (!patch->checkRange(i+2*di, j+2*dj, k+2*dk)) {
+                      BUG;
+                    }
+                    //- End debugging
+                    if (m_Ls.G(*patch, i + di, j + dj, k + dk) >= 0) {
+                      int index_i = patch->index(i, j, k);
+                      real x_io, y_io, z_io;
+                      patch->xyzoCell(index_i, x_io, y_io, z_io);
+                      real gx, gy, gz;
+                      grad(patch, m_Ls, i, j, k, gx, gy, gz);
+                      real x_n, y_n, z_n;
+                      x_n = x_io - 2*m_Ls.G(*patch, i, j, k)*gx;
+                      y_n = y_io - 2*m_Ls.G(*patch, i, j, k)*gy;
+                      z_n = z_io - 2*m_Ls.G(*patch, i, j, k)*gz;
+
+                      WeightedSet<real> weight_set;
+                      bool exists = CartesianPatch::computeCCDataInterpolCoeffs_V1(x_n, y_n, z_n, weight_set);
+                      if (!exists) BUG;
+                      //- To remove after debug runs
+                      if (weight_set.getSize() != 8) BUG;
+                      //- End
+                      bccell_t cell;
+                      for(int c_i = 0; c_i != weight_set.getSize(); ++c_i) {
+                        cell.octet_id[c_i] = weight_set[c_i].first;
+                        cell.octet_wt[c_i] = weight_set[c_i].second;
+                      }
+                      cell.index = index_i;
+                      m_BcCells[i_patch] << cell;
+                      extrapolate = false;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            if (extrapolate) {
+              // Correct bounds once for for extrapolation method..
+              if (i < 2)          i_stt = 0;
+              if (i >= imax - 2)  i_end = 0;
+              if (j < 2)          j_stt = 0;
+              if (j >= jmax - 2)  j_end = 0;
+              if (k < 2)          k_stt = 0;
+              if (k >= kmax - 2)  k_end = 0;
+              cell_t cell;
+              cell.i = i;
+              cell.j = j;
+              cell.k = k;
+              cell.di_1 = i_stt;
+              cell.di_2 = i_end;
+              cell.dj_1 = j_stt;
+              cell.dj_2 = j_end;
+              cell.dk_1 = k_stt;
+              cell.dk_2 = k_end;
+              cell.extrapolate = extrapolate;
+              m_Cells[i_patch] << cell;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // delete old GPU arrays
+  foreach (cell_t* cells, m_GpuCells) {
+    cudaFree(cells);
+    CUDA_CHECK_ERROR;
+  }
+  m_GpuCells.clear();
+
+  // allocate new arrays
+  m_GpuCells.resize(this->m_Patches.size());
+  for (int i_patch = 0; i_patch < this->m_Patches.size(); ++i_patch) {
+    if (m_Cells[i_patch].size() > 0) {
+      cudaMalloc(&m_GpuCells[i_patch], m_Cells[i_patch].size()*sizeof(cell_t));
+      CUDA_CHECK_ERROR;
+      cell_t* cells = new cell_t[m_Cells[i_patch].size()];
+      for (int i = 0; i < m_Cells[i_patch].size(); ++i) {
+        cells[i] = m_Cells[i_patch][i];
+      }
+      cudaMemcpy(m_GpuCells[i_patch], cells, m_Cells[i_patch].size()*sizeof(cell_t), cudaMemcpyHostToDevice);
+      CUDA_CHECK_ERROR;
+      delete [] cells;
+    } else {
+      m_GpuCells[i_patch] = NULL;
+    }
+  }
+
+  /*
+  m_UpdateRequired = false;
   if (!m_UpdateRequired) {
     return;
   }
@@ -192,6 +338,16 @@ void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::update()
   }
 
   m_UpdateRequired = false;
+  */
+}
+
+template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
+void GPU_CartesianLevelSetBC<DIM,NUM_LS,LS,BC>::returnBaseIndex(CartesianPatch* patch, vec3_t pt_n, int& idx)
+{
+  real x_o, y_o, z_o;
+  patch->xyzToRefCell()
+
+
 }
 
 template <unsigned int DIM, unsigned int NUM_LS, typename LS, typename BC>
