@@ -98,6 +98,7 @@ SET(drnumlib_SOURCES
     simplelevelsets.h
     timeaverage.h
     timeaverage.cpp
+    weightedset.h
 )
 
 ADD_LIBRARY(drnumlib SHARED ${drnumlib_SOURCES})

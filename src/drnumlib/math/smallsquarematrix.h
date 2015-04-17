@@ -22,7 +22,7 @@
 #ifndef SmallSquareMatrix_HH
 #define SmallSquareMatrix_HH
 
-#include "math/mathvector.h"
+#include "mathvector.h"
 
 template <class T, unsigned int N> class SmallSquareMatrix;
 
@@ -41,7 +41,7 @@ protected:
   /** Indicator for precision safe mode
    */
   bool prec_safe;
-  T prec_limit;
+  T    prec_limit;
 
 public:
 
@@ -305,12 +305,7 @@ protected:
 public:
   /** constructor.
    */ 
-  InvSmallSquareMatrix<T,N>(SmallSquareMatrix<T,N> a,
-//<<<<<<< HEAD
-//			    bool a_prec_safe, T a_prec_limit) {
-//=======
-                            bool a_prec_safe, T a_prec_limit) {
-//>>>>>>> master
+  InvSmallSquareMatrix<T,N>(SmallSquareMatrix<T,N> a, bool a_prec_safe, T a_prec_limit) {
 
     int Smalldim = N;
     int n;
@@ -339,22 +334,6 @@ public:
       max=0.0;
       p[k]=0;
       for(i=k;i<n;i++){
-//<<<<<<< HEAD
-//	s=0.0;
-//	for(j=k;j<n;j++) s=s+fabs(a[i][j]);
-//	q=fabs(a[i][k])/s;
-//	if(q>max){
-//	  max=q;
-//	  p[k]=i;
-//        }
-//      }
-//      if(!(p[k]==k)){
-//	det=-det;
-//	for(j=0;j<n;j++){
-//	  h=a[k][j];
-//	  a[k][j]=a[p[k]][j];
-//	  a[p[k]][j]=h;
-//=======
         s=0.0;
         for(j=k;j<n;j++) s=s+fabs(a[i][j]);
         q=fabs(a[i][k])/s;
@@ -369,7 +348,6 @@ public:
           h=a[k][j];
           a[k][j]=a[p[k]][j];
           a[p[k]][j]=h;
-//>>>>>>> master
         }
       }
       det=det*a[k][k];
@@ -383,18 +361,6 @@ public:
     //.. Proceed with rest of system reduction
     for(k=0;k<n-1;k++)
       if(!(p[k]==k)){
-//<<<<<<< HEAD
-//	for(l=0;l<n;l++){
-//	  h=b[k][l];
-//	  b[k][l]=b[p[k]][l];
-//	  b[p[k]][l]=h;
-//	}
-//      }
-//    for(i=0;i<n;i++){
-//      for(j=0;j<i;j++){
-//	for(l=0;l<n;l++)
-//	  b[i][l]=b[i][l]-a[i][j]*b[j][l];
-//=======
         for(l=0;l<n;l++){
           h=b[k][l];
           b[k][l]=b[p[k]][l];
@@ -405,22 +371,14 @@ public:
       for(j=0;j<i;j++){
         for(l=0;l<n;l++)
           b[i][l]=b[i][l]-a[i][j]*b[j][l];
-//>>>>>>> master
       }
     }
     for(i=n-1;i>=0;i--){
       for(l=0;l<n;l++){
-//<<<<<<< HEAD
-//	s=b[i][l];
-//	for(k=i+1;k<n;k++)
-//	  s=s-a[i][k]*b[k][l];
-//	b[i][l]=s/a[i][i];
-//=======
         s=b[i][l];
         for(k=i+1;k<n;k++)
           s=s-a[i][k]*b[k][l];
         b[i][l]=s/a[i][i];
-//>>>>>>> master
       }
     }
 
@@ -442,7 +400,7 @@ protected:
   SmallSquareMatrix<T,2> INV;
 
 public:
-  // constructor.
+  // Constructor
     
   InvSmallSquareMatrix<T,2>(SmallSquareMatrix<T,2> SSM,
 			    bool a_prec_safe, T a_prec_limit)
@@ -451,22 +409,22 @@ public:
     if(a_prec_safe) {
       SSM.setSafe(a_prec_limit);
       ele_max = SSM.linNorm_0();
-      // sorce: maple
+      // Source: maple
       T det = (SSM[0][0]*SSM[1][1]-SSM[0][1]*SSM[1][0]);
       SSM.precisionHandling(det, ele_max);
       T t4 = 1/det;
-      INV[0][0] = SSM[1][1]*t4;
+      INV[0][0] =  SSM[1][1]*t4;
       INV[0][1] = -SSM[0][1]*t4;
       INV[1][0] = -SSM[1][0]*t4;
-      INV[1][1] = SSM[0][0]*t4;
+      INV[1][1] =  SSM[0][0]*t4;
     }
     else {
-      // sorce: maple
+      // Source: maple
       T t4 = 1/(SSM[0][0]*SSM[1][1]-SSM[0][1]*SSM[1][0]);
-      INV[0][0] = SSM[1][1]*t4;
+      INV[0][0] =  SSM[1][1]*t4;
       INV[0][1] = -SSM[0][1]*t4;
       INV[1][0] = -SSM[1][0]*t4;
-      INV[1][1] = SSM[0][0]*t4;
+      INV[1][1] =  SSM[0][0]*t4;
     }
   }
     
@@ -488,10 +446,10 @@ public:
     if(a_prec_safe) {
       SSM.setSafe(a_prec_limit);
       T ele_max = SSM.linNorm_0();
-      // Source (maple)
-      T t4 = SSM[0][0]*SSM[1][1];
-      T t6 = SSM[0][0]*SSM[1][2];
-      T t8 = SSM[0][1]*SSM[1][0];
+      // Source: maple
+      T t4  = SSM[0][0]*SSM[1][1];
+      T t6  = SSM[0][0]*SSM[1][2];
+      T t8  = SSM[0][1]*SSM[1][0];
       T t10 = SSM[0][2]*SSM[1][0];
       T t12 = SSM[0][1]*SSM[2][0];
       T t14 = SSM[0][2]*SSM[2][0];
@@ -499,35 +457,35 @@ public:
 	       t12*SSM[1][2]-t14*SSM[1][1]);
       SSM.precisionHandling(det, ele_max);
       T t17 = 1/det;
-      INV[0][0] = (SSM[1][1]*SSM[2][2]-SSM[1][2]*SSM[2][1])*t17;
+      INV[0][0] =  (SSM[1][1]*SSM[2][2]-SSM[1][2]*SSM[2][1])*t17;
       INV[0][1] = -(SSM[0][1]*SSM[2][2]-SSM[0][2]*SSM[2][1])*t17;
       INV[0][2] = -(-SSM[0][1]*SSM[1][2]+SSM[0][2]*SSM[1][1])*t17;
       INV[1][0] = -(SSM[1][0]*SSM[2][2]-SSM[1][2]*SSM[2][0])*t17;
-      INV[1][1] = (SSM[0][0]*SSM[2][2]-t14)*t17;
+      INV[1][1] =  (SSM[0][0]*SSM[2][2]-t14)*t17;
       INV[1][2] = -(t6-t10)*t17;
       INV[2][0] = -(-SSM[1][0]*SSM[2][1]+SSM[1][1]*SSM[2][0])*t17;
       INV[2][1] = -(SSM[0][0]*SSM[2][1]-t12)*t17;
-      INV[2][2] = (t4-t8)*t17;
+      INV[2][2] =  (t4-t8)*t17;
     }
     else {
-      // Source (maple)
-      T t4 = SSM[0][0]*SSM[1][1];
-      T t6 = SSM[0][0]*SSM[1][2];
-      T t8 = SSM[0][1]*SSM[1][0];
+      // Source: maple
+      T t4  = SSM[0][0]*SSM[1][1];
+      T t6  = SSM[0][0]*SSM[1][2];
+      T t8  = SSM[0][1]*SSM[1][0];
       T t10 = SSM[0][2]*SSM[1][0];
       T t12 = SSM[0][1]*SSM[2][0];
       T t14 = SSM[0][2]*SSM[2][0];
       T t17 = 1/(t4*SSM[2][2]-t6*SSM[2][1]-t8*SSM[2][2]+t10*SSM[2][1]+
 		 t12*SSM[1][2]-t14*SSM[1][1]);
-      INV[0][0] = (SSM[1][1]*SSM[2][2]-SSM[1][2]*SSM[2][1])*t17;
+      INV[0][0] =  (SSM[1][1]*SSM[2][2]-SSM[1][2]*SSM[2][1])*t17;
       INV[0][1] = -(SSM[0][1]*SSM[2][2]-SSM[0][2]*SSM[2][1])*t17;
       INV[0][2] = -(-SSM[0][1]*SSM[1][2]+SSM[0][2]*SSM[1][1])*t17;
       INV[1][0] = -(SSM[1][0]*SSM[2][2]-SSM[1][2]*SSM[2][0])*t17;
-      INV[1][1] = (SSM[0][0]*SSM[2][2]-t14)*t17;
+      INV[1][1] =  (SSM[0][0]*SSM[2][2]-t14)*t17;
       INV[1][2] = -(t6-t10)*t17;
       INV[2][0] = -(-SSM[1][0]*SSM[2][1]+SSM[1][1]*SSM[2][0])*t17;
       INV[2][1] = -(SSM[0][0]*SSM[2][1]-t12)*t17;
-      INV[2][2] = (t4-t8)*t17;
+      INV[2][2] =  (t4-t8)*t17;
     }
   }
   SmallSquareMatrix<T,3> inverse() { return INV; }
@@ -664,5 +622,24 @@ SmallSquareMatrix<T,N-1> SmallSquareMatrix<T,N>::subMatrix(unsigned int row, uns
   }
   return M;
 }
+
+
+typedef SmallSquareMatrix<real, 2> mat2_t;
+typedef SmallSquareMatrix<real, 3> mat3_t;
+typedef SmallSquareMatrix<real, 4> mat4_t;
+typedef SmallSquareMatrix<real, 5> mat5_t;
+typedef SmallSquareMatrix<real, 6> mat6_t;
+
+typedef SmallSquareMatrix<float, 2> fmat2_t;
+typedef SmallSquareMatrix<float, 3> fmat3_t;
+typedef SmallSquareMatrix<float, 4> fmat4_t;
+typedef SmallSquareMatrix<float, 5> fmat5_t;
+typedef SmallSquareMatrix<float, 6> fmat6_t;
+
+typedef SmallSquareMatrix<double, 2> dmat2_t;
+typedef SmallSquareMatrix<double, 3> dmat3_t;
+typedef SmallSquareMatrix<double, 4> dmat4_t;
+typedef SmallSquareMatrix<double, 5> dmat5_t;
+typedef SmallSquareMatrix<double, 6> dmat6_t;
 
 #endif

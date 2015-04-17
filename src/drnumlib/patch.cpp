@@ -87,8 +87,7 @@ bool Patch::readFromFile(istringstream& iss_input, real scale)
 
 /// @todo clean up this class, so to find methods, etc...
 
-void Patch::xyzoCell(const size_t& l_cell,
-                     real& xo_cell, real& yo_cell, real& zo_cell)
+void Patch::xyzoCell(const size_t& l_cell, real& xo_cell, real& yo_cell, real& zo_cell)
 {
   // hand over to virtual method getting local coords
   real x_cell, y_cell, z_cell;

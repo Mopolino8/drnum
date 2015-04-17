@@ -79,9 +79,9 @@ class GPU_Patch;
  *          smarter to define coalignments of neighbouring blocks.
  *
  */
-//=======
+
 #include "transformation.h"    /// @todo merge: kept for compatibility
-//>>>>>>> master
+
 
 class Patch
 {
